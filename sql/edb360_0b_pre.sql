@@ -286,7 +286,7 @@ PRO <body>
 PRO <h1><a href="http://www.enkitec.com" target="_blank">Enkitec</a>: DataBase 360-degree view <em>(<a href="http://www.enkitec.com/products/edb360" target="_blank">edb360</a>)</em></h1>
 PRO
 PRO <pre>
-PRO dbname:&&database_name_short. version:&&db_version. host:&&host_name_short. license:&&license_pack. days:&&history_days. today:&&&&time_stamp.
+PRO dbname:&&database_name_short. version:&&db_version. host:&&host_name_short. license:&&license_pack. days:&&history_days. today:&&time_stamp.
 PRO </pre>
 PRO
 SPO OFF;
