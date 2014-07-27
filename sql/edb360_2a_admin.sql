@@ -307,6 +307,7 @@ SELECT /*+ &&sq_fact_hints. */
   FROM dba_hist_active_sess_history
  WHERE sql_plan_operation = ''INDEX''
    AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND dbid = &&edb360_dbid.
    AND current_obj# > 0
 )
 SELECT /*+ &&top_level_hints. */
@@ -334,7 +335,8 @@ SELECT object_owner, object_name
    AND (i.owner, i.index_name) NOT IN (
 SELECT object_owner, object_name
   FROM dba_hist_sql_plan
- WHERE operation = ''INDEX'' )
+ WHERE operation = ''INDEX''
+   AND dbid = &&edb360_dbid. )
  ORDER BY
        i.table_owner,
        i.table_name,

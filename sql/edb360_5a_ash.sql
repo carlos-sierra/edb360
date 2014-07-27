@@ -63,6 +63,7 @@ SELECT /*+ &&sq_fact_hints. */
        SUM(CASE wait_class    WHEN ''User I/O''       THEN 1 ELSE 0 END) w_user_io       
   FROM dba_hist_active_sess_history
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND dbid = &&edb360_dbid.
    AND instance_number = @instance_number@
  GROUP BY
        snap_id,
@@ -97,6 +98,8 @@ SELECT /*+ &&sq_fact_hints. */
  WHERE s.snap_id = a.snap_id
    AND s.dbid = a.dbid
    AND s.instance_number = a.instance_number
+   AND s.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND s.dbid = &&edb360_dbid.
    AND s.end_interval_time > (s.begin_interval_time + (1 / (24 * 60))) /* filter out snaps apart < 1 min */
 ),
 ash_aas AS (
@@ -262,6 +265,7 @@ SELECT /*+ &&sq_fact_hints. */
        SUM(CASE wait_class    WHEN ''User I/O''       THEN 1 ELSE 0 END) w_user_io       
   FROM dba_hist_active_sess_history
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND dbid = &&edb360_dbid.
    AND @filter_predicate@
  GROUP BY
        snap_id,
@@ -296,6 +300,8 @@ SELECT /*+ &&sq_fact_hints. */
  WHERE s.snap_id = a.snap_id
    AND s.dbid = a.dbid
    AND s.instance_number = a.instance_number
+   AND s.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND s.dbid = &&edb360_dbid.
    AND s.end_interval_time > (s.begin_interval_time + (1 / (24 * 60))) /* filter out snaps apart < 1 min */
 ),
 ash_aas AS (
@@ -498,10 +504,13 @@ SELECT /*+ &&sq_fact_hints. */
        dba_hist_snapshot s
  WHERE '&&diagnostics_pack.' = 'Y'
    AND h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND h.dbid = &&edb360_dbid.
    AND h.session_state = 'WAITING'
    AND s.snap_id = h.snap_id
    AND s.dbid = h.dbid
    AND s.instance_number = h.instance_number
+   AND s.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND s.dbid = &&edb360_dbid.
  GROUP BY
        h.wait_class,
        h.event
@@ -553,6 +562,7 @@ SELECT /*+ &&sq_fact_hints. */
        dba_hist_snapshot s
  WHERE @filter_predicate@
    AND h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND h.dbid = &&edb360_dbid.
    AND s.snap_id = h.snap_id
    AND s.dbid = h.dbid
    AND s.instance_number = h.instance_number

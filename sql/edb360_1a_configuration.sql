@@ -72,6 +72,7 @@ BEGIN
 SELECT /*+ &&top_level_hints. */
        *
   FROM dba_hist_database_instance
+ WHERE dbid = &&edb360_dbid.
  ORDER BY
        dbid,
        instance_number,

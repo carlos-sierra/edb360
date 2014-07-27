@@ -1,6 +1,10 @@
+WHENEVER SQLERROR EXIT SQL.SQLCODE;
 SET TERM ON VER OFF FEED OFF ECHO OFF;
 CL COL;
 COL row_num FOR 9999999 HEA '#' PRI;
+-- get dbid
+COL edb360_dbid NEW_V edb360_dbid;
+SELECT TRIM(TO_CHAR(dbid)) edb360_dbid FROM v$database;
 
 -- parameters
 PRO
@@ -10,9 +14,8 @@ PRO If you have a license for Diagnostics pack but not for Tuning pack, enter D.
 PRO Be aware value N reduces the output content substantially. Avoid N if possible.
 PRO
 PRO Oracle Pack License? (Tuning, Diagnostics or None) [ T | D | N ] (required)
-COL license_pack NEW_V license_pack NOPRI FOR A1;
+COL license_pack NEW_V license_pack FOR A1;
 SELECT NVL(UPPER(SUBSTR(TRIM('&1.'), 1, 1)), '?') license_pack FROM DUAL;
-WHENEVER SQLERROR EXIT SQL.SQLCODE;
 BEGIN
   IF NOT '&&license_pack.' IN ('T', 'D', 'N') THEN
     RAISE_APPLICATION_ERROR(-20000, 'Invalid Oracle Pack License "&&license_pack.". Valid values are T, D and N.');
@@ -20,15 +23,14 @@ BEGIN
 END;
 /
 PRO
-WHENEVER SQLERROR CONTINUE;
 SET TERM OFF;
-COL diagnostics_pack NEW_V diagnostics_pack NOPRI FOR A1;
+COL diagnostics_pack NEW_V diagnostics_pack FOR A1;
 SELECT CASE WHEN '&&license_pack.' IN ('T', 'D') THEN 'Y' ELSE 'N' END diagnostics_pack FROM DUAL;
-COL skip_diagnostics NEW_V skip_diagnostics NOPRI FOR A1;
+COL skip_diagnostics NEW_V skip_diagnostics FOR A1;
 SELECT CASE WHEN '&&license_pack.' IN ('T', 'D') THEN NULL ELSE 'Y' END skip_diagnostics FROM DUAL;
-COL tuning_pack NEW_V tuning_pack NOPRI FOR A1;
+COL tuning_pack NEW_V tuning_pack FOR A1;
 SELECT CASE WHEN '&&license_pack.' = 'T' THEN 'Y' ELSE 'N' END tuning_pack FROM DUAL;
-COL skip_tuning NEW_V skip_tuning NOPRI FOR A1;
+COL skip_tuning NEW_V skip_tuning FOR A1;
 SELECT CASE WHEN '&&license_pack.' = 'T' THEN NULL ELSE 'Y' END skip_tuning FROM DUAL;
 SET TERM ON;
 SELECT 'Be aware value "N" reduces output content substantially. Avoid "N" if possible.' warning FROM dual WHERE '&&license_pack.' = 'N';
@@ -42,27 +44,27 @@ PRO
 PRO Parameter 2: Days of History? (default 31)
 PRO Use default value of 31 unless you have been instructed otherwise.
 PRO
-COL history_days NEW_V history_days NOPRI;
-SELECT TO_CHAR(LEAST(TRUNC(SYSDATE - CAST(MIN(begin_interval_time) AS DATE)), TO_NUMBER(NVL(TRIM('&2.'), '31')))) history_days FROM dba_hist_snapshot WHERE '&&diagnostics_pack.' = 'Y';
+COL history_days NEW_V history_days;
+SELECT TO_CHAR(LEAST(TRUNC(SYSDATE - CAST(MIN(begin_interval_time) AS DATE)), TO_NUMBER(NVL(TRIM('&2.'), '31')))) history_days FROM dba_hist_snapshot WHERE '&&diagnostics_pack.' = 'Y' AND dbid = &&edb360_dbid.;
 SELECT 0 history_days FROM DUAL WHERE '&&diagnostics_pack.' IS NULL;
 
 DEF skip_script = 'sql/edb360_0f_skip_script.sql ';
 
 /*
 PRO Parameter 3: Produce HTML Reports? [ Y | N ] (default Y)
-COL html_reports NEW_V html_reports NOPRI FOR A1;
+COL html_reports NEW_V html_reports FOR A1;
 SELECT DECODE(NVL(UPPER(SUBSTR(TRIM('&3.'), 1, 1)), 'Y'), 'Y', NULL, '&&skip_script.') html_reports FROM DUAL;
 
 PRO Parameter 4: Produce TEXT Reports? [ Y | N ] (default Y)
-COL text_reports NEW_V text_reports NOPRI FOR A1;
+COL text_reports NEW_V text_reports FOR A1;
 SELECT DECODE(NVL(UPPER(SUBSTR(TRIM('&4.'), 1, 1)), 'Y'), 'Y', NULL, '&&skip_script.') text_reports FROM DUAL;
 
 PRO Parameter 5: Produce CSV Files? [ Y | N ] (default Y)
-COL csv_files NEW_V csv_files NOPRI FOR A1;
+COL csv_files NEW_V csv_files FOR A1;
 SELECT DECODE(NVL(UPPER(SUBSTR(TRIM('&5.'), 1, 1)), 'Y'), 'Y', NULL, '&&skip_script.') csv_files FROM DUAL;
 
 PRO Parameter 6: Produce CHART Reports? [ Y | N ] (default Y)
-COL chrt_reports NEW_V chrt_reports NOPRI FOR A1;
+COL chrt_reports NEW_V chrt_reports FOR A1;
 SELECT DECODE(NVL(UPPER(SUBSTR(TRIM('&6.'), 1, 1)), 'Y'), 'Y', NULL, '&&skip_script.') chrt_reports FROM DUAL;
 */
 
@@ -72,12 +74,8 @@ DEF text_reports = '';
 DEF csv_files = '';
 DEF chrt_reports = '';
 
--- get dbid
-COL dbid NEW_V dbid NOPRI;
-SELECT TO_CHAR(dbid) dbid FROM v$database;
-
 -- get database name (up to 10, stop before first '.', no special characters)
-COL database_name_short NEW_V database_name_short FOR A10 NOPRI;
+COL database_name_short NEW_V database_name_short FOR A10;
 SELECT LOWER(SUBSTR(SYS_CONTEXT('USERENV', 'DB_NAME'), 1, 10)) database_name_short FROM DUAL;
 SELECT SUBSTR('&&database_name_short.', 1, INSTR('&&database_name_short..', '.') - 1) database_name_short FROM DUAL;
 SELECT TRANSLATE('&&database_name_short.',
@@ -85,7 +83,7 @@ SELECT TRANSLATE('&&database_name_short.',
 'abcdefghijklmnopqrstuvwxyz0123456789-_') database_name_short FROM DUAL;
 
 -- get host name (up to 30, stop before first '.', no special characters)
-COL host_name_short NEW_V host_name_short FOR A30 NOPRI;
+COL host_name_short NEW_V host_name_short FOR A30;
 SELECT LOWER(SUBSTR(SYS_CONTEXT('USERENV', 'SERVER_HOST'), 1, 30)) host_name_short FROM DUAL;
 SELECT SUBSTR('&&host_name_short.', 1, INSTR('&&host_name_short..', '.') - 1) host_name_short FROM DUAL;
 SELECT TRANSLATE('&&host_name_short.',
@@ -93,43 +91,43 @@ SELECT TRANSLATE('&&host_name_short.',
 'abcdefghijklmnopqrstuvwxyz0123456789-_') host_name_short FROM DUAL;
 
 -- get rdbms version
-COL db_version NEW_V db_version NOPRI;
+COL db_version NEW_V db_version;
 SELECT version db_version FROM v$instance;
 DEF skip_10g = '';
-COL skip_10g NEW_V skip_10g NOPRI;
+COL skip_10g NEW_V skip_10g;
 SELECT '--' skip_10g FROM v$instance WHERE version LIKE '10%';
 
 -- get average number of CPUs
-COL avg_cpu_count NEW_V avg_cpu_count FOR A3 NOPRI;
+COL avg_cpu_count NEW_V avg_cpu_count FOR A3;
 SELECT ROUND(AVG(TO_NUMBER(value))) avg_cpu_count FROM gv$system_parameter2 WHERE name = 'cpu_count';
 
 -- get total number of CPUs
-COL sum_cpu_count NEW_V sum_cpu_count FOR A3 NOPRI;
+COL sum_cpu_count NEW_V sum_cpu_count FOR A3;
 SELECT SUM(TO_NUMBER(value)) sum_cpu_count FROM gv$system_parameter2 WHERE name = 'cpu_count';
 
 -- determine if rac or single instance (null means rac)
-COL is_single_instance NEW_V is_single_instance FOR A1 NOPRI;
+COL is_single_instance NEW_V is_single_instance FOR A1;
 SELECT CASE COUNT(*) WHEN 1 THEN 'Y' END is_single_instance FROM gv$instance;
 
 -- timestamp on filename
-COL file_creation_time NEW_V file_creation_time NOPRI FOR A20;
+COL file_creation_time NEW_V file_creation_time FOR A20;
 SELECT TO_CHAR(SYSDATE, 'YYYYMMDD_HH24MI') file_creation_time FROM DUAL;
 
 -- snapshot ranges
 SELECT '0' history_days FROM DUAL WHERE TRIM('&&history_days.') IS NULL;
-COL tool_sysdate NEW_V tool_sysdate NOPRI;
+COL tool_sysdate NEW_V tool_sysdate;
 SELECT TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS') tool_sysdate FROM DUAL;
-COL as_of_date NEW_V as_of_date NOPRI;
+COL as_of_date NEW_V as_of_date;
 SELECT ', as of '||TO_CHAR(SYSDATE, 'Dy Mon DD @HH12:MIAM') as_of_date FROM DUAL;
-COL minimum_snap_id NEW_V minimum_snap_id NOPRI;
-SELECT NVL(TO_CHAR(MAX(snap_id)), '0') minimum_snap_id FROM dba_hist_snapshot WHERE '&&diagnostics_pack.' = 'Y' AND begin_interval_time < SYSDATE - &&history_days.;
+COL minimum_snap_id NEW_V minimum_snap_id;
+SELECT NVL(TO_CHAR(MAX(snap_id)), '0') minimum_snap_id FROM dba_hist_snapshot WHERE '&&diagnostics_pack.' = 'Y' AND dbid = &&edb360_dbid. AND begin_interval_time < SYSDATE - &&history_days.;
 SELECT '-1' minimum_snap_id FROM DUAL WHERE TRIM('&&minimum_snap_id.') IS NULL;
-COL maximum_snap_id NEW_V maximum_snap_id NOPRI;
-SELECT NVL(TO_CHAR(MAX(snap_id)), '&&minimum_snap_id.') maximum_snap_id FROM dba_hist_snapshot WHERE '&&diagnostics_pack.' = 'Y';
+COL maximum_snap_id NEW_V maximum_snap_id;
+SELECT NVL(TO_CHAR(MAX(snap_id)), '&&minimum_snap_id.') maximum_snap_id FROM dba_hist_snapshot WHERE '&&diagnostics_pack.' = 'Y' AND dbid = &&edb360_dbid.;
 SELECT '-1' maximum_snap_id FROM DUAL WHERE TRIM('&&maximum_snap_id.') IS NULL;
 
 -- setup
-DEF tool_vrsn = 'v1409 (2014-07-21)';
+DEF tool_vrsn = 'v1409 (2014-07-26)';
 DEF prefix = 'edb360';
 DEF sql_trace_level = '8';
 DEF main_table = '';
@@ -212,7 +210,7 @@ DEF event_name_12 = '';
 DEF exadata = '';
 DEF max_col_number = '1';
 DEF column_number = '1';
-COL recovery NEW_V recovery NOPRI;
+COL recovery NEW_V recovery;
 SELECT CHR(38)||' recovery' recovery FROM DUAL;
 -- this above is to handle event "RMAN backup & recovery I/O"
 COL skip_html NEW_V skip_html;
@@ -236,12 +234,12 @@ COL dummy_12 NOPRI;
 COL dummy_13 NOPRI;
 COL dummy_14 NOPRI;
 COL dummy_15 NOPRI;
-COL time_stamp NEW_V time_stamp NOPRI FOR A20;
+COL time_stamp NEW_V time_stamp FOR A20;
 SELECT TO_CHAR(SYSDATE, 'YYYY-MM-DD/HH24:MI:SS') time_stamp FROM DUAL;
-COL hh_mm_ss NEW_V hh_mm_ss NOPRI FOR A8;
-COL title_no_spaces NEW_V title_no_spaces NOPRI;
-COL spool_filename NEW_V spool_filename NOPRI;
-COL one_spool_filename NEW_V one_spool_filename NOPRI;
+COL hh_mm_ss NEW_V hh_mm_ss FOR A8;
+COL title_no_spaces NEW_V title_no_spaces;
+COL spool_filename NEW_V spool_filename;
+COL one_spool_filename NEW_V one_spool_filename;
 VAR row_count NUMBER;
 VAR sql_text CLOB;
 VAR sql_text_backup CLOB;
@@ -290,3 +288,4 @@ PRO dbname:&&database_name_short. version:&&db_version. host:&&host_name_short. 
 PRO </pre>
 PRO
 SPO OFF;
+WHENEVER SQLERROR CONTINUE;

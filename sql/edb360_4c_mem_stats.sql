@@ -37,11 +37,14 @@ SELECT /*+ &&sq_fact_hints. */
        dba_hist_osstat h1
  WHERE h1.stat_name IN (''VM_IN_BYTES'', ''VM_OUT_BYTES'')
    AND h1.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND h1.dbid = &&edb360_dbid.
    AND h1.instance_number = @instance_number@
    AND h0.snap_id = h1.snap_id - 1
    AND h0.dbid = h1.dbid
    AND h0.instance_number = h1.instance_number
    AND h0.stat_name = h1.stat_name
+   AND h0.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND h0.dbid = &&edb360_dbid.
  GROUP BY
        h1.snap_id,
        h1.dbid,
@@ -55,6 +58,7 @@ SELECT /*+ &&sq_fact_hints. */
        SUM(h1.value) bytes
   FROM dba_hist_sga h1
  WHERE h1.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND h1.dbid = &&edb360_dbid.
    AND h1.instance_number = @instance_number@
  GROUP BY
        h1.snap_id,
@@ -70,6 +74,7 @@ SELECT /*+ &&sq_fact_hints. */
   FROM dba_hist_pgastat h1
  WHERE h1.name = ''maximum PGA allocated''
    AND h1.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND h1.dbid = &&edb360_dbid.
    AND h1.instance_number = @instance_number@
  GROUP BY
        h1.snap_id,
@@ -92,6 +97,7 @@ SELECT /*+ &&sq_fact_hints. */
   FROM dba_hist_snapshot snp,
        vm, sga, pga
  WHERE snp.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND snp.dbid = &&edb360_dbid.
    AND snp.end_interval_time > (snp.begin_interval_time + (1 / (24 * 60))) /* filter out snaps apart < 1 min */
    AND vm.snap_id(+) = snp.snap_id
    AND vm.dbid(+) = snp.dbid

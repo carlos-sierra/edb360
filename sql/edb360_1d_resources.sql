@@ -119,6 +119,7 @@ SELECT /*+ &&sq_fact_hints. */
        COUNT(*) on_cpu
   FROM dba_hist_active_sess_history
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND dbid = &&edb360_dbid.
    AND (session_state = ''ON CPU''
     OR event = ''resmgr:cpu quantum'')
  GROUP BY
@@ -146,13 +147,15 @@ SELECT /*+ &&sq_fact_hints. */
   FROM samples_on_cpu c,
        dba_hist_snapshot s,
        dba_hist_database_instance di
- WHERE s.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
-   AND s.snap_id = c.snap_id
+ WHERE s.snap_id = c.snap_id
    AND s.dbid = c.dbid
    AND s.instance_number = c.instance_number
+   AND s.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND s.dbid = &&edb360_dbid.
    AND di.dbid = s.dbid
    AND di.instance_number = s.instance_number
    AND di.startup_time = s.startup_time
+   AND di.dbid = &&edb360_dbid.
  GROUP BY
        c.dbid,
        di.db_name,
@@ -234,6 +237,7 @@ SELECT /*+ &&sq_fact_hints. */
        TO_CHAR(TRUNC(CAST(sample_time AS DATE), ''HH'') + (1/24), ''YYYY-MM-DD HH24:MI'') end_time
   FROM dba_hist_active_sess_history
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND dbid = &&edb360_dbid.
    AND instance_number = @instance_number@
    AND (session_state = ''ON CPU'' OR event = ''resmgr:cpu quantum'')
  GROUP BY
@@ -438,6 +442,7 @@ SELECT /*+ &&sq_fact_hints. */
        TO_CHAR(TRUNC(CAST(sample_time AS DATE), ''HH'') + (1/24), ''YYYY-MM-DD HH24:MI'') end_time
   FROM dba_hist_active_sess_history
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND dbid = &&edb360_dbid.
    AND instance_number = @instance_number@
    AND (session_state = ''ON CPU'' OR event = ''resmgr:cpu quantum'')
  GROUP BY
@@ -616,6 +621,7 @@ SELECT /*+ &&sq_fact_hints. */
        SUM(CASE stat_name WHEN ''DB CPU'' THEN value / 1e6 ELSE 0 END) db_cpu
   FROM dba_hist_sys_time_model
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND dbid = &&edb360_dbid.
    AND stat_name IN (''background cpu time'', ''DB CPU'')
  GROUP BY
        snap_id,
@@ -649,6 +655,8 @@ SELECT /*+ &&sq_fact_hints. */
    AND s0.snap_id = h0.snap_id
    AND s0.dbid = h0.dbid
    AND s0.instance_number = h0.instance_number
+   AND s0.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND s0.dbid = &&edb360_dbid.
    AND s1.snap_id = h1.snap_id
    AND s1.dbid = h1.dbid
    AND s1.instance_number = h1.instance_number
@@ -656,10 +664,13 @@ SELECT /*+ &&sq_fact_hints. */
    AND s1.dbid = s0.dbid
    AND s1.instance_number = s0.instance_number
    AND s1.startup_time = s0.startup_time
+   AND s1.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND s1.dbid = &&edb360_dbid.
    AND s1.begin_interval_time > (s0.begin_interval_time + (1 / (24 * 60))) /* filter out snaps apart < 1 min */
    AND di.dbid = s1.dbid
    AND di.instance_number = s1.instance_number
    AND di.startup_time = s1.startup_time
+   AND di.dbid = &&edb360_dbid.
 ),
 cpu_time_aas AS (
 SELECT /*+ &&sq_fact_hints. */
@@ -771,6 +782,7 @@ SELECT /*+ &&sq_fact_hints. */
        SUM(CASE stat_name WHEN ''DB CPU'' THEN value / 1e6 ELSE 0 END) db_cpu
   FROM dba_hist_sys_time_model
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND dbid = &&edb360_dbid.
    AND instance_number = @instance_number@
    AND stat_name IN (''background cpu time'', ''DB CPU'')
  GROUP BY
@@ -801,6 +813,8 @@ SELECT /*+ &&sq_fact_hints. */
    AND s0.snap_id = h0.snap_id
    AND s0.dbid = h0.dbid
    AND s0.instance_number = h0.instance_number
+   AND s0.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND s0.dbid = &&edb360_dbid.
    AND s1.snap_id = h1.snap_id
    AND s1.dbid = h1.dbid
    AND s1.instance_number = h1.instance_number
@@ -808,6 +822,8 @@ SELECT /*+ &&sq_fact_hints. */
    AND s1.dbid = s0.dbid
    AND s1.instance_number = s0.instance_number
    AND s1.startup_time = s0.startup_time
+   AND s1.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND s1.dbid = &&edb360_dbid.
    AND s1.begin_interval_time > (s0.begin_interval_time + (1 / (24 * 60))) /* filter out snaps apart < 1 min */
 ),
 cpu_time_aas AS (
@@ -1059,7 +1075,7 @@ SELECT /*+ &&sq_fact_hints. */
        par.instance_name,
        par.pga_aggregate_target,
        pga_max.bytes max_bytes,
-       GREATEST(par.pga_aggregate_target, pga_max.bytes) bytes
+       GREATEST(NVL(par.pga_aggregate_target, 0), NVL(pga_max.bytes, 0)) bytes
   FROM par,
        pga_max
  WHERE par.inst_id = pga_max.inst_id
@@ -1074,7 +1090,7 @@ SELECT /*+ &&sq_fact_hints. */
        par.instance_name,
        par.memory_target,
        par.memory_max_target,
-       GREATEST(par.memory_target, par.memory_max_target) + (6 * 1024 * 1024) bytes
+       GREATEST(NVL(par.memory_target, 0), NVL(par.memory_max_target, 0)) + (6 * 1024 * 1024) bytes
   FROM par
 ),
 asmm AS (
@@ -1088,7 +1104,7 @@ SELECT /*+ &&sq_fact_hints. */
        par.sga_target,
        par.sga_max_size,
        pga.bytes pga_bytes,
-       GREATEST(sga_target, sga_max_size) + pga.bytes + (6 * 1024 * 1024) bytes
+       GREATEST(NVL(sga_target, 0), NVL(sga_max_size, 0)) + NVL(pga.bytes, 0) + (6 * 1024 * 1024) bytes
   FROM par,
        pga
  WHERE par.inst_id = pga.inst_id
@@ -1117,7 +1133,7 @@ SELECT /*+ &&sq_fact_hints. */
        amm.host_name,
        amm.instance_number,
        amm.instance_name,
-       GREATEST(amm.bytes, asmm.bytes, no_mm.bytes) bytes,
+       GREATEST(NVL(amm.bytes, 0), NVL(asmm.bytes, 0), NVL(no_mm.bytes, 0)) bytes,
        amm.memory_target,
        amm.memory_max_target,
        asmm.sga_target,
@@ -1201,6 +1217,7 @@ SELECT /*+ &&sq_fact_hints. */
  WHERE parameter_name IN (''memory_target'', ''memory_max_target'', ''sga_target'', ''sga_max_size'', ''pga_aggregate_target'')
    AND (snap_id, dbid, instance_number) IN (SELECT s.snap_id, s.dbid, s.instance_number FROM dba_hist_snapshot s)
    AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND dbid = &&edb360_dbid.
  GROUP BY
        dbid,
        instance_number,
@@ -1220,6 +1237,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND p.instance_number = s.instance_number
    AND p.parameter_name = s.parameter_name
    AND p.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND p.dbid = &&edb360_dbid.
 ),
 last_snap AS (
 SELECT /*+ &&sq_fact_hints. */
@@ -1235,6 +1253,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND s.dbid = p.dbid
    AND s.instance_number = p.instance_number
    AND s.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND s.dbid = &&edb360_dbid.
 ),
 par AS (
 SELECT /*+ &&sq_fact_hints. */
@@ -1253,6 +1272,7 @@ SELECT /*+ &&sq_fact_hints. */
  WHERE di.dbid = p.dbid
    AND di.instance_number = p.instance_number
    AND di.startup_time = p.startup_time
+   AND di.dbid = &&edb360_dbid.
  GROUP BY
        p.dbid,
        di.db_name,
@@ -1268,6 +1288,7 @@ SELECT /*+ &&sq_fact_hints. */
        SUM(value) sga_size
   FROM dba_hist_sga
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND dbid = &&edb360_dbid.
  GROUP BY
        snap_id,
        dbid,
@@ -1291,6 +1312,7 @@ SELECT /*+ &&sq_fact_hints. */
   FROM dba_hist_pgastat
  WHERE name = ''maximum PGA allocated''
    AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND dbid = &&edb360_dbid.
  GROUP BY
        dbid,
        instance_number
@@ -1304,7 +1326,7 @@ SELECT /*+ &&sq_fact_hints. */
        par.instance_name,
        par.pga_aggregate_target,
        pga_max.bytes max_bytes,
-       GREATEST(par.pga_aggregate_target, pga_max.bytes) bytes
+       GREATEST(NVL(par.pga_aggregate_target, 0), NVL(pga_max.bytes, 0)) bytes
   FROM pga_max,
        par
  WHERE par.dbid = pga_max.dbid
@@ -1319,7 +1341,7 @@ SELECT /*+ &&sq_fact_hints. */
        par.instance_name,
        par.memory_target,
        par.memory_max_target,
-       GREATEST(par.memory_target, par.memory_max_target) + (6 * 1024 * 1024) bytes
+       GREATEST(NVL(par.memory_target, 0), NVL(par.memory_max_target, 0)) + (6 * 1024 * 1024) bytes
   FROM par
 ),
 asmm AS (
@@ -1332,7 +1354,7 @@ SELECT /*+ &&sq_fact_hints. */
        par.sga_target,
        par.sga_max_size,
        pga.bytes pga_bytes,
-       GREATEST(sga_target, sga_max_size) + pga.bytes + (6 * 1024 * 1024) bytes
+       GREATEST(NVL(sga_target, 0), NVL(sga_max_size, 0)) + NVL(pga.bytes, 0) + (6 * 1024 * 1024) bytes
   FROM pga,
        par
  WHERE par.dbid = pga.dbid
@@ -1361,7 +1383,7 @@ SELECT /*+ &&sq_fact_hints. */
        amm.host_name,
        amm.instance_number,
        amm.instance_name,
-       GREATEST(amm.bytes, asmm.bytes, no_mm.bytes) bytes,
+       GREATEST(NVL(amm.bytes, 0), NVL(asmm.bytes, 0), NVL(no_mm.bytes, 0)) bytes,
        amm.memory_target,
        amm.memory_max_target,
        asmm.sga_target,
@@ -1462,6 +1484,7 @@ SELECT /*+ &&sq_fact_hints. */
        SUM(value) bytes
   FROM dba_hist_sga
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND dbid = &&edb360_dbid.
    AND instance_number = @instance_number@
  GROUP BY
        snap_id,
@@ -1476,6 +1499,7 @@ SELECT /*+ &&sq_fact_hints. */
        value bytes
   FROM dba_hist_pgastat
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND dbid = &&edb360_dbid.
    AND instance_number = @instance_number@
    AND name = ''maximum PGA allocated''
 ),
@@ -1498,6 +1522,8 @@ SELECT /*+ &&sq_fact_hints. */
    AND snp.snap_id = sga.snap_id
    AND snp.dbid = sga.dbid
    AND snp.instance_number = sga.instance_number
+   AND snp.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND snp.dbid = &&edb360_dbid.
 ),
 hourly_inst AS (
 SELECT /*+ &&sq_fact_hints. */
@@ -1713,6 +1739,7 @@ SELECT /*+ &&sq_fact_hints. */
        SUM(CASE WHEN stat_name IN (''physical write total bytes'', ''redo size'') THEN value ELSE 0 END) w_bytes
   FROM dba_hist_sysstat
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND dbid = &&edb360_dbid.
    AND stat_name IN (''physical read total IO requests'', ''physical write total IO requests'', ''redo writes'', ''physical read total bytes'', ''physical write total bytes'', ''redo size'')
  GROUP BY
        snap_id,
@@ -1730,6 +1757,7 @@ SELECT /*+ &&sq_fact_hints. */
        startup_time
   FROM dba_hist_snapshot
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND dbid = &&edb360_dbid.
 ),
 rw_per_snap_and_inst AS (
 SELECT /*+ &&sq_fact_hints. ORDERED */
@@ -1763,6 +1791,7 @@ SELECT /*+ &&sq_fact_hints. ORDERED */
    AND di.dbid = s1.dbid
    AND di.instance_number = s1.instance_number
    AND di.startup_time = s1.startup_time
+   AND di.dbid = &&edb360_dbid.
 ),
 rw_per_snap_and_cluster AS (
 SELECT /*+ &&sq_fact_hints. */
@@ -2295,6 +2324,7 @@ SELECT /*+ &&sq_fact_hints. */
        SUM(CASE WHEN stat_name IN (''physical write total bytes'', ''redo size'') THEN value ELSE 0 END) w_bytes
   FROM dba_hist_sysstat
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND dbid = &&edb360_dbid.
    AND instance_number = @instance_number@
    AND stat_name IN (''physical read total IO requests'', ''physical write total IO requests'', ''redo writes'', ''physical read total bytes'', ''physical write total bytes'', ''redo size'')
  GROUP BY
@@ -2313,6 +2343,7 @@ SELECT /*+ &&sq_fact_hints. */
        startup_time
   FROM dba_hist_snapshot
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND dbid = &&edb360_dbid.
    AND instance_number = @instance_number@
 ),
 rw_per_snap_and_inst AS (

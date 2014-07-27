@@ -133,9 +133,12 @@ SELECT /*+ &&sq_fact_hints. */
  WHERE ''&&diagnostics_pack.'' = ''Y''
    AND @filter_predicate@
    AND h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND h.dbid = &&edb360_dbid.
    AND s.snap_id = h.snap_id
    AND s.dbid = h.dbid
    AND s.instance_number = h.instance_number
+   AND s.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND s.dbid = &&edb360_dbid.
  GROUP BY
        CASE h.session_state WHEN ''ON CPU'' THEN h.session_state ELSE h.wait_class||'' "''||h.event||''"'' END
  ORDER BY
@@ -595,9 +598,12 @@ SELECT /*+ &&sq_fact_hints. */
  WHERE ''&&diagnostics_pack.'' = ''Y''
    AND @filter_predicate@
    AND h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND h.dbid = &&edb360_dbid.
    AND s.snap_id = h.snap_id
    AND s.dbid = h.dbid
    AND s.instance_number = h.instance_number
+   AND s.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND s.dbid = &&edb360_dbid.
  GROUP BY
        h.sql_id,
        h.dbid
@@ -942,9 +948,12 @@ SELECT /*+ &&sq_fact_hints. */
  WHERE ''&&diagnostics_pack.'' = ''Y''
    AND @filter_predicate@
    AND h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND h.dbid = &&edb360_dbid.
    AND s.snap_id = h.snap_id
    AND s.dbid = h.dbid
    AND s.instance_number = h.instance_number
+   AND s.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND s.dbid = &&edb360_dbid.
  GROUP BY
        h.program
  ORDER BY
@@ -1215,9 +1224,12 @@ SELECT /*+ &&sq_fact_hints. */
  WHERE ''&&diagnostics_pack.'' = ''Y''
    AND @filter_predicate@
    AND h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND h.dbid = &&edb360_dbid.
    AND s.snap_id = h.snap_id
    AND s.dbid = h.dbid
    AND s.instance_number = h.instance_number
+   AND s.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND s.dbid = &&edb360_dbid.
  GROUP BY
        TRIM(h.module||'' ''||h.action)
  ORDER BY
@@ -1488,9 +1500,12 @@ SELECT /*+ &&sq_fact_hints. */
  WHERE ''&&diagnostics_pack.'' = ''Y''
    AND @filter_predicate@
    AND h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND h.dbid = &&edb360_dbid.
    AND s.snap_id = h.snap_id
    AND s.dbid = h.dbid
    AND s.instance_number = h.instance_number
+   AND s.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND s.dbid = &&edb360_dbid.
  GROUP BY
        h.user_id
  ORDER BY
@@ -1771,9 +1786,12 @@ SELECT /*+ &&sq_fact_hints. */
  WHERE ''&&diagnostics_pack.'' = ''Y''
    AND @filter_predicate@
    AND h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND h.dbid = &&edb360_dbid.
    AND s.snap_id = h.snap_id
    AND s.dbid = h.dbid
    AND s.instance_number = h.instance_number
+   AND s.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND s.dbid = &&edb360_dbid.
    AND e.object_id(+) = h.plsql_entry_object_id 
    AND e.subprogram_id(+) = h.plsql_entry_subprogram_id
    AND p.object_id(+) = CASE WHEN h.plsql_entry_object_id != h.plsql_object_id AND h.plsql_entry_subprogram_id != h.plsql_subprogram_id THEN h.plsql_object_id END

@@ -53,19 +53,26 @@ BEGIN
                WHERE h1.instance_number = i.instance_number
                  AND h1.stat_name IN ('DB time', 'background elapsed time')
                  AND h1.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+                 AND h1.dbid = &&edb360_dbid.
                  AND h2.snap_id = h1.snap_id + 1
                  AND h2.dbid = h1.dbid
                  AND h2.instance_number = h1.instance_number
                  AND h2.stat_id = h1.stat_id
                  AND h2.stat_name = h1.stat_name
+                 AND h2.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+                 AND h2.dbid = &&edb360_dbid.
                  AND s1.snap_id = h1.snap_id
                  AND s1.dbid = h1.dbid
                  AND s1.instance_number = h1.instance_number
                  AND CAST(s1.end_interval_time AS DATE) > TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - 7 -- includes all options
+                 AND s1.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+                 AND s1.dbid = &&edb360_dbid.
                  AND s2.snap_id = s1.snap_id + 1
                  AND s2.dbid = s1.dbid
                  AND s2.instance_number = s1.instance_number
                  AND s2.startup_time = s1.startup_time
+                 AND s2.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+                 AND s2.dbid = &&edb360_dbid.
               ),
               max_7d AS (
               SELECT MAX(value) value

@@ -50,6 +50,7 @@ SELECT /*+ &&sq_fact_hints. */
  WHERE wait_count > 0
    AND wait_class IN (''User I/O'', ''System I/O'')
    AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND dbid = &&edb360_dbid.
  GROUP BY
        snap_id,
        dbid,
@@ -80,11 +81,15 @@ SELECT /*+ &&sq_fact_hints. */
    AND s0.snap_id = h0.snap_id
    AND s0.dbid = h0.dbid
    AND s0.instance_number = h0.instance_number
+   AND s0.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND s0.dbid = &&edb360_dbid.
    AND s1.snap_id = h1.snap_id
    AND s1.dbid = h1.dbid
    AND s1.instance_number = h1.instance_number
    AND s1.snap_id = s0.snap_id + 1
    AND s1.startup_time = s0.startup_time
+   AND s1.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND s1.dbid = &&edb360_dbid.
    AND s1.begin_interval_time > (s0.begin_interval_time + (1 / (24 * 60))) /* filter out snaps apart < 1 min */
    AND (h1.total - h0.total) > 0
 )
@@ -192,6 +197,7 @@ SELECT /*+ &&sq_fact_hints. */
  WHERE wait_count > 0
    AND wait_class IN (''User I/O'', ''System I/O'')
    AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND dbid = &&edb360_dbid.
    AND @filter_predicate@
  GROUP BY
        snap_id,
@@ -249,11 +255,15 @@ SELECT /*+ &&sq_fact_hints. */
    AND s0.snap_id = h0.snap_id
    AND s0.dbid = h0.dbid
    AND s0.instance_number = h0.instance_number
+   AND s0.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND s0.dbid = &&edb360_dbid.
    AND s1.snap_id = h1.snap_id
    AND s1.dbid = h1.dbid
    AND s1.instance_number = h1.instance_number
    AND s1.snap_id = s0.snap_id + 1
    AND s1.startup_time = s0.startup_time
+   AND s1.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND s1.dbid = &&edb360_dbid.
    AND s1.begin_interval_time > (s0.begin_interval_time + (1 / (24 * 60))) /* filter out snaps apart < 1 min */
    AND (h1.total - h0.total) > 0
 ),
@@ -405,10 +415,13 @@ SELECT /*+ &&sq_fact_hints. */
   FROM dba_hist_event_histogram h,
        dba_hist_snapshot s
  WHERE h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND h.dbid = &&edb360_dbid.
    AND h.wait_class IN ('User I/O', 'System I/O')
    AND s.snap_id = h.snap_id
    AND s.dbid = h.dbid
    AND s.instance_number = h.instance_number
+   AND s.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND s.dbid = &&edb360_dbid.
  GROUP BY
        h.wait_class,
        h.event_name

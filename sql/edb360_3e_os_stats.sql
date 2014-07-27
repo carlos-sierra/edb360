@@ -68,6 +68,7 @@ SELECT /*+ &&sq_fact_hints. */
   FROM dba_hist_osstat
  WHERE stat_name IN (''NUM_CPUS'', ''LOAD'', ''IDLE_TIME'', ''BUSY_TIME'', ''USER_TIME'', ''NICE_TIME'', ''SYS_TIME'', ''OS_CPU_WAIT_TIME'', ''RSRC_MGR_CPU_WAIT_TIME'', ''IOWAIT_TIME'', ''VM_IN_BYTES'', ''VM_OUT_BYTES'')
    AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND dbid = &&edb360_dbid.
    AND instance_number = @instance_number@
  GROUP BY
        snap_id,
@@ -104,11 +105,15 @@ SELECT /*+ &&sq_fact_hints. */
    AND s0.snap_id = h0.snap_id
    AND s0.dbid = h0.dbid
    AND s0.instance_number = h0.instance_number
+   AND s0.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND s0.dbid = &&edb360_dbid.
    AND s1.snap_id = h1.snap_id
    AND s1.dbid = h1.dbid
    AND s1.instance_number = h1.instance_number
    AND s1.snap_id = s0.snap_id + 1
    AND s1.startup_time = s0.startup_time
+   AND s1.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND s1.dbid = &&edb360_dbid.
    AND s1.begin_interval_time > (s0.begin_interval_time + (1 / (24 * 60))) /* filter out snaps apart < 1 min */
 )
 SELECT snap_id,
@@ -278,6 +283,7 @@ SELECT /*+ &&sq_fact_hints. */
  --WHERE stat_name IN (''NUM_CPUS'', ''LOAD'', ''IDLE_TIME'', ''BUSY_TIME'', ''USER_TIME'', ''NICE_TIME'', ''SYS_TIME'', ''OS_CPU_WAIT_TIME'', ''RSRC_MGR_CPU_WAIT_TIME'', ''IOWAIT_TIME'', ''VM_IN_BYTES'', ''VM_OUT_BYTES'')
  WHERE stat_name IN (''NUM_CPUS'', UPPER(''@stat_name@''))
    AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND dbid = &&edb360_dbid.
  GROUP BY
        snap_id,
        dbid,
@@ -313,11 +319,15 @@ SELECT /*+ &&sq_fact_hints. */
    AND s0.snap_id = h0.snap_id
    AND s0.dbid = h0.dbid
    AND s0.instance_number = h0.instance_number
+   AND s0.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND s0.dbid = &&edb360_dbid.
    AND s1.snap_id = h1.snap_id
    AND s1.dbid = h1.dbid
    AND s1.instance_number = h1.instance_number
    AND s1.snap_id = s0.snap_id + 1
    AND s1.startup_time = s0.startup_time
+   AND s1.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND s1.dbid = &&edb360_dbid.
    AND s1.begin_interval_time > (s0.begin_interval_time + (1 / (24 * 60))) /* filter out snaps apart < 1 min */
 ),
 osstat_inst AS (

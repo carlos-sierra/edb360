@@ -1,14 +1,17 @@
-EDB360 is a tool to perform an initial assessment of a remote system. 
-It gives a glance of a database state. It also helps to document findings.
-Installs nothing. For better results execute connected as SYS or DBA.
-It takes several minutes to execute. Output zip file can be large (several megs).
+EDB360 v1409 (2014-07-26) by Carlos Sierra
+
+EDB360 is a "free to use" tool to perform an initial assessment of a remote system. 
+It gives a glance of a database state. It also helps to document any findings.
+EDB360 installs nothing. For better results execute connected as SYS or DBA.
+It takes around one hour to execute. Output ZIP file can be large (several MBs), so
+you may want to execute EDB360 from a system directory with at least 1 GB of free 
+space. Best time to execute EDB360 is close to the end of a working day.
 
 Steps
 ~~~~~
 1. Unzip edb360.zip, navigate to the root edb360 directory, and connect as as SYS, 
    DBA, or any User with Data Dictionary access:
 
-   # cd /home/csierra
    # unzip edb360.zip
    # cd edb360
    # sqlplus / as sysdba
@@ -25,6 +28,7 @@ Steps
 
 4. Review main html file 0001_edb360_<dbname>_index.html
 
+******************************************************************************************
 
 Notes
 ~~~~~
@@ -39,3 +43,23 @@ Notes
 3. If you decide to include SQLHC from MOS 1366133.1, be aware that sqlhc.sql uses
    global temporary table plan_table as staging repository, so it has some inserts into
    it and a rollback.
+
+******************************************************************************************
+   
+    EDB360 - Enkitec's Oracle Database 360-degree View
+    Copyright (C) 2014  Carlos Sierra
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+******************************************************************************************
