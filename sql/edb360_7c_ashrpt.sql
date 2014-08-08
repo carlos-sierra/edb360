@@ -74,10 +74,18 @@ BEGIN
                  AND s2.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
                  AND s2.dbid = &&edb360_dbid.
               ),
+              max_7wd AS (
+              SELECT MAX(value) value
+                FROM expensive
+               WHERE end_date BETWEEN TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - 7 AND TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - 1 -- avoids selecting same twice
+                 AND TO_CHAR(end_date, 'D') BETWEEN '2' AND '6' /* between Monday and Friday */
+                 AND TO_CHAR(end_date, 'HH24') BETWEEN '0800' AND '1900' /* between 8AM to 7PM */
+              ),
               max_7d AS (
               SELECT MAX(value) value
                 FROM expensive
                WHERE end_date BETWEEN TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - 7 AND TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - 1 -- avoids selecting same twice
+                 AND value NOT IN (SELECT value FROM max_7wd)
               ),
               max_1d AS (
               SELECT MAX(value) value
@@ -89,6 +97,11 @@ BEGIN
                 FROM expensive
                WHERE end_date > TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - (4 / 24)
               )
+              SELECT e.dbid, e.bid, e.eid, e.begin_date, e.end_date
+                FROM expensive e,
+                     max_7wd m
+               WHERE m.value = e.value
+               UNION
               SELECT e.dbid, e.bid, e.eid, e.begin_date, e.end_date
                 FROM expensive e,
                      max_7d m

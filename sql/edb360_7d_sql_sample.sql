@@ -29,9 +29,10 @@ BEGIN
 				   COUNT(*) times_on_top, 
 				   SUM(samples) samples
 			  FROM (
-			SELECT sql_id, samples
+			SELECT /*+ &&sq_fact_hints. */ sql_id, samples
 			  FROM (
-			SELECT sql_id,
+			SELECT /*+ &&sq_fact_hints. */
+			       sql_id,
 				   COUNT(*) samples
 			  FROM gv$active_session_history
 			 WHERE '&&diagnostics_pack.' = 'Y'
@@ -44,9 +45,10 @@ BEGIN
 			)
 			 WHERE ROWNUM < 17
 			 UNION ALL
-			SELECT sql_id, samples
+			SELECT /*+ &&sq_fact_hints. */ sql_id, samples
 			  FROM (
-			SELECT ash.sql_id,
+			SELECT /*+ &&sq_fact_hints. */
+			       ash.sql_id,
 				   COUNT(*) samples
 			  FROM dba_hist_active_sess_history ash,
 				   dba_hist_snapshot snp
@@ -64,9 +66,10 @@ BEGIN
 			)
 			 WHERE ROWNUM < 17
 			 UNION ALL
-			SELECT sql_id, samples
+			SELECT /*+ &&sq_fact_hints. */ sql_id, samples
 			  FROM (
-			SELECT ash.sql_id,
+			SELECT /*+ &&sq_fact_hints. */
+			       ash.sql_id,
 				   COUNT(*) samples
 			  FROM dba_hist_active_sess_history ash,
 				   dba_hist_snapshot snp
@@ -84,9 +87,10 @@ BEGIN
 			)
 			 WHERE ROWNUM < 17
 			 UNION ALL
-			SELECT sql_id, samples
+			SELECT /*+ &&sq_fact_hints. */ sql_id, samples
 			  FROM (
-			SELECT ash.sql_id,
+			SELECT /*+ &&sq_fact_hints. */
+			       ash.sql_id,
 				   COUNT(*) samples
 			  FROM dba_hist_active_sess_history ash,
 				   dba_hist_snapshot snp
@@ -104,9 +108,33 @@ BEGIN
 			)
 			 WHERE ROWNUM < 17
 			 UNION ALL
-			SELECT sql_id, samples
+			SELECT /*+ &&sq_fact_hints. */ sql_id, samples
 			  FROM (
-			SELECT ash.sql_id,
+			SELECT /*+ &&sq_fact_hints. */
+			       ash.sql_id,
+				   COUNT(*) samples
+			  FROM dba_hist_active_sess_history ash,
+				   dba_hist_snapshot snp
+			 WHERE '&&diagnostics_pack.' = 'Y'
+			   AND ash.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+			   AND ash.sql_id IS NOT NULL
+			   AND snp.snap_id = ash.snap_id
+			   AND snp.dbid = ash.dbid
+			   AND snp.instance_number = ash.instance_number
+			   AND CAST(snp.end_interval_time AS DATE) BETWEEN TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - 7 AND TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') -- for past 7 days
+               AND TO_CHAR(CAST(snp.end_interval_time AS DATE), 'D') BETWEEN '2' AND '6' /* between Monday and Friday */
+               AND TO_CHAR(CAST(snp.end_interval_time AS DATE), 'HH24') BETWEEN '0800' AND '1900' /* between 8AM to 7PM */
+			 GROUP BY 
+				   ash.sql_id
+			 ORDER BY
+				   2 DESC
+			)
+			 WHERE ROWNUM < 17
+			 UNION ALL
+			SELECT /*+ &&sq_fact_hints. */ sql_id, samples
+			  FROM (
+			SELECT /*+ &&sq_fact_hints. */
+			       ash.sql_id,
 				   COUNT(*) samples
 			  FROM dba_hist_active_sess_history ash,
 				   dba_hist_snapshot snp

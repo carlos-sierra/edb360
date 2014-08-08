@@ -499,7 +499,7 @@ events AS (
 SELECT /*+ &&sq_fact_hints. */
        h.wait_class,
        h.event event_name,
-       COUNT(*)
+       COUNT(*) samples
   FROM dba_hist_active_sess_history h,
        dba_hist_snapshot s
  WHERE '&&diagnostics_pack.' = 'Y'
@@ -514,35 +514,38 @@ SELECT /*+ &&sq_fact_hints. */
  GROUP BY
        h.wait_class,
        h.event
- ORDER BY
-       3 DESC
-)
-SELECT MIN(CASE ROWNUM WHEN 01 THEN wait_class END) wait_class_01,
-       MIN(CASE ROWNUM WHEN 01 THEN event_name END) event_name_01,
-       MIN(CASE ROWNUM WHEN 02 THEN wait_class END) wait_class_02,
-       MIN(CASE ROWNUM WHEN 02 THEN event_name END) event_name_02,
-       MIN(CASE ROWNUM WHEN 03 THEN wait_class END) wait_class_03,
-       MIN(CASE ROWNUM WHEN 03 THEN event_name END) event_name_03,
-       MIN(CASE ROWNUM WHEN 04 THEN wait_class END) wait_class_04,
-       MIN(CASE ROWNUM WHEN 04 THEN event_name END) event_name_04,
-       MIN(CASE ROWNUM WHEN 05 THEN wait_class END) wait_class_05,
-       MIN(CASE ROWNUM WHEN 05 THEN event_name END) event_name_05,
-       MIN(CASE ROWNUM WHEN 06 THEN wait_class END) wait_class_06,
-       MIN(CASE ROWNUM WHEN 06 THEN event_name END) event_name_06,
-       MIN(CASE ROWNUM WHEN 07 THEN wait_class END) wait_class_07,
-       MIN(CASE ROWNUM WHEN 07 THEN event_name END) event_name_07,
-       MIN(CASE ROWNUM WHEN 08 THEN wait_class END) wait_class_08,
-       MIN(CASE ROWNUM WHEN 08 THEN event_name END) event_name_08,
-       MIN(CASE ROWNUM WHEN 09 THEN wait_class END) wait_class_09,
-       MIN(CASE ROWNUM WHEN 09 THEN event_name END) event_name_09,
-       MIN(CASE ROWNUM WHEN 10 THEN wait_class END) wait_class_10,
-       MIN(CASE ROWNUM WHEN 10 THEN event_name END) event_name_10,
-       MIN(CASE ROWNUM WHEN 11 THEN wait_class END) wait_class_11,
-       MIN(CASE ROWNUM WHEN 11 THEN event_name END) event_name_11,
-       MIN(CASE ROWNUM WHEN 12 THEN wait_class END) wait_class_12,
-       MIN(CASE ROWNUM WHEN 12 THEN event_name END) event_name_12
+),
+ranked AS (
+SELECT wait_class, event_name,
+       RANK () OVER (ORDER BY samples DESC) wrank
   FROM events
- WHERE ROWNUM < 13;
+)
+SELECT MIN(CASE wrank WHEN 01 THEN wait_class END) wait_class_01,
+       MIN(CASE wrank WHEN 01 THEN event_name END) event_name_01,
+       MIN(CASE wrank WHEN 02 THEN wait_class END) wait_class_02,
+       MIN(CASE wrank WHEN 02 THEN event_name END) event_name_02,
+       MIN(CASE wrank WHEN 03 THEN wait_class END) wait_class_03,
+       MIN(CASE wrank WHEN 03 THEN event_name END) event_name_03,
+       MIN(CASE wrank WHEN 04 THEN wait_class END) wait_class_04,
+       MIN(CASE wrank WHEN 04 THEN event_name END) event_name_04,
+       MIN(CASE wrank WHEN 05 THEN wait_class END) wait_class_05,
+       MIN(CASE wrank WHEN 05 THEN event_name END) event_name_05,
+       MIN(CASE wrank WHEN 06 THEN wait_class END) wait_class_06,
+       MIN(CASE wrank WHEN 06 THEN event_name END) event_name_06,
+       MIN(CASE wrank WHEN 07 THEN wait_class END) wait_class_07,
+       MIN(CASE wrank WHEN 07 THEN event_name END) event_name_07,
+       MIN(CASE wrank WHEN 08 THEN wait_class END) wait_class_08,
+       MIN(CASE wrank WHEN 08 THEN event_name END) event_name_08,
+       MIN(CASE wrank WHEN 09 THEN wait_class END) wait_class_09,
+       MIN(CASE wrank WHEN 09 THEN event_name END) event_name_09,
+       MIN(CASE wrank WHEN 10 THEN wait_class END) wait_class_10,
+       MIN(CASE wrank WHEN 10 THEN event_name END) event_name_10,
+       MIN(CASE wrank WHEN 11 THEN wait_class END) wait_class_11,
+       MIN(CASE wrank WHEN 11 THEN event_name END) event_name_11,
+       MIN(CASE wrank WHEN 12 THEN wait_class END) wait_class_12,
+       MIN(CASE wrank WHEN 12 THEN event_name END) event_name_12
+  FROM ranked
+ WHERE wrank < 13;
 
 COL recovery NEW_V recovery;
 SELECT CHR(38)||' recovery' recovery FROM DUAL;

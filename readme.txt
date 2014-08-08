@@ -1,4 +1,4 @@
-EDB360 v1409 (2014-07-26) by Carlos Sierra
+EDB360 v1410 (2014-08-07) by Carlos Sierra
 
 EDB360 is a "free to use" tool to perform an initial assessment of a remote system. 
 It gives a glance of a database state. It also helps to document any findings.
@@ -28,13 +28,13 @@ Steps
 
 4. Review main html file 0001_edb360_<dbname>_index.html
 
-******************************************************************************************
+****************************************************************************************
 
 Notes
 ~~~~~
 1. If you need to execute db360 against all databases in host use then run_db360.sh
 
-2. If you need to execute only one piece of edb360 (i.e. resources) use these 3 commands:
+2. If you need to execute only one piece of edb360 (i.e. resources) use these commands:
 
    SQL> @sql/edb360_0b_pre.sql T 31
    SQL> @sql/edb360_1d_resources.sql
@@ -44,7 +44,7 @@ Notes
    global temporary table plan_table as staging repository, so it has some inserts into
    it and a rollback.
 
-******************************************************************************************
+****************************************************************************************
    
     EDB360 - Enkitec's Oracle Database 360-degree View
     Copyright (C) 2014  Carlos Sierra
@@ -62,4 +62,4 @@ Notes
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-******************************************************************************************
+****************************************************************************************

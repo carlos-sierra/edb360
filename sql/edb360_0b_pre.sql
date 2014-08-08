@@ -127,7 +127,7 @@ SELECT NVL(TO_CHAR(MAX(snap_id)), '&&minimum_snap_id.') maximum_snap_id FROM dba
 SELECT '-1' maximum_snap_id FROM DUAL WHERE TRIM('&&maximum_snap_id.') IS NULL;
 
 -- setup
-DEF tool_vrsn = 'v1409 (2014-07-26)';
+DEF tool_vrsn = 'v1410 (2014-08-07)';
 DEF prefix = 'edb360';
 DEF sql_trace_level = '8';
 DEF main_table = '';
@@ -139,8 +139,8 @@ DEF main_report_name = '0001_&&common_prefix._index';
 DEF edb360_log = '0002_&&common_prefix._log';
 DEF edb360_tkprof = '0003_&&common_prefix._tkprof';
 DEF main_compressed_filename = '&&common_prefix._&&host_name_short.';
-DEF edb360_log2 = '0004_&&main_compressed_filename._&&file_creation_time.';
-DEF edb360_tracefile_identifier = '&&main_compressed_filename._&&file_creation_time.';
+DEF edb360_log2 = '0004_&&common_prefix._log2';
+DEF edb360_tracefile_identifier = '&&common_prefix.';
 DEF copyright = ' (c) 2014';
 DEF top_level_hints = 'NO_MERGE';
 DEF sq_fact_hints = 'MATERIALIZE NO_MERGE';

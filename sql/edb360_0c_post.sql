@@ -11,8 +11,12 @@ ALTER SESSION SET SQL_TRACE = FALSE;
 COL edb360_udump_path NEW_V edb360_udump_path FOR A500;
 SELECT value||DECODE(INSTR(value, '/'), 0, '\', '/') edb360_udump_path FROM v$parameter2 WHERE name = 'user_dump_dest';
 
+-- get pid
+COL edb360_spid NEW_V edb360_spid FOR A5;
+SELECT TO_CHAR(spid) edb360_spid FROM v$session s, v$process p WHERE s.sid = SYS_CONTEXT('USERENV', 'SID') AND p.addr = s.paddr;
+
 -- tkprof for trace from execution of tool in case someone reports slow performance in tool
-HOS tkprof &&edb360_udump_path.*ora*&&edb360_tracefile_identifier.*.trc &&edb360_tkprof._sort.txt sort=prsela exeela fchela
+HOS tkprof &&edb360_udump_path.*ora_&&edb360_spid._&&edb360_tracefile_identifier..trc &&edb360_tkprof._sort.txt sort=prsela exeela fchela
 
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
