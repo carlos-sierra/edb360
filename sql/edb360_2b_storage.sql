@@ -479,8 +479,9 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
-DEF title = 'Tables and their indexes larger than 20 GB';
+DEF title = 'Tables and their indexes larger than 1 GB';
 DEF main_table = 'DBA_SEGMENTS';
+COL gb FOR 999990.000;
 BEGIN
   :sql_text := '
 WITH
@@ -531,9 +532,9 @@ WHERE t.owner = i.table_owner(+)
 )
 SELECT owner,
        table_name,
-       ROUND(bytes / 1024 / 1024 / 1024) gb
+       ROUND(bytes / 1024 / 1024 / 1024, 3) gb
   FROM total
-WHERE bytes > 20 * 1024 * 1024 * 1024
+WHERE bytes > 1024 * 1024 * 1024
 ORDER BY
        bytes DESC NULLS LAST
 ';

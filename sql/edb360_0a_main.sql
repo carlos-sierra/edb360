@@ -22,6 +22,7 @@ DEF column_number = '1';
 @@edb360_1b_security.sql
 @@edb360_1c_memory.sql
 @@edb360_1d_resources.sql
+@@edb360_1e_resources_statspack.sql
 
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

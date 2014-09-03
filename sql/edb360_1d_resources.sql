@@ -1660,6 +1660,7 @@ DEF title = 'Database Size on Disk';
 DEF main_table = 'GV$DATABASE';
 DEF abstract = 'Displays Space on Disk including datafiles, tempfiles, log and control files.'
 DEF foot = 'Consider "Tera Bytes (TB)" column for sizing.'
+COL gb FOR 999990.000;
 BEGIN
   :sql_text := '
 WITH 
@@ -1720,6 +1721,94 @@ SELECT d.dbid,
 END;
 /
 @@edb360_9a_pre_one.sql
+
+/*****************************************************************************************/
+
+DEF main_table = 'DBA_HIST_TBSPC_SPACE_USAGE';
+DEF chartype = 'LineChart';
+DEF stacked = '';
+DEF vbaseline = '';
+DEF vaxis = 'Tablespace Size in Giga Bytes (GB)';
+DEF tit_01 = 'Total (Perm + Undo + Temp)';
+DEF tit_02 = 'Permanent';
+DEF tit_03 = 'Undo';
+DEF tit_04 = 'Temporary';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
+
+BEGIN
+  :sql_text := '
+WITH
+ts_per_snap_id AS (
+SELECT /*+ &&sq_fact_hints. */
+       us.snap_id,
+       TRUNC(CAST(sn.end_interval_time AS DATE), ''HH'') + (1/24) end_time,
+       SUM(us.tablespace_size * ts.block_size) all_tablespaces_bytes,
+       SUM(CASE ts.contents WHEN ''PERMANENT'' THEN us.tablespace_size * ts.block_size ELSE 0 END) perm_tablespaces_bytes,
+       SUM(CASE ts.contents WHEN ''UNDO''      THEN us.tablespace_size * ts.block_size ELSE 0 END) undo_tablespaces_bytes,
+       SUM(CASE ts.contents WHEN ''TEMPORARY'' THEN us.tablespace_size * ts.block_size ELSE 0 END) temp_tablespaces_bytes
+  FROM dba_hist_tbspc_space_usage us,
+       dba_hist_snapshot sn,
+       v$tablespace vt,
+       dba_tablespaces ts
+ WHERE us.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND us.dbid = &&edb360_dbid.
+   AND sn.snap_id = us.snap_id
+   AND sn.dbid = us.dbid
+   AND sn.instance_number = &&connect_instance_number.
+   AND vt.ts# = us.tablespace_id
+   AND ts.tablespace_name = vt.name
+ GROUP BY
+       us.snap_id,
+       sn.end_interval_time
+)
+SELECT MAX(snap_id) snap_id,
+       (end_time - (1/24)) begin_time,
+       end_time,
+       ROUND(MAX(all_tablespaces_bytes) / POWER(2, 30), 3),
+       ROUND(MAX(perm_tablespaces_bytes) / POWER(2, 30), 3),
+       ROUND(MAX(undo_tablespaces_bytes) / POWER(2, 30), 3),
+       ROUND(MAX(temp_tablespaces_bytes) / POWER(2, 30), 3),
+       0 dummy_05,
+       0 dummy_06,
+       0 dummy_07,
+       0 dummy_08,
+       0 dummy_09,
+       0 dummy_10,
+       0 dummy_11,
+       0 dummy_12,
+       0 dummy_13,
+       0 dummy_14,
+       0 dummy_15
+  FROM ts_per_snap_id
+ GROUP BY
+       end_time
+ ORDER BY
+       end_time
+';
+END;
+/
+
+DEF skip_lch = '';
+DEF skip_all = '&&is_single_instance.';
+DEF title = 'Tablespace Size Series';
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+/*****************************************************************************************/
+
+DEF skip_lch = 'Y';
+DEF skip_pch = 'Y';
+
+/*****************************************************************************************/
 
 DEF title = 'IOPS and MBPS';
 DEF main_table = 'DBA_HIST_SYSSTAT';
@@ -2666,6 +2755,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@column3@', 'w_mbps');
 
 DEF skip_lch = 'Y';
 DEF skip_pch = 'Y';
+DEF abstract = '';
 
 /*****************************************************************************************/
 

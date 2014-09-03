@@ -10,8 +10,11 @@ ps -ef | grep pmo[n] | grep -v \+ASM | sed 's/.*mon_\(.*\)$/\1/' | while read IN
   sqlplus -s /nolog <<EOF 
   connect / as sysdba
 
+@sql/esp_collect_requirements.sql
 @sql/edb360_0a_main.sql T 31
 
 EOF
 done
-echo "End edb360."
+zip -qmT esp_requirements.zip esp_requirements.csv esp_requirements.log
+zip -qmT edb360_output.zip esp_requirements.zip edb360_*.zip
+echo "End edb360. Output: edb360_output.zip"

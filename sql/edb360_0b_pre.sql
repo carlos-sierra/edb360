@@ -74,6 +74,10 @@ DEF text_reports = '';
 DEF csv_files = '';
 DEF chrt_reports = '';
 
+-- get instance number
+COL connect_instance_number NEW_V connect_instance_number;
+SELECT TO_CHAR(instance_number) connect_instance_number FROM v$instance;
+
 -- get database name (up to 10, stop before first '.', no special characters)
 COL database_name_short NEW_V database_name_short FOR A10;
 SELECT LOWER(SUBSTR(SYS_CONTEXT('USERENV', 'DB_NAME'), 1, 10)) database_name_short FROM DUAL;
@@ -127,7 +131,7 @@ SELECT NVL(TO_CHAR(MAX(snap_id)), '&&minimum_snap_id.') maximum_snap_id FROM dba
 SELECT '-1' maximum_snap_id FROM DUAL WHERE TRIM('&&maximum_snap_id.') IS NULL;
 
 -- setup
-DEF tool_vrsn = 'v1410 (2014-08-07)';
+DEF tool_vrsn = 'v1411 (2014-09-03)';
 DEF prefix = 'edb360';
 DEF sql_trace_level = '8';
 DEF main_table = '';

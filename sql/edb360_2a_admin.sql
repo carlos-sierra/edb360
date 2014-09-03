@@ -73,6 +73,111 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+DEF title = 'Non-indexed FK Constraints';
+DEF main_table = 'DBA_CONSTRAINTS';
+COL constraint_columns FOR A200;
+BEGIN
+  :sql_text := '
+-- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
+WITH 
+ref_int_constraints AS (
+SELECT /*+ &&sq_fact_hints. */
+       col.owner,
+       col.constraint_name,
+       col.table_name,
+       con.status,
+       con.r_owner,
+       con.r_constraint_name,
+       MAX(CASE col.position WHEN 01 THEN      col.column_name END)||
+       MAX(CASE col.position WHEN 02 THEN '':''||col.column_name END)||
+       MAX(CASE col.position WHEN 03 THEN '':''||col.column_name END)||
+       MAX(CASE col.position WHEN 04 THEN '':''||col.column_name END)||
+       MAX(CASE col.position WHEN 05 THEN '':''||col.column_name END)||
+       MAX(CASE col.position WHEN 06 THEN '':''||col.column_name END)||
+       MAX(CASE col.position WHEN 07 THEN '':''||col.column_name END)||
+       MAX(CASE col.position WHEN 08 THEN '':''||col.column_name END)||
+       MAX(CASE col.position WHEN 09 THEN '':''||col.column_name END)||
+       MAX(CASE col.position WHEN 10 THEN '':''||col.column_name END)||
+       MAX(CASE col.position WHEN 11 THEN '':''||col.column_name END)||
+       MAX(CASE col.position WHEN 12 THEN '':''||col.column_name END)||
+       MAX(CASE col.position WHEN 13 THEN '':''||col.column_name END)||
+       MAX(CASE col.position WHEN 14 THEN '':''||col.column_name END)||
+       MAX(CASE col.position WHEN 15 THEN '':''||col.column_name END)||
+       MAX(CASE col.position WHEN 16 THEN '':''||col.column_name END)
+       constraint_columns
+  FROM dba_constraints  con,
+       dba_cons_columns col
+ WHERE con.constraint_type = ''R''
+   --AND con.status = ''ENABLED''
+   AND con.owner NOT IN &&exclusion_list.
+   AND con.owner NOT IN &&exclusion_list2.
+   AND col.owner = con.owner
+   AND col.constraint_name = con.constraint_name
+   AND col.table_name = con.table_name
+ GROUP BY
+       col.owner,
+       col.constraint_name,
+       col.table_name,
+       con.status,
+       con.r_owner,
+       con.r_constraint_name
+),
+indexed_columns AS (
+SELECT /*+ &&sq_fact_hints. */
+       col.index_owner,
+       col.index_name,
+       col.table_owner,
+       col.table_name,
+       MAX(CASE col.column_position WHEN 01 THEN      col.column_name END)||
+       MAX(CASE col.column_position WHEN 02 THEN '':''||col.column_name END)||
+       MAX(CASE col.column_position WHEN 03 THEN '':''||col.column_name END)||
+       MAX(CASE col.column_position WHEN 04 THEN '':''||col.column_name END)||
+       MAX(CASE col.column_position WHEN 05 THEN '':''||col.column_name END)||
+       MAX(CASE col.column_position WHEN 06 THEN '':''||col.column_name END)||
+       MAX(CASE col.column_position WHEN 07 THEN '':''||col.column_name END)||
+       MAX(CASE col.column_position WHEN 08 THEN '':''||col.column_name END)||
+       MAX(CASE col.column_position WHEN 09 THEN '':''||col.column_name END)||
+       MAX(CASE col.column_position WHEN 10 THEN '':''||col.column_name END)||
+       MAX(CASE col.column_position WHEN 11 THEN '':''||col.column_name END)||
+       MAX(CASE col.column_position WHEN 12 THEN '':''||col.column_name END)||
+       MAX(CASE col.column_position WHEN 13 THEN '':''||col.column_name END)||
+       MAX(CASE col.column_position WHEN 14 THEN '':''||col.column_name END)||
+       MAX(CASE col.column_position WHEN 15 THEN '':''||col.column_name END)||
+       MAX(CASE col.column_position WHEN 16 THEN '':''||col.column_name END)
+       indexed_columns
+  FROM dba_ind_columns col
+ WHERE col.table_owner NOT IN &&exclusion_list.
+   AND col.table_owner NOT IN &&exclusion_list2.
+ GROUP BY
+       col.index_owner,
+       col.index_name,
+       col.table_owner,
+       col.table_name
+)
+SELECT /*+ &&top_level_hints. */
+       rc.status,
+       rc.owner,
+       rc.table_name,
+       rc.constraint_name,
+       rc.constraint_columns,
+       rc.r_owner,
+       rc.r_constraint_name
+  FROM ref_int_constraints rc,
+       indexed_columns     ic
+ WHERE ic.table_owner(+) = rc.owner
+   AND ic.table_name(+) = rc.table_name
+   AND ic.indexed_columns(+) LIKE rc.constraint_columns||''%''
+   AND ic.table_name IS NULL
+ ORDER BY
+       rc.status DESC,
+       rc.owner,
+       rc.table_name,
+       rc.constraint_name
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
 DEF title = 'Unusable Indexes';
 DEF main_table = 'DBA_INDEXES';
 BEGIN
@@ -179,101 +284,6 @@ SELECT /*+ &&top_level_hints. */
        owner,
        table_name,
        column_name
-';
-END;
-/
-@@edb360_9a_pre_one.sql
-
-DEF title = 'Non-indexed FK Constraints';
-DEF main_table = 'DBA_CONSTRAINTS';
-COL constraint_columns FOR A200;
-BEGIN
-  :sql_text := '
--- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
-WITH 
-ref_int_constraints AS (
-SELECT /*+ &&sq_fact_hints. */
-       col.owner,
-       col.constraint_name,
-       col.table_name,
-       MAX(CASE col.position WHEN 01 THEN      col.column_name END)||
-       MAX(CASE col.position WHEN 02 THEN '':''||col.column_name END)||
-       MAX(CASE col.position WHEN 03 THEN '':''||col.column_name END)||
-       MAX(CASE col.position WHEN 04 THEN '':''||col.column_name END)||
-       MAX(CASE col.position WHEN 05 THEN '':''||col.column_name END)||
-       MAX(CASE col.position WHEN 06 THEN '':''||col.column_name END)||
-       MAX(CASE col.position WHEN 07 THEN '':''||col.column_name END)||
-       MAX(CASE col.position WHEN 08 THEN '':''||col.column_name END)||
-       MAX(CASE col.position WHEN 09 THEN '':''||col.column_name END)||
-       MAX(CASE col.position WHEN 10 THEN '':''||col.column_name END)||
-       MAX(CASE col.position WHEN 11 THEN '':''||col.column_name END)||
-       MAX(CASE col.position WHEN 12 THEN '':''||col.column_name END)||
-       MAX(CASE col.position WHEN 13 THEN '':''||col.column_name END)||
-       MAX(CASE col.position WHEN 14 THEN '':''||col.column_name END)||
-       MAX(CASE col.position WHEN 15 THEN '':''||col.column_name END)||
-       MAX(CASE col.position WHEN 16 THEN '':''||col.column_name END)
-       constraint_columns
-  FROM dba_constraints  con,
-       dba_cons_columns col
- WHERE con.constraint_type = ''R''
-   AND con.status = ''ENABLED''
-   AND con.owner NOT IN &&exclusion_list.
-   AND con.owner NOT IN &&exclusion_list2.
-   AND col.owner = con.owner
-   AND col.constraint_name = con.constraint_name
-   AND col.table_name = con.table_name
- GROUP BY
-       col.owner,
-       col.constraint_name,
-       col.table_name
-),
-indexed_columns AS (
-SELECT /*+ &&sq_fact_hints. */
-       col.index_owner,
-       col.index_name,
-       col.table_owner,
-       col.table_name,
-       MAX(CASE col.column_position WHEN 01 THEN      col.column_name END)||
-       MAX(CASE col.column_position WHEN 02 THEN '':''||col.column_name END)||
-       MAX(CASE col.column_position WHEN 03 THEN '':''||col.column_name END)||
-       MAX(CASE col.column_position WHEN 04 THEN '':''||col.column_name END)||
-       MAX(CASE col.column_position WHEN 05 THEN '':''||col.column_name END)||
-       MAX(CASE col.column_position WHEN 06 THEN '':''||col.column_name END)||
-       MAX(CASE col.column_position WHEN 07 THEN '':''||col.column_name END)||
-       MAX(CASE col.column_position WHEN 08 THEN '':''||col.column_name END)||
-       MAX(CASE col.column_position WHEN 09 THEN '':''||col.column_name END)||
-       MAX(CASE col.column_position WHEN 10 THEN '':''||col.column_name END)||
-       MAX(CASE col.column_position WHEN 11 THEN '':''||col.column_name END)||
-       MAX(CASE col.column_position WHEN 12 THEN '':''||col.column_name END)||
-       MAX(CASE col.column_position WHEN 13 THEN '':''||col.column_name END)||
-       MAX(CASE col.column_position WHEN 14 THEN '':''||col.column_name END)||
-       MAX(CASE col.column_position WHEN 15 THEN '':''||col.column_name END)||
-       MAX(CASE col.column_position WHEN 16 THEN '':''||col.column_name END)
-       indexed_columns
-  FROM dba_ind_columns col
- WHERE col.table_owner NOT IN &&exclusion_list.
-   AND col.table_owner NOT IN &&exclusion_list2.
- GROUP BY
-       col.index_owner,
-       col.index_name,
-       col.table_owner,
-       col.table_name
-)
-SELECT /*+ &&top_level_hints. */
-       rc.owner,
-       rc.table_name,
-       rc.constraint_name,
-       rc.constraint_columns
-  FROM ref_int_constraints rc,
-       indexed_columns     ic
- WHERE ic.table_owner(+) = rc.owner
-   AND ic.table_name(+) = rc.table_name
-   AND ic.indexed_columns(+) LIKE rc.constraint_columns||''%''
-   AND ic.table_name IS NULL
- ORDER BY
-       rc.owner,
-       rc.table_name,
-       rc.constraint_name
 ';
 END;
 /
@@ -661,7 +671,7 @@ BEGIN
 SELECT /*+ &&top_level_hints. */
        *
   FROM v$rman_backup_job_details
- WHERE start_time >= (SYSDATE - 100)
+ --WHERE start_time >= (SYSDATE - 100)
  ORDER BY
        start_time DESC
 ';

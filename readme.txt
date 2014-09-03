@@ -1,4 +1,4 @@
-EDB360 v1410 (2014-08-07) by Carlos Sierra
+EDB360 v1411 (2014-09-03) by Carlos Sierra
 
 EDB360 is a "free to use" tool to perform an initial assessment of a remote system. 
 It gives a glance of a database state. It also helps to document any findings.
@@ -9,7 +9,7 @@ space. Best time to execute EDB360 is close to the end of a working day.
 
 Steps
 ~~~~~
-1. Unzip edb360.zip, navigate to the root edb360 directory, and connect as as SYS, 
+1. Unzip edb360.zip, navigate to the root edb360 directory, and connect as SYS, 
    DBA, or any User with Data Dictionary access:
 
    # unzip edb360.zip
