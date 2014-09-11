@@ -68,7 +68,9 @@ SPO OFF;
 @@&&skip_diagnostics.edb360_4b_pga_stats.sql
 @@&&skip_diagnostics.edb360_4c_mem_stats.sql
 @@&&skip_diagnostics.edb360_4d_time_model.sql
-@@&&skip_diagnostics.&&skip_10g.edb360_4e_io_waits.sql
+@@&&skip_diagnostics.edb360_4e_time_model_comp.sql
+@@&&skip_diagnostics.&&skip_10g.edb360_4f_io_waits.sql
+@@&&skip_diagnostics.&&skip_10g.edb360_4g_io_waits_top.sql
 
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -81,6 +83,8 @@ PRO
 SPO OFF;
 
 @@&&skip_diagnostics.edb360_5a_ash.sql
+@@&&skip_diagnostics.edb360_5b_ash_wait.sql
+@@&&skip_diagnostics.edb360_5c_ash_top.sql
 
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -92,7 +96,12 @@ PRO </td><td>
 PRO
 SPO OFF;
 
-@@&&skip_diagnostics.edb360_6a_ash_top.sql
+@@&&skip_diagnostics.edb360_6a_ash_event.sql
+@@&&skip_diagnostics.edb360_6b_ash_sql.sql
+@@&&skip_diagnostics.edb360_6c_ash_programs.sql
+@@&&skip_diagnostics.edb360_6d_ash_modules.sql
+@@&&skip_diagnostics.edb360_6e_ash_users.sql
+@@&&skip_diagnostics.edb360_6f_ash_plsql.sql
 
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

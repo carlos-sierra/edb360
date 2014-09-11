@@ -6,7 +6,7 @@
 --
 -- Author:      Carlos Sierra
 --
--- Version:     2014/09/03
+-- Version:     v1412 (2014/09/11)
 --
 -- Usage:       Collects Requirements from AWR and ASH views, thus it should only be
 --              executed on systems with the Oracle Diagnostics Pack license.
@@ -1014,7 +1014,8 @@ cpu_per_inst_and_sample AS (
 SELECT /*+ &&ecr_sq_fact_hints. */
        instance_number,
        snap_id,
-       sample_time,
+       sample_id,
+       MIN(sample_time) sample_time,
        CASE session_state WHEN 'ON CPU' THEN 'ON CPU' ELSE 'resmgr:cpu quantum' END session_state,
        COUNT(*) active_sessions
   FROM dba_hist_active_sess_history
@@ -1024,7 +1025,7 @@ SELECT /*+ &&ecr_sq_fact_hints. */
  GROUP BY
        instance_number,
        snap_id,
-       sample_time,
+       sample_id,
        session_state,
        event
 )
@@ -1039,7 +1040,6 @@ SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'cpu_ts', session_state
        instance_number,
        TRUNC(CAST(sample_time AS DATE), 'HH')
 /
-
 
 -- mem time series
 WITH
