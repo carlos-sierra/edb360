@@ -6,7 +6,7 @@
 --
 -- Author:      Carlos Sierra
 --
--- Version:     v1412 (2014/09/20)
+-- Version:     v1414 (2014/10/08)
 --
 -- Usage:       Collects Requirements from AWR and ASH views, thus it should only be
 --              executed on systems with the Oracle Diagnostics Pack license.
@@ -44,7 +44,7 @@ SELECT 'get_instance_number', TO_CHAR(instance_number) ecr_instance_number FROM 
 COL ecr_min_snap_id NEW_V ecr_min_snap_id;
 SELECT 'get_min_snap_id', TO_CHAR(MIN(snap_id)) ecr_min_snap_id FROM dba_hist_snapshot WHERE dbid = &&ecr_dbid.;
 COL ecr_collection_host NEW_V ecr_collection_host;
-SELECT 'get_collection_host', LOWER(SUBSTR(SYS_CONTEXT('USERENV', 'HOST'), 1, INSTR(SYS_CONTEXT('USERENV', 'HOST'), '.') - 1)) ecr_collection_host FROM DUAL;
+SELECT 'get_collection_host', LOWER(SUBSTR(SYS_CONTEXT('USERENV', 'HOST')||'.', 1, INSTR(SYS_CONTEXT('USERENV', 'HOST')||'.', '.') - 1)) ecr_collection_host FROM DUAL;
 
 DEF;
 SELECT 'get_current_time', TO_CHAR(SYSDATE, '&&ecr_date_format.') current_time FROM DUAL
@@ -63,9 +63,9 @@ SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'id', 'awr_retention_da
 /
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'id', 'user', 'user', 0, 0, USER FROM DUAL
 /
-SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'id', 'host', 'sys_context', 0, 0, SYS_CONTEXT('USERENV', 'HOST') FROM DUAL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'id', 'host', 'sys_context', 0, 0, LOWER(SUBSTR(SYS_CONTEXT('USERENV', 'HOST')||'.', 1, INSTR(SYS_CONTEXT('USERENV', 'HOST')||'.', '.') - 1)) FROM DUAL
 /
-SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'id', 'server_host', 'sys_context', 0, 0, SYS_CONTEXT('USERENV', 'SERVER_HOST') FROM DUAL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'id', 'server_host', 'sys_context', 0, 0, LOWER(SUBSTR(SYS_CONTEXT('USERENV', 'SERVER_HOST')||'.', 1, INSTR(SYS_CONTEXT('USERENV', 'SERVER_HOST')||'.', '.') - 1)) FROM DUAL
 /
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'id', 'dbid', 'v$database', 0, 0, '&&ecr_dbid.' FROM DUAL
 /
@@ -75,7 +75,7 @@ SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'id', 'db_unique_name',
 /
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'id', 'platform_name', 'v$database', 0, 0, platform_name FROM v$database
 /
-SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'id', 'host_name', 'gv$instance', instance_number, inst_id, host_name FROM gv$instance ORDER BY inst_id
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'id', 'host_name', 'gv$instance', instance_number, inst_id, LOWER(SUBSTR(host_name||'.', 1, INSTR(host_name||'.', '.') - 1)) FROM gv$instance ORDER BY inst_id
 /
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'id', 'version', 'gv$instance', instance_number, inst_id, version FROM gv$instance ORDER BY inst_id
 /
@@ -95,7 +95,7 @@ SELECT /*+ &&ecr_sq_fact_hints. */
        SUM(CASE session_state WHEN 'ON CPU' THEN 1 ELSE 0 END) aas_on_cpu,
        SUM(CASE event WHEN 'resmgr:cpu quantum' THEN 1 ELSE 0 END) aas_resmgr_cpu_quantum       
   FROM dba_hist_active_sess_history
- WHERE snap_id >= &&ecr_min_snap_id.
+ WHERE snap_id >= TO_NUMBER(NVL('&&ecr_min_snap_id.','0'))
    AND dbid = &&ecr_dbid.
    AND (session_state = 'ON CPU' OR event = 'resmgr:cpu quantum')
  GROUP BY
@@ -410,7 +410,7 @@ SELECT /*+ &&ecr_sq_fact_hints. */
        snap_id,
        SUM(value) sga_alloc
   FROM dba_hist_sga
- WHERE snap_id >= &&ecr_min_snap_id.
+ WHERE snap_id >= TO_NUMBER(NVL('&&ecr_min_snap_id.','0'))
    AND dbid = &&ecr_dbid.
  GROUP BY
        instance_number,
@@ -438,7 +438,7 @@ SELECT /*+ &&ecr_sq_fact_hints. */
        instance_number,
        MAX(value) pga_alloc
   FROM dba_hist_pgastat
- WHERE snap_id >= &&ecr_min_snap_id.
+ WHERE snap_id >= TO_NUMBER(NVL('&&ecr_min_snap_id.','0'))
    AND dbid = &&ecr_dbid.
    AND name = 'maximum PGA allocated'
  GROUP BY
@@ -459,7 +459,7 @@ SELECT /*+ &&ecr_sq_fact_hints. */
        parameter_name,
        MAX(TO_NUMBER(value)) value
   FROM dba_hist_parameter
- WHERE snap_id >= &&ecr_min_snap_id.
+ WHERE snap_id >= TO_NUMBER(NVL('&&ecr_min_snap_id.','0'))
    AND dbid = &&ecr_dbid.
    AND parameter_name IN ('memory_target', 'memory_max_target', 'sga_target', 'sga_max_size', 'pga_aggregate_target', 'cpu_count')
  GROUP BY
@@ -504,9 +504,9 @@ SELECT 'tempfile' file_type,
   FROM v$tempfile
  UNION ALL
 SELECT 'redo_log' file_type,
-       'gv$log' source,
+       'v$log' source,
        SUM(bytes) * MAX(members) bytes
-  FROM gv$log
+  FROM v$log
  UNION ALL
 SELECT 'controlfile' file_type,
        'v$controlfile' source,
@@ -529,7 +529,7 @@ SELECT /*+ &&ecr_sq_fact_hints. */
        SUM(CASE WHEN stat_name = 'physical read total bytes' THEN value ELSE 0 END) r_bytes,
        SUM(CASE WHEN stat_name IN ('physical write total bytes', 'redo size') THEN value ELSE 0 END) w_bytes
   FROM dba_hist_sysstat
- WHERE snap_id >= &&ecr_min_snap_id.
+ WHERE snap_id >= TO_NUMBER(NVL('&&ecr_min_snap_id.','0'))
    AND dbid = &&ecr_dbid.
    AND stat_name IN ('physical read total IO requests', 'physical write total IO requests', 'redo writes', 'physical read total bytes', 'physical write total bytes', 'redo size')
  GROUP BY
@@ -549,13 +549,13 @@ SELECT /*+ &&ecr_sq_fact_hints. */
        dba_hist_snapshot s0,
        sysstat_io h1,
        dba_hist_snapshot s1
- WHERE s0.snap_id >= &&ecr_min_snap_id.
+ WHERE s0.snap_id >= TO_NUMBER(NVL('&&ecr_min_snap_id.','0'))
    AND s0.dbid = &&ecr_dbid.
    AND s0.snap_id = h0.snap_id
    AND s0.instance_number = h0.instance_number
    AND h1.instance_number = h0.instance_number
    AND h1.snap_id = h0.snap_id + 1
-   AND s1.snap_id >= &&ecr_min_snap_id.
+   AND s1.snap_id >= TO_NUMBER(NVL('&&ecr_min_snap_id.','0'))
    AND s1.dbid = &&ecr_dbid.
    AND s1.snap_id = h1.snap_id
    AND s1.instance_number = h1.instance_number
@@ -1019,7 +1019,7 @@ SELECT /*+ &&ecr_sq_fact_hints. */
        CASE session_state WHEN 'ON CPU' THEN 'ON CPU' ELSE 'resmgr:cpu quantum' END session_state,
        COUNT(*) active_sessions
   FROM dba_hist_active_sess_history
- WHERE snap_id >= &&ecr_min_snap_id.
+ WHERE snap_id >= TO_NUMBER(NVL('&&ecr_min_snap_id.','0'))
    AND dbid = &&ecr_dbid.
    AND (session_state = 'ON CPU' OR event = 'resmgr:cpu quantum')
  GROUP BY
@@ -1051,7 +1051,7 @@ SELECT /*+ &&ecr_sq_fact_hints. */
        SUM(h.value) bytes
   FROM dba_hist_sga h,
        dba_hist_snapshot s
- WHERE h.snap_id >= &&ecr_min_snap_id.
+ WHERE h.snap_id >= TO_NUMBER(NVL('&&ecr_min_snap_id.','0'))
    AND h.dbid = &&ecr_dbid.
    AND s.snap_id = h.snap_id
    AND s.dbid = h.dbid
@@ -1079,7 +1079,7 @@ SELECT /*+ &&ecr_sq_fact_hints. */
        SUM(h.value) bytes
   FROM dba_hist_pgastat h,
        dba_hist_snapshot s
- WHERE h.snap_id >= &&ecr_min_snap_id.
+ WHERE h.snap_id >= TO_NUMBER(NVL('&&ecr_min_snap_id.','0'))
    AND h.dbid = &&ecr_dbid.
    AND h.name = 'maximum PGA allocated'
    AND s.snap_id = h.snap_id
@@ -1111,7 +1111,7 @@ SELECT /*+ &&ecr_sq_fact_hints. */
        SUM(CASE WHEN stat_name = 'physical read total bytes' THEN value ELSE 0 END) r_bytes,
        SUM(CASE WHEN stat_name IN ('physical write total bytes', 'redo size') THEN value ELSE 0 END) w_bytes
   FROM dba_hist_sysstat
- WHERE snap_id >= &&ecr_min_snap_id.
+ WHERE snap_id >= TO_NUMBER(NVL('&&ecr_min_snap_id.','0'))
    AND dbid = &&ecr_dbid.
    AND stat_name IN ('physical read total IO requests', 'physical write total IO requests', 'redo writes', 'physical read total bytes', 'physical write total bytes', 'redo size')
  GROUP BY
@@ -1131,13 +1131,13 @@ SELECT /*+ &&ecr_sq_fact_hints. */
        dba_hist_snapshot s0,
        sysstat_io h1,
        dba_hist_snapshot s1
- WHERE s0.snap_id >= &&ecr_min_snap_id.
+ WHERE s0.snap_id >= TO_NUMBER(NVL('&&ecr_min_snap_id.','0'))
    AND s0.dbid = &&ecr_dbid.
    AND s0.snap_id = h0.snap_id
    AND s0.instance_number = h0.instance_number
    AND h1.instance_number = h0.instance_number
    AND h1.snap_id = h0.snap_id + 1
-   AND s1.snap_id >= &&ecr_min_snap_id.
+   AND s1.snap_id >= TO_NUMBER(NVL('&&ecr_min_snap_id.','0'))
    AND s1.dbid = &&ecr_dbid.
    AND s1.snap_id = h1.snap_id
    AND s1.instance_number = h1.instance_number
@@ -1186,7 +1186,7 @@ SELECT /*+ &&ecr_sq_fact_hints. */
        dba_hist_snapshot sn,
        v$tablespace vt,
        dba_tablespaces ts
- WHERE us.snap_id >= &&ecr_min_snap_id.
+ WHERE us.snap_id >= TO_NUMBER(NVL('&&ecr_min_snap_id.','0'))
    AND us.dbid = &&ecr_dbid.
    AND sn.snap_id = us.snap_id
    AND sn.dbid = us.dbid
@@ -1227,7 +1227,7 @@ SELECT /*+ &&ecr_sq_fact_hints. */
        SUM(CASE stat_name WHEN 'PHYSICAL_MEMORY_BYTES' THEN value ELSE 0 END) physical_memory_bytes
   FROM dba_hist_osstat
  WHERE stat_name IN ('LOAD', 'NUM_CPUS', 'NUM_CPU_CORES', 'PHYSICAL_MEMORY_BYTES')
-   AND snap_id >= &&ecr_min_snap_id.
+   AND snap_id >= TO_NUMBER(NVL('&&ecr_min_snap_id.','0'))
    AND dbid = &&ecr_dbid.
  GROUP BY
        snap_id,

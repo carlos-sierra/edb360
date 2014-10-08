@@ -3,6 +3,52 @@ SPO &&main_report_name..html APP;
 PRO <h2>&&section_name.</h2>
 SPO OFF;
 
+DEF title = 'I/O Average Latency per Class';
+DEF main_table = 'GV$WAITCLASSMETRIC';
+BEGIN
+  :sql_text := '
+-- inspired on http://www.oraclerealworld.com/wait-event-and-wait-class-metrics-vs-vsystem_event/
+SELECT /*+ &&top_level_hints. */
+       m.inst_id,
+       c.wait_class,
+       ROUND(10 * m.time_waited / m.wait_count, 3) avg_ms
+  FROM gv$waitclassmetric m,
+       gv$system_wait_class c
+ WHERE m.wait_count > 0
+   AND c.inst_id = m.inst_id
+   AND c.wait_class# = m.wait_class#
+   AND c.wait_class LIKE ''%I/O''
+ ORDER BY
+       1, 2
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+DEF title = 'I/O Average Latency per Event';
+DEF main_table = 'GV$EVENTMETRIC';
+BEGIN
+  :sql_text := '
+-- inspired on http://www.oraclerealworld.com/wait-event-and-wait-class-metrics-vs-vsystem_event/
+SELECT /*+ &&top_level_hints. */
+       m.inst_id,
+       e.wait_class,
+       e.name event,
+       ROUND(10 * m.time_waited / m.wait_count, 3) avg_ms
+  FROM gv$eventmetric m,
+       gv$event_name e
+ WHERE m.wait_count > 0
+   AND e.inst_id = m.inst_id
+   AND e.event_id = m.event_id
+   AND e.wait_class LIKE ''%I/O''
+ ORDER BY
+       1,2,3
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+
 SET SERVEROUT ON;
 SPO 9987_&&common_prefix._chart_setup_driver4.sql;
 DECLARE

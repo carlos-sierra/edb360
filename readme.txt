@@ -1,4 +1,4 @@
-EDB360 v1412 (2014-09-20) by Carlos Sierra
+EDB360 v1414 (2014-10-08) by Carlos Sierra
 
 EDB360 is a "free to use" tool to perform an initial assessment of a remote system. 
 It gives a glance of a database state. It also helps to document any findings.
@@ -12,9 +12,9 @@ Steps
 1. Unzip edb360.zip, navigate to the root edb360 directory, and connect as SYS, 
    DBA, or any User with Data Dictionary access:
 
-   # unzip edb360.zip
-   # cd edb360
-   # sqlplus / as sysdba
+   $ unzip edb360.zip
+   $ cd edb360
+   $ sqlplus / as sysdba
 
 2. Execute edb360.sql indicating two input parameters. The first one is to specify if 
    your database is licensed for the Oracle Tuning Pack, the Diagnostics Pack or None 

@@ -202,8 +202,7 @@ BEGIN
 SELECT /*+ &&top_level_hints. */
        *
   FROM gv$sysmetric
- WHERE value > 0
-   AND group_id = 2 -- 1 minute
+ WHERE group_id = 2 -- 1 minute
  ORDER BY
        inst_id,
        metric_name
@@ -222,8 +221,6 @@ BEGIN
 SELECT /*+ &&top_level_hints. */
        *
   FROM gv$sysmetric_summary
- WHERE maxval > 0
-   AND group_id = 2 -- 1 minute
  ORDER BY
        inst_id,
        metric_name

@@ -1339,7 +1339,7 @@ SELECT ''Temp'' file_type,
  UNION ALL
 SELECT ''Log'' file_type,
        SUM(bytes) * MAX(members) bytes
-  FROM gv$log
+  FROM v$log
  UNION ALL
 SELECT ''Control'' file_type,
        SUM(block_size * file_size_blks) bytes

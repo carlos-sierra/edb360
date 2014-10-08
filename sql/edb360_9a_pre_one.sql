@@ -5,7 +5,7 @@ SELECT TO_CHAR(SYSDATE, 'HH24:MI:SS') hh_mm_ss FROM DUAL;
 SELECT REPLACE(TRANSLATE('&&title.',
 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ''`~!@#$%^*()-_=+[]{}\|;:",.<>/?'||CHR(0)||CHR(9)||CHR(10)||CHR(13)||CHR(38),
 'abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz0123456789_'), '__', '_') title_no_spaces FROM DUAL;
-SELECT REPLACE('&&common_prefix._&&column_number._&&title_no_spaces.', '$', 's') spool_filename FROM DUAL;
+SELECT '&&common_prefix._&&column_number._&&title_no_spaces.' spool_filename FROM DUAL;
 SET HEA OFF TERM ON;
 
 -- log
@@ -61,6 +61,7 @@ HOS zip -q &&main_compressed_filename._&&file_creation_time. &&main_report_name.
 @@&&skip_csv.&&csv_files.edb360_9d_one_csv.sql
 @@&&skip_lch.&&chrt_reports.edb360_9e_one_line_chart.sql
 @@&&skip_pch.&&chrt_reports.edb360_9f_one_pie_chart.sql
+HOS zip -q &&main_compressed_filename._&&file_creation_time. &&edb360_log2..txt
 EXEC :sql_text := NULL;
 COL row_num FOR 9999999 HEA '#' PRI;
 DEF abstract = '';
