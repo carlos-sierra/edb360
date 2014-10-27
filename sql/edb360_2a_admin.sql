@@ -482,7 +482,7 @@ SELECT /*+ &&top_level_hints. */
        SUM(CASE WHEN LENGTH(TRIM(degree)) = 3 AND TRIM(degree) BETWEEN ''129'' AND ''256'' THEN 1 ELSE 0 END) "129-256",
        SUM(CASE WHEN LENGTH(TRIM(degree)) = 3 AND TRIM(degree) BETWEEN ''257'' AND ''512'' THEN 1 ELSE 0 END) "257-512",
        SUM(CASE WHEN (LENGTH(TRIM(degree)) = 3 AND TRIM(degree) > ''512'') OR
-                     (LENGTH(TRIM(degree)) > 3) THEN 1 ELSE 0 END) "HIGHER"
+                     (LENGTH(TRIM(degree)) > 3 AND TRIM(degree) != ''DEFAULT'') THEN 1 ELSE 0 END) "HIGHER"
   FROM dba_tables
  WHERE owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
@@ -538,7 +538,7 @@ SELECT /*+ &&top_level_hints. */
        SUM(CASE WHEN LENGTH(TRIM(degree)) = 3 AND TRIM(degree) BETWEEN ''129'' AND ''256'' THEN 1 ELSE 0 END) "129-256",
        SUM(CASE WHEN LENGTH(TRIM(degree)) = 3 AND TRIM(degree) BETWEEN ''257'' AND ''512'' THEN 1 ELSE 0 END) "257-512",
        SUM(CASE WHEN (LENGTH(TRIM(degree)) = 3 AND TRIM(degree) > ''512'') OR
-                     (LENGTH(TRIM(degree)) > 3) THEN 1 ELSE 0 END) "HIGHER"
+                     (LENGTH(TRIM(degree)) > 3 AND TRIM(degree) != ''DEFAULT'') THEN 1 ELSE 0 END) "HIGHER"
   FROM dba_indexes
  WHERE owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
@@ -804,6 +804,81 @@ SELECT /*+ &&sq_fact_hints. */
        SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''22'', 1, 0)) h22,
        SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''23'', 1, 0)) h23
   FROM v$log_history
+ GROUP BY
+       thread#,
+       TRUNC(first_time)
+ ORDER BY
+       thread#,
+       TRUNC(first_time) DESC NULLS LAST
+),
+ordered_log AS (
+SELECT /*+ &&sq_fact_hints. */
+       ROWNUM row_num_noprint, log.*
+  FROM log
+),
+min_set AS (
+SELECT /*+ &&sq_fact_hints. */
+       thread#,
+       MIN(row_num_noprint) min_row_num
+  FROM ordered_log
+ GROUP BY 
+       thread#
+)
+SELECT /*+ &&top_level_hints. */
+       log.*
+  FROM ordered_log log,
+       min_set ms
+ WHERE log.thread# = ms.thread#
+   AND log.row_num_noprint < ms.min_row_num + 14
+ ORDER BY
+       log.thread#,
+       log.yyyy_mm_dd DESC
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+DEF title = 'ARCHIVED LOG Frequency Map';
+DEF main_table = 'V$ARCHIVED_LOG';
+COL row_num_noprint NOPRI;
+BEGIN
+  :sql_text := '
+-- requested by Abdul Khan and Srinivas Kanaparthy
+WITH
+log AS (
+SELECT /*+ &&sq_fact_hints. */
+       thread#,
+       TO_CHAR(TRUNC(first_time), ''YYYY-MM-DD'') yyyy_mm_dd,
+       TO_CHAR(TRUNC(first_time), ''Dy'') day,
+       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''00'', 1, 0)) h00,
+       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''01'', 1, 0)) h01,
+       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''02'', 1, 0)) h02,
+       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''03'', 1, 0)) h03,
+       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''04'', 1, 0)) h04,
+       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''05'', 1, 0)) h05,
+       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''06'', 1, 0)) h06,
+       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''07'', 1, 0)) h07,
+       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''08'', 1, 0)) h08,
+       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''09'', 1, 0)) h09,
+       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''10'', 1, 0)) h10,
+       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''11'', 1, 0)) h11,
+       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''12'', 1, 0)) h12,
+       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''13'', 1, 0)) h13,
+       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''14'', 1, 0)) h14,
+       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''15'', 1, 0)) h15,
+       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''16'', 1, 0)) h16,
+       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''17'', 1, 0)) h17,
+       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''18'', 1, 0)) h18,
+       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''19'', 1, 0)) h19,
+       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''20'', 1, 0)) h20,
+       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''21'', 1, 0)) h21,
+       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''22'', 1, 0)) h22,
+       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''23'', 1, 0)) h23,
+       ROUND(SUM(blocks * block_size) / POWER(2, 30), 1) TOT_GB,
+       CASE SUM(blocks * block_size) / POWER(2, 30)
+       WHEN MAX(SUM(blocks * block_size) / POWER(2, 30)) OVER (PARTITION BY thread#) 
+       THEN ''***'' END MAX_GB
+  FROM v$archived_log
  GROUP BY
        thread#,
        TRUNC(first_time)

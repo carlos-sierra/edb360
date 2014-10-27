@@ -1,4 +1,4 @@
-WHENEVER SQLERROR EXIT SQL.SQLCODE;
+--WHENEVER SQLERROR EXIT SQL.SQLCODE;
 SET TERM ON VER OFF FEED OFF ECHO OFF;
 CL COL;
 COL row_num FOR 9999999 HEA '#' PRI;
@@ -131,7 +131,7 @@ SELECT NVL(TO_CHAR(MAX(snap_id)), '&&minimum_snap_id.') maximum_snap_id FROM dba
 SELECT '-1' maximum_snap_id FROM DUAL WHERE TRIM('&&maximum_snap_id.') IS NULL;
 
 -- setup
-DEF tool_vrsn = 'v1414 (2014-10-08)';
+DEF tool_vrsn = 'v1415 (2014-10-08)';
 DEF prefix = 'edb360';
 DEF sql_trace_level = '8';
 DEF main_table = '';
@@ -292,4 +292,4 @@ PRO dbname:&&database_name_short. version:&&db_version. host:&&host_name_short. 
 PRO </pre>
 PRO
 SPO OFF;
-WHENEVER SQLERROR CONTINUE;
+--WHENEVER SQLERROR CONTINUE;

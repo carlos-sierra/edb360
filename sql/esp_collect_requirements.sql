@@ -6,7 +6,7 @@
 --
 -- Author:      Carlos Sierra
 --
--- Version:     v1414 (2014/10/08)
+-- Version:     v1415 (2014/10/27)
 --
 -- Usage:       Collects Requirements from AWR and ASH views, thus it should only be
 --              executed on systems with the Oracle Diagnostics Pack license.
@@ -22,8 +22,8 @@
 ---------------------------------------------------------------------------------------
 --
 SPO  esp_requirements.log APP;
-WHENEVER OSERROR EXIT;
-WHENEVER SQLERROR EXIT SQL.SQLCODE;
+--WHENEVER OSERROR EXIT;
+--WHENEVER SQLERROR EXIT SQL.SQLCODE;
 
 SET TERM OFF ECHO OFF FEED OFF VER OFF HEA OFF PAGES 0 COLSEP ', ' LIN 32767 TRIMS ON TRIM ON TI OFF TIMI OFF ARRAY 100 NUM 20 SQLBL ON BLO . RECSEP OFF;
 
@@ -54,6 +54,8 @@ SPO esp_requirements.csv APP;
 
 -- id
 SELECT 'collection_host,collection_key,category,data_element,source,instance_number,inst_id,value' FROM DUAL
+/
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'id', 'collector_version', 'v1415', 0, 0, '2014-10-27' FROM DUAL
 /
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'id', 'collection_date', 'sysdate', 0, 0, TO_CHAR(SYSDATE, '&&ecr_date_format.') FROM DUAL
 /
@@ -1008,6 +1010,10 @@ SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf', 'w_mbps_av
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'rman', status, TO_CHAR(end_time, '&&ecr_date_format.'), 0, 0, ROUND(output_bytes / POWER(2, 30), 3) value FROM v$rman_backup_job_details ORDER BY end_time
 /
 
+-- os stats
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'osstat', stat_name, 'gv$osstat', 0, inst_id, value FROM gv$osstat ORDER BY inst_id, stat_name
+/
+
 -- cpu time series
 WITH 
 cpu_per_inst_and_sample AS (
@@ -1028,17 +1034,40 @@ SELECT /*+ &&ecr_sq_fact_hints. */
        sample_id,
        session_state,
        event
-)
-SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'cpu_ts', session_state, TO_CHAR(TRUNC(CAST(sample_time AS DATE), 'HH') + (1/24), '&&ecr_date_format.'), instance_number, 0 inst_id, MAX(active_sessions) value
+),
+cpu_per_inst_and_hour AS (
+SELECT /*+ &&ecr_sq_fact_hints. */
+       session_state,
+       instance_number,
+       TO_CHAR(TRUNC(CAST(sample_time AS DATE), 'HH') + (1/24), '&&ecr_date_format.') end_time,
+       MAX(active_sessions) active_sessions_max, -- max or peak
+       PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY active_sessions) active_sessions_99p, -- 99% percentile
+       PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY active_sessions) active_sessions_95p, -- 99% percentile
+       PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY active_sessions) active_sessions_90p, -- 99% percentile
+       PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY active_sessions) active_sessions_75p, -- 99% percentile
+       ROUND(MEDIAN(active_sessions), 1) active_sessions_med, -- median
+       ROUND(AVG(active_sessions), 1) active_sessions_avg -- average
   FROM cpu_per_inst_and_sample
  GROUP BY
        session_state,
        instance_number,
        TRUNC(CAST(sample_time AS DATE), 'HH')
+)
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'cpu_ts', session_state, end_time, instance_number, 0 inst_id, active_sessions_max value FROM cpu_per_inst_and_hour
+ UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'cpu_ts_99p', session_state, end_time, instance_number, 0 inst_id, active_sessions_99p value FROM cpu_per_inst_and_hour
+ UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'cpu_ts_95p', session_state, end_time, instance_number, 0 inst_id, active_sessions_95p value FROM cpu_per_inst_and_hour
+ UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'cpu_ts_90p', session_state, end_time, instance_number, 0 inst_id, active_sessions_90p value FROM cpu_per_inst_and_hour
+ UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'cpu_ts_75p', session_state, end_time, instance_number, 0 inst_id, active_sessions_75p value FROM cpu_per_inst_and_hour
+ UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'cpu_ts_med', session_state, end_time, instance_number, 0 inst_id, active_sessions_med value FROM cpu_per_inst_and_hour
+ UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'cpu_ts_avg', session_state, end_time, instance_number, 0 inst_id, active_sessions_avg value FROM cpu_per_inst_and_hour
  ORDER BY
-       session_state,
-       instance_number,
-       TRUNC(CAST(sample_time AS DATE), 'HH')
+       3, 4, 6, 5
 /
 
 -- mem time series
@@ -1047,7 +1076,7 @@ sga AS (
 SELECT /*+ &&ecr_sq_fact_hints. */
        h.instance_number,
        h.snap_id,
-       TRUNC(CAST(s.end_interval_time AS DATE), 'HH') + (1/24) end_time,
+       TO_CHAR(TRUNC(CAST(s.end_interval_time AS DATE), 'HH') + (1/24), '&&ecr_date_format.') end_time,
        SUM(h.value) bytes
   FROM dba_hist_sga h,
        dba_hist_snapshot s
@@ -1061,27 +1090,27 @@ SELECT /*+ &&ecr_sq_fact_hints. */
        h.snap_id,
        s.end_interval_time
 )
-SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'mem_ts', 'sga', TO_CHAR(end_time, '&&ecr_date_format.'), instance_number, 0 inst_id, ROUND(MAX(bytes) / POWER(2, 30), 3) value
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'mem_ts', 'sga', end_time, instance_number, 0 inst_id, ROUND(MAX(bytes) / POWER(2, 30), 3) value
   FROM sga
  GROUP BY
        instance_number,
        end_time
  ORDER BY
-       instance_number,
-       end_time
+       3, 4, 6, 5
 /
 WITH
 pga AS (
 SELECT /*+ &&ecr_sq_fact_hints. */
        h.instance_number,
        h.snap_id,
-       TRUNC(CAST(s.end_interval_time AS DATE), 'HH') + (1/24) end_time,
+       TO_CHAR(TRUNC(CAST(s.end_interval_time AS DATE), 'HH') + (1/24), '&&ecr_date_format.') end_time,
        SUM(h.value) bytes
   FROM dba_hist_pgastat h,
        dba_hist_snapshot s
  WHERE h.snap_id >= TO_NUMBER(NVL('&&ecr_min_snap_id.','0'))
    AND h.dbid = &&ecr_dbid.
-   AND h.name = 'maximum PGA allocated'
+   --AND h.name = 'maximum PGA allocated'
+   AND h.name = 'total PGA allocated'
    AND s.snap_id = h.snap_id
    AND s.dbid = h.dbid
    AND s.instance_number = h.instance_number
@@ -1090,14 +1119,13 @@ SELECT /*+ &&ecr_sq_fact_hints. */
        h.snap_id,
        s.end_interval_time
 )
-SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'mem_ts', 'pga', TO_CHAR(end_time, '&&ecr_date_format.'), instance_number, 0 inst_id, ROUND(MAX(bytes) / POWER(2, 30), 3) value
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'mem_ts', 'pga', end_time, instance_number, 0 inst_id, ROUND(MAX(bytes) / POWER(2, 30), 3) value
   FROM pga
  GROUP BY
        instance_number,
        end_time
  ORDER BY
-       instance_number,
-       end_time
+       3, 4, 6, 5
 /
 
 -- disk_perf time series
@@ -1121,7 +1149,7 @@ SELECT /*+ &&ecr_sq_fact_hints. */
 io_per_inst_and_snap_id AS (
 SELECT /*+ &&ecr_sq_fact_hints. */
        h1.instance_number,
-       TRUNC(CAST(s1.end_interval_time AS DATE), 'HH') + (1/24) end_time,
+       TO_CHAR(TRUNC(CAST(s1.end_interval_time AS DATE), 'HH') + (1/24), '&&ecr_date_format.') end_time,
        (h1.r_reqs - h0.r_reqs) r_reqs,
        (h1.w_reqs - h0.w_reqs) w_reqs,
        (h1.r_bytes - h0.r_bytes) r_bytes,
@@ -1145,31 +1173,31 @@ SELECT /*+ &&ecr_sq_fact_hints. */
    AND s1.startup_time = s0.startup_time
    AND (CAST(s1.end_interval_time AS DATE) - CAST(s1.begin_interval_time AS DATE)) * 86400 > 60 -- ignore snaps too close
 )
-SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf_ts', 'r_iops', TO_CHAR(end_time, '&&ecr_date_format.'), instance_number, 0 inst_id, ROUND(MAX(r_reqs / elapsed_sec)) value
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf_ts', 'r_iops', end_time, instance_number, 0 inst_id, ROUND(MAX(r_reqs / elapsed_sec)) value
   FROM io_per_inst_and_snap_id
  GROUP BY
        instance_number,
        end_time
  UNION ALL
-SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf_ts', 'w_iops', TO_CHAR(end_time, '&&ecr_date_format.'), instance_number, 0 inst_id, ROUND(MAX(w_reqs / elapsed_sec)) value
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf_ts', 'w_iops', end_time, instance_number, 0 inst_id, ROUND(MAX(w_reqs / elapsed_sec)) value
   FROM io_per_inst_and_snap_id
  GROUP BY
        instance_number,
        end_time
  UNION ALL
-SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf_ts', 'r_mbps', TO_CHAR(end_time, '&&ecr_date_format.'), instance_number, 0 inst_id, ROUND(MAX(r_bytes / POWER(2, 20) / elapsed_sec), 3) value
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf_ts', 'r_mbps', end_time, instance_number, 0 inst_id, ROUND(MAX(r_bytes / POWER(2, 20) / elapsed_sec), 3) value
   FROM io_per_inst_and_snap_id
  GROUP BY
        instance_number,
        end_time
  UNION ALL
-SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf_ts', 'w_mbps', TO_CHAR(end_time, '&&ecr_date_format.'), instance_number, 0 inst_id, ROUND(MAX(w_bytes / POWER(2, 20) / elapsed_sec), 3) value
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf_ts', 'w_mbps', end_time, instance_number, 0 inst_id, ROUND(MAX(w_bytes / POWER(2, 20) / elapsed_sec), 3) value
   FROM io_per_inst_and_snap_id
  GROUP BY
        instance_number,
        end_time
  ORDER BY
-       4, 6, 5
+       3, 4, 6, 5
 /
 
 -- db_size time series
@@ -1177,7 +1205,7 @@ WITH
 ts_per_snap_id AS (
 SELECT /*+ &&ecr_sq_fact_hints. */
        us.snap_id,
-       TRUNC(CAST(sn.end_interval_time AS DATE), 'HH') + (1/24) end_time,
+       TO_CHAR(TRUNC(CAST(sn.end_interval_time AS DATE), 'HH') + (1/24), '&&ecr_date_format.') end_time,
        SUM(us.tablespace_size * ts.block_size) all_tablespaces_bytes,
        SUM(CASE ts.contents WHEN 'PERMANENT' THEN us.tablespace_size * ts.block_size ELSE 0 END) perm_tablespaces_bytes,
        SUM(CASE ts.contents WHEN 'UNDO'      THEN us.tablespace_size * ts.block_size ELSE 0 END) undo_tablespaces_bytes,
@@ -1197,22 +1225,22 @@ SELECT /*+ &&ecr_sq_fact_hints. */
        us.snap_id,
        sn.end_interval_time
 )
-SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'db_size_ts', 'perm', TO_CHAR(end_time, '&&ecr_date_format.'), &&ecr_instance_number., 0 inst_id, ROUND(MAX(perm_tablespaces_bytes) / POWER(2, 30), 3) value
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'db_size_ts', 'perm', end_time, &&ecr_instance_number., 0 inst_id, ROUND(MAX(perm_tablespaces_bytes) / POWER(2, 30), 3) value
   FROM ts_per_snap_id
  GROUP BY
        end_time
  UNION ALL
-SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'db_size_ts', 'undo', TO_CHAR(end_time, '&&ecr_date_format.'), &&ecr_instance_number., 0 inst_id, ROUND(MAX(undo_tablespaces_bytes) / POWER(2, 30), 3) value
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'db_size_ts', 'undo', end_time, &&ecr_instance_number., 0 inst_id, ROUND(MAX(undo_tablespaces_bytes) / POWER(2, 30), 3) value
   FROM ts_per_snap_id
  GROUP BY
        end_time
  UNION ALL
-SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'db_size_ts', 'temp', TO_CHAR(end_time, '&&ecr_date_format.'), &&ecr_instance_number., 0 inst_id, ROUND(MAX(temp_tablespaces_bytes) / POWER(2, 30), 3) value
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'db_size_ts', 'temp', end_time, &&ecr_instance_number., 0 inst_id, ROUND(MAX(temp_tablespaces_bytes) / POWER(2, 30), 3) value
   FROM ts_per_snap_id
  GROUP BY
        end_time
  ORDER BY
-       4, 5
+       3, 4, 6, 5
 /
 
 -- os time series: load, num_cpus, num_cpu_cores and physical memory
@@ -1224,9 +1252,10 @@ SELECT /*+ &&ecr_sq_fact_hints. */
        SUM(CASE stat_name WHEN 'LOAD'                  THEN value ELSE 0 END) load,
        SUM(CASE stat_name WHEN 'NUM_CPUS'              THEN value ELSE 0 END) num_cpus,
        SUM(CASE stat_name WHEN 'NUM_CPU_CORES'         THEN value ELSE 0 END) num_cpu_cores,
+       SUM(CASE stat_name WHEN 'NUM_CPU_SOCKETS'       THEN value ELSE 0 END) num_cpu_sockets,
        SUM(CASE stat_name WHEN 'PHYSICAL_MEMORY_BYTES' THEN value ELSE 0 END) physical_memory_bytes
   FROM dba_hist_osstat
- WHERE stat_name IN ('LOAD', 'NUM_CPUS', 'NUM_CPU_CORES', 'PHYSICAL_MEMORY_BYTES')
+ WHERE stat_name IN ('LOAD', 'NUM_CPUS', 'NUM_CPU_CORES', 'NUM_CPU_SOCKETS', 'PHYSICAL_MEMORY_BYTES')
    AND snap_id >= TO_NUMBER(NVL('&&ecr_min_snap_id.','0'))
    AND dbid = &&ecr_dbid.
  GROUP BY
@@ -1240,6 +1269,7 @@ SELECT /*+ &&ecr_sq_fact_hints. */
        ROUND(MAX(load), 2) load,
        MAX(num_cpus) num_cpus,
        MAX(num_cpu_cores) num_cpu_cores,
+       MAX(num_cpu_sockets) num_cpu_sockets,
        MAX(physical_memory_bytes) physical_memory_bytes
   FROM osstat_denorm h,
        dba_hist_snapshot s
@@ -1259,15 +1289,18 @@ SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'os_ts', 'num_cpus', en
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'os_ts', 'num_cpu_cores', end_time, instance_number, 0 inst_id, num_cpu_cores value
   FROM osstat_denorm_2
  UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'os_ts', 'num_cpu_sockets', end_time, instance_number, 0 inst_id, num_cpu_sockets value
+  FROM osstat_denorm_2
+ UNION ALL
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'os_ts', 'physical_memory_gb', end_time, instance_number, 0 inst_id, ROUND(physical_memory_bytes / POWER(2, 30), 3) value
   FROM osstat_denorm_2
  ORDER BY
-       4, 5
+       3, 4, 6, 5
 /
 
 SPO OFF;
 HOS zip -qT esp_requirements.zip esp_requirements.csv esp_requirements.log
 SET TERM ON ECHO OFF FEED ON VER ON HEA ON PAGES 14 COLSEP ' ' LIN 80 TRIMS OFF TRIM ON TI OFF TIMI OFF ARRAY 15 NUM 10 SQLBL OFF BLO ON RECSEP WR;
 
-WHENEVER SQLERROR CONTINUE;
-WHENEVER OSERROR CONTINUE;
+--WHENEVER SQLERROR CONTINUE;
+--WHENEVER OSERROR CONTINUE;
