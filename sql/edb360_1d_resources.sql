@@ -1164,7 +1164,7 @@ SELECT /*+ &&sq_fact_hints. */
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
    AND instance_number = @instance_number@
-   AND name = ''maximum PGA allocated''
+   AND name = ''total PGA allocated''
 ),
 mem AS (
 SELECT /*+ &&sq_fact_hints. */

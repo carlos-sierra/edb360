@@ -802,7 +802,8 @@ SELECT /*+ &&sq_fact_hints. */
        SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''20'', 1, 0)) h20,
        SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''21'', 1, 0)) h21,
        SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''22'', 1, 0)) h22,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''23'', 1, 0)) h23
+       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''23'', 1, 0)) h23,
+       COUNT(*) day
   FROM v$log_history
  GROUP BY
        thread#,
@@ -1129,6 +1130,22 @@ SELECT /*+ &&top_level_hints. */
    AND o.object_id(+) = s.program_id
  ORDER BY 
        1, 2 DESC, 3
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+DEF title = 'Open Cursors Count per Session';
+DEF main_table = 'GV$OPEN_CURSOR';
+BEGIN
+  :sql_text := '
+SELECT /*+ &&top_level_hints. */ 
+       COUNT(*) open_cursors, inst_id, sid, user_name
+  FROM gv$open_cursor
+ GROUP BY
+       inst_id, sid, user_name
+ ORDER BY 
+       1 DESC
 ';
 END;
 /

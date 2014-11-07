@@ -45,34 +45,11 @@ PRO Parameter 2: Days of History? (default 31)
 PRO Use default value of 31 unless you have been instructed otherwise.
 PRO
 COL history_days NEW_V history_days;
-SELECT TO_CHAR(LEAST(TRUNC(SYSDATE - CAST(MIN(begin_interval_time) AS DATE)), TO_NUMBER(NVL(TRIM('&2.'), '31')))) history_days FROM dba_hist_snapshot WHERE '&&diagnostics_pack.' = 'Y' AND dbid = &&edb360_dbid.;
-SELECT 0 history_days FROM DUAL WHERE '&&diagnostics_pack.' IS NULL;
+-- range: takes at least 31 days and at most as many as actual history, with a default of 31. parameter restricts within that range. 
+SELECT TO_CHAR(LEAST(CEIL(SYSDATE - CAST(MIN(begin_interval_time) AS DATE)), GREATEST(31, TO_NUMBER(NVL(TRIM('&2.'), '31'))))) history_days FROM dba_hist_snapshot WHERE '&&diagnostics_pack.' = 'Y' AND dbid = &&edb360_dbid.;
+SELECT '0' history_days FROM DUAL WHERE NVL(TRIM('&&diagnostics_pack.'), 'N') = 'N';
 
 DEF skip_script = 'sql/edb360_0f_skip_script.sql ';
-
-/*
-PRO Parameter 3: Produce HTML Reports? [ Y | N ] (default Y)
-COL html_reports NEW_V html_reports FOR A1;
-SELECT DECODE(NVL(UPPER(SUBSTR(TRIM('&3.'), 1, 1)), 'Y'), 'Y', NULL, '&&skip_script.') html_reports FROM DUAL;
-
-PRO Parameter 4: Produce TEXT Reports? [ Y | N ] (default Y)
-COL text_reports NEW_V text_reports FOR A1;
-SELECT DECODE(NVL(UPPER(SUBSTR(TRIM('&4.'), 1, 1)), 'Y'), 'Y', NULL, '&&skip_script.') text_reports FROM DUAL;
-
-PRO Parameter 5: Produce CSV Files? [ Y | N ] (default Y)
-COL csv_files NEW_V csv_files FOR A1;
-SELECT DECODE(NVL(UPPER(SUBSTR(TRIM('&5.'), 1, 1)), 'Y'), 'Y', NULL, '&&skip_script.') csv_files FROM DUAL;
-
-PRO Parameter 6: Produce CHART Reports? [ Y | N ] (default Y)
-COL chrt_reports NEW_V chrt_reports FOR A1;
-SELECT DECODE(NVL(UPPER(SUBSTR(TRIM('&6.'), 1, 1)), 'Y'), 'Y', NULL, '&&skip_script.') chrt_reports FROM DUAL;
-*/
-
--- too many people were passing N for no apparent reason
-DEF html_reports = '';
-DEF text_reports = '';
-DEF csv_files = '';
-DEF chrt_reports = '';
 
 -- get instance number
 COL connect_instance_number NEW_V connect_instance_number;
@@ -131,7 +108,7 @@ SELECT NVL(TO_CHAR(MAX(snap_id)), '&&minimum_snap_id.') maximum_snap_id FROM dba
 SELECT '-1' maximum_snap_id FROM DUAL WHERE TRIM('&&maximum_snap_id.') IS NULL;
 
 -- setup
-DEF tool_vrsn = 'v1415 (2014-10-08)';
+DEF tool_vrsn = 'v1416 (2014-11-07)';
 DEF prefix = 'edb360';
 DEF sql_trace_level = '8';
 DEF main_table = '';
@@ -148,7 +125,7 @@ DEF edb360_tracefile_identifier = '&&common_prefix.';
 DEF copyright = ' (c) 2014';
 DEF top_level_hints = 'NO_MERGE';
 DEF sq_fact_hints = 'MATERIALIZE NO_MERGE';
-DEF def_max_rows = '1e4';
+DEF def_max_rows = '10000';
 DEF max_rows = '1e4';
 DEF exclusion_list = "(''ANONYMOUS'',''APEX_030200'',''APEX_040000'',''APEX_SSO'',''APPQOSSYS'',''CTXSYS'',''DBSNMP'',''DIP'',''EXFSYS'',''FLOWS_FILES'',''MDSYS'',''OLAPSYS'',''ORACLE_OCM'',''ORDDATA'',''ORDPLUGINS'',''ORDSYS'',''OUTLN'',''OWBSYS'')";
 DEF exclusion_list2 = "(''SI_INFORMTN_SCHEMA'',''SQLTXADMIN'',''SQLTXPLAIN'',''SYS'',''SYSMAN'',''SYSTEM'',''TRCANLZR'',''WMSYS'',''XDB'',''XS$NULL'')";
@@ -165,7 +142,6 @@ DEF skip_all = '';
 DEF abstract = '';
 DEF abstract2 = '';
 DEF foot = '';
-DEF foot2 = '';
 DEF sql_text = '';
 DEF chartype = '';
 DEF stacked = '';
@@ -269,7 +245,7 @@ ALTER SESSION SET MAX_DUMP_FILE_SIZE = '1G';
 ALTER SESSION SET TRACEFILE_IDENTIFIER = "&&edb360_tracefile_identifier.";
 --ALTER SESSION SET STATISTICS_LEVEL = 'ALL';
 ALTER SESSION SET EVENTS '10046 TRACE NAME CONTEXT FOREVER, LEVEL &&sql_trace_level.';
-SET TERM OFF HEA ON LIN 32767 NEWP NONE PAGES 50 LONG 32000 LONGC 2000 WRA ON TRIMS ON TRIM ON TI OFF TIMI OFF ARRAY 100 NUM 20 SQLBL ON BLO . RECSEP OFF;
+SET TERM OFF HEA ON LIN 32767 NEWP NONE PAGES &&def_max_rows. LONG 32000 LONGC 2000 WRA ON TRIMS ON TRIM ON TI OFF TIMI OFF ARRAY 100 NUM 20 SQLBL ON BLO . RECSEP OFF;
 
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -292,4 +268,8 @@ PRO dbname:&&database_name_short. version:&&db_version. host:&&host_name_short. 
 PRO </pre>
 PRO
 SPO OFF;
+
+-- zip
+HOS zip -jq &&main_compressed_filename._&&file_creation_time. js/sorttable.js
+
 --WHENEVER SQLERROR CONTINUE;

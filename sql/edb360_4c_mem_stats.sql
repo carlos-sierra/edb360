@@ -72,7 +72,7 @@ SELECT /*+ &&sq_fact_hints. */
        h1.instance_number,
        SUM(h1.value) bytes
   FROM dba_hist_pgastat h1
- WHERE h1.name = ''maximum PGA allocated''
+ WHERE h1.name = ''total PGA allocated''
    AND h1.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND h1.dbid = &&edb360_dbid.
    AND h1.instance_number = @instance_number@

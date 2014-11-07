@@ -17,8 +17,9 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 *****************************************************************************************/
+PRO Please wait ...
 @@sql/esp_collect_requirements.sql
-HOS zip -qT esp_requirements.zip esp_requirements.csv esp_requirements.log
+HOS zip -qmT esp_requirements.zip esp_requirements.csv esp_requirements.log
 @@sql/edb360_0a_main.sql
-HOS zip -mq &&main_compressed_filename._&&file_creation_time. esp_requirements.zip 
+HOS zip -qmT &&main_compressed_filename._&&file_creation_time. esp_requirements.zip 
 HOS unzip -l &&main_compressed_filename._&&file_creation_time.

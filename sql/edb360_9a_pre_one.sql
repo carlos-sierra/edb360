@@ -56,18 +56,17 @@ SPO OFF;
 HOS zip -q &&main_compressed_filename._&&file_creation_time. &&main_report_name..html
 
 -- execute one sql
-@@&&skip_html.&&html_reports.edb360_9b_one_html.sql
-@@&&skip_text.&&text_reports.edb360_9c_one_text.sql
-@@&&skip_csv.&&csv_files.edb360_9d_one_csv.sql
-@@&&skip_lch.&&chrt_reports.edb360_9e_one_line_chart.sql
-@@&&skip_pch.&&chrt_reports.edb360_9f_one_pie_chart.sql
+@@&&skip_html.edb360_9b_one_html.sql
+@@&&skip_text.edb360_9c_one_text.sql
+@@&&skip_csv.edb360_9d_one_csv.sql
+@@&&skip_lch.edb360_9e_one_line_chart.sql
+@@&&skip_pch.edb360_9f_one_pie_chart.sql
 HOS zip -q &&main_compressed_filename._&&file_creation_time. &&edb360_log2..txt
 EXEC :sql_text := NULL;
 COL row_num FOR 9999999 HEA '#' PRI;
 DEF abstract = '';
 DEF abstract2 = '';
 DEF foot = '';
-DEF foot2 = '';
 DEF max_rows = '&&def_max_rows.';
 DEF skip_html = '';
 DEF skip_text = '';

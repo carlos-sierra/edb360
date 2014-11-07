@@ -1,4 +1,4 @@
-EDB360 v1415 (2014-10-27) by Carlos Sierra
+EDB360 v1416 (2014-11-07) by Carlos Sierra
 
 EDB360 is a "free to use" tool to perform an initial assessment of a remote system. 
 It gives a glance of a database state. It also helps to document any findings.
@@ -19,8 +19,9 @@ Steps
 2. Execute edb360.sql indicating two input parameters. The first one is to specify if 
    your database is licensed for the Oracle Tuning Pack, the Diagnostics Pack or None 
    [ T | D | N ]. The second parameter indicates up to how many days of history you
-   want edb360 to query (defaults to 31). Example below specifies Tuning Pack and 31 
-   days of history.
+   want edb360 to query. Example below specifies Tuning Pack and 31 days of history.
+   Actual days of history used depends on retention period. Value used is raised up to
+   31 days if history permits.
 
    SQL> @edb360.sql T 31
    

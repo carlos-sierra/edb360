@@ -34,7 +34,6 @@ PRO
 
 -- footer
 PRO &&foot.
-PRO &&foot2.
 SET LIN 80;
 DESC &&main_table.
 SET HEA OFF LIN 32767;

@@ -27,7 +27,7 @@ SPO &&one_spool_filename..csv;
 -- body
 SET PAGES 50000 COLSEP ',';
 /
-SET PAGES 50 COLSEP ' ';
+SET PAGES &&def_max_rows. COLSEP ' ';
 
 -- footer
 SPO OFF;

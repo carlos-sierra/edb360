@@ -35,7 +35,6 @@ BEGIN
   FOR i IN (SELECT instance_number
               FROM gv$instance
              WHERE '&&diagnostics_pack.' = 'Y'
-               AND ('&&html_reports.' IS NULL OR '&&text_reports.' IS NULL)
              ORDER BY
                    instance_number)
   LOOP
@@ -139,7 +138,7 @@ BEGIN
       put_line('PRO <li title="DBMS_WORKLOAD_REPOSITORY">'||l_standard_filename||' <small><em>('||TO_CHAR(j.end_date,'DD-Mon-YY HH24:MI:SS')||')</em></small>');
       put_line('SPO OFF;');
       put_line('HOS zip -q &&main_compressed_filename._&&file_creation_time. &&main_report_name..html');
-      IF '&&html_reports.' IS NULL THEN
+      BEGIN
         :file_seq := :file_seq + 1;
         l_one_spool_filename := LPAD(:file_seq, 4, '0')||'_'||l_spool_filename;
         update_log(l_one_spool_filename||'.html');
@@ -153,8 +152,8 @@ BEGIN
         put_line('-- zip');
         put_line('HOS zip -mq &&main_compressed_filename._&&file_creation_time. '||l_one_spool_filename||'.html');
         put_line('HOS zip -q &&main_compressed_filename._&&file_creation_time. &&main_report_name..html');
-      END IF;
-      IF '&&text_reports.' IS NULL THEN
+      END;
+      BEGIN
         :file_seq := :file_seq + 1;
         l_one_spool_filename := LPAD(:file_seq, 4, '0')||'_'||l_spool_filename;
         update_log(l_one_spool_filename||'.txt');
@@ -168,7 +167,7 @@ BEGIN
         put_line('-- zip');
         put_line('HOS zip -mq &&main_compressed_filename._&&file_creation_time. '||l_one_spool_filename||'.txt');
         put_line('HOS zip -q &&main_compressed_filename._&&file_creation_time. &&main_report_name..html');
-      END IF;
+      END;
       put_line('-- update main report');
       put_line('SPO &&main_report_name..html APP;');
       put_line('PRO </li>');
@@ -193,7 +192,7 @@ BEGIN
         put_line('SPO &&main_report_name..html APP;');
         put_line('PRO <li title="DBMS_WORKLOAD_REPOSITORY">'||l_standard_filename||' <small><em>('||TO_CHAR(j.end_date,'DD-Mon-YY HH24:MI:SS')||')</em></small>');
         put_line('HOS zip -q &&main_compressed_filename._&&file_creation_time. &&main_report_name..html');
-        IF '&&html_reports.' IS NULL THEN
+        BEGIN
           :file_seq := :file_seq + 1;
           l_one_spool_filename := LPAD(:file_seq, 4, '0')||'_'||l_spool_filename;
           update_log(l_one_spool_filename||'.html');
@@ -207,8 +206,8 @@ BEGIN
           put_line('-- zip');
           put_line('HOS zip -mq &&main_compressed_filename._&&file_creation_time. '||l_one_spool_filename||'.html');
           put_line('HOS zip -q &&main_compressed_filename._&&file_creation_time. &&main_report_name..html');
-        END IF; 
-        IF '&&text_reports.' IS NULL THEN
+        END; 
+        BEGIN
           :file_seq := :file_seq + 1;
           l_one_spool_filename := LPAD(:file_seq, 4, '0')||'_'||l_spool_filename;
           update_log(l_one_spool_filename||'.txt');
@@ -222,7 +221,7 @@ BEGIN
           put_line('-- zip');
           put_line('HOS zip -mq &&main_compressed_filename._&&file_creation_time. '||l_one_spool_filename||'.txt');
           put_line('HOS zip -q &&main_compressed_filename._&&file_creation_time. &&main_report_name..html');
-        END IF;
+        END;
         put_line('-- update main report');
         put_line('SPO &&main_report_name..html APP;');
         put_line('PRO </li>');
@@ -235,5 +234,5 @@ END;
 /
 SPO OFF;
 @9991_&&common_prefix._awr_driver.sql;
-SET SERVEROUT OFF HEAD ON PAGES 50;
+SET SERVEROUT OFF HEAD ON PAGES &&def_max_rows.;
 HOS zip -mq &&main_compressed_filename._&&file_creation_time. 9991_&&common_prefix._awr_driver.sql

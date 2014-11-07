@@ -287,7 +287,8 @@ DEF main_table = 'X$DBGALERTEXT';
 BEGIN
   :sql_text := '
 SELECT /*+ &&top_level_hints. */ 
-       *
+       originating_timestamp,
+       message_text
 FROM sys.x$dbgalertext
 WHERE originating_timestamp > SYSDATE - &&history_days.
 ORDER BY originating_timestamp DESC

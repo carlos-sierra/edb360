@@ -24,6 +24,8 @@ GET &&common_prefix._query.sql
 -- header
 SPO &&one_spool_filename..html;
 @@edb360_0d_html_header.sql
+PRO <script src="sorttable.js"></script>
+PRO
 PRO <!-- &&one_spool_filename..html $ -->
 PRO </head>
 PRO <body>
@@ -35,13 +37,14 @@ PRO &&abstract2.
 PRO
 
 -- body
-SET MARK HTML ON TABLE "" SPOOL OFF;
+SET MARK HTML ON TABLE "class=sortable" SPOOL OFF;
 /
 SET MARK HTML OFF;
 
 -- footer
 PRO &&foot.
-PRO &&foot2.
+PRO #: click on a column heading to sort on it
+PRO
 PRO <pre>
 SET LIN 80;
 DESC &&main_table.

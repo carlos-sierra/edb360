@@ -7,6 +7,7 @@ SPO OFF;
 
 COL hh_mm_ss NEW_V hh_mm_ss NOPRI FOR A8;
 SPO 9997_&&common_prefix._top_sql_driver.sql;
+DEF local_hints = 'NO_MERGE(ash) NO_MERGE(snp) FULL(ash) FULL(snp) USE_HASH(ash snp)';
 DECLARE
   l_count NUMBER := 0;
   PROCEDURE put_line(p_line IN VARCHAR2) IS
@@ -47,7 +48,7 @@ BEGIN
 			 UNION ALL
 			SELECT /*+ &&sq_fact_hints. */ sql_id, samples
 			  FROM (
-			SELECT /*+ &&sq_fact_hints. */
+			SELECT /*+ &&sq_fact_hints. &&local_hints. */
 			       ash.sql_id,
 				   COUNT(*) samples
 			  FROM dba_hist_active_sess_history ash,
@@ -68,7 +69,7 @@ BEGIN
 			 UNION ALL
 			SELECT /*+ &&sq_fact_hints. */ sql_id, samples
 			  FROM (
-			SELECT /*+ &&sq_fact_hints. */
+			SELECT /*+ &&sq_fact_hints. &&local_hints. */
 			       ash.sql_id,
 				   COUNT(*) samples
 			  FROM dba_hist_active_sess_history ash,
@@ -89,7 +90,7 @@ BEGIN
 			 UNION ALL
 			SELECT /*+ &&sq_fact_hints. */ sql_id, samples
 			  FROM (
-			SELECT /*+ &&sq_fact_hints. */
+			SELECT /*+ &&sq_fact_hints. &&local_hints. */
 			       ash.sql_id,
 				   COUNT(*) samples
 			  FROM dba_hist_active_sess_history ash,
@@ -110,7 +111,7 @@ BEGIN
 			 UNION ALL
 			SELECT /*+ &&sq_fact_hints. */ sql_id, samples
 			  FROM (
-			SELECT /*+ &&sq_fact_hints. */
+			SELECT /*+ &&sq_fact_hints. &&local_hints. */
 			       ash.sql_id,
 				   COUNT(*) samples
 			  FROM dba_hist_active_sess_history ash,
@@ -133,7 +134,7 @@ BEGIN
 			 UNION ALL
 			SELECT /*+ &&sq_fact_hints. */ sql_id, samples
 			  FROM (
-			SELECT /*+ &&sq_fact_hints. */
+			SELECT /*+ &&sq_fact_hints. &&local_hints. */
 			       ash.sql_id,
 				   COUNT(*) samples
 			  FROM dba_hist_active_sess_history ash,
@@ -228,9 +229,9 @@ END;
 /
 SPO OFF;
 @9997_&&common_prefix._top_sql_driver.sql;
-SET SERVEROUT OFF HEAD ON PAGES 50;
+SET SERVEROUT OFF HEAD ON PAGES &&def_max_rows.;
 HOS zip -mq &&main_compressed_filename._&&file_creation_time. 9997_&&common_prefix._top_sql_driver.sql
-SET HEA ON LIN 32767 NEWP NONE PAGES 50 LONG 32000 LONGC 2000 WRA ON TRIMS ON TRIM ON TI OFF TIMI OFF ARRAY 100 NUM 20 SQLBL ON BLO . RECSEP OFF;
+SET HEA ON LIN 32767 NEWP NONE PAGES &&def_max_rows. LONG 32000 LONGC 2000 WRA ON TRIMS ON TRIM ON TI OFF TIMI OFF ARRAY 100 NUM 20 SQLBL ON BLO . RECSEP OFF;
 CL COL;
 COL row_num FOR 9999999 HEA '#' PRI;
 

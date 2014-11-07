@@ -483,6 +483,270 @@ END;
 /
 @@&&skip_tuning.&&skip_10g.edb360_9a_pre_one.sql
 
+DEF title = 'SQL with chaning Elapsed Time per Execution (list)';
+DEF abstract = 'SQL Statements with "Elapsed Time per Execution" changing over time.';
+DEF main_table = 'DBA_HIST_SQLSTAT';
+DEF days_of_history_accessed = '31';
+DEF captured_at_least_x_times = '10';
+DEF captured_at_least_x_days_apart = '5';
+DEF med_elap_microsecs_threshold = '1e4';
+DEF min_slope_threshold = '0.1';
+DEF max_num_rows_x = '20';
 
+COL med_secs_per_exec FOR A13 HEA 'Median Secs|Per Exec';
+COL std_secs_per_exec FOR A13 HEA 'Std Dev Secs|Per Exec';
+COL avg_secs_per_exec FOR A13 HEA 'Avg Secs|Per Exec';
+COL min_secs_per_exec FOR A13 HEA 'Min Secs|Per Exec';
+COL max_secs_per_exec FOR A13 HEA 'Max Secs|Per Exec';
+COL plans FOR 9999;
+BEGIN
+  :sql_text := '
+WITH
+per_time AS (
+SELECT /*+ &&sq_fact_hints. */
+       h.dbid,
+       h.sql_id,
+       SYSDATE - CAST(s.end_interval_time AS DATE) days_ago,
+       SUM(h.elapsed_time_total) / SUM(h.executions_total) time_per_exec
+  FROM dba_hist_sqlstat h, 
+       dba_hist_snapshot s
+ WHERE h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND h.dbid = &&edb360_dbid.
+   AND h.executions_total > 0 
+   AND s.snap_id = h.snap_id
+   AND s.dbid = h.dbid
+   AND s.instance_number = h.instance_number
+   AND CAST(s.end_interval_time AS DATE) > SYSDATE - &&days_of_history_accessed. 
+ GROUP BY
+       h.dbid,
+       h.sql_id,
+       SYSDATE - CAST(s.end_interval_time AS DATE)
+),
+avg_time AS (
+SELECT /*+ &&sq_fact_hints. */
+       dbid,
+       sql_id, 
+       MEDIAN(time_per_exec) med_time_per_exec,
+       STDDEV(time_per_exec) std_time_per_exec,
+       AVG(time_per_exec)    avg_time_per_exec,
+       MIN(time_per_exec)    min_time_per_exec,
+       MAX(time_per_exec)    max_time_per_exec       
+  FROM per_time
+ GROUP BY
+       dbid,
+       sql_id
+HAVING COUNT(*) >= &&captured_at_least_x_times. 
+   AND MAX(days_ago) - MIN(days_ago) >= &&captured_at_least_x_days_apart.
+   AND MEDIAN(time_per_exec) > &&med_elap_microsecs_threshold.
+),
+time_over_median AS (
+SELECT /*+ &&sq_fact_hints. */
+       h.dbid,
+       h.sql_id,
+       h.days_ago,
+       (h.time_per_exec / a.med_time_per_exec) time_per_exec_over_med,
+       a.med_time_per_exec,
+       a.std_time_per_exec,
+       a.avg_time_per_exec,
+       a.min_time_per_exec,
+       a.max_time_per_exec
+  FROM per_time h, avg_time a
+ WHERE a.sql_id = h.sql_id
+),
+ranked AS (
+SELECT /*+ &&sq_fact_hints. */
+       RANK () OVER (ORDER BY ABS(REGR_SLOPE(t.time_per_exec_over_med, t.days_ago)) DESC) rank_num,
+       t.dbid,
+       t.sql_id,
+       CASE WHEN REGR_SLOPE(t.time_per_exec_over_med, t.days_ago) > 0 THEN ''IMPROVING'' ELSE ''REGRESSING'' END change,
+       ROUND(REGR_SLOPE(t.time_per_exec_over_med, t.days_ago), 3) slope,
+       ROUND(AVG(t.med_time_per_exec)/1e6, 3) med_secs_per_exec,
+       ROUND(AVG(t.std_time_per_exec)/1e6, 3) std_secs_per_exec,
+       ROUND(AVG(t.avg_time_per_exec)/1e6, 3) avg_secs_per_exec,
+       ROUND(MIN(t.min_time_per_exec)/1e6, 3) min_secs_per_exec,
+       ROUND(MAX(t.max_time_per_exec)/1e6, 3) max_secs_per_exec
+  FROM time_over_median t
+ GROUP BY
+       t.dbid,
+       t.sql_id
+HAVING ABS(REGR_SLOPE(t.time_per_exec_over_med, t.days_ago)) > &&min_slope_threshold.
+)
+SELECT /*+ &&top_level_hints. */
+       r.sql_id,
+       r.change,
+       LPAD(TO_CHAR(r.slope, ''990.000S''), 10) slope,
+       LPAD(TO_CHAR(r.med_secs_per_exec, ''999,990.000''), 13) med_secs_per_exec,
+       LPAD(TO_CHAR(r.std_secs_per_exec, ''999,990.000''), 13) std_secs_per_exec,
+       LPAD(TO_CHAR(r.avg_secs_per_exec, ''999,990.000''), 13) avg_secs_per_exec,
+       LPAD(TO_CHAR(r.min_secs_per_exec, ''999,990.000''), 13) min_secs_per_exec,
+       LPAD(TO_CHAR(r.max_secs_per_exec, ''999,990.000''), 13) max_secs_per_exec,
+       (SELECT COUNT(DISTINCT p.plan_hash_value) FROM dba_hist_sql_plan p WHERE p.dbid = r.dbid AND p.sql_id = r.sql_id) plans,
+       REPLACE((SELECT DBMS_LOB.SUBSTR(s.sql_text) FROM dba_hist_sqltext s WHERE s.dbid = r.dbid AND s.sql_id = r.sql_id), CHR(10)) sql_text
+  FROM ranked r
+ WHERE r.rank_num <= &&max_num_rows_x.
+ ORDER BY
+       r.rank_num
+';
+END;
+/
+@@&&skip_diagnostics.edb360_9a_pre_one.sql
 
+DEF title = 'SQL with chaning Elapsed Time per Execution (time series)';
+DEF abstract = 'SQL Statements with "Elapsed Time per Execution" changing over time.';
+DEF main_table = 'DBA_HIST_SQLSTAT';
+DEF days_of_history_accessed = '31';
+DEF captured_at_least_x_times = '10';
+DEF captured_at_least_x_days_apart = '5';
+DEF med_elap_microsecs_threshold = '1e4';
+DEF min_slope_threshold = '0.1';
+DEF max_num_rows_x = '20';
+
+COL rank_num FOR 9999 HEA 'Rank';
+COL instance_number_x FOR 9999 HEA 'Inst';
+COL end_time_x HEA 'End Time';
+COL plan_hash_value_x HEA 'Plan|Hash Value';
+COL executions_total_x FOR 999,999 HEA 'Execs|Total';
+COL rows_per_exec FOR A17 HEA 'Rows Per Exec';
+COL et_secs_per_exec FOR A13 HEA 'Elap Secs|Per Exec';
+COL cpu_secs_per_exec FOR A13 HEA 'CPU Secs|Per Exec';
+COL io_secs_per_exec FOR A13 HEA 'IO Secs|Per Exec';
+COL cl_secs_per_exec FOR A13 HEA 'Clus Secs|Per Exec';
+COL ap_secs_per_exec FOR A13 HEA 'App Secs|Per Exec';
+COL cc_secs_per_exec FOR A13 HEA 'Conc Secs|Per Exec';
+COL pl_secs_per_exec FOR A13 HEA 'PLSQL Secs|Per Exec';
+COL ja_secs_per_exec FOR A13 HEA 'Java Secs|Per Exec';
+COL bg_per_exec FOR A17 HEA 'Buffer Gets|Per Exec';
+COL dr_per_exec FOR A17 HEA 'Disk Reads|Per Exec';
+COL dw_per_exec FOR A17 HEA 'Direct Writes|Per Exec';
+COL prr_per_exec FOR A17 HEA 'Phy Read Reqs|Per Exec';
+COL prb_per_exec FOR A17 HEA 'Phy Read Bytes|Per Exec';
+COL pwr_per_exec FOR A17 HEA 'Phy Write Reqs|Per Exec';
+COL pwb_per_exec FOR A17 HEA 'Phy Write Bytes|Per Exec';
+COL ofb_per_exec FOR A17 HEA 'IO Offl  Eleg Bytes|Per Exec';
+COL icb_per_exec FOR A17 HEA 'IO Interc Bytes|Per Exec';
+COL opr_per_exec FOR A17 HEA 'Opt Phy Reads|Per Exec';
+COL unb_per_exec FOR A17 HEA 'Cell Uncomp Bytes|Per Exec';
+COL orb_per_exec FOR A17 HEA 'IO Offl Rtn Bytes|Per Exec';
+
+BEGIN
+  :sql_text := '
+WITH
+per_time AS (
+SELECT /*+ &&sq_fact_hints. */
+       h.dbid,
+       h.sql_id,
+       SYSDATE - CAST(s.end_interval_time AS DATE) days_ago,
+       SUM(h.elapsed_time_total) / SUM(h.executions_total) time_per_exec
+  FROM dba_hist_sqlstat h, 
+       dba_hist_snapshot s
+ WHERE h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND h.dbid = &&edb360_dbid.
+   AND h.executions_total > 0 
+   AND s.snap_id = h.snap_id
+   AND s.dbid = h.dbid
+   AND s.instance_number = h.instance_number
+   AND CAST(s.end_interval_time AS DATE) > SYSDATE - &&days_of_history_accessed. 
+ GROUP BY
+       h.dbid,
+       h.sql_id,
+       SYSDATE - CAST(s.end_interval_time AS DATE)
+),
+avg_time AS (
+SELECT /*+ &&sq_fact_hints. */
+       dbid,
+       sql_id, 
+       MEDIAN(time_per_exec) med_time_per_exec,
+       STDDEV(time_per_exec) std_time_per_exec,
+       AVG(time_per_exec)    avg_time_per_exec,
+       MIN(time_per_exec)    min_time_per_exec,
+       MAX(time_per_exec)    max_time_per_exec       
+  FROM per_time
+ GROUP BY
+       dbid,
+       sql_id
+HAVING COUNT(*) >= &&captured_at_least_x_times. 
+   AND MAX(days_ago) - MIN(days_ago) >= &&captured_at_least_x_days_apart.
+   AND MEDIAN(time_per_exec) > &&med_elap_microsecs_threshold.
+),
+time_over_median AS (
+SELECT /*+ &&sq_fact_hints. */
+       h.dbid,
+       h.sql_id,
+       h.days_ago,
+       (h.time_per_exec / a.med_time_per_exec) time_per_exec_over_med,
+       a.med_time_per_exec,
+       a.std_time_per_exec,
+       a.avg_time_per_exec,
+       a.min_time_per_exec,
+       a.max_time_per_exec
+  FROM per_time h, avg_time a
+ WHERE a.sql_id = h.sql_id
+),
+ranked AS (
+SELECT /*+ &&sq_fact_hints. */
+       RANK () OVER (ORDER BY ABS(REGR_SLOPE(t.time_per_exec_over_med, t.days_ago)) DESC) rank_num,
+       t.dbid,
+       t.sql_id,
+       CASE WHEN REGR_SLOPE(t.time_per_exec_over_med, t.days_ago) > 0 THEN ''IMPROVING'' ELSE ''REGRESSING'' END change,
+       ROUND(REGR_SLOPE(t.time_per_exec_over_med, t.days_ago), 3) slope,
+       ROUND(AVG(t.med_time_per_exec)/1e6, 3) med_secs_per_exec,
+       ROUND(AVG(t.std_time_per_exec)/1e6, 3) std_secs_per_exec,
+       ROUND(AVG(t.avg_time_per_exec)/1e6, 3) avg_secs_per_exec,
+       ROUND(MIN(t.min_time_per_exec)/1e6, 3) min_secs_per_exec,
+       ROUND(MAX(t.max_time_per_exec)/1e6, 3) max_secs_per_exec
+  FROM time_over_median t
+ GROUP BY
+       t.dbid,
+       t.sql_id
+HAVING ABS(REGR_SLOPE(t.time_per_exec_over_med, t.days_ago)) > &&min_slope_threshold.
+)
+SELECT /*+ &&top_level_hints. */
+         r.rank_num
+       , h.sql_id
+       , h.instance_number instance_number_x
+       , TO_CHAR(CAST(s.end_interval_time AS DATE), ''YYYY-MM-DD HH24:MI'') end_time_x
+       , h.plan_hash_value plan_hash_value_x
+       , h.executions_total executions_total_x
+       , LPAD(TO_CHAR(ROUND(h.rows_processed_total / h.executions_total), ''999,999,999,990''), 17) rows_per_exec
+       , LPAD(TO_CHAR(ROUND(h.elapsed_time_total   / h.executions_total / 1e6, 3), ''999,990.000''), 13) et_secs_per_exec
+       , LPAD(TO_CHAR(ROUND(h.cpu_time_total       / h.executions_total / 1e6, 3), ''999,990.000''), 13) cpu_secs_per_exec
+       , LPAD(TO_CHAR(ROUND(h.iowait_total         / h.executions_total / 1e6, 3), ''999,990.000''), 13) io_secs_per_exec
+       , LPAD(TO_CHAR(ROUND(h.clwait_total         / h.executions_total / 1e6, 3), ''999,990.000''), 13) cl_secs_per_exec
+       , LPAD(TO_CHAR(ROUND(h.apwait_total         / h.executions_total / 1e6, 3), ''999,990.000''), 13) ap_secs_per_exec
+       , LPAD(TO_CHAR(ROUND(h.ccwait_total         / h.executions_total / 1e6, 3), ''999,990.000''), 13) cc_secs_per_exec
+       , LPAD(TO_CHAR(ROUND(h.plsexec_time_total   / h.executions_total / 1e6, 3), ''999,990.000''), 13) pl_secs_per_exec
+       , LPAD(TO_CHAR(ROUND(h.javexec_time_total   / h.executions_total / 1e6, 3), ''999,990.000''), 13) ja_secs_per_exec
+       , LPAD(TO_CHAR(ROUND(h.buffer_gets_total    / h.executions_total), ''999,999,999,990''), 17) bg_per_exec
+       , LPAD(TO_CHAR(ROUND(h.disk_reads_total     / h.executions_total), ''999,999,999,990''), 17) dr_per_exec
+       , LPAD(TO_CHAR(ROUND(h.direct_writes_total  / h.executions_total), ''999,999,999,990''), 17) dw_per_exec
+       &&skip_10g., LPAD(TO_CHAR(ROUND(h.physical_read_requests_total   / h.executions_total), ''999,999,999,990''), 17) prr_per_exec
+       &&skip_10g., LPAD(TO_CHAR(ROUND(h.physical_read_bytes_total      / h.executions_total), ''999,999,999,990''), 17) prb_per_exec
+       &&skip_10g., LPAD(TO_CHAR(ROUND(h.physical_write_requests_total  / h.executions_total), ''999,999,999,990''), 17) pwr_per_exec
+       &&skip_10g., LPAD(TO_CHAR(ROUND(h.physical_write_bytes_total     / h.executions_total), ''999,999,999,990''), 17) pwb_per_exec	
+       &&skip_10g., LPAD(TO_CHAR(ROUND(h.io_offload_elig_bytes_total    / h.executions_total), ''999,999,999,990''), 17) ofb_per_exec
+       &&skip_10g., LPAD(TO_CHAR(ROUND(h.io_interconnect_bytes_total    / h.executions_total), ''999,999,999,990''), 17) icb_per_exec
+       &&skip_10g., LPAD(TO_CHAR(ROUND(h.optimized_physical_reads_total / h.executions_total), ''999,999,999,990''), 17) opr_per_exec
+       &&skip_10g., LPAD(TO_CHAR(ROUND(h.cell_uncompressed_bytes_total  / h.executions_total), ''999,999,999,990''), 17) unb_per_exec
+       &&skip_10g., LPAD(TO_CHAR(ROUND(h.io_offload_return_bytes_total  / h.executions_total), ''999,999,999,990''), 17) orb_per_exec
+  FROM ranked r,
+       dba_hist_sqlstat h, 
+       dba_hist_snapshot s
+ WHERE r.rank_num <= &&max_num_rows_x.
+   AND h.sql_id = r.sql_id
+   AND h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND h.dbid = &&edb360_dbid.
+   AND h.executions_total > 0 
+   AND s.snap_id = h.snap_id
+   AND s.dbid = h.dbid
+   AND s.instance_number = h.instance_number
+ ORDER BY
+       r.rank_num,
+       h.sql_id,
+       h.instance_number,
+       s.end_interval_time,
+       h.plan_hash_value
+';
+END;
+/
+@@&&skip_diagnostics.edb360_9a_pre_one.sql
 
