@@ -6,7 +6,7 @@
 --
 -- Author:      Carlos Sierra
 --
--- Version:     v1415 (2014/10/27)
+-- Version:     v1417 (2014/11/10)
 --
 -- Usage:       Collects Requirements from AWR and ASH views, thus it should only be
 --              executed on systems with the Oracle Diagnostics Pack license.
@@ -21,10 +21,15 @@
 --             
 ---------------------------------------------------------------------------------------
 --
-SPO  esp_requirements.log APP;
---WHENEVER OSERROR EXIT;
---WHENEVER SQLERROR EXIT SQL.SQLCODE;
+-- get host name (up to 30, stop before first '.', no special characters)
+COL esp_host_name_short NEW_V esp_host_name_short FOR A30;
+SELECT LOWER(SUBSTR(SYS_CONTEXT('USERENV', 'SERVER_HOST'), 1, 30)) esp_host_name_short FROM DUAL;
+SELECT SUBSTR('&&esp_host_name_short.', 1, INSTR('&&esp_host_name_short..', '.') - 1) esp_host_name_short FROM DUAL;
+SELECT TRANSLATE('&&esp_host_name_short.',
+'abcdefghijklmnopqrstuvwxyz0123456789-_ ''`~!@#$%&*()=+[]{}\|;:",.<>/?'||CHR(0)||CHR(9)||CHR(10)||CHR(13)||CHR(38),
+'abcdefghijklmnopqrstuvwxyz0123456789-_') esp_host_name_short FROM DUAL;
 
+SPO  esp_requirements_&&esp_host_name_short..log APP;
 SET TERM OFF ECHO OFF FEED OFF VER OFF HEA OFF PAGES 0 COLSEP ', ' LIN 32767 TRIMS ON TRIM ON TI OFF TIMI OFF ARRAY 100 NUM 20 SQLBL ON BLO . RECSEP OFF;
 
 ALTER SESSION SET NLS_NUMERIC_CHARACTERS = ".,";
@@ -50,12 +55,14 @@ DEF;
 SELECT 'get_current_time', TO_CHAR(SYSDATE, '&&ecr_date_format.') current_time FROM DUAL
 /
 SPO OFF;
-SPO esp_requirements.csv APP;
+SPO esp_requirements_&&esp_host_name_short..csv APP;
 
--- id
+-- header
 SELECT 'collection_host,collection_key,category,data_element,source,instance_number,inst_id,value' FROM DUAL
 /
-SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'id', 'collector_version', 'v1415', 0, 0, '2014-10-27' FROM DUAL
+
+-- id
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'id', 'collector_version', 'v1417', 0, 0, '2014-11-10' FROM DUAL
 /
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'id', 'collection_date', 'sysdate', 0, 0, TO_CHAR(SYSDATE, '&&ecr_date_format.') FROM DUAL
 /
@@ -1040,12 +1047,12 @@ SELECT /*+ &&ecr_sq_fact_hints. */
        session_state,
        instance_number,
        TO_CHAR(TRUNC(CAST(sample_time AS DATE), 'HH') + (1/24), '&&ecr_date_format.') end_time,
-       MAX(active_sessions) active_sessions_max, -- max or peak
+       MAX(active_sessions) active_sessions_max, -- 100% percentile or max or peak
        PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY active_sessions) active_sessions_99p, -- 99% percentile
-       PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY active_sessions) active_sessions_95p, -- 99% percentile
-       PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY active_sessions) active_sessions_90p, -- 99% percentile
-       PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY active_sessions) active_sessions_75p, -- 99% percentile
-       ROUND(MEDIAN(active_sessions), 1) active_sessions_med, -- median
+       PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY active_sessions) active_sessions_95p, -- 95% percentile
+       PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY active_sessions) active_sessions_90p, -- 90% percentile
+       PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY active_sessions) active_sessions_75p, -- 75% percentile
+       ROUND(MEDIAN(active_sessions), 1) active_sessions_med, -- 50% percentile or median
        ROUND(AVG(active_sessions), 1) active_sessions_avg -- average
   FROM cpu_per_inst_and_sample
  GROUP BY
@@ -1298,9 +1305,10 @@ SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'os_ts', 'physical_memo
        3, 4, 6, 5
 /
 
-SPO OFF;
-HOS zip -qT esp_requirements.zip esp_requirements.csv esp_requirements.log
-SET TERM ON ECHO OFF FEED ON VER ON HEA ON PAGES 14 COLSEP ' ' LIN 80 TRIMS OFF TRIM ON TI OFF TIMI OFF ARRAY 15 NUM 10 SQLBL OFF BLO ON RECSEP WR;
+-- footer
+SELECT 'collection_host,collection_key,category,data_element,source,instance_number,inst_id,value' FROM DUAL
+/
 
---WHENEVER SQLERROR CONTINUE;
---WHENEVER OSERROR CONTINUE;
+SPO OFF;
+HOS zip -qT esp_requirements_&&esp_host_name_short..zip esp_requirements_&&esp_host_name_short..csv esp_requirements_&&esp_host_name_short..log
+SET TERM ON ECHO OFF FEED ON VER ON HEA ON PAGES 14 COLSEP ' ' LIN 80 TRIMS OFF TRIM ON TI OFF TIMI OFF ARRAY 15 NUM 10 SQLBL OFF BLO ON RECSEP WR;

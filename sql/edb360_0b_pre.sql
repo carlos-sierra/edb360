@@ -1,5 +1,10 @@
 --WHENEVER SQLERROR EXIT SQL.SQLCODE;
-SET TERM ON VER OFF FEED OFF ECHO OFF;
+SET TERM ON; 
+SET VER OFF; 
+SET FEED OFF; 
+SET ECHO OFF;
+SET TIM OFF;
+SET TIMI OFF;
 CL COL;
 COL row_num FOR 9999999 HEA '#' PRI;
 -- get dbid
@@ -108,7 +113,7 @@ SELECT NVL(TO_CHAR(MAX(snap_id)), '&&minimum_snap_id.') maximum_snap_id FROM dba
 SELECT '-1' maximum_snap_id FROM DUAL WHERE TRIM('&&maximum_snap_id.') IS NULL;
 
 -- setup
-DEF tool_vrsn = 'v1416 (2014-11-07)';
+DEF tool_vrsn = 'v1417 (2014-11-10)';
 DEF prefix = 'edb360';
 DEF sql_trace_level = '8';
 DEF main_table = '';
@@ -245,7 +250,23 @@ ALTER SESSION SET MAX_DUMP_FILE_SIZE = '1G';
 ALTER SESSION SET TRACEFILE_IDENTIFIER = "&&edb360_tracefile_identifier.";
 --ALTER SESSION SET STATISTICS_LEVEL = 'ALL';
 ALTER SESSION SET EVENTS '10046 TRACE NAME CONTEXT FOREVER, LEVEL &&sql_trace_level.';
-SET TERM OFF HEA ON LIN 32767 NEWP NONE PAGES &&def_max_rows. LONG 32000 LONGC 2000 WRA ON TRIMS ON TRIM ON TI OFF TIMI OFF ARRAY 100 NUM 20 SQLBL ON BLO . RECSEP OFF;
+SET TERM OFF; 
+SET HEA ON; 
+SET LIN 32767; 
+SET NEWP NONE; 
+SET PAGES &&def_max_rows.; 
+SET LONG 32000; 
+SET LONGC 2000; 
+SET WRA ON; 
+SET TRIMS ON; 
+SET TRIM ON; 
+SET TI OFF; 
+SET TIMI OFF; 
+SET ARRAY 100; 
+SET NUM 20; 
+SET SQLBL ON; 
+SET BLO .; 
+SET RECSEP OFF;
 
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

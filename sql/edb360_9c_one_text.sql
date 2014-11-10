@@ -36,7 +36,8 @@ PRO
 PRO &&foot.
 SET LIN 80;
 DESC &&main_table.
-SET HEA OFF LIN 32767;
+SET HEA OFF;
+SET LIN 32767;
 PRINT sql_text_display;
 SET HEA ON;
 PRO &&row_count. rows selected.

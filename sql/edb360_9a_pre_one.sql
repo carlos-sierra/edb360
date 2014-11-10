@@ -1,12 +1,15 @@
 -- setup
-SET VER OFF FEED OFF ECHO OFF;
+SET VER OFF; 
+SET FEED OFF; 
+SET ECHO OFF;
 SELECT TO_CHAR(SYSDATE, 'YYYY-MM-DD/HH24:MI:SS') time_stamp FROM DUAL;
 SELECT TO_CHAR(SYSDATE, 'HH24:MI:SS') hh_mm_ss FROM DUAL;
 SELECT REPLACE(TRANSLATE('&&title.',
 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ''`~!@#$%^*()-_=+[]{}\|;:",.<>/?'||CHR(0)||CHR(9)||CHR(10)||CHR(13)||CHR(38),
 'abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz0123456789_'), '__', '_') title_no_spaces FROM DUAL;
 SELECT '&&common_prefix._&&column_number._&&title_no_spaces.' spool_filename FROM DUAL;
-SET HEA OFF TERM ON;
+SET HEA OFF;
+SET TERM ON;
 
 -- log
 SPO &&edb360_log..txt APP;
@@ -21,7 +24,8 @@ PRINT sql_text;
 PRO &&hh_mm_ss. col:&&column_number.of&&max_col_number.. Computing COUNT(*)...
 EXEC :row_count := 0;
 EXEC :sql_text_display := TRIM(CHR(10) FROM :sql_text)||';';
-SET TIMI ON SERVEROUT ON;
+SET TIMI ON;
+SET SERVEROUT ON;
 BEGIN
   --:sql_text_display := TRIM(CHR(10) FROM :sql_text)||';';
   BEGIN
@@ -34,7 +38,8 @@ BEGIN
   DBMS_OUTPUT.PUT_LINE(TRIM(TO_CHAR(:row_count))||' rows selected.'||CHR(10));
 END;
 /
-SET TIMI OFF SERVEROUT OFF;
+SET TIMI OFF;
+SET SERVEROUT OFF;
 PRO
 SET TERM OFF;
 COL row_count NEW_V row_count NOPRI;

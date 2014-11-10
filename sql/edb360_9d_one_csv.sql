@@ -25,9 +25,11 @@ GET &&common_prefix._query.sql
 SPO &&one_spool_filename..csv;
 
 -- body
-SET PAGES 50000 COLSEP ',';
+SET PAGES 50000;
+SET COLSEP ',';
 /
-SET PAGES &&def_max_rows. COLSEP ' ';
+SET PAGES &&def_max_rows.;
+SET COLSEP ' ';
 
 -- footer
 SPO OFF;
