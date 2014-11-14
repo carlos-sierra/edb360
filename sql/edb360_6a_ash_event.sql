@@ -125,7 +125,7 @@ BEGIN
   :sql_text_backup := '
 WITH
 events AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. */
        CASE h.session_state WHEN ''ON CPU'' THEN h.session_state ELSE h.wait_class||'' "''||h.event||''"'' END timed_event,
        COUNT(*) samples
   FROM dba_hist_active_sess_history h,

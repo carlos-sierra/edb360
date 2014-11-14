@@ -7,10 +7,22 @@ DEF title = 'CBO System Statistics';
 DEF main_table = 'SYS.AUX_STATS$';
 BEGIN
   :sql_text := '
--- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
 SELECT /*+ &&top_level_hints. */
        *
   FROM sys.aux_stats$
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+DEF title = 'CBO System Statistics History';
+DEF main_table = 'SYS.WRI$_OPTSTAT_AUX_HISTORY';
+BEGIN
+  :sql_text := '
+SELECT /*+ &&top_level_hints. */
+       *
+  FROM sys.wri$_optstat_aux_history
+ ORDER BY 1 DESC, 2
 ';
 END;
 /
@@ -402,6 +414,36 @@ SELECT /*+ &&top_level_hints. */
    AND t.table_name = s.table_name
  ORDER BY
        s.owner, s.table_name
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+DEF title = 'SYS Stats for WRH$, WRI$, WRM$ and WRR$ Tables';
+DEF main_table = 'DBA_TABLES';
+BEGIN
+  :sql_text := '
+select /*+ &&top_level_hints. */ 
+table_name, blocks, num_rows, sample_size, last_analyzed
+from dba_tables 
+where owner = ''SYS''
+and table_name like ''WR_$\_%'' escape ''\''
+order by table_name
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+DEF title = 'SYS Stats for WRH$, WRI$, WRM$ and WRR$ Indexes';
+DEF main_table = 'DBA_INDEXES';
+BEGIN
+  :sql_text := '
+select /*+ &&top_level_hints. */ 
+table_name, index_name, blevel, leaf_blocks, distinct_keys, num_rows, sample_size, last_analyzed
+from dba_indexes 
+where owner = ''SYS''
+and table_name like ''WR_$\_%'' escape ''\''
+order by table_name, index_name
 ';
 END;
 /

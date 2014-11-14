@@ -7,7 +7,6 @@ SPO OFF;
 
 COL hh_mm_ss NEW_V hh_mm_ss NOPRI FOR A8;
 SPO 9997_&&common_prefix._top_sql_driver.sql;
-DEF local_hints = 'NO_MERGE(ash) NO_MERGE(snp) FULL(ash) FULL(snp) USE_HASH(ash snp)';
 DECLARE
   l_count NUMBER := 0;
   PROCEDURE put_line(p_line IN VARCHAR2) IS
@@ -48,7 +47,7 @@ BEGIN
 			 UNION ALL
 			SELECT /*+ &&sq_fact_hints. */ sql_id, samples
 			  FROM (
-			SELECT /*+ &&sq_fact_hints. &&local_hints. */
+			SELECT /*+ &&sq_fact_hints. &&ds_hint. */
 			       ash.sql_id,
 				   COUNT(*) samples
 			  FROM dba_hist_active_sess_history ash,
@@ -69,7 +68,7 @@ BEGIN
 			 UNION ALL
 			SELECT /*+ &&sq_fact_hints. */ sql_id, samples
 			  FROM (
-			SELECT /*+ &&sq_fact_hints. &&local_hints. */
+			SELECT /*+ &&sq_fact_hints. &&ds_hint. */
 			       ash.sql_id,
 				   COUNT(*) samples
 			  FROM dba_hist_active_sess_history ash,
@@ -90,7 +89,7 @@ BEGIN
 			 UNION ALL
 			SELECT /*+ &&sq_fact_hints. */ sql_id, samples
 			  FROM (
-			SELECT /*+ &&sq_fact_hints. &&local_hints. */
+			SELECT /*+ &&sq_fact_hints. &&ds_hint. */
 			       ash.sql_id,
 				   COUNT(*) samples
 			  FROM dba_hist_active_sess_history ash,
@@ -111,7 +110,7 @@ BEGIN
 			 UNION ALL
 			SELECT /*+ &&sq_fact_hints. */ sql_id, samples
 			  FROM (
-			SELECT /*+ &&sq_fact_hints. &&local_hints. */
+			SELECT /*+ &&sq_fact_hints. &&ds_hint. */
 			       ash.sql_id,
 				   COUNT(*) samples
 			  FROM dba_hist_active_sess_history ash,
@@ -134,7 +133,7 @@ BEGIN
 			 UNION ALL
 			SELECT /*+ &&sq_fact_hints. */ sql_id, samples
 			  FROM (
-			SELECT /*+ &&sq_fact_hints. &&local_hints. */
+			SELECT /*+ &&sq_fact_hints. &&ds_hint. */
 			       ash.sql_id,
 				   COUNT(*) samples
 			  FROM dba_hist_active_sess_history ash,

@@ -38,11 +38,12 @@ COL aas_queueing FOR 999990.000;
 COL aas_scheduler FOR 999990.000;
 COL aas_system_io FOR 999990.000;
 COL aas_user_io FOR 999990.000;
+
 BEGIN
   :sql_text_backup := '
 WITH
 ash_denorm_2 AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. */
        snap_id,
        dbid,
        instance_number,
@@ -71,7 +72,7 @@ SELECT /*+ &&sq_fact_hints. */
        instance_number
 ),
 ash_denorm_3 AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. */
        a.snap_id,
        a.dbid,
        a.instance_number,
@@ -244,7 +245,7 @@ BEGIN
   :sql_text_backup := '
 WITH
 ash_denorm_2 AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. */
        snap_id,
        dbid,
        instance_number,
@@ -273,7 +274,7 @@ SELECT /*+ &&sq_fact_hints. */
        instance_number
 ),
 ash_denorm_3 AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. */
        a.snap_id,
        a.dbid,
        a.instance_number,

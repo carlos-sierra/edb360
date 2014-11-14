@@ -30,7 +30,7 @@ COL event_name_12 NEW_V event_name_12;
 
 WITH
 events AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. */
        h.wait_class,
        h.event event_name,
        COUNT(*) samples
@@ -90,7 +90,7 @@ BEGIN
   :sql_text_backup2 := '
 WITH
 events AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. */
        SUBSTR(TRIM(h.sql_id||'' ''||h.program||'' ''||
        CASE h.module WHEN h.program THEN NULL ELSE h.module END), 1, 128) source,
        h.dbid,

@@ -312,7 +312,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND current_obj# > 0
 ),
 ash_awr AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. */
        DISTINCT current_obj# 
   FROM dba_hist_active_sess_history
  WHERE sql_plan_operation = ''INDEX''
@@ -1424,7 +1424,6 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
-
 DEF title = 'Libraries calling ANALYZE';
 DEF main_table = 'DBA_SOURCE';
 BEGIN
@@ -1442,5 +1441,17 @@ END;
 -- taking long and of little use, 
 -- enable only if you suspect of ANALYZE been executed by application
 -- @@edb360_9a_pre_one.sql
+
+DEF title = 'Workload Repository Control';
+DEF main_table = 'DBA_HIST_WR_CONTROL';
+BEGIN
+  :sql_text := '
+SELECT /*+ &&top_level_hints. */ 
+       *
+  FROM dba_hist_wr_control
+';
+END;
+/
+@@&&skip_diagnostics.edb360_9a_pre_one.sql
 
 

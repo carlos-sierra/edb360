@@ -113,7 +113,7 @@ SELECT NVL(TO_CHAR(MAX(snap_id)), '&&minimum_snap_id.') maximum_snap_id FROM dba
 SELECT '-1' maximum_snap_id FROM DUAL WHERE TRIM('&&maximum_snap_id.') IS NULL;
 
 -- setup
-DEF tool_vrsn = 'v1417 (2014-11-10)';
+DEF tool_vrsn = 'v1418 (2014-11-14)';
 DEF prefix = 'edb360';
 DEF sql_trace_level = '8';
 DEF main_table = '';
@@ -130,6 +130,7 @@ DEF edb360_tracefile_identifier = '&&common_prefix.';
 DEF copyright = ' (c) 2014';
 DEF top_level_hints = 'NO_MERGE';
 DEF sq_fact_hints = 'MATERIALIZE NO_MERGE';
+DEF ds_hint = 'DYNAMIC_SAMPLING(4)';
 DEF def_max_rows = '10000';
 DEF max_rows = '1e4';
 DEF exclusion_list = "(''ANONYMOUS'',''APEX_030200'',''APEX_040000'',''APEX_SSO'',''APPQOSSYS'',''CTXSYS'',''DBSNMP'',''DIP'',''EXFSYS'',''FLOWS_FILES'',''MDSYS'',''OLAPSYS'',''ORACLE_OCM'',''ORDDATA'',''ORDPLUGINS'',''ORDSYS'',''OUTLN'',''OWBSYS'')";

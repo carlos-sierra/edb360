@@ -9,7 +9,7 @@ BEGIN
   :sql_text_backup := '
 WITH
 events AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. */
        h.user_id,
        COUNT(*) samples
   FROM dba_hist_active_sess_history h,

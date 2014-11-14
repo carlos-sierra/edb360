@@ -185,7 +185,7 @@ BEGIN
   :sql_text := '
 WITH 
 cpu_per_inst_and_sample AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. */
        dbid,
        instance_number,
        snap_id,
@@ -204,7 +204,7 @@ SELECT /*+ &&sq_fact_hints. */
        sample_id
 ),
 cpu_per_inst AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. */
        c.dbid,
        di.db_name,
        di.host_name,
@@ -351,7 +351,7 @@ BEGIN
   :sql_text_backup := '
 WITH 
 cpu_per_inst_and_sample AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. */
        instance_number,
        snap_id,
        sample_id,
@@ -524,7 +524,7 @@ BEGIN
   :sql_text_backup := '
 WITH 
 cpu_per_inst_and_sample AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. */
        instance_number,
        snap_id,
        sample_id,

@@ -9,7 +9,7 @@ BEGIN
   :sql_text_backup := '
 WITH
 events AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. */
        COUNT(*) samples,
        e.owner plsql_entry_owner,
        e.object_name plsql_entry_object_name,

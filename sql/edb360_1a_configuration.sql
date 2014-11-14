@@ -296,3 +296,21 @@ ORDER BY originating_timestamp DESC
 END;
 /
 @@&&skip_10g.edb360_9a_pre_one.sql
+
+DEF title = 'SQLTXPLAIN Version';
+DEF main_table = 'SQLTXPLAIN.SQLI$_PARAMETER';
+BEGIN
+  :sql_text := '
+SELECT /*+ &&top_level_hints. */ 
+sqltxplain.sqlt$a.get_param(''tool_version'') sqlt_version,
+sqltxplain.sqlt$a.get_param(''tool_date'') sqlt_version_date,
+sqltxplain.sqlt$a.get_param(''install_date'') install_date
+FROM DUAL
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+
+
+

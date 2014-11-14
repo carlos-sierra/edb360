@@ -124,7 +124,7 @@ BEGIN
   :sql_text_backup := '
 WITH
 events AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. */
        NVL(h.sql_id, ''null'') sql_id,
        h.dbid,
        COUNT(*) samples
