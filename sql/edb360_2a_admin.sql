@@ -803,7 +803,7 @@ SELECT /*+ &&sq_fact_hints. */
        SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''21'', 1, 0)) h21,
        SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''22'', 1, 0)) h22,
        SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''23'', 1, 0)) h23,
-       COUNT(*) day
+       COUNT(*) days
   FROM v$log_history
  GROUP BY
        thread#,
@@ -1453,5 +1453,67 @@ SELECT /*+ &&top_level_hints. */
 END;
 /
 @@&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF title = 'SYSAUX Occupants';
+DEF main_table = 'V$SYSAUX_OCCUPANTS';
+BEGIN
+  :sql_text := '
+SELECT /*+ &&top_level_hints. */ 
+       v.*, ROUND(v.space_usage_kbytes / POWER(2, 20), 3) space_usage_gbs
+  FROM v$sysaux_occupants v
+ ORDER BY 1
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+DEF title = 'ASH Retention ';
+DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
+BEGIN
+  :sql_text := '
+-- from http://jhdba.wordpress.com/tag/purge-wrh-tables/
+SELECT /*+ &&top_level_hints. */ 
+ sysdate - a.sample_time ash,
+sysdate - s.begin_interval_time snap,
+c.RETENTION
+from sys.wrm$_wr_control c,
+(
+select db.dbid,
+min(w.sample_time) sample_time
+from sys.v_$database db,
+sys.Wrh$_active_session_history w
+where w.dbid = db.dbid group by db.dbid
+) a,
+(
+select db.dbid,
+min(r.begin_interval_time) begin_interval_time
+from sys.v_$database db,
+sys.wrm$_snapshot r
+where r.dbid = db.dbid
+group by db.dbid
+) s
+where a.dbid = s.dbid
+and c.dbid = a.dbid
+';
+END;
+/
+@@&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF title = 'WRH$ Partitions ';
+DEF main_table = 'DBA_TAB_PARTITIONS';
+BEGIN
+  :sql_text := '
+-- from http://jhdba.wordpress.com/tag/purge-wrh-tables/
+select table_name, count(*)
+from dba_tab_partitions
+where table_name like ''WRH$%''
+and table_owner = ''SYS''
+group by table_name
+order by 1
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
 
 
