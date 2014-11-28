@@ -861,7 +861,7 @@ SELECT /*+ &&sq_fact_hints. */
        SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''21'', 1, 0)) h21,
        SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''22'', 1, 0)) h22,
        SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''23'', 1, 0)) h23,
-       COUNT(*) days
+       COUNT(*) per_day
   FROM v$log_history
  GROUP BY
        thread#,
