@@ -13,24 +13,24 @@ COL version FOR A17;
 COL aas_on_cpu_and_resmgr_peak    FOR 999999999999990.0 HEA "CPU and RESMGR Peak";
 COL aas_on_cpu_peak               FOR 999999999999990.0 HEA "CPU Peak";
 COL aas_resmgr_cpu_quantum_peak   FOR 999999999999990.0 HEA "RESMGR Peak";
-COL aas_on_cpu_and_resmgr_9999    FOR 999999999999990.0 HEA "CPU and RESMGR 99.99%";
-COL aas_on_cpu_9999               FOR 999999999999990.0 HEA "CPU 99.99%";
-COL aas_resmgr_cpu_quantum_9999   FOR 999999999999990.0 HEA "RESMGR 99.99%";
-COL aas_on_cpu_and_resmgr_999     FOR 999999999999990.0 HEA "CPU and RESMGR 99.9%";
-COL aas_on_cpu_999                FOR 999999999999990.0 HEA "CPU 99.9%";
-COL aas_resmgr_cpu_quantum_999    FOR 999999999999990.0 HEA "RESMGR 99.9%";
-COL aas_on_cpu_and_resmgr_99      FOR 999999999999990.0 HEA "CPU and RESMGR 99%";
-COL aas_on_cpu_99                 FOR 999999999999990.0 HEA "CPU 99%";
-COL aas_resmgr_cpu_quantum_99     FOR 999999999999990.0 HEA "RESMGR 99%";
-COL aas_on_cpu_and_resmgr_95      FOR 999999999999990.0 HEA "CPU and RESMGR 95%";
-COL aas_on_cpu_95                 FOR 999999999999990.0 HEA "CPU 95%";
-COL aas_resmgr_cpu_quantum_95     FOR 999999999999990.0 HEA "RESMGR 95%";
-COL aas_on_cpu_and_resmgr_90      FOR 999999999999990.0 HEA "CPU and RESMGR 90%";
-COL aas_on_cpu_90                 FOR 999999999999990.0 HEA "CPU 90%";
-COL aas_resmgr_cpu_quantum_90     FOR 999999999999990.0 HEA "RESMGR 90%";
-COL aas_on_cpu_and_resmgr_75      FOR 999999999999990.0 HEA "CPU and RESMGR 75%";
-COL aas_on_cpu_75                 FOR 999999999999990.0 HEA "CPU 75%";
-COL aas_resmgr_cpu_quantum_75     FOR 999999999999990.0 HEA "RESMGR 75%";
+COL aas_on_cpu_and_resmgr_9999    FOR 999999999999990.0 HEA "CPU and RESMGR 99.99th";
+COL aas_on_cpu_9999               FOR 999999999999990.0 HEA "CPU 99.99th";
+COL aas_resmgr_cpu_quantum_9999   FOR 999999999999990.0 HEA "RESMGR 99.99th";
+COL aas_on_cpu_and_resmgr_999     FOR 999999999999990.0 HEA "CPU and RESMGR 99.9th";
+COL aas_on_cpu_999                FOR 999999999999990.0 HEA "CPU 99.9th";
+COL aas_resmgr_cpu_quantum_999    FOR 999999999999990.0 HEA "RESMGR 99.9th";
+COL aas_on_cpu_and_resmgr_99      FOR 999999999999990.0 HEA "CPU and RESMGR 99th";
+COL aas_on_cpu_99                 FOR 999999999999990.0 HEA "CPU 99th";
+COL aas_resmgr_cpu_quantum_99     FOR 999999999999990.0 HEA "RESMGR 99th";
+COL aas_on_cpu_and_resmgr_95      FOR 999999999999990.0 HEA "CPU and RESMGR 95th";
+COL aas_on_cpu_95                 FOR 999999999999990.0 HEA "CPU 95th";
+COL aas_resmgr_cpu_quantum_95     FOR 999999999999990.0 HEA "RESMGR 95th";
+COL aas_on_cpu_and_resmgr_90      FOR 999999999999990.0 HEA "CPU and RESMGR 90th";
+COL aas_on_cpu_90                 FOR 999999999999990.0 HEA "CPU 90th";
+COL aas_resmgr_cpu_quantum_90     FOR 999999999999990.0 HEA "RESMGR 90th";
+COL aas_on_cpu_and_resmgr_75      FOR 999999999999990.0 HEA "CPU and RESMGR 75th";
+COL aas_on_cpu_75                 FOR 999999999999990.0 HEA "CPU 75th";
+COL aas_resmgr_cpu_quantum_75     FOR 999999999999990.0 HEA "RESMGR 75th";
 COL aas_on_cpu_and_resmgr_median  FOR 999999999999990.0 HEA "CPU and RESMGR MEDIAN";
 COL aas_on_cpu_median             FOR 999999999999990.0 HEA "CPU MEDIAN";
 COL aas_resmgr_cpu_quantum_median FOR 999999999999990.0 HEA "RESMGR MEDIAN";
@@ -62,7 +62,7 @@ sub_totals AS (
 SELECT /*+ &&sq_fact_hints. */
        d.dbid,
        d.name db_name,
-       i.host_name,
+       LOWER(SUBSTR(i.host_name||''.'', 1, INSTR(i.host_name||''.'', ''.'') - 1)) host_name,
        i.instance_number,
        i.instance_name,
        MAX(c.aas_on_cpu_and_resmgr) aas_on_cpu_and_resmgr_peak,
@@ -207,7 +207,7 @@ cpu_per_inst AS (
 SELECT /*+ &&sq_fact_hints. &&ds_hint. */
        c.dbid,
        di.db_name,
-       di.host_name,
+       LOWER(SUBSTR(di.host_name||''.'', 1, INSTR(di.host_name||''.'', ''.'') - 1)) host_name,
        c.instance_number,
        di.instance_name,
        MAX(c.aas_on_cpu_and_resmgr) aas_on_cpu_and_resmgr_peak,
@@ -505,10 +505,10 @@ DEF chartype = 'LineChart';
 DEF stacked = '';
 DEF vaxis = 'Sessions "ON CPU"';
 DEF tit_01 = 'Maximum (peak)';
-DEF tit_02 = '99% Percentile';
-DEF tit_03 = '95% Percentile';
-DEF tit_04 = '90% Percentile';
-DEF tit_05 = '75% Percentile';
+DEF tit_02 = '99th Percentile';
+DEF tit_03 = '95th Percentile';
+DEF tit_04 = '90th Percentile';
+DEF tit_05 = '75th Percentile';
 DEF tit_06 = 'Median';
 DEF tit_07 = 'Average';
 DEF tit_08 = '';
@@ -692,7 +692,7 @@ SELECT /*+ &&sq_fact_hints. */
        d.dbid,
        d.name db_name,
        i.inst_id,
-       i.host_name,
+       LOWER(SUBSTR(i.host_name||''.'', 1, INSTR(i.host_name||''.'', ''.'') - 1)) host_name,
        i.instance_number,
        i.instance_name,
        SUM(CASE p.name WHEN ''memory_target'' THEN TO_NUMBER(value) END) memory_target,
@@ -922,7 +922,7 @@ par AS (
 SELECT /*+ &&sq_fact_hints. */
        p.dbid,
        di.db_name,
-       di.host_name,
+       LOWER(SUBSTR(di.host_name||''.'', 1, INSTR(di.host_name||''.'', ''.'') - 1)) host_name,
        p.instance_number,
        di.instance_name,
        SUM(CASE p.parameter_name WHEN ''memory_target'' THEN TO_NUMBER(p.value) ELSE 0 END) memory_target,
@@ -1027,7 +1027,7 @@ no_mm AS (
 SELECT /*+ &&sq_fact_hints. */
        pga.dbid,
        pga.db_name,
-       pga.host_name,
+       LOWER(SUBSTR(pga.host_name||''.'', 1, INSTR(pga.host_name||''.'', ''.'') - 1)) host_name,
        pga.instance_number,
        pga.instance_name,
        sga_max.bytes max_sga,
@@ -1484,7 +1484,7 @@ sysstat_io AS (
 SELECT /*+ &&sq_fact_hints. */
        d.dbid,
        d.name db_name,
-       i.host_name,
+       LOWER(SUBSTR(i.host_name||''.'', 1, INSTR(i.host_name||''.'', ''.'') - 1)) host_name,
        h.instance_number,
        i.instance_name,
        h.snap_id,

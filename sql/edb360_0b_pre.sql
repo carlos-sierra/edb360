@@ -82,6 +82,9 @@ SELECT version db_version FROM v$instance;
 DEF skip_10g = '';
 COL skip_10g NEW_V skip_10g;
 SELECT '--' skip_10g FROM v$instance WHERE version LIKE '10%';
+DEF skip_11r1 = '';
+COL skip_11r1 NEW_V skip_11r1;
+SELECT '--' skip_11r1 FROM v$instance WHERE version LIKE '11.1%';
 
 -- get average number of CPUs
 COL avg_cpu_count NEW_V avg_cpu_count FOR A3;
@@ -113,7 +116,8 @@ SELECT NVL(TO_CHAR(MAX(snap_id)), '&&minimum_snap_id.') maximum_snap_id FROM dba
 SELECT '-1' maximum_snap_id FROM DUAL WHERE TRIM('&&maximum_snap_id.') IS NULL;
 
 -- setup
-DEF tool_vrsn = 'v1418 (2014-11-14)';
+DEF tool_vYYNN = 'v1419';
+DEF tool_vrsn = '&&tool_vYYNN. (2014-11-28)';
 DEF prefix = 'edb360';
 DEF sql_trace_level = '8';
 DEF main_table = '';
@@ -283,7 +287,7 @@ SPO &&main_report_name..html;
 @@edb360_0d_html_header.sql
 PRO </head>
 PRO <body>
-PRO <h1><a href="http://www.enkitec.com" target="_blank">Enkitec</a>: DataBase 360-degree view <em>(<a href="http://www.enkitec.com/products/edb360" target="_blank">edb360</a>)</em></h1>
+PRO <h1><a href="http://www.enkitec.com" target="_blank">Enkitec</a>: DataBase 360-degree view <em>(<a href="http://www.enkitec.com/products/edb360" target="_blank">edb360</a>)</em> &&tool_vYYNN.</h1>
 PRO
 PRO <pre>
 PRO dbname:&&database_name_short. version:&&db_version. host:&&host_name_short. license:&&license_pack. days:&&history_days. today:&&time_stamp.

@@ -1,4 +1,4 @@
-EDB360 v1418 (2014-11-14) by Carlos Sierra
+EDB360 v1419 (2014-11-28) by Carlos Sierra
 
 EDB360 is a "free to use" tool to perform an initial assessment of a remote system. 
 It gives a glance of a database state. It also helps to document any findings.
@@ -33,10 +33,14 @@ Steps
 
 Notes
 ~~~~~
-1. If you need to execute db360 against all databases in host use then run_db360.sh
+1. If you need to execute edb360 against all databases in host use then run_db360.sh
+
+   $ unzip edb360.zip
+   $ cd edb360
+   $ sh run_db360.sh
 
 2. If you need to execute only a portion of edb360 (i.e. resources and os stats) use 
-   these commands:
+   these commands. Notice 0b_pre and 0c_post scripts.
 
    SQL> @sql/edb360_0b_pre.sql T 31
    SQL> @sql/edb360_1d_resources.sql
@@ -45,7 +49,7 @@ Notes
 
 3. If you decide to include SQLHC from MOS 1366133.1, be aware that sqlhc.sql uses
    global temporary table plan_table as staging repository, so it has some inserts into
-   it and a rollback.
+   it and a rollback. Just place sqlhc.sql inside the edb360/sql directory.
 
 ****************************************************************************************
    

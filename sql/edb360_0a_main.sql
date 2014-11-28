@@ -71,6 +71,7 @@ SPO OFF;
 @@&&skip_diagnostics.edb360_4e_time_model_comp.sql
 @@&&skip_diagnostics.&&skip_10g.edb360_4f_io_waits.sql
 @@&&skip_diagnostics.&&skip_10g.edb360_4g_io_waits_top.sql
+@@edb360_4h_parallel_execution.sql
 
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

@@ -105,7 +105,7 @@ BEGIN
   l_line := l_line||']';
   DBMS_OUTPUT.PUT_LINE(l_line);
   --OPEN cur FOR :sql_text;
-  l_sql_text := DBMS_LOB.SUBSTR(:sql_text, 32767, 1); -- needed for 10g
+  l_sql_text := DBMS_LOB.SUBSTR(:sql_text); -- needed for 10g
   OPEN cur FOR l_sql_text; -- needed for 10g
   LOOP
     FETCH cur INTO l_snap_id, l_begin_time, l_end_time,

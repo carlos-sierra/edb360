@@ -6,7 +6,7 @@ SPO OFF;
 DEF main_table = 'DBA_HIST_SGASTAT';
 DEF chartype = 'LineChart';
 DEF stacked = '';
-DEF vaxis = 'SGA Statistics in Bytes';
+DEF vaxis = 'SGA Statistics in GBs';
 DEF vbaseline = '';
 DEF tit_01 = 'Total SGA allocated';
 DEF tit_02 = 'Fixed SGA';
@@ -90,15 +90,15 @@ SELECT /*+ &&sq_fact_hints. */
 SELECT snap_id,
        TO_CHAR(MIN(begin_interval_time), ''YYYY-MM-DD HH24:MI'') begin_time,
        TO_CHAR(MIN(end_interval_time), ''YYYY-MM-DD HH24:MI'') end_time,
-       SUM(sga_total) sga_total,
-       SUM(fixed_sga) fixed_sga,
-       SUM(buffer_cache) buffer_cache,
-       SUM(log_buffer) log_buffer,
-       SUM(shared_io_pool) shared_io_pool,
-       SUM(shared_pool) shared_pool,
-       SUM(large_pool) large_pool,
-       SUM(java_pool) java_pool,
-       SUM(streams_pool) streams_pool,
+       ROUND(SUM(sga_total) / POWER(2, 30), 3) sga_total,
+       ROUND(SUM(fixed_sga) / POWER(2, 30), 3) fixed_sga,
+       ROUND(SUM(buffer_cache) / POWER(2, 30), 3) buffer_cache,
+       ROUND(SUM(log_buffer) / POWER(2, 30), 3) log_buffer,
+       ROUND(SUM(shared_io_pool) / POWER(2, 30), 3) shared_io_pool,
+       ROUND(SUM(shared_pool) / POWER(2, 30), 3) shared_pool,
+       ROUND(SUM(large_pool) / POWER(2, 30), 3) large_pool,
+       ROUND(SUM(java_pool) / POWER(2, 30), 3) java_pool,
+       ROUND(SUM(streams_pool) / POWER(2, 30), 3) streams_pool,
        0 dummy_10,
        0 dummy_11,
        0 dummy_12,

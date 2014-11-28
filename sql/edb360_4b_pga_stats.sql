@@ -6,7 +6,7 @@ SPO OFF;
 DEF main_table = 'DBA_HIST_PGASTAT';
 DEF chartype = 'LineChart';
 DEF stacked = '';
-DEF vaxis = 'PGA Statistics in Bytes';
+DEF vaxis = 'PGA Statistics in GBs';
 DEF vbaseline = '';
 DEF tit_01 = 'PGA memory freed back to OS';
 DEF tit_02 = 'aggregate PGA auto target';
@@ -140,20 +140,20 @@ SELECT /*+ &&sq_fact_hints. */
 SELECT snap_id,
        TO_CHAR(MIN(begin_interval_time), ''YYYY-MM-DD HH24:MI'') begin_time,
        TO_CHAR(MIN(end_interval_time), ''YYYY-MM-DD HH24:MI'') end_time,
-       SUM(pga_mem_freed_to_os) pga_mem_freed_to_os,
-       SUM(aggr_pga_auto_target) aggr_pga_auto_target,
-       SUM(aggr_pga_target_param) aggr_pga_target_param,
-       SUM(bytes_processed) bytes_processed,
-       SUM(extra_bytes_rw) extra_bytes_rw,
-       SUM(global_memory_bound) global_memory_bound,
-       SUM(max_pga_allocated) max_pga_allocated,
-       SUM(max_pga_used_aut_wa) max_pga_used_aut_wa,
-       SUM(max_pga_used_man_wa) max_pga_used_man_wa,
-       SUM(tot_pga_allocated) tot_pga_allocated,
-       SUM(tot_pga_inuse) tot_pga_inuse,
-       SUM(tot_pga_used_aut_wa) tot_pga_used_aut_wa,
-       SUM(tot_pga_used_man_wa) tot_pga_used_man_wa,
-       SUM(tot_freeable_pga_mem) tot_freeable_pga_mem,
+       ROUND(SUM(pga_mem_freed_to_os) / POWER(2, 30), 3) pga_mem_freed_to_os,
+       ROUND(SUM(aggr_pga_auto_target) / POWER(2, 30), 3) aggr_pga_auto_target,
+       ROUND(SUM(aggr_pga_target_param) / POWER(2, 30), 3) aggr_pga_target_param,
+       ROUND(SUM(bytes_processed) / POWER(2, 30), 3) bytes_processed,
+       ROUND(SUM(extra_bytes_rw) / POWER(2, 30), 3) extra_bytes_rw,
+       ROUND(SUM(global_memory_bound) / POWER(2, 30), 3) global_memory_bound,
+       ROUND(SUM(max_pga_allocated) / POWER(2, 30), 3) max_pga_allocated,
+       ROUND(SUM(max_pga_used_aut_wa) / POWER(2, 30), 3) max_pga_used_aut_wa,
+       ROUND(SUM(max_pga_used_man_wa) / POWER(2, 30), 3) max_pga_used_man_wa,
+       ROUND(SUM(tot_pga_allocated) / POWER(2, 30), 3) tot_pga_allocated,
+       ROUND(SUM(tot_pga_inuse) / POWER(2, 30), 3) tot_pga_inuse,
+       ROUND(SUM(tot_pga_used_aut_wa) / POWER(2, 30), 3) tot_pga_used_aut_wa,
+       ROUND(SUM(tot_pga_used_man_wa) / POWER(2, 30), 3) tot_pga_used_man_wa,
+       ROUND(SUM(tot_freeable_pga_mem) / POWER(2, 30), 3) tot_freeable_pga_mem,
        0 dummy_15
   FROM pgastat_delta
  GROUP BY

@@ -494,8 +494,8 @@ SELECT /*+ &&sq_fact_hints. */
        ROUND(100 * os_cpu_wait_time_secs / num_cpus / interval_secs, 1) os_cpu_wait_time_perc,
        ROUND(100 * rsrc_mgr_cpu_wait_time_secs / num_cpus / interval_secs, 1) rsrc_mgr_cpu_wait_time_perc,
        ROUND(100 * iowait_time_secs / num_cpus / interval_secs, 1) iowait_time_perc,
-       vm_in_bytes,
-       vm_out_bytes
+       ROUND(vm_in_bytes / POWER(2, 30), 3) vm_in_bytes,
+       ROUND(vm_out_bytes / POWER(2, 30), 3) vm_out_bytes
   FROM osstat_delta
 ),
 osstat_denorm_3 AS (
@@ -599,7 +599,7 @@ COL inst_08 FOR 999999999999990;
 
 DEF skip_lch = '';
 DEF title = 'Virtual Memory (VM) Pages IN per Instance';
-DEF vaxis = 'Virtual Memory Pages IN (Bytes)';
+DEF vaxis = 'Virtual Memory Pages IN (GBs)';
 DEF vbaseline = '';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name@_perc', 'vm_in_bytes');
 EXEC :sql_text := REPLACE(:sql_text, '@stat_name@', 'vm_in_bytes');
@@ -607,7 +607,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@stat_name@', 'vm_in_bytes');
 
 DEF skip_lch = '';
 DEF title = 'Virtual Memory (VM) Pages OUT per Instance';
-DEF vaxis = 'Virtual Memory Pages OUT (Bytes)';
+DEF vaxis = 'Virtual Memory Pages OUT (GBs)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name@_perc', 'vm_out_bytes');
 EXEC :sql_text := REPLACE(:sql_text, '@stat_name@', 'vm_out_bytes');
 @@&&skip_diagnostics.edb360_9a_pre_one.sql

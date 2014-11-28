@@ -15,7 +15,7 @@ SELECT d.dbid,
        i.inst_id,
        i.instance_number,
        i.instance_name,
-       i.host_name,
+       LOWER(SUBSTR(i.host_name||''.'', 1, INSTR(i.host_name||''.'', ''.'') - 1)) host_name,
        p.value cpu_count
   FROM v$database d,
        gv$instance i,

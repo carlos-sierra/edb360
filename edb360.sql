@@ -19,7 +19,7 @@
 *****************************************************************************************/
 PRO Please wait ...
 @@sql/esp_collect_requirements.sql
-HOS zip -qmT esp_requirements.zip esp_requirements.csv esp_requirements.log
+HOS zip -qmT esp_requirements_&&esp_host_name_short..zip esp_requirements_&&esp_host_name_short..csv esp_requirements_&&esp_host_name_short..log cpuinfo_model_name.txt
 @@sql/edb360_0a_main.sql
-HOS zip -qmT &&main_compressed_filename._&&file_creation_time. esp_requirements.zip 
+HOS zip -qmT &&main_compressed_filename._&&file_creation_time. esp_requirements_&&esp_host_name_short..zip 
 HOS unzip -l &&main_compressed_filename._&&file_creation_time.

@@ -119,7 +119,7 @@ SELECT SUM(samples) samples,
 SELECT e.source,
        e.samples,
        ROUND(100 * e.samples / t.samples, 1) percent,
-       (SELECT DBMS_LOB.SUBSTR(s.sql_text, 1000, 1) FROM dba_hist_sqltext s WHERE s.sql_id = SUBSTR(e.source, 1, 13) AND s.dbid = e.dbid AND ROWNUM = 1) sql_text
+       (SELECT DBMS_LOB.SUBSTR(s.sql_text, 4000) FROM dba_hist_sqltext s WHERE s.sql_id = SUBSTR(e.source, 1, 13) AND s.dbid = e.dbid AND ROWNUM = 1) sql_text
   FROM events e,
        total t
  WHERE ROWNUM <= &&slices.

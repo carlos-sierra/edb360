@@ -22,7 +22,7 @@ PRO &&hh_mm_ss. &&title.&&title_suffix.
 -- count
 PRINT sql_text;
 PRO &&hh_mm_ss. col:&&column_number.of&&max_col_number.. Computing COUNT(*)...
-EXEC :row_count := 0;
+EXEC :row_count := -1;
 EXEC :sql_text_display := TRIM(CHR(10) FROM :sql_text)||';';
 SET TIMI ON;
 SET SERVEROUT ON;

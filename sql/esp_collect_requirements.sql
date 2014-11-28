@@ -6,7 +6,7 @@
 --
 -- Author:      Carlos Sierra
 --
--- Version:     v1417 (2014/11/10)
+-- Version:     v1419 (2014/11/28)
 --
 -- Usage:       Collects Requirements from AWR and ASH views, thus it should only be
 --              executed on systems with the Oracle Diagnostics Pack license.
@@ -21,6 +21,7 @@
 --             
 ---------------------------------------------------------------------------------------
 --
+SET TERM OFF ECHO OFF FEED OFF VER OFF HEA OFF PAGES 0 COLSEP ', ' LIN 32767 TRIMS ON TRIM ON TI OFF TIMI OFF ARRAY 100 NUM 20 SQLBL ON BLO . RECSEP OFF;
 -- get host name (up to 30, stop before first '.', no special characters)
 COL esp_host_name_short NEW_V esp_host_name_short FOR A30;
 SELECT LOWER(SUBSTR(SYS_CONTEXT('USERENV', 'SERVER_HOST'), 1, 30)) esp_host_name_short FROM DUAL;
@@ -29,8 +30,11 @@ SELECT TRANSLATE('&&esp_host_name_short.',
 'abcdefghijklmnopqrstuvwxyz0123456789-_ ''`~!@#$%&*()=+[]{}\|;:",.<>/?'||CHR(0)||CHR(9)||CHR(10)||CHR(13)||CHR(38),
 'abcdefghijklmnopqrstuvwxyz0123456789-_') esp_host_name_short FROM DUAL;
 
+DEF skip_on_10g = '';
+COL skip_on_10g NEW_V skip_on_10g;
+SELECT '--' skip_on_10g FROM v$instance WHERE version LIKE '10%';
+
 SPO  esp_requirements_&&esp_host_name_short..log APP;
-SET TERM OFF ECHO OFF FEED OFF VER OFF HEA OFF PAGES 0 COLSEP ', ' LIN 32767 TRIMS ON TRIM ON TI OFF TIMI OFF ARRAY 100 NUM 20 SQLBL ON BLO . RECSEP OFF;
 
 ALTER SESSION SET NLS_NUMERIC_CHARACTERS = ".,";
 ALTER SESSION SET NLS_SORT = 'BINARY';
@@ -62,7 +66,7 @@ SELECT 'collection_host,collection_key,category,data_element,source,instance_num
 /
 
 -- id
-SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'id', 'collector_version', 'v1417', 0, 0, '2014-11-10' FROM DUAL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'id', 'collector_version', 'v1419', 0, 0, '2014-11-28' FROM DUAL
 /
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'id', 'collection_date', 'sysdate', 0, 0, TO_CHAR(SYSDATE, '&&ecr_date_format.') FROM DUAL
 /
@@ -1014,7 +1018,7 @@ SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf', 'w_mbps_av
 /
 
 -- rman
-SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'rman', status, TO_CHAR(end_time, '&&ecr_date_format.'), 0, 0, ROUND(output_bytes / POWER(2, 30), 3) value FROM v$rman_backup_job_details ORDER BY end_time
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'rman', status, TO_CHAR(end_time, '&&ecr_date_format.'), 0, 0, ROUND(output_bytes / POWER(2, 30), 3) value FROM v$rman_backup_job_details WHERE '&&skip_on_10g.' IS NULL ORDER BY end_time
 /
 
 -- os stats
@@ -1310,5 +1314,6 @@ SELECT 'collection_host,collection_key,category,data_element,source,instance_num
 /
 
 SPO OFF;
-HOS zip -qT esp_requirements_&&esp_host_name_short..zip esp_requirements_&&esp_host_name_short..csv esp_requirements_&&esp_host_name_short..log
+HOS cat /proc/cpuinfo | grep -i name | sort | uniq >> cpuinfo_model_name.txt
+HOS zip -qT esp_requirements_&&esp_host_name_short..zip esp_requirements_&&esp_host_name_short..csv esp_requirements_&&esp_host_name_short..log cpuinfo_model_name.txt
 SET TERM ON ECHO OFF FEED ON VER ON HEA ON PAGES 14 COLSEP ' ' LIN 80 TRIMS OFF TRIM ON TI OFF TIMI OFF ARRAY 15 NUM 10 SQLBL OFF BLO ON RECSEP WR;

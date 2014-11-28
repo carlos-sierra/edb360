@@ -462,6 +462,63 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+DEF title = 'Tables on KEEP Buffer Pool';
+DEF main_table = 'DBA_TABLES';
+BEGIN
+  :sql_text := '
+SELECT /*+ &&top_level_hints. */
+       owner,
+       table_name
+  FROM dba_tables
+ WHERE owner NOT IN &&exclusion_list.
+   AND owner NOT IN &&exclusion_list2.
+   AND buffer_pool = ''KEEP''
+ ORDER BY
+       owner,
+       table_name
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+DEF title = 'Tables on KEEP Flash Cache';
+DEF main_table = 'DBA_TABLES';
+BEGIN
+  :sql_text := '
+SELECT /*+ &&top_level_hints. */
+       owner,
+       table_name
+  FROM dba_tables
+ WHERE owner NOT IN &&exclusion_list.
+   AND owner NOT IN &&exclusion_list2.
+   AND flash_cache = ''KEEP''
+ ORDER BY
+       owner,
+       table_name
+';
+END;
+/
+@@&&skip_10g.&&skip_11r1.edb360_9a_pre_one.sql
+
+DEF title = 'Tables on KEEP Cell Flash Cache';
+DEF main_table = 'DBA_TABLES';
+BEGIN
+  :sql_text := '
+SELECT /*+ &&top_level_hints. */
+       owner,
+       table_name
+  FROM dba_tables
+ WHERE owner NOT IN &&exclusion_list.
+   AND owner NOT IN &&exclusion_list2.
+   AND cell_flash_cache = ''KEEP''
+ ORDER BY
+       owner,
+       table_name
+';
+END;
+/
+@@&&skip_10g.&&skip_11r1.edb360_9a_pre_one.sql
+
 DEF title = 'Degree of Parallelism DOP on Tables';
 DEF main_table = 'DBA_TABLES';
 BEGIN
@@ -677,7 +734,8 @@ SELECT /*+ &&top_level_hints. */
 ';
 END;
 /
-@@edb360_9a_pre_one.sql
+-- skipped on 10g due to bug as per mos 420200.1
+@@&&skip_10g.edb360_9a_pre_one.sql
 
 DEF title = 'Block Corruption';
 DEF main_table = 'V$DATABASE_BLOCK_CORRUPTION';
@@ -1077,7 +1135,7 @@ END;
 
 DEF title = 'SQL using Literals or many children (by COUNT)';
 DEF main_table = 'GV$SQL';
-COL force_matching_signature FOR 99999999999999999999;
+COL force_matching_signature FOR 99999999999999999999 HEA "SIGNATURE";
 BEGIN
   :sql_text := '
 WITH
@@ -1107,7 +1165,7 @@ END;
 
 DEF title = 'SQL using Literals or many children (by OWNER)';
 DEF main_table = 'GV$SQL';
-COL force_matching_signature FOR 99999999999999999999;
+COL force_matching_signature FOR 99999999999999999999 HEA "SIGNATURE";
 BEGIN
   :sql_text := '
 WITH
@@ -1185,9 +1243,10 @@ BEGIN
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
 SELECT /*+ &&top_level_hints. */ 
    FORCE_MATCHING_SIGNATURE,
-   duplicate_count,
+   duplicate_count cnt,
    executions,
    buffer_gets,
+   (SELECT SUBSTR(v2.sql_text, 1, 200) FROM gv$sql v2 WHERE v2.force_matching_signature = v1.force_matching_signature AND ROWNUM = 1) sql_text,
    buffer_gets_per_exec,
    disk_reads,
    disk_reads_per_exec,
@@ -1196,8 +1255,7 @@ SELECT /*+ &&top_level_hints. */
    elapsed_seconds,
    elapsed_seconds_per_exec,
    pct_total_buffer_gets,
-   pct_total_disk_reads,
-   (SELECT v2.sql_text FROM gv$sql v2 WHERE v2.force_matching_signature = v1.force_matching_signature AND ROWNUM = 1) sql_text
+   pct_total_disk_reads
 from
   (select
       FORCE_MATCHING_SIGNATURE,

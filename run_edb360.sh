@@ -31,6 +31,6 @@ connect / as sysdba
 EOF
 
 done
-zip -qmT esp_output.zip esp_requirements_*.zip esp_requirements_*.csv esp_requirements_*.log
+zip -qmT esp_output.zip esp_requirements_*.zip esp_requirements_*.csv esp_requirements_*.log cpuinfo_model_name.txt
 zip -qmT edb360_output.zip esp_output.zip edb360_*.zip
 echo "End edb360 collector. Output: edb360_output.zip"

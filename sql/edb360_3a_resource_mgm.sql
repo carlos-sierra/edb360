@@ -31,20 +31,6 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
-DEF title = 'IO Last Calibration Results';
-DEF main_table = 'DBA_RSRC_IO_CALIBRATE';
-BEGIN
-  :sql_text := '
-SELECT /*+ &&top_level_hints. */
-       *
-  FROM dba_rsrc_io_calibrate
- ORDER BY
-       1, 2
-';
-END;
-/
-@@&&skip_10g.edb360_9a_pre_one.sql
-
 DEF title = 'Resource Groups Mappings';
 DEF main_table = 'DBA_RSRC_GROUP_MAPPINGS';
 BEGIN
