@@ -1,7 +1,8 @@
+@@edb360_0g_tkprof.sql
 SET VER OFF FEED OFF SERVEROUT ON HEAD OFF PAGES 50000 LIN 32767 LONG 320000 LONGC 2000 TRIMS ON TRIM ON TI OFF TIMI OFF ARRAY 100;
 DEF section_name = 'ADDM Reports';
 SPO &&main_report_name..html APP;
-PRO <h2 title="For largest 'DB time' or 'background elapsed time' for past 4 hours, 1 and 7 days (for each instance)">&&section_name.</h2>
+PRO <h2 title="For max/min/med 'DB time' + 'background elapsed time' for past 4 hours, and 1, 7 and &&history_days. days (for each instance)">&&section_name.</h2>
 SPO OFF;
 
 COL hh_mm_ss NEW_V hh_mm_ss NOPRI FOR A8;
@@ -31,16 +32,15 @@ DECLARE
   END update_log;
 BEGIN
   SELECT COUNT(*) INTO l_instances FROM gv$instance;
-  -- three report per instance
+  -- two reports per instance
   FOR i IN (SELECT instance_number
               FROM gv$instance
              WHERE '&&diagnostics_pack.' = 'Y'
              ORDER BY
                    instance_number)
   LOOP
-    -- find the one with largest 'DB time' or 'background elapsed time' for past 4 hours, 1 and 7 days (for each instance)
     FOR j IN (WITH
-              expensive AS (
+              expensive2 AS (
               SELECT h1.dbid, h1.snap_id bid, h2.snap_id eid,
                      CAST(s2.begin_interval_time AS DATE) begin_date,
                      CAST(s2.end_interval_time AS DATE) end_date,
@@ -63,7 +63,7 @@ BEGIN
                  AND s1.snap_id = h1.snap_id
                  AND s1.dbid = h1.dbid
                  AND s1.instance_number = h1.instance_number
-                 AND CAST(s1.end_interval_time AS DATE) > TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - 7 -- includes all options
+                 AND CAST(s1.end_interval_time AS DATE) BETWEEN TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - &&history_days. AND TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') -- includes all options
                  AND s1.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
                  AND s1.dbid = &&edb360_dbid.
                  AND s2.snap_id = s1.snap_id + 1
@@ -73,8 +73,46 @@ BEGIN
                  AND s2.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
                  AND s2.dbid = &&edb360_dbid.
               ),
+              expensive AS (
+              SELECT dbid, bid, eid, begin_date, end_date, SUM(value) value
+                FROM expensive2
+               GROUP BY
+                     dbid, bid, eid, begin_date, end_date
+              ),
+              max_&&history_days.wd AS (
+              SELECT MAX(value) value
+                FROM expensive
+               WHERE end_date BETWEEN TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - &&history_days. AND TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - 7 -- avoids selecting same twice
+                 AND TO_CHAR(end_date, 'D') BETWEEN '2' AND '6' /* between Monday and Friday */
+                 AND TO_CHAR(end_date, 'HH24') BETWEEN '0800' AND '1900' /* between 8AM to 7PM */
+              ),
+              min_&&history_days.wd AS (
+              SELECT MIN(value) value
+                FROM expensive
+               WHERE end_date BETWEEN TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - &&history_days. AND TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - 7 -- avoids selecting same twice
+                 AND TO_CHAR(end_date, 'D') BETWEEN '2' AND '6' /* between Monday and Friday */
+                 AND TO_CHAR(end_date, 'HH24') BETWEEN '0800' AND '1900' /* between 8AM to 7PM */
+              ),
+              max_&&history_days.d AS (
+              SELECT MAX(value) value
+                FROM expensive
+               WHERE end_date BETWEEN TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - &&history_days. AND TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - 7 -- avoids selecting same twice
+                 AND value NOT IN (SELECT value FROM max_&&history_days.wd)
+              ),
+              med_&&history_days.d AS (
+              SELECT PERCENTILE_DISC(0.5) WITHIN GROUP (ORDER BY value) value
+                FROM expensive
+               WHERE end_date BETWEEN TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - &&history_days. AND TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - 7 -- avoids selecting same twice
+              ),
               max_7wd AS (
               SELECT MAX(value) value
+                FROM expensive
+               WHERE end_date BETWEEN TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - 7 AND TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - 1 -- avoids selecting same twice
+                 AND TO_CHAR(end_date, 'D') BETWEEN '2' AND '6' /* between Monday and Friday */
+                 AND TO_CHAR(end_date, 'HH24') BETWEEN '0800' AND '1900' /* between 8AM to 7PM */
+              ),
+              min_7wd AS (
+              SELECT MIN(value) value
                 FROM expensive
                WHERE end_date BETWEEN TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - 7 AND TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - 1 -- avoids selecting same twice
                  AND TO_CHAR(end_date, 'D') BETWEEN '2' AND '6' /* between Monday and Friday */
@@ -86,6 +124,11 @@ BEGIN
                WHERE end_date BETWEEN TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - 7 AND TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - 1 -- avoids selecting same twice
                  AND value NOT IN (SELECT value FROM max_7wd)
               ),
+              med_7d AS (
+              SELECT PERCENTILE_DISC(0.5) WITHIN GROUP (ORDER BY value) value
+                FROM expensive
+               WHERE end_date BETWEEN TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - 7 AND TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - 1 -- avoids selecting same twice
+              ),
               max_1d AS (
               SELECT MAX(value) value
                 FROM expensive
@@ -94,29 +137,58 @@ BEGIN
               max_4h AS (
               SELECT MAX(value) value
                 FROM expensive
-               WHERE end_date > TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - (4 / 24)
+               WHERE end_date BETWEEN TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - (4 / 24) AND TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS')
               )
-              SELECT e.dbid, e.bid, e.eid, e.begin_date, e.end_date
+              SELECT e.dbid, e.bid, e.eid, e.begin_date, e.end_date, 'max&&history_days.wd' rep, 50 ob
+                FROM expensive e,
+                     max_&&history_days.wd m
+               WHERE m.value = e.value
+               UNION
+              SELECT e.dbid, e.bid, e.eid, e.begin_date, e.end_date, 'min&&history_days.wd' rep, 100 ob
+                FROM expensive e,
+                     min_&&history_days.wd m
+               WHERE m.value = e.value
+               UNION
+              SELECT e.dbid, e.bid, e.eid, e.begin_date, e.end_date, 'max&&history_days.d' rep, 60 ob
+                FROM expensive e,
+                     max_&&history_days.d m
+               WHERE m.value = e.value
+               UNION
+              SELECT e.dbid, e.bid, e.eid, e.begin_date, e.end_date, 'med&&history_days.d' rep, 80 ob
+                FROM expensive e,
+                     med_&&history_days.d m
+               WHERE m.value = e.value
+               UNION
+              SELECT e.dbid, e.bid, e.eid, e.begin_date, e.end_date, 'max7wd' rep, 30 ob
                 FROM expensive e,
                      max_7wd m
                WHERE m.value = e.value
                UNION
-              SELECT e.dbid, e.bid, e.eid, e.begin_date, e.end_date
+              SELECT e.dbid, e.bid, e.eid, e.begin_date, e.end_date, 'min7wd' rep, 90 ob
+                FROM expensive e,
+                     min_7wd m
+               WHERE m.value = e.value
+               UNION
+              SELECT e.dbid, e.bid, e.eid, e.begin_date, e.end_date, 'max7d' rep, 40 ob
                 FROM expensive e,
                      max_7d m
                WHERE m.value = e.value
                UNION
-              SELECT e.dbid, e.bid, e.eid, e.begin_date, e.end_date
+              SELECT e.dbid, e.bid, e.eid, e.begin_date, e.end_date, 'med7d' rep, 70 ob
+                FROM expensive e,
+                     med_7d m
+               WHERE m.value = e.value
+               UNION
+              SELECT e.dbid, e.bid, e.eid, e.begin_date, e.end_date, 'max1d' rep, 20 ob
                 FROM expensive e,
                      max_1d m
                WHERE m.value = e.value
                UNION
-              SELECT e.dbid, e.bid, e.eid, e.begin_date, e.end_date
+              SELECT e.dbid, e.bid, e.eid, e.begin_date, e.end_date, 'max4h' rep, 10 ob
                 FROM expensive e,
                      max_4h m
                WHERE m.value = e.value
-               ORDER BY
-                     1, 2 DESC)
+               ORDER BY 7)
     LOOP
       l_begin_date := TO_CHAR(j.begin_date, 'YYYYMMDDHH24MISS');
       l_end_date := TO_CHAR(j.end_date, 'YYYYMMDDHH24MISS');
@@ -133,7 +205,7 @@ BEGIN
       put_line('END;');
       put_line('/');
       put_line('PRINT l_task_name;');
-      l_standard_filename := 'addmrpt_'||i.instance_number||'_'||j.bid||'_'||j.eid;
+      l_standard_filename := 'addmrpt_'||i.instance_number||'_'||j.bid||'_'||j.eid||'_'||j.rep;
       l_spool_filename := '&&common_prefix._'||l_standard_filename;
       put_line('COL hh_mm_ss NEW_V hh_mm_ss NOPRI FOR A8;');
       put_line('SELECT TO_CHAR(SYSDATE, ''HH24:MI:SS'') hh_mm_ss FROM DUAL;');
@@ -186,7 +258,7 @@ BEGIN
         put_line('END;');
         put_line('/');
         put_line('PRINT l_task_name;');
-        l_standard_filename := 'addmrpt_rac_'||j.bid||'_'||j.eid;
+        l_standard_filename := 'addmrpt_rac_'||j.bid||'_'||j.eid||'_'||j.rep;
         l_spool_filename := '&&common_prefix._'||l_standard_filename;
         put_line('COL hh_mm_ss NEW_V hh_mm_ss NOPRI FOR A8;');
         put_line('SELECT TO_CHAR(SYSDATE, ''HH24:MI:SS'') hh_mm_ss FROM DUAL;');

@@ -1,3 +1,4 @@
+@@edb360_0g_tkprof.sql
 DEF section_name = 'Active Session History (ASH) on CPU and Top Wait Events';
 SPO &&main_report_name..html APP;
 PRO <h2>&&section_name.</h2>

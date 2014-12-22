@@ -6,7 +6,7 @@
 --
 -- Author:      Carlos Sierra
 --
--- Version:     v1419 (2014/11/28)
+-- Version:     v1420 (2014/12/22)
 --
 -- Usage:       Collects Requirements from AWR and ASH views, thus it should only be
 --              executed on systems with the Oracle Diagnostics Pack license.
@@ -53,7 +53,7 @@ SELECT 'get_instance_number', TO_CHAR(instance_number) ecr_instance_number FROM 
 COL ecr_min_snap_id NEW_V ecr_min_snap_id;
 SELECT 'get_min_snap_id', TO_CHAR(MIN(snap_id)) ecr_min_snap_id FROM dba_hist_snapshot WHERE dbid = &&ecr_dbid.;
 COL ecr_collection_host NEW_V ecr_collection_host;
-SELECT 'get_collection_host', LOWER(SUBSTR(SYS_CONTEXT('USERENV', 'HOST')||'.', 1, INSTR(SYS_CONTEXT('USERENV', 'HOST')||'.', '.') - 1)) ecr_collection_host FROM DUAL;
+SELECT 'get_collection_host', LOWER(SUBSTR(SYS_CONTEXT('USERENV', 'SERVER_HOST')||'.', 1, INSTR(SYS_CONTEXT('USERENV', 'SERVER_HOST')||'.', '.') - 1)) ecr_collection_host FROM DUAL;
 
 DEF;
 SELECT 'get_current_time', TO_CHAR(SYSDATE, '&&ecr_date_format.') current_time FROM DUAL

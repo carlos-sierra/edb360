@@ -116,8 +116,8 @@ SELECT NVL(TO_CHAR(MAX(snap_id)), '&&minimum_snap_id.') maximum_snap_id FROM dba
 SELECT '-1' maximum_snap_id FROM DUAL WHERE TRIM('&&maximum_snap_id.') IS NULL;
 
 -- setup
-DEF tool_vYYNN = 'v1419';
-DEF tool_vrsn = '&&tool_vYYNN. (2014-11-28)';
+DEF tool_vYYNN = 'v1420';
+DEF tool_vrsn = '&&tool_vYYNN. (2014-12-22)';
 DEF prefix = 'edb360';
 DEF sql_trace_level = '8';
 DEF main_table = '';
@@ -250,11 +250,21 @@ ALTER SESSION SET NLS_TIMESTAMP_TZ_FORMAT = 'YYYY-MM-DD/HH24:MI:SS.FF TZH:TZM';
 -- adding to prevent slow access to ASH with non default NLS settings
 ALTER SESSION SET NLS_SORT = 'BINARY';
 ALTER SESSION SET NLS_COMP = 'BINARY';
+
 -- tracing script in case it takes long to execute so we can diagnose it
 ALTER SESSION SET MAX_DUMP_FILE_SIZE = '1G';
 ALTER SESSION SET TRACEFILE_IDENTIFIER = "&&edb360_tracefile_identifier.";
 --ALTER SESSION SET STATISTICS_LEVEL = 'ALL';
 ALTER SESSION SET EVENTS '10046 TRACE NAME CONTEXT FOREVER, LEVEL &&sql_trace_level.';
+
+-- get udump directory path
+COL edb360_udump_path NEW_V edb360_udump_path FOR A500;
+SELECT value||DECODE(INSTR(value, '/'), 0, '\', '/') edb360_udump_path FROM v$parameter2 WHERE name = 'user_dump_dest';
+
+-- get pid
+COL edb360_spid NEW_V edb360_spid FOR A5;
+SELECT TO_CHAR(spid) edb360_spid FROM v$session s, v$process p WHERE s.sid = SYS_CONTEXT('USERENV', 'SID') AND p.addr = s.paddr;
+
 SET TERM OFF; 
 SET HEA ON; 
 SET LIN 32767; 

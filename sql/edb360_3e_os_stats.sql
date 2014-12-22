@@ -1,3 +1,4 @@
+@@edb360_0g_tkprof.sql
 DEF section_name = 'Operating System (OS) Statistics History';
 SPO &&main_report_name..html APP;
 PRO <h2>&&section_name.</h2>

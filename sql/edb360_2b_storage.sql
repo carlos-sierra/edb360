@@ -1,3 +1,4 @@
+@@edb360_0g_tkprof.sql
 DEF section_name = 'Storage';
 SPO &&main_report_name..html APP;
 PRO <h2>&&section_name.</h2>
@@ -577,6 +578,24 @@ FROM TABLE(dbms_space.asa_recommendations())
 Where segment_owner not in &&exclusion_list. and
    segment_owner not in &&exclusion_list2.
 order by reclaimable_space desc
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+DEF title = 'Objects in Recycle Bin';
+DEF main_table = 'DBA_RECYCLEBIN';
+BEGIN
+  :sql_text := '
+-- requested by Milton Quinteros
+SELECT /*+ &&top_level_hints. */
+       *
+  FROM dba_recyclebin
+ WHERE owner NOT IN &&exclusion_list.
+   AND owner NOT IN &&exclusion_list2.
+ ORDER BY
+       owner,
+       object_name
 ';
 END;
 /

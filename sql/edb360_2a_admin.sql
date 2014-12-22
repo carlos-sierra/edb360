@@ -1,3 +1,4 @@
+@@edb360_0g_tkprof.sql
 DEF section_name = 'Database Administration';
 SPO &&main_report_name..html APP;
 PRO <h2>&&section_name.</h2>
@@ -481,6 +482,26 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+DEF title = 'Tables to be CACHED in Buffer Cache';
+DEF main_table = 'DBA_TABLES';
+BEGIN
+  :sql_text := '
+-- requested by Milton Quinteros
+SELECT /*+ &&top_level_hints. */
+       owner,
+       table_name
+  FROM dba_tables
+ WHERE owner NOT IN &&exclusion_list.
+   AND owner NOT IN &&exclusion_list2.
+   AND TRIM(cache) = ''Y''
+ ORDER BY
+       owner,
+       table_name
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
 DEF title = 'Tables on KEEP Flash Cache';
 DEF main_table = 'DBA_TABLES';
 BEGIN
@@ -514,6 +535,66 @@ SELECT /*+ &&top_level_hints. */
  ORDER BY
        owner,
        table_name
+';
+END;
+/
+@@&&skip_10g.&&skip_11r1.edb360_9a_pre_one.sql
+
+DEF title = 'Segments with non-default Buffer Pool';
+DEF main_table = 'DBA_SEGMENTS';
+BEGIN
+  :sql_text := '
+-- requested by Milton Quinteros
+SELECT /*+ &&top_level_hints. */
+       buffer_pool, owner, segment_name, segment_type, blocks
+  FROM dba_segments
+ WHERE owner NOT IN &&exclusion_list.
+   AND owner NOT IN &&exclusion_list2.
+   AND TRIM(buffer_pool) != ''DEFAULT''
+ ORDER BY
+       buffer_pool,
+       owner,
+       segment_name
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+DEF title = 'Segments with non-default Flash Cache';
+DEF main_table = 'DBA_SEGMENTS';
+BEGIN
+  :sql_text := '
+-- requested by Milton Quinteros
+SELECT /*+ &&top_level_hints. */
+       flash_cache, owner, segment_name, segment_type, blocks
+  FROM dba_segments
+ WHERE owner NOT IN &&exclusion_list.
+   AND owner NOT IN &&exclusion_list2.
+   AND TRIM(flash_cache) != ''DEFAULT''
+ ORDER BY
+       flash_cache,
+       owner,
+       segment_name
+';
+END;
+/
+@@&&skip_10g.&&skip_11r1.edb360_9a_pre_one.sql
+
+DEF title = 'Segments with non-default Cell Flash Cache';
+DEF main_table = 'DBA_SEGMENTS';
+BEGIN
+  :sql_text := '
+-- requested by Milton Quinteros
+SELECT /*+ &&top_level_hints. */
+       cell_flash_cache, owner, segment_name, segment_type, blocks
+  FROM dba_segments
+ WHERE owner NOT IN &&exclusion_list.
+   AND owner NOT IN &&exclusion_list2.
+   AND TRIM(cell_flash_cache) != ''DEFAULT''
+ ORDER BY
+       cell_flash_cache,
+       owner,
+       segment_name
 ';
 END;
 /
@@ -626,6 +707,23 @@ SELECT /*+ &&top_level_hints. */
        degree DESC,
        owner,
        index_name
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+DEF title = 'Unused Columns';
+DEF main_table = 'DBA_UNUSED_COL_TABS';
+BEGIN
+  :sql_text := '
+-- requested by Mike Moehlman
+SELECT /*+ &&top_level_hints. */
+       *
+  FROM dba_unused_col_tabs
+ WHERE owner NOT IN &&exclusion_list.
+   AND owner NOT IN &&exclusion_list2.
+ ORDER BY
+       1, 2
 ';
 END;
 /
@@ -771,12 +869,14 @@ BEGIN
   :sql_text := '
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
 SELECT /*+ &&top_level_hints. */
-       *
-from dba_sequences
+       s.*,
+       ROUND(100 * s.last_number / s.max_value, 3) percent_used /* requested by Mike Moehlman */
+from dba_sequences s
 where
-   sequence_owner not in &&exclusion_list.
-and sequence_owner not in &&exclusion_list2.
-order by sequence_owner, sequence_name
+   s.sequence_owner not in &&exclusion_list.
+and s.sequence_owner not in &&exclusion_list2.
+and s.max_value > 0
+order by s.sequence_owner, s.sequence_name
 ';
 END;
 /
@@ -1573,5 +1673,59 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+DEF title = 'Distributed Transactions awaiting Recovery';
+DEF main_table = 'DBA_2PC_PENDING';
+BEGIN
+  :sql_text := '
+-- requested by Milton Quinteros
+SELECT /*+ &&top_level_hints. */
+       *
+  FROM dba_2pc_pending
+ ORDER BY
+       1, 2
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+DEF title = 'Connections for Pending Transactions';
+DEF main_table = 'DBA_2PC_NEIGHBORS';
+BEGIN
+  :sql_text := '
+-- requested by Milton Quinteros
+SELECT /*+ &&top_level_hints. */
+       *
+  FROM dba_2pc_neighbors
+ ORDER BY
+       1
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+
+DEF title = 'Segments with Next Extent at Risk';
+DEF main_table = 'DBA_SEGMENTS';
+BEGIN
+  :sql_text := '
+-- requested by Milton Quinteros
+with 
+max_free AS (
+select /*+ &&sq_fact_hints. */
+tablespace_name, max(bytes) bytes
+from dba_free_space
+group by tablespace_name )
+select /*+ &&top_level_hints. */
+s.owner, s.segment_name, s.tablespace_name, s.next_extent, max_free.bytes max_free_bytes 
+from dba_segments s, max_free
+where s.owner NOT IN &&exclusion_list.
+and s.owner NOT IN &&exclusion_list2.
+and s.next_extent > max_free.bytes 
+and s.tablespace_name=max_free.tablespace_name
+order by 1,2
+';
+END;
+/
+@@edb360_9a_pre_one.sql
 
 

@@ -1,3 +1,4 @@
+@@edb360_0g_tkprof.sql
 DEF files_prefix = '';
 SET VER OFF FEED OFF SERVEROUT ON HEAD OFF PAGES 50000 LIN 32767 TRIMS ON TRIM ON TI OFF TIMI OFF ARRAY 100;
 DEF section_name = 'SQL Sample';
@@ -227,6 +228,7 @@ BEGIN
 END;
 /
 SPO OFF;
+@@edb360_0g_tkprof.sql
 @9997_&&common_prefix._top_sql_driver.sql;
 SET SERVEROUT OFF HEAD ON PAGES &&def_max_rows.;
 HOS zip -mq &&main_compressed_filename._&&file_creation_time. 9997_&&common_prefix._top_sql_driver.sql
