@@ -16,6 +16,7 @@ SELECT /*+ &&sq_fact_hints. */
   FROM gv$active_session_history h
  WHERE ''&&diagnostics_pack.'' = ''Y''
    AND @filter_predicate@
+   AND sql_id IS NOT NULL
  GROUP BY
        h.sql_id
  ORDER BY
@@ -133,6 +134,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */
        dba_hist_snapshot s
  WHERE ''&&diagnostics_pack.'' = ''Y''
    AND @filter_predicate@
+   AND h.sql_id IS NOT NULL
    AND h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND h.dbid = &&edb360_dbid.
    AND s.snap_id = h.snap_id
@@ -154,7 +156,7 @@ SELECT SUM(samples) samples,
 SELECT e.sql_id,
        e.samples,
        ROUND(100 * e.samples / t.samples, 1) percent,
-       (SELECT DBMS_LOB.SUBSTR(s.sql_text, 4000) FROM dba_hist_sqltext s WHERE s.sql_id = e.sql_id AND s.dbid = e.dbid AND ROWNUM = 1) sql_text
+       (SELECT DBMS_LOB.SUBSTR(s.sql_text, 1000) FROM dba_hist_sqltext s WHERE s.sql_id = e.sql_id AND s.dbid = e.dbid AND ROWNUM = 1) sql_text
   FROM events e,
        total t
  WHERE ROWNUM <= &&slices.

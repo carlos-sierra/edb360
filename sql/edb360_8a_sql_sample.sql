@@ -44,7 +44,7 @@ BEGIN
 			 ORDER BY
 				   2 DESC
 			)
-			 WHERE ROWNUM < 17
+			 WHERE ROWNUM < 33
 			 UNION ALL
 			SELECT /*+ &&sq_fact_hints. */ sql_id, samples
 			  FROM (
@@ -65,7 +65,7 @@ BEGIN
 			 ORDER BY
 				   2 DESC
 			)
-			 WHERE ROWNUM < 17
+			 WHERE ROWNUM < 33
 			 UNION ALL
 			SELECT /*+ &&sq_fact_hints. */ sql_id, samples
 			  FROM (
@@ -86,7 +86,7 @@ BEGIN
 			 ORDER BY
 				   2 DESC
 			)
-			 WHERE ROWNUM < 17
+			 WHERE ROWNUM < 33
 			 UNION ALL
 			SELECT /*+ &&sq_fact_hints. */ sql_id, samples
 			  FROM (
@@ -107,7 +107,7 @@ BEGIN
 			 ORDER BY
 				   2 DESC
 			)
-			 WHERE ROWNUM < 17
+			 WHERE ROWNUM < 33
 			 UNION ALL
 			SELECT /*+ &&sq_fact_hints. */ sql_id, samples
 			  FROM (
@@ -130,7 +130,7 @@ BEGIN
 			 ORDER BY
 				   2 DESC
 			)
-			 WHERE ROWNUM < 17
+			 WHERE ROWNUM < 33
 			 UNION ALL
 			SELECT /*+ &&sq_fact_hints. */ sql_id, samples
 			  FROM (
@@ -150,14 +150,36 @@ BEGIN
 			 ORDER BY
 				   2 DESC
 			)
-			 WHERE ROWNUM < 17
+			 WHERE ROWNUM < 33
+			 UNION ALL
+			SELECT /*+ &&sq_fact_hints. */ sql_id, samples
+			  FROM (
+			SELECT /*+ &&sq_fact_hints. &&ds_hint. */
+			       ash.sql_id,
+				   COUNT(*) samples
+			  FROM dba_hist_active_sess_history ash,
+				   dba_hist_snapshot snp
+			 WHERE '&&diagnostics_pack.' = 'Y'
+			   AND ash.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id. -- for past &&history_days. work days (implicit on range of snaps)
+               AND TO_CHAR(CAST(snp.end_interval_time AS DATE), 'D') BETWEEN '2' AND '6' /* between Monday and Friday */
+               AND TO_CHAR(CAST(snp.end_interval_time AS DATE), 'HH24') BETWEEN '0800' AND '1900' /* between 8AM to 7PM */
+			   AND ash.sql_id IS NOT NULL
+			   AND snp.snap_id = ash.snap_id
+			   AND snp.dbid = ash.dbid
+			   AND snp.instance_number = ash.instance_number
+			 GROUP BY 
+				   ash.sql_id
+			 ORDER BY
+				   2 DESC
+			)
+			 WHERE ROWNUM < 33
 			)
 			 GROUP BY
 				   sql_id
 			 ORDER BY
 				   times_on_top * samples DESC
 			)
-			WHERE ROWNUM < 17)
+			WHERE ROWNUM < 33)
   LOOP
     l_count := l_count + 1;
     put_line('COL hh_mm_ss NEW_V hh_mm_ss NOPRI FOR A8;');
@@ -175,7 +197,7 @@ BEGIN
     put_line('PRO <li title="PLANX(16), SQLMON(12), SQLASH(8) and SQLHC(4)">'||i.sql_id);
     put_line('HOS zip -q &&main_compressed_filename._&&file_creation_time. &&main_report_name..html');
     put_line('SPO OFF;');
-    IF l_count <= 16 THEN
+    IF l_count <= 32 THEN
       update_log('PLANX');
       put_line('@@sql/planx.sql &&diagnostics_pack. '||i.sql_id);
       put_line('-- update main report');
@@ -186,7 +208,7 @@ BEGIN
       put_line('HOS zip -mq &&main_compressed_filename._&&file_creation_time. planx_'||i.sql_id||'_'||CHR(38)||chr(38)||'current_time..txt');
       put_line('HOS zip -q &&main_compressed_filename._&&file_creation_time. &&main_report_name..html');
     END IF;
-    IF l_count <= 12 AND '&&skip_10g.' IS NULL AND '&&skip_diagnostics.' IS NULL AND '&&skip_tuning.' IS NULL THEN
+    IF l_count <= 24 AND '&&skip_10g.' IS NULL AND '&&skip_diagnostics.' IS NULL AND '&&skip_tuning.' IS NULL THEN
       update_log('SQLMON');
       put_line('@@sql/sqlmon.sql &&tuning_pack. '||i.sql_id);
       put_line('-- update main report');
@@ -197,7 +219,7 @@ BEGIN
       put_line('HOS zip -mq &&main_compressed_filename._&&file_creation_time. sqlmon_'||i.sql_id||'_'||CHR(38)||chr(38)||'current_time..zip');
       put_line('HOS zip -q &&main_compressed_filename._&&file_creation_time. &&main_report_name..html');
     END IF;
-    IF l_count <= 8 AND '&&skip_diagnostics.' IS NULL THEN
+    IF l_count <= 16 AND '&&skip_diagnostics.' IS NULL THEN
       update_log('SQLASH');
       put_line('@@sql/sqlash.sql &&diagnostics_pack. '||i.sql_id);
       put_line('-- update main report');
@@ -208,7 +230,7 @@ BEGIN
       put_line('HOS zip -mq &&main_compressed_filename._&&file_creation_time. sqlash_'||i.sql_id||'.zip');
       put_line('HOS zip -q &&main_compressed_filename._&&file_creation_time. &&main_report_name..html');
     END IF;
-    IF l_count <= 4 THEN
+    IF l_count <= 8 THEN
       update_log('SQLHC');
       put_line('@@sql/sqlhc.sql &&license_pack. '||i.sql_id);
       put_line('-- update main report');

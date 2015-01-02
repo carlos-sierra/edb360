@@ -17,7 +17,13 @@ SELECT d.dbid,
        i.instance_number,
        i.instance_name,
        LOWER(SUBSTR(i.host_name||''.'', 1, INSTR(i.host_name||''.'', ''.'') - 1)) host_name,
-       p.value cpu_count
+       p.value cpu_count,
+       ''&&ebs_release.'' ebs_release,
+       ''&&ebs_system_name.'' ebs_system_name,
+       ''&&siebel_schema.'' siebel_schema,
+       ''&&siebel_app_ver.'' siebel_app_ver,
+       ''&&psft_schema.'' psft_schema,
+       ''&&psft_tools_rel.'' psft_tools_rel
   FROM v$database d,
        gv$instance i,
        gv$system_parameter2 p

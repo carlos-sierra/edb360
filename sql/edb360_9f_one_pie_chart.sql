@@ -38,7 +38,7 @@ DECLARE
   l_slice VARCHAR2(1000);
   l_value NUMBER;
   l_percent NUMBER;
-  l_text VARCHAR2(1000);
+  l_text VARCHAR2(4000);
   l_sql_text VARCHAR2(32767);
 BEGIN
   DBMS_OUTPUT.PUT_LINE('[''Slice'', ''Value'']');

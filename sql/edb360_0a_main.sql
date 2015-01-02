@@ -1,5 +1,5 @@
 @@edb360_0b_pre.sql
-DEF max_col_number = '7';
+DEF max_col_number = '8';
 DEF column_number = '0';
 SPO &&main_report_name..html APP;
 PRO <table><tr>
@@ -10,6 +10,7 @@ PRO <td class="c">4/&&max_col_number.</td>
 PRO <td class="c">5/&&max_col_number.</td>
 PRO <td class="c">6/&&max_col_number.</td>
 PRO <td class="c">7/&&max_col_number.</td>
+PRO <td class="c">8/&&max_col_number.</td>
 PRO </tr><tr><td>
 PRO
 SPO OFF;
@@ -37,6 +38,7 @@ SPO OFF;
 @@edb360_2a_admin.sql
 @@edb360_2b_storage.sql
 @@edb360_2c_asm.sql
+@@edb360_2d_rman.sql
 
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -117,7 +119,18 @@ SPO OFF;
 @@&&skip_diagnostics.edb360_7a_awrrpt.sql
 @@&&skip_diagnostics.edb360_7b_addmrpt.sql
 @@&&skip_diagnostics.edb360_7c_ashrpt.sql
-@@&&skip_diagnostics.edb360_7d_sql_sample.sql
+
+PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+DEF column_number = '8';
+
+SPO &&main_report_name..html APP;
+PRO
+PRO </td><td>
+PRO
+SPO OFF;
+
+@@&&skip_diagnostics.edb360_8a_sql_sample.sql
 
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

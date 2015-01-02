@@ -818,35 +818,6 @@ END;
 /
 @@&&skip_10g.edb360_9a_pre_one.sql
 
-DEF title = 'RMAN Backup Job Details';
-DEF main_table = 'V$RMAN_BACKUP_JOB_DETAILS';
-BEGIN
-  :sql_text := '
--- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
-SELECT /*+ &&top_level_hints. */
-       *
-  FROM v$rman_backup_job_details
- --WHERE start_time >= (SYSDATE - 100)
- ORDER BY
-       start_time DESC
-';
-END;
-/
--- skipped on 10g due to bug as per mos 420200.1
-@@&&skip_10g.edb360_9a_pre_one.sql
-
-DEF title = 'Block Corruption';
-DEF main_table = 'V$DATABASE_BLOCK_CORRUPTION';
-BEGIN
-  :sql_text := '
-SELECT /*+ &&top_level_hints. */
-       *
-  FROM v$database_block_corruption
-';
-END;
-/
-@@edb360_9a_pre_one.sql
-
 DEF title = 'Current Blocking Activity';
 DEF main_table = 'GV$SESSION';
 BEGIN
@@ -877,333 +848,6 @@ where
 and s.sequence_owner not in &&exclusion_list2.
 and s.max_value > 0
 order by s.sequence_owner, s.sequence_name
-';
-END;
-/
-@@edb360_9a_pre_one.sql
-
-DEF title = 'REDO LOG';
-DEF main_table = 'V$LOG';
-BEGIN
-  :sql_text := '
--- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
-SELECT /*+ &&top_level_hints. */
-     *
-  FROM v$log
- ORDER BY 1, 2, 3, 4
-';
-END;
-/
-@@edb360_9a_pre_one.sql
-
-DEF title = 'REDO LOG Files';
-DEF main_table = 'V$LOGFILE';
-BEGIN
-  :sql_text := '
-SELECT /*+ &&top_level_hints. */
-     *
-  FROM v$logfile
- ORDER BY 1, 2, 3, 4
-';
-END;
-/
-@@edb360_9a_pre_one.sql
-
-DEF title = 'REDO LOG History';
-DEF main_table = 'V$LOG_HISTORY';
-BEGIN
-  :sql_text := '
--- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
-SELECT /*+ &&top_level_hints. */
- THREAD#, TO_CHAR(trunc(FIRST_TIME), ''YYYY-MON-DD'') day, count(*)
-from v$log_history
-where FIRST_TIME >= (sysdate - 31)
-group by rollup(THREAD#, trunc(FIRST_TIME))
-order by THREAD#, trunc(FIRST_TIME)
-';
-END;
-/
-@@edb360_9a_pre_one.sql
-
-DEF title = 'REDO LOG Switches Frequency Map';
-DEF main_table = 'V$LOG_HISTORY';
-COL row_num_noprint NOPRI;
-BEGIN
-  :sql_text := '
--- requested by Weidong
-WITH
-log AS (
-SELECT /*+ &&sq_fact_hints. */
-       thread#,
-       TO_CHAR(TRUNC(first_time), ''YYYY-MM-DD'') yyyy_mm_dd,
-       TO_CHAR(TRUNC(first_time), ''Dy'') day,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''00'', 1, 0)) h00,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''01'', 1, 0)) h01,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''02'', 1, 0)) h02,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''03'', 1, 0)) h03,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''04'', 1, 0)) h04,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''05'', 1, 0)) h05,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''06'', 1, 0)) h06,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''07'', 1, 0)) h07,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''08'', 1, 0)) h08,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''09'', 1, 0)) h09,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''10'', 1, 0)) h10,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''11'', 1, 0)) h11,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''12'', 1, 0)) h12,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''13'', 1, 0)) h13,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''14'', 1, 0)) h14,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''15'', 1, 0)) h15,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''16'', 1, 0)) h16,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''17'', 1, 0)) h17,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''18'', 1, 0)) h18,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''19'', 1, 0)) h19,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''20'', 1, 0)) h20,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''21'', 1, 0)) h21,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''22'', 1, 0)) h22,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''23'', 1, 0)) h23,
-       COUNT(*) per_day
-  FROM v$log_history
- GROUP BY
-       thread#,
-       TRUNC(first_time)
- ORDER BY
-       thread#,
-       TRUNC(first_time) DESC NULLS LAST
-),
-ordered_log AS (
-SELECT /*+ &&sq_fact_hints. */
-       ROWNUM row_num_noprint, log.*
-  FROM log
-),
-min_set AS (
-SELECT /*+ &&sq_fact_hints. */
-       thread#,
-       MIN(row_num_noprint) min_row_num
-  FROM ordered_log
- GROUP BY 
-       thread#
-)
-SELECT /*+ &&top_level_hints. */
-       log.*
-  FROM ordered_log log,
-       min_set ms
- WHERE log.thread# = ms.thread#
-   AND log.row_num_noprint < ms.min_row_num + 14
- ORDER BY
-       log.thread#,
-       log.yyyy_mm_dd DESC
-';
-END;
-/
-@@edb360_9a_pre_one.sql
-
-DEF title = 'ARCHIVED LOG Frequency Map';
-DEF main_table = 'V$ARCHIVED_LOG';
-COL row_num_noprint NOPRI;
-BEGIN
-  :sql_text := '
--- requested by Abdul Khan and Srinivas Kanaparthy
-WITH
-log AS (
-SELECT /*+ &&sq_fact_hints. */
-       thread#,
-       TO_CHAR(TRUNC(first_time), ''YYYY-MM-DD'') yyyy_mm_dd,
-       TO_CHAR(TRUNC(first_time), ''Dy'') day,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''00'', 1, 0)) h00,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''01'', 1, 0)) h01,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''02'', 1, 0)) h02,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''03'', 1, 0)) h03,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''04'', 1, 0)) h04,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''05'', 1, 0)) h05,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''06'', 1, 0)) h06,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''07'', 1, 0)) h07,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''08'', 1, 0)) h08,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''09'', 1, 0)) h09,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''10'', 1, 0)) h10,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''11'', 1, 0)) h11,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''12'', 1, 0)) h12,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''13'', 1, 0)) h13,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''14'', 1, 0)) h14,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''15'', 1, 0)) h15,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''16'', 1, 0)) h16,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''17'', 1, 0)) h17,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''18'', 1, 0)) h18,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''19'', 1, 0)) h19,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''20'', 1, 0)) h20,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''21'', 1, 0)) h21,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''22'', 1, 0)) h22,
-       SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''23'', 1, 0)) h23,
-       ROUND(SUM(blocks * block_size) / POWER(2, 30), 1) TOT_GB,
-       CASE SUM(blocks * block_size) / POWER(2, 30)
-       WHEN MAX(SUM(blocks * block_size) / POWER(2, 30)) OVER (PARTITION BY thread#) 
-       THEN ''***'' END MAX_GB
-  FROM v$archived_log
- GROUP BY
-       thread#,
-       TRUNC(first_time)
- ORDER BY
-       thread#,
-       TRUNC(first_time) DESC NULLS LAST
-),
-ordered_log AS (
-SELECT /*+ &&sq_fact_hints. */
-       ROWNUM row_num_noprint, log.*
-  FROM log
-),
-min_set AS (
-SELECT /*+ &&sq_fact_hints. */
-       thread#,
-       MIN(row_num_noprint) min_row_num
-  FROM ordered_log
- GROUP BY 
-       thread#
-)
-SELECT /*+ &&top_level_hints. */
-       log.*
-  FROM ordered_log log,
-       min_set ms
- WHERE log.thread# = ms.thread#
-   AND log.row_num_noprint < ms.min_row_num + 14
- ORDER BY
-       log.thread#,
-       log.yyyy_mm_dd DESC
-';
-END;
-/
-@@edb360_9a_pre_one.sql
-
-DEF title = 'NOLOGGING Objects';
-DEF main_table = 'DBA_TABLESPACES';
-BEGIN
-  :sql_text := '
-WITH 
-objects AS (
-SELECT 1 record_type,
-       ''TABLESPACE'' object_type,
-       tablespace_name,
-       NULL owner,
-       NULL name,
-       NULL column_name,
-       NULL partition,
-       NULL subpartition
-  FROM dba_tablespaces
- WHERE logging = ''NOLOGGING''
-UNION ALL       
-SELECT 2 record_type,
-       ''TABLE'' object_type,
-       tablespace_name,
-       owner,
-       table_name name,
-       NULL column_name,
-       NULL partition,
-       NULL subpartition
-  FROM dba_all_tables
- WHERE logging = ''NO''
-UNION ALL       
-SELECT 3 record_type,
-       ''INDEX'' object_type,
-       tablespace_name,
-       owner,
-       index_name name,
-       NULL column_name,
-       NULL partition,
-       NULL subpartition
-  FROM dba_indexes
- WHERE logging = ''NO''
-UNION ALL       
-SELECT 4 record_type,
-       ''LOB'' object_type,
-       tablespace_name,
-       owner,
-       table_name name,
-       SUBSTR(column_name, 1, 30) column_name,
-       NULL partition,
-       NULL subpartition
-  FROM dba_lobs
- WHERE logging = ''NO''
-UNION ALL       
-SELECT 5 record_type,
-       ''TAB_PARTITION'' object_type,
-       tablespace_name,
-       table_owner owner,
-       table_name name,
-       NULL column_name,
-       partition_name partition,
-       NULL subpartition
-  FROM dba_tab_partitions
- WHERE logging = ''NO''
-UNION ALL       
-SELECT 6 record_type,
-       ''IND_PARTITION'' object_type,
-       tablespace_name,
-       index_owner owner,
-       index_name name,
-       NULL column_name,
-       partition_name partition,
-       NULL subpartition
-  FROM dba_ind_partitions
- WHERE logging = ''NO''
-UNION ALL       
-SELECT 7 record_type,
-       ''LOB_PARTITION'' object_type,
-       tablespace_name,
-       table_owner owner,
-       table_name name,
-       SUBSTR(column_name, 1, 30) column_name,
-       partition_name partition,
-       NULL subpartition
-  FROM dba_lob_partitions
- WHERE logging = ''NO''
-UNION ALL       
-SELECT 8 record_type,
-       ''TAB_SUBPARTITION'' object_type,
-       tablespace_name,
-       table_owner owner,
-       table_name name,
-       NULL column_name,
-       partition_name partition,
-       subpartition_name subpartition
-  FROM dba_tab_subpartitions
- WHERE logging = ''NO''
-UNION ALL       
-SELECT 9 record_type,
-       ''IND_SUBPARTITION'' object_type,
-       tablespace_name,
-       index_owner owner,
-       index_name name,
-       NULL column_name,
-       partition_name partition,
-       subpartition_name subpartition
-  FROM dba_ind_subpartitions
- WHERE logging = ''NO''
-UNION ALL       
-SELECT 10 record_type,
-       ''LOB_SUBPARTITION'' object_type,
-       tablespace_name,
-       table_owner owner,
-       table_name name,
-       SUBSTR(column_name, 1, 30) column_name,
-       lob_partition_name partition,
-       subpartition_name subpartition
-  FROM dba_lob_subpartitions
- WHERE logging = ''NO''
-)
-SELECT object_type,
-       tablespace_name,
-       owner,
-       name,
-       column_name,
-       partition,
-       subpartition
-  FROM objects
- ORDER BY
-       record_type,
-       tablespace_name,
-       owner,
-       name,
-       column_name,
-       partition,
-       subpartition
 ';
 END;
 /
@@ -1251,7 +895,7 @@ HAVING COUNT(*) > 49
 SELECT /*+ &&top_level_hints. */ 
        DISTINCT lit.cnt, s.force_matching_signature, s.parsing_schema_name owner,
        CASE WHEN o.object_name IS NOT NULL THEN o.object_name||''(''||s.program_line#||'')'' END source,
-       SUBSTR(s.sql_text, 1, 200) sql_text
+       s.sql_text
   FROM lit, gv$sql s, dba_objects o
  WHERE s.force_matching_signature = lit.force_matching_signature
    AND s.sql_id = lit.min_sql_id
@@ -1281,7 +925,7 @@ HAVING COUNT(*) > 49
 SELECT /*+ &&top_level_hints. */ 
        DISTINCT s.parsing_schema_name owner, lit.cnt, s.force_matching_signature,
        CASE WHEN o.object_name IS NOT NULL THEN o.object_name||''(''||s.program_line#||'')'' END source,
-       SUBSTR(s.sql_text, 1, 200) sql_text
+       s.sql_text
   FROM lit, gv$sql s, dba_objects o
  WHERE s.force_matching_signature = lit.force_matching_signature
    AND s.sql_id = lit.min_sql_id
@@ -1346,7 +990,6 @@ SELECT /*+ &&top_level_hints. */
    duplicate_count cnt,
    executions,
    buffer_gets,
-   (SELECT SUBSTR(v2.sql_text, 1, 200) FROM gv$sql v2 WHERE v2.force_matching_signature = v1.force_matching_signature AND ROWNUM = 1) sql_text,
    buffer_gets_per_exec,
    disk_reads,
    disk_reads_per_exec,
@@ -1355,7 +998,8 @@ SELECT /*+ &&top_level_hints. */
    elapsed_seconds,
    elapsed_seconds_per_exec,
    pct_total_buffer_gets,
-   pct_total_disk_reads
+   pct_total_disk_reads,
+   (SELECT v2.sql_text FROM gv$sql v2 WHERE v2.force_matching_signature = v1.force_matching_signature AND ROWNUM = 1) sql_text
 from
   (select
       FORCE_MATCHING_SIGNATURE,
@@ -1455,7 +1099,7 @@ WITH /* active_sql */
 unique_sql AS (
 SELECT /*+ &&sq_fact_hints. */
        DISTINCT sq.sql_id,
-       REPLACE(SUBSTR(sq.sql_text, 1, 60), CHR(10)) sql_text
+       sq.sql_text
   FROM gv$session se,
        gv$sql sq
  WHERE se.status = ''ACTIVE''
@@ -1728,4 +1372,18 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
-
+DEF title = 'Libraries Version';
+DEF main_table = 'DBA_SOURCE';
+BEGIN
+  :sql_text := '
+SELECT /*+ &&top_level_hints. */
+       *
+  FROM dba_source
+ WHERE line < 4
+   AND text LIKE ''%$Header%''
+ ORDER BY
+       1, 2, 3, 4
+';
+END;
+/
+@@edb360_9a_pre_one.sql
