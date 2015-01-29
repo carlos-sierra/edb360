@@ -52,6 +52,8 @@ HOS rename alert_ 0005_&&common_prefix._alert_ alert_*.log
 HOS zip -mq &&main_compressed_filename._&&file_creation_time. &&common_prefix._query.sql
 HOS zip -dq &&main_compressed_filename._&&file_creation_time. &&common_prefix._query.sql
 HOS zip -mq &&main_compressed_filename._&&file_creation_time. 0005_&&common_prefix._alert_*.log
+HOS zip -jq 0006_&&common_prefix._opatch $ORACLE_HOME/cfgtoollogs/opatch/opatch*
+HOS zip -mq &&main_compressed_filename._&&file_creation_time. 0006_&&common_prefix._opatch.zip
 HOS zip -mq &&main_compressed_filename._&&file_creation_time. &&edb360_log2..txt
 HOS zip -mq &&main_compressed_filename._&&file_creation_time. &&edb360_tkprof._sort.txt
 HOS zip -mq &&main_compressed_filename._&&file_creation_time. &&edb360_log..txt

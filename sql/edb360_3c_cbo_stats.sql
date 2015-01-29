@@ -1,5 +1,5 @@
 @@edb360_0g_tkprof.sql
-DEF section_name = 'Cost-based Optimizer (CBO) Statitics';
+DEF section_name = 'Cost-based Optimizer (CBO) Statistics';
 SPO &&main_report_name..html APP;
 PRO <h2>&&section_name.</h2>
 SPO OFF;

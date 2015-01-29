@@ -49,8 +49,10 @@ DEF main_table = 'DBA_OBJ_AUDIT_OPTS';
 BEGIN
   :sql_text := '
 SELECT /*+ &&top_level_hints. */ 
-       *
-  FROM dba_obj_audit_opts
+       o.*
+  FROM dba_obj_audit_opts o
+ WHERE (o.alt,o.aud,o.com,o.del,o.gra,o.ind,o.ins,o.loc,o.ren,o.sel,o.upd,o.ref,o.exe,o.fbk,o.rea) NOT IN 
+       (SELECT d.alt,d.aud,d.com,d.del,d.gra,d.ind,d.ins,d.loc,d.ren,d.sel,d.upd,d.ref,d.exe,d.fbk,d.rea FROM all_def_audit_opts d)
  ORDER BY
        1, 2
 ';
@@ -92,17 +94,18 @@ BEGIN
   :sql_text := '
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
 SELECT /*+ &&top_level_hints. */
-       * from dba_role_privs
-where (granted_role in 
+       p.* from dba_role_privs p
+where (p.granted_role in 
 (''AQ_ADMINISTRATOR_ROLE'',''DELETE_CATALOG_ROLE'',''DBA'',''DM_CATALOG_ROLE'',''EXECUTE_CATALOG_ROLE'',
 ''EXP_FULL_DATABASE'',''GATHER_SYSTEM_STATISTICS'',''HS_ADMIN_ROLE'',''IMP_FULL_DATABASE'',
    ''JAVASYSPRIV'',''JAVA_ADMIN'',''JAVA_DEPLOY'',''LOGSTDBY_ADMINISTRATOR'',
    ''OEM_MONITOR'',''OLAP_DBA'',''RECOVERY_CATALOG_OWNER'',''SCHEDULER_ADMIN'',
    ''SELECT_CATALOG_ROLE'',''WM_ADMIN_ROLE'',''XDBADMIN'',''RESOURCE'')
-    or granted_role like ''%ANY%'')
-   and grantee not in &&exclusion_list.
-   and grantee not in &&exclusion_list2.
-order by grantee, granted_role
+    or p.granted_role like ''%ANY%'')
+   and p.grantee not in &&exclusion_list.
+   and p.grantee not in &&exclusion_list2.
+   and p.grantee in (select username from dba_users)
+order by p.grantee, p.granted_role
 ';
 END;
 /
@@ -119,7 +122,8 @@ where (default_tablespace in (''SYSAUX'',''SYSTEM'') or
 temporary_tablespace not in
    (select tablespace_name
    from dba_tablespaces
-   where contents = ''TEMPORARY''))
+   where contents = ''TEMPORARY''
+   and status = ''ONLINE''))
 and username not in &&exclusion_list.
 and username not in &&exclusion_list2.
 order by username
@@ -127,4 +131,8 @@ order by username
 END;
 /
 @@edb360_9a_pre_one.sql
+
+
+
+
 

@@ -543,6 +543,85 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+DEF title = 'Indexes larger than their Table';
+DEF main_table = 'DBA_SEGMENTS';
+COL gb FOR 999990.000;
+BEGIN
+  :sql_text := '
+WITH
+tables AS (
+SELECT /*+ &&sq_fact_hints. */
+       owner,
+       segment_name,
+       SUM(bytes) bytes
+  FROM dba_segments
+WHERE segment_type LIKE ''TABLE%''
+GROUP BY
+       owner,
+       segment_name
+),
+indexes AS (
+SELECT /*+ &&sq_fact_hints. */
+       owner,
+       segment_name,
+       SUM(bytes) bytes
+  FROM dba_segments
+WHERE segment_type LIKE ''INDEX%''
+GROUP BY
+       owner,
+       segment_name
+),
+idx_tbl AS (
+SELECT /*+ &&sq_fact_hints. */
+       d.table_owner,
+       d.table_name,
+       d.owner,
+       d.index_name,
+       SUM(i.bytes) bytes
+  FROM indexes i,
+       dba_indexes d
+WHERE i.owner = d.owner
+   AND i.segment_name = d.index_name
+GROUP BY
+       d.table_owner,
+       d.table_name,
+       d.owner,
+       d.index_name
+),
+total AS (
+SELECT /*+ &&sq_fact_hints. */
+       t.owner table_owner,
+       t.segment_name table_name,
+       t.bytes t_bytes,
+       i.owner index_owner,
+       i.index_name,
+       i.bytes i_bytes
+  FROM tables t,
+       idx_tbl i
+WHERE t.owner = i.table_owner
+   AND t.segment_name = i.table_name
+   AND i.bytes > t.bytes
+   AND t.bytes > 1024 * 1024 * 10 /* 10M */
+)
+SELECT table_owner,
+       table_name,
+       ROUND(t_bytes / 1024 / 1024 / 1024, 3) table_gb,
+       index_owner,
+       index_name,
+       ROUND(i_bytes / 1024 / 1024 / 1024, 3) index_gb,
+       ROUND((i_bytes - t_bytes) / 1024 / 1024 / 1024, 3) dif_gb,
+       ROUND(100 * (i_bytes - t_bytes) / t_bytes, 1) dif_perc
+  FROM total
+ORDER BY
+      table_owner,
+       table_name,
+       index_owner,
+       index_name
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
 DEF title = 'Candidate Tables for Partitioning';
 DEF main_table = 'DBA_TABLES';
 BEGIN

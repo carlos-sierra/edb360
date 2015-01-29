@@ -252,6 +252,24 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+DEF title = 'Reversed Indexes';
+DEF main_table = 'DBA_INDEXES';
+BEGIN
+  :sql_text := '
+SELECT /*+ &&top_level_hints. */
+       *
+  FROM dba_indexes
+ WHERE index_type LIKE ''%REV''
+   AND owner NOT IN &&exclusion_list.
+   AND owner NOT IN &&exclusion_list2.
+ ORDER BY
+       owner,
+       index_name
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
 DEF title = 'Hidden Columns';
 DEF main_table = 'DBA_TAB_COLS';
 BEGIN
@@ -841,7 +859,7 @@ BEGIN
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
 SELECT /*+ &&top_level_hints. */
        s.*,
-       ROUND(100 * s.last_number / s.max_value, 3) percent_used /* requested by Mike Moehlman */
+       ROUND(100 * (s.last_number - s.min_value) / GREATEST((s.max_value - s.min_value), 1), 1) percent_used /* requested by Mike Moehlman */
 from dba_sequences s
 where
    s.sequence_owner not in &&exclusion_list.
@@ -946,6 +964,25 @@ SELECT /*+ &&top_level_hints. */
   FROM gv$open_cursor
  GROUP BY
        inst_id, sid, user_name
+ ORDER BY 
+       1 DESC
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+DEF title = 'Open Cursors Count per SQL_ID';
+DEF main_table = 'GV$OPEN_CURSOR';
+DEF abstract = 'SQL statements with more than 50 Open Cursors';
+BEGIN
+  :sql_text := '
+SELECT /*+ &&top_level_hints. */ 
+       COUNT(*) open_cursors, COUNT(DISTINCT inst_id||''.''||sid) sessions, sql_id, hash_value, address, sql_text, cursor_type,
+       MIN(user_name) min_user_name, MAX(user_name) max_user_name, MAX(last_sql_active_time) last_sql_active_time
+  FROM gv$open_cursor
+ GROUP BY
+       sql_id, hash_value, address, sql_text, cursor_type
+HAVING COUNT(*) >= 50 
  ORDER BY 
        1 DESC
 ';

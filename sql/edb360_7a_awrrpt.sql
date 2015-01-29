@@ -247,7 +247,7 @@ BEGIN
       put_line('HOS zip -q &&main_compressed_filename._&&file_creation_time. &&main_report_name..html');
 
       -- all nodes
-      IF l_instances > 1 THEN
+      IF l_instances > 1 AND '&&db_version.' >= '11' THEN
         l_standard_filename := 'awrrpt_rac_'||j.bid||'_'||j.eid||'_'||j.rep;
         l_spool_filename := '&&common_prefix._'||l_standard_filename;
         put_line('COL hh_mm_ss NEW_V hh_mm_ss NOPRI FOR A8;');

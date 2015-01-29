@@ -484,7 +484,7 @@ END;
 /
 @@&&skip_tuning.&&skip_10g.edb360_9a_pre_one.sql
 
-DEF title = 'SQL with chaning Elapsed Time per Execution (list)';
+DEF title = 'SQL with changing Elapsed Time per Execution (list)';
 DEF abstract = 'SQL Statements with "Elapsed Time per Execution" changing over time.';
 DEF main_table = 'DBA_HIST_SQLSTAT';
 DEF days_of_history_accessed = '31';
@@ -593,7 +593,7 @@ END;
 /
 @@&&skip_diagnostics.edb360_9a_pre_one.sql
 
-DEF title = 'SQL with chaning Elapsed Time per Execution (time series)';
+DEF title = 'SQL with changing Elapsed Time per Execution (time series)';
 DEF abstract = 'SQL Statements with "Elapsed Time per Execution" changing over time.';
 DEF main_table = 'DBA_HIST_SQLSTAT';
 DEF days_of_history_accessed = '31';
@@ -607,7 +607,7 @@ COL rank_num FOR 9999 HEA 'Rank';
 COL instance_number_x FOR 9999 HEA 'Inst';
 COL end_time_x HEA 'End Time';
 COL plan_hash_value_x HEA 'Plan|Hash Value';
-COL executions_total_x FOR 999,999 HEA 'Execs|Total';
+COL executions_total_x FOR 999,999,999 HEA 'Execs|Total';
 COL rows_per_exec HEA 'Rows Per Exec';
 COL et_secs_per_exec HEA 'Elap Secs|Per Exec';
 COL cpu_secs_per_exec HEA 'CPU Secs|Per Exec';

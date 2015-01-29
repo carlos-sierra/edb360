@@ -139,8 +139,8 @@ SELECT owner psft_schema FROM sys.dba_tab_columns WHERE table_name = 'PSSTATUS' 
 SELECT toolsrel psft_tools_rel FROM &&psft_schema..psstatus WHERE ROWNUM = 1;
 
 -- setup
-DEF tool_vYYNN = 'v1501';
-DEF tool_vrsn = '&&tool_vYYNN. (2015-01-01)';
+DEF tool_vYYNN = 'v1502';
+DEF tool_vrsn = '&&tool_vYYNN. (2015-01-28)';
 DEF prefix = 'edb360';
 DEF sql_trace_level = '8';
 DEF main_table = '';
@@ -260,7 +260,7 @@ VAR sql_text_backup CLOB;
 VAR sql_text_backup2 CLOB;
 VAR sql_text_display CLOB;
 VAR file_seq NUMBER;
-EXEC :file_seq := 5;
+EXEC :file_seq := 6;
 VAR get_time_t0 NUMBER;
 VAR get_time_t1 NUMBER;
 -- Exadata
@@ -331,5 +331,6 @@ SPO OFF;
 
 -- zip
 HOS zip -jq &&main_compressed_filename._&&file_creation_time. js/sorttable.js
+HOS zip -qmT &&main_compressed_filename._&&file_creation_time. esp_requirements_&&esp_host_name_short..zip 
 
 --WHENEVER SQLERROR CONTINUE;

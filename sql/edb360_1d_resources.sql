@@ -1,5 +1,5 @@
 @@edb360_0g_tkprof.sql
-DEF section_name = 'Resources';
+DEF section_name = 'Resources (as per AWR)';
 SPO &&main_report_name..html APP;
 PRO <h2>&&section_name.</h2>
 SPO OFF;
