@@ -77,13 +77,19 @@ DEF main_table = 'DBA_HIST_DATABASE_INSTANCE';
 BEGIN
   :sql_text := '
 SELECT /*+ &&top_level_hints. */
-       *
+       dbid,				
+       instance_number,	
+       startup_time,		
+       version,			
+       db_name,			
+       instance_name,		
+       host_name,			
+       platform_name	
   FROM dba_hist_database_instance
- WHERE dbid = &&edb360_dbid.
  ORDER BY
-       dbid,
-       instance_number,
-       startup_time DESC
+       dbid,				
+       instance_number,	
+       startup_time
 ';
 END;				
 /

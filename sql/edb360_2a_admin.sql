@@ -74,6 +74,25 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+DEF title = 'Not Validated Constraints';
+DEF main_table = 'DBA_CONSTRAINTS';
+BEGIN
+  :sql_text := '
+SELECT /*+ &&top_level_hints. */
+       *
+  FROM dba_constraints
+ WHERE validated = ''NOT VALIDATED''
+   AND NOT (owner = ''SYSTEM'' AND constraint_name LIKE ''LOGMNR%'')
+   AND owner NOT IN &&exclusion_list.
+   AND owner NOT IN &&exclusion_list2.
+ ORDER BY
+       owner,
+       constraint_name
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
 DEF title = 'Non-indexed FK Constraints';
 DEF main_table = 'DBA_CONSTRAINTS';
 COL constraint_columns FOR A200;

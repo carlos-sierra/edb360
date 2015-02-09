@@ -12,7 +12,9 @@ BEGIN
 SELECT /*+ &&top_level_hints. */
        m.inst_id,
        c.wait_class,
-       ROUND(10 * m.time_waited / m.wait_count, 3) avg_ms
+       ROUND(10 * m.time_waited / m.wait_count, 3) avg_ms,
+       m.wait_count,
+       m.time_waited
   FROM gv$waitclassmetric m,
        gv$system_wait_class c
  WHERE m.wait_count > 0
@@ -35,7 +37,9 @@ SELECT /*+ &&top_level_hints. */
        m.inst_id,
        e.wait_class,
        e.name event,
-       ROUND(10 * m.time_waited / m.wait_count, 3) avg_ms
+       ROUND(10 * m.time_waited / m.wait_count, 3) avg_ms,
+       m.wait_count,
+       m.time_waited
   FROM gv$eventmetric m,
        gv$event_name e
  WHERE m.wait_count > 0

@@ -6,10 +6,6 @@ SET ECHO OFF;
 SET TIM OFF;
 SET TIMI OFF;
 CL COL;
-COL row_num FOR 9999999 HEA '#' PRI;
--- get dbid
-COL edb360_dbid NEW_V edb360_dbid;
-SELECT TRIM(TO_CHAR(dbid)) edb360_dbid FROM v$database;
 
 -- parameters
 PRO
@@ -51,9 +47,26 @@ PRO Use default value of 31 unless you have been instructed otherwise.
 PRO
 COL history_days NEW_V history_days;
 -- range: takes at least 31 days and at most as many as actual history, with a default of 31. parameter restricts within that range. 
-SELECT TO_CHAR(LEAST(CEIL(SYSDATE - CAST(MIN(begin_interval_time) AS DATE)), GREATEST(31, TO_NUMBER(NVL(TRIM('&2.'), '31'))))) history_days FROM dba_hist_snapshot WHERE '&&diagnostics_pack.' = 'Y' AND dbid = &&edb360_dbid.;
+SELECT TO_CHAR(LEAST(CEIL(SYSDATE - CAST(MIN(begin_interval_time) AS DATE)), GREATEST(31, TO_NUMBER(NVL(TRIM('&2.'), '31'))))) history_days FROM dba_hist_snapshot WHERE '&&diagnostics_pack.' = 'Y' AND dbid = (SELECT dbid FROM v$database);
 SELECT '0' history_days FROM DUAL WHERE NVL(TRIM('&&diagnostics_pack.'), 'N') = 'N';
 
+-- esp collection
+DEF rr_host_name_short = '';
+DEF esp_host_name_short = '';
+HOS cat /proc/cpuinfo | grep -i name | sort | uniq >> cpuinfo_model_name.txt
+PRO Please wait ...
+@@&&skip_diagnostics.resources_requirements.sql
+PRO Please wait ...
+@@&&skip_diagnostics.esp_collect_requirements.sql
+HOS zip -qmT esp_requirements_&&esp_host_name_short..zip res_requirements_&&rr_host_name_short..txt esp_requirements_&&esp_host_name_short..csv cpuinfo_model_name.txt 
+
+-- initialization
+CL COL;
+COL row_num FOR 9999999 HEA '#' PRI;
+
+-- get dbid
+COL edb360_dbid NEW_V edb360_dbid;
+SELECT TRIM(TO_CHAR(dbid)) edb360_dbid FROM v$database;
 DEF skip_script = 'sql/edb360_0f_skip_script.sql ';
 
 -- get instance number
@@ -75,6 +88,13 @@ SELECT SUBSTR('&&host_name_short.', 1, INSTR('&&host_name_short..', '.') - 1) ho
 SELECT TRANSLATE('&&host_name_short.',
 'abcdefghijklmnopqrstuvwxyz0123456789-_ ''`~!@#$%&*()=+[]{}\|;:",.<>/?'||CHR(0)||CHR(9)||CHR(10)||CHR(13)||CHR(38),
 'abcdefghijklmnopqrstuvwxyz0123456789-_') host_name_short FROM DUAL;
+
+COL esp_host_name_short NEW_V esp_host_name_short FOR A30;
+SELECT LOWER(SUBSTR(SYS_CONTEXT('USERENV', 'SERVER_HOST'), 1, 30)) esp_host_name_short FROM DUAL;
+SELECT SUBSTR('&&esp_host_name_short.', 1, INSTR('&&esp_host_name_short..', '.') - 1) esp_host_name_short FROM DUAL;
+SELECT TRANSLATE('&&esp_host_name_short.',
+'abcdefghijklmnopqrstuvwxyz0123456789-_ ''`~!@#$%&*()=+[]{}\|;:",.<>/?'||CHR(0)||CHR(9)||CHR(10)||CHR(13)||CHR(38),
+'abcdefghijklmnopqrstuvwxyz0123456789-_') esp_host_name_short FROM DUAL;
 
 -- get rdbms version
 COL db_version NEW_V db_version;
@@ -139,8 +159,8 @@ SELECT owner psft_schema FROM sys.dba_tab_columns WHERE table_name = 'PSSTATUS' 
 SELECT toolsrel psft_tools_rel FROM &&psft_schema..psstatus WHERE ROWNUM = 1;
 
 -- setup
-DEF tool_vYYNN = 'v1502';
-DEF tool_vrsn = '&&tool_vYYNN. (2015-01-28)';
+DEF tool_vYYNN = 'v1503';
+DEF tool_vrsn = '&&tool_vYYNN. (2015-02-08)';
 DEF prefix = 'edb360';
 DEF sql_trace_level = '8';
 DEF main_table = '';
@@ -330,7 +350,9 @@ PRO
 SPO OFF;
 
 -- zip
-HOS zip -jq &&main_compressed_filename._&&file_creation_time. js/sorttable.js
 HOS zip -qmT &&main_compressed_filename._&&file_creation_time. esp_requirements_&&esp_host_name_short..zip 
+HOS zip -jq &&main_compressed_filename._&&file_creation_time. js/sorttable.js
+HOS zip -r osw_&&esp_host_name_short..zip `ps -ef | grep OSW | grep FM | awk -F 'OSW' '{print $2}' | cut -f 3 -d ' '`
+HOS zip -qmT &&main_compressed_filename._&&file_creation_time. osw_&&esp_host_name_short..zip
 
 --WHENEVER SQLERROR CONTINUE;

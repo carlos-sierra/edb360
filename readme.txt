@@ -1,4 +1,4 @@
-EDB360 v1502 (2015-01-08) by Carlos Sierra
+EDB360 v1503 (2015-02-08) by Carlos Sierra
 
 EDB360 is a "free to use" tool to perform an initial assessment of a remote system. 
 It gives a glance of a database state. It also helps to document any findings.
@@ -33,11 +33,13 @@ Steps
 
 Notes
 ~~~~~
-1. If you need to execute edb360 against all databases in host use then run_db360.sh
+1. If you need to execute edb360 against all databases in host use then run_db360.sh:
 
    $ unzip edb360.zip
    $ cd edb360
    $ sh run_db360.sh
+
+   note: this method requires Oracle Diagostics or Tuning pack license.
 
 2. If you need to execute only a portion of edb360 (i.e. resources and os stats) use 
    these commands. Notice 0b_pre and 0c_post scripts.

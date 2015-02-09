@@ -278,8 +278,8 @@ SELECT snap_id,
        ROUND(100 * SUM(os_cpu_wait_time_secs / num_cpus) / SUM(interval_secs), 1) os_cpu_wait_time_perc,
        ROUND(100 * SUM(rsrc_mgr_cpu_wait_time_secs / num_cpus) / SUM(interval_secs), 1) rsrc_mgr_cpu_wait_perc,
        ROUND(100 * SUM(iowait_time_secs / num_cpus) / SUM(interval_secs), 1) iowait_perc,
-       SUM(vm_in_bytes) vm_in_bytes,
-       SUM(vm_out_bytes) vm_out_bytes,
+       ROUND(SUM(vm_in_bytes) / POWER(2, 30), 3) vm_in_gb,
+       ROUND(SUM(vm_out_bytes) / POWER(2, 30), 3) vm_out_gb,
        0 dummy_13,
        0 dummy_14,
        0 dummy_15
@@ -375,9 +375,9 @@ DEF skip_lch = '';
 DEF title = 'Virtual Memory (VM) Pages for Cluster';
 DEF tit_01 = '';
 DEF tit_02 = '';
-DEF tit_11 = 'VM Pages IN (Bytes)';
-DEF tit_12 = 'VM Pages OUT (Bytes)';
-DEF vaxis = 'Virtual Memory Pages IN and OUT (Bytes)';
+DEF tit_11 = 'VM Pages IN (GBs)';
+DEF tit_12 = 'VM Pages OUT (GBs)';
+DEF vaxis = 'Virtual Memory Pages IN and OUT (GBs)';
 DEF vbaseline = '';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', 'instance_number');
 @@edb360_9a_pre_one.sql

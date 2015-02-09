@@ -6,7 +6,7 @@
 --
 -- Author:      Carlos Sierra
 --
--- Version:     v1420 (2014/12/22)
+-- Version:     v1503 (2015/02/08)
 --
 -- Usage:       Collects Requirements from AWR and ASH views, thus it should only be
 --              executed on systems with the Oracle Diagnostics Pack license.
@@ -17,7 +17,7 @@
 --              # sqlplus / as sysdba
 --              SQL> START sql/esp_collect_requirements.sql
 --
---  Notes:      Developed and tested for 11.2.0.3 and 10.2.0.4
+--  Notes:      Developed and tested on 11.2.0.3 and 10.2.0.4
 --             
 ---------------------------------------------------------------------------------------
 --
@@ -34,7 +34,7 @@ DEF skip_on_10g = '';
 COL skip_on_10g NEW_V skip_on_10g;
 SELECT '--' skip_on_10g FROM v$instance WHERE version LIKE '10%';
 
-SPO  esp_requirements_&&esp_host_name_short..log APP;
+--SPO  esp_requirements_&&esp_host_name_short..log APP;
 
 ALTER SESSION SET NLS_NUMERIC_CHARACTERS = ".,";
 ALTER SESSION SET NLS_SORT = 'BINARY';
@@ -58,7 +58,7 @@ SELECT 'get_collection_host', LOWER(SUBSTR(SYS_CONTEXT('USERENV', 'SERVER_HOST')
 DEF;
 SELECT 'get_current_time', TO_CHAR(SYSDATE, '&&ecr_date_format.') current_time FROM DUAL
 /
-SPO OFF;
+--SPO OFF;
 SPO esp_requirements_&&esp_host_name_short..csv APP;
 
 -- header
@@ -131,6 +131,9 @@ SELECT /*+ &&ecr_sq_fact_hints. */
        PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY aas_on_cpu_and_resmgr) aas_on_cpu_and_resmgr_99,
        PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY aas_on_cpu) aas_on_cpu_99,
        PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY aas_resmgr_cpu_quantum) aas_resmgr_cpu_quantum_99,
+       PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY aas_on_cpu_and_resmgr) aas_on_cpu_and_resmgr_97,
+       PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY aas_on_cpu) aas_on_cpu_97,
+       PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY aas_resmgr_cpu_quantum) aas_resmgr_cpu_quantum_97,
        PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY aas_on_cpu_and_resmgr) aas_on_cpu_and_resmgr_95,
        PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY aas_on_cpu) aas_on_cpu_95,
        PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY aas_resmgr_cpu_quantum) aas_resmgr_cpu_quantum_95,
@@ -197,6 +200,18 @@ UNION ALL
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'cpu', 'aas_on_cpu_99', 'dba_hist_active_sess_history', -1, -1, SUM(aas_on_cpu_99) FROM cpu_per_inst
 UNION ALL
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'cpu', 'aas_resmgr_cpu_quantum_99', 'dba_hist_active_sess_history', -1, -1, SUM(aas_resmgr_cpu_quantum_99) FROM cpu_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'cpu', 'aas_on_cpu_and_resmgr_97', 'dba_hist_active_sess_history', instance_number, 0, aas_on_cpu_and_resmgr_97 FROM cpu_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'cpu', 'aas_on_cpu_97', 'dba_hist_active_sess_history', instance_number, 0, aas_on_cpu_97 FROM cpu_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'cpu', 'aas_resmgr_cpu_quantum_97', 'dba_hist_active_sess_history', instance_number, 0, aas_resmgr_cpu_quantum_97 FROM cpu_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'cpu', 'aas_on_cpu_and_resmgr_97', 'dba_hist_active_sess_history', -1, -1, SUM(aas_on_cpu_and_resmgr_97) FROM cpu_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'cpu', 'aas_on_cpu_97', 'dba_hist_active_sess_history', -1, -1, SUM(aas_on_cpu_97) FROM cpu_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'cpu', 'aas_resmgr_cpu_quantum_97', 'dba_hist_active_sess_history', -1, -1, SUM(aas_resmgr_cpu_quantum_97) FROM cpu_per_inst
 UNION ALL
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'cpu', 'aas_on_cpu_and_resmgr_95', 'dba_hist_active_sess_history', instance_number, 0, aas_on_cpu_and_resmgr_95 FROM cpu_per_inst
 UNION ALL
@@ -287,6 +302,9 @@ SELECT /*+ &&ecr_sq_fact_hints. */
        PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY aas_on_cpu_and_resmgr) aas_on_cpu_and_resmgr_99,
        PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY aas_on_cpu) aas_on_cpu_99,
        PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY aas_resmgr_cpu_quantum) aas_resmgr_cpu_quantum_99,
+       PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY aas_on_cpu_and_resmgr) aas_on_cpu_and_resmgr_97,
+       PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY aas_on_cpu) aas_on_cpu_97,
+       PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY aas_resmgr_cpu_quantum) aas_resmgr_cpu_quantum_97,
        PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY aas_on_cpu_and_resmgr) aas_on_cpu_and_resmgr_95,
        PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY aas_on_cpu) aas_on_cpu_95,
        PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY aas_resmgr_cpu_quantum) aas_resmgr_cpu_quantum_95,
@@ -353,6 +371,18 @@ UNION ALL
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'cpu', 'aas_on_cpu_99', 'gv$active_session_history', -1, -1, SUM(aas_on_cpu_99) FROM cpu_per_inst
 UNION ALL
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'cpu', 'aas_resmgr_cpu_quantum_99', 'gv$active_session_history', -1, -1, SUM(aas_resmgr_cpu_quantum_99) FROM cpu_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'cpu', 'aas_on_cpu_and_resmgr_97', 'gv$active_session_history', 0, inst_id, aas_on_cpu_and_resmgr_97 FROM cpu_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'cpu', 'aas_on_cpu_97', 'gv$active_session_history', 0, inst_id, aas_on_cpu_97 FROM cpu_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'cpu', 'aas_resmgr_cpu_quantum_97', 'gv$active_session_history', 0, inst_id, aas_resmgr_cpu_quantum_97 FROM cpu_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'cpu', 'aas_on_cpu_and_resmgr_97', 'gv$active_session_history', -1, -1, SUM(aas_on_cpu_and_resmgr_97) FROM cpu_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'cpu', 'aas_on_cpu_97', 'gv$active_session_history', -1, -1, SUM(aas_on_cpu_97) FROM cpu_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'cpu', 'aas_resmgr_cpu_quantum_97', 'gv$active_session_history', -1, -1, SUM(aas_resmgr_cpu_quantum_97) FROM cpu_per_inst
 UNION ALL
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'cpu', 'aas_on_cpu_and_resmgr_95', 'gv$active_session_history', 0, inst_id, aas_on_cpu_and_resmgr_95 FROM cpu_per_inst
 UNION ALL
@@ -601,6 +631,9 @@ SELECT /*+ &&ecr_sq_fact_hints. */
        ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY (r_reqs + w_reqs) / elapsed_sec)) rw_iops_99,
        ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY r_reqs / elapsed_sec)) r_iops_99,
        ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY w_reqs / elapsed_sec)) w_iops_99,
+       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY (r_reqs + w_reqs) / elapsed_sec)) rw_iops_97,
+       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY r_reqs / elapsed_sec)) r_iops_97,
+       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY w_reqs / elapsed_sec)) w_iops_97,
        ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY (r_reqs + w_reqs) / elapsed_sec)) rw_iops_95,
        ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY r_reqs / elapsed_sec)) r_iops_95,
        ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY w_reqs / elapsed_sec)) w_iops_95,
@@ -627,6 +660,9 @@ SELECT /*+ &&ecr_sq_fact_hints. */
        ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY (r_bytes + w_bytes) / POWER(2, 20) / elapsed_sec)) rw_mbps_99,
        ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY r_bytes / POWER(2, 20) / elapsed_sec)) r_mbps_99,
        ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY w_bytes / POWER(2, 20) / elapsed_sec)) w_mbps_99,
+       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY (r_bytes + w_bytes) / POWER(2, 20) / elapsed_sec)) rw_mbps_97,
+       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY r_bytes / POWER(2, 20) / elapsed_sec)) r_mbps_97,
+       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY w_bytes / POWER(2, 20) / elapsed_sec)) w_mbps_97,
        ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY (r_bytes + w_bytes) / POWER(2, 20) / elapsed_sec)) rw_mbps_95,
        ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY r_bytes / POWER(2, 20) / elapsed_sec)) r_mbps_95,
        ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY w_bytes / POWER(2, 20) / elapsed_sec)) w_mbps_95,
@@ -660,6 +696,9 @@ SELECT /*+ &&ecr_sq_fact_hints. */
        ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY (r_reqs + w_reqs) / elapsed_sec)) rw_iops_99,
        ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY r_reqs / elapsed_sec)) r_iops_99,
        ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY w_reqs / elapsed_sec)) w_iops_99,
+       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY (r_reqs + w_reqs) / elapsed_sec)) rw_iops_97,
+       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY r_reqs / elapsed_sec)) r_iops_97,
+       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY w_reqs / elapsed_sec)) w_iops_97,
        ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY (r_reqs + w_reqs) / elapsed_sec)) rw_iops_95,
        ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY r_reqs / elapsed_sec)) r_iops_95,
        ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY w_reqs / elapsed_sec)) w_iops_95,
@@ -686,6 +725,9 @@ SELECT /*+ &&ecr_sq_fact_hints. */
        ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY (r_bytes + w_bytes) / POWER(2, 20) / elapsed_sec)) rw_mbps_99,
        ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY r_bytes / POWER(2, 20) / elapsed_sec)) r_mbps_99,
        ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY w_bytes / POWER(2, 20) / elapsed_sec)) w_mbps_99,
+       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY (r_bytes + w_bytes) / POWER(2, 20) / elapsed_sec)) rw_mbps_97,
+       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY r_bytes / POWER(2, 20) / elapsed_sec)) r_mbps_97,
+       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY w_bytes / POWER(2, 20) / elapsed_sec)) w_mbps_97,
        ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY (r_bytes + w_bytes) / POWER(2, 20) / elapsed_sec)) rw_mbps_95,
        ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY r_bytes / POWER(2, 20) / elapsed_sec)) r_mbps_95,
        ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY w_bytes / POWER(2, 20) / elapsed_sec)) w_mbps_95,
@@ -725,6 +767,12 @@ UNION ALL
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf', 'r_iops_99', 'dba_hist_sysstat', instance_number, 0, r_iops_99 FROM io_per_inst
 UNION ALL
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf', 'w_iops_99', 'dba_hist_sysstat', instance_number, 0, w_iops_99 FROM io_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf', 'rw_iops_97', 'dba_hist_sysstat', instance_number, 0, rw_iops_97 FROM io_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf', 'r_iops_97', 'dba_hist_sysstat', instance_number, 0, r_iops_97 FROM io_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf', 'w_iops_97', 'dba_hist_sysstat', instance_number, 0, w_iops_97 FROM io_per_inst
 UNION ALL
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf', 'rw_iops_95', 'dba_hist_sysstat', instance_number, 0, rw_iops_95 FROM io_per_inst
 UNION ALL
@@ -778,6 +826,12 @@ SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf', 'r_mbps_99
 UNION ALL
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf', 'w_mbps_99', 'dba_hist_sysstat', instance_number, 0, w_mbps_99 FROM io_per_inst
 UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf', 'rw_mbps_97', 'dba_hist_sysstat', instance_number, 0, rw_mbps_97 FROM io_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf', 'r_mbps_97', 'dba_hist_sysstat', instance_number, 0, r_mbps_97 FROM io_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf', 'w_mbps_97', 'dba_hist_sysstat', instance_number, 0, w_mbps_97 FROM io_per_inst
+UNION ALL
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf', 'rw_mbps_95', 'dba_hist_sysstat', instance_number, 0, rw_mbps_95 FROM io_per_inst
 UNION ALL
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf', 'r_mbps_95', 'dba_hist_sysstat', instance_number, 0, r_mbps_95 FROM io_per_inst
@@ -829,6 +883,12 @@ UNION ALL
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf', 'r_iops_99', 'dba_hist_sysstat', -1, -1, SUM(r_iops_99) FROM io_per_inst
 UNION ALL
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf', 'w_iops_99', 'dba_hist_sysstat', -1, -1, SUM(w_iops_99) FROM io_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf', 'rw_iops_97', 'dba_hist_sysstat', -1, -1, SUM(rw_iops_97) FROM io_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf', 'r_iops_97', 'dba_hist_sysstat', -1, -1, SUM(r_iops_97) FROM io_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf', 'w_iops_97', 'dba_hist_sysstat', -1, -1, SUM(w_iops_97) FROM io_per_inst
 UNION ALL
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf', 'rw_iops_95', 'dba_hist_sysstat', -1, -1, SUM(rw_iops_95) FROM io_per_inst
 UNION ALL
@@ -882,6 +942,12 @@ SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf', 'r_mbps_99
 UNION ALL
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf', 'w_mbps_99', 'dba_hist_sysstat', -1, -1, SUM(w_mbps_99) FROM io_per_inst
 UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf', 'rw_mbps_97', 'dba_hist_sysstat', -1, -1, SUM(rw_mbps_97) FROM io_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf', 'r_mbps_97', 'dba_hist_sysstat', -1, -1, SUM(r_mbps_97) FROM io_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf', 'w_mbps_97', 'dba_hist_sysstat', -1, -1, SUM(w_mbps_97) FROM io_per_inst
+UNION ALL
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf', 'rw_mbps_95', 'dba_hist_sysstat', -1, -1, SUM(rw_mbps_95) FROM io_per_inst
 UNION ALL
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf', 'r_mbps_95', 'dba_hist_sysstat', -1, -1, SUM(r_mbps_95) FROM io_per_inst
@@ -934,6 +1000,12 @@ SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf', 'r_iops_99
 UNION ALL
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf', 'w_iops_99', 'dba_hist_sysstat', -2, -2, w_iops_99 FROM io_per_cluster
 UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf', 'rw_iops_97', 'dba_hist_sysstat', -2, -2, rw_iops_97 FROM io_per_cluster
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf', 'r_iops_97', 'dba_hist_sysstat', -2, -2, r_iops_97 FROM io_per_cluster
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf', 'w_iops_97', 'dba_hist_sysstat', -2, -2, w_iops_97 FROM io_per_cluster
+UNION ALL
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf', 'rw_iops_95', 'dba_hist_sysstat', -2, -2, rw_iops_95 FROM io_per_cluster
 UNION ALL
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf', 'r_iops_95', 'dba_hist_sysstat', -2, -2, r_iops_95 FROM io_per_cluster
@@ -985,6 +1057,12 @@ UNION ALL
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf', 'r_mbps_99', 'dba_hist_sysstat', -2, -2, r_mbps_99 FROM io_per_cluster
 UNION ALL
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf', 'w_mbps_99', 'dba_hist_sysstat', -2, -2, w_mbps_99 FROM io_per_cluster
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf', 'rw_mbps_97', 'dba_hist_sysstat', -2, -2, rw_mbps_97 FROM io_per_cluster
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf', 'r_mbps_97', 'dba_hist_sysstat', -2, -2, r_mbps_97 FROM io_per_cluster
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf', 'w_mbps_97', 'dba_hist_sysstat', -2, -2, w_mbps_97 FROM io_per_cluster
 UNION ALL
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'disk_perf', 'rw_mbps_95', 'dba_hist_sysstat', -2, -2, rw_mbps_95 FROM io_per_cluster
 UNION ALL
@@ -1053,6 +1131,7 @@ SELECT /*+ &&ecr_sq_fact_hints. */
        TO_CHAR(TRUNC(CAST(sample_time AS DATE), 'HH') + (1/24), '&&ecr_date_format.') end_time,
        MAX(active_sessions) active_sessions_max, -- 100% percentile or max or peak
        PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY active_sessions) active_sessions_99p, -- 99% percentile
+       PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY active_sessions) active_sessions_97p, -- 97% percentile
        PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY active_sessions) active_sessions_95p, -- 95% percentile
        PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY active_sessions) active_sessions_90p, -- 90% percentile
        PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY active_sessions) active_sessions_75p, -- 75% percentile
@@ -1067,6 +1146,8 @@ SELECT /*+ &&ecr_sq_fact_hints. */
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'cpu_ts', session_state, end_time, instance_number, 0 inst_id, active_sessions_max value FROM cpu_per_inst_and_hour
  UNION ALL
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'cpu_ts_99p', session_state, end_time, instance_number, 0 inst_id, active_sessions_99p value FROM cpu_per_inst_and_hour
+ UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'cpu_ts_97p', session_state, end_time, instance_number, 0 inst_id, active_sessions_97p value FROM cpu_per_inst_and_hour
  UNION ALL
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'cpu_ts_95p', session_state, end_time, instance_number, 0 inst_id, active_sessions_95p value FROM cpu_per_inst_and_hour
  UNION ALL
@@ -1314,6 +1395,6 @@ SELECT 'collection_host,collection_key,category,data_element,source,instance_num
 /
 
 SPO OFF;
-HOS cat /proc/cpuinfo | grep -i name | sort | uniq >> cpuinfo_model_name.txt
-HOS zip -qT esp_requirements_&&esp_host_name_short..zip esp_requirements_&&esp_host_name_short..csv esp_requirements_&&esp_host_name_short..log cpuinfo_model_name.txt
+--HOS cat /proc/cpuinfo | grep -i name | sort | uniq >> cpuinfo_model_name.txt
+--HOS zip -qT esp_requirements_&&esp_host_name_short..zip esp_requirements_&&esp_host_name_short..csv esp_requirements_&&esp_host_name_short..log cpuinfo_model_name.txt res_requirements_&&esp_host_name_short..txt
 SET TERM ON ECHO OFF FEED ON VER ON HEA ON PAGES 14 COLSEP ' ' LIN 80 TRIMS OFF TRIM ON TI OFF TIMI OFF ARRAY 15 NUM 10 SQLBL OFF BLO ON RECSEP WR;

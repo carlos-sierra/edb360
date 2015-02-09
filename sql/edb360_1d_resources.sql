@@ -1,328 +1,293 @@
 @@edb360_0g_tkprof.sql
-DEF section_name = 'Resources (as per AWR)';
+DEF section_name = 'Resources (as per AWR and MEM)';
 SPO &&main_report_name..html APP;
 PRO <h2>&&section_name.</h2>
 SPO OFF;
 
-COL db_name FOR A9;
-COL host_name FOR A64;
-COL instance_name FOR A16;
-COL db_unique_name FOR A30;
-COL platform_name FOR A101;
-COL version FOR A17;
+COL order_by NOPRI;
+COL metric FOR A16 HEA "Metric";
+COL instance_number FOR 9999 HEA "Inst|Num";
+COL on_cpu FOR 999990.0 HEA "Active|Sessions|ON CPU";
+COL on_cpu_and_resmgr FOR 9999990.0 HEA "Active|Sessions|ON CPU|or RESMGR";
+COL resmgr_cpu_quantum FOR 999999990.0 HEA "Active|Sessions|ON RESMGR|CPU quantum";
+COL begin_interval_time FOR A18 HEA "Begin Interval";
+COL end_interval_time FOR A18 HEA "End Interval";
+COL snap_shots FOR 99999 HEA "Snap|Shots";
+COL days FOR 990.0 HEA "Days|Hist";
+COL avg_snaps_per_day FOR 990.0 HEA "Avg|Snaps|per|Day";
+COL min_sample_time FOR A18 HEA "Begin Interval";
+COL max_sample_time FOR A18 HEA "End Interval";
+COL samples FOR 9999999 HEA "Samples";
+COL hours FOR 9990.0 HEA "Hours|Hist";
 
-COL aas_on_cpu_and_resmgr_peak    FOR 999999999999990.0 HEA "CPU and RESMGR Peak";
-COL aas_on_cpu_peak               FOR 999999999999990.0 HEA "CPU Peak";
-COL aas_resmgr_cpu_quantum_peak   FOR 999999999999990.0 HEA "RESMGR Peak";
-COL aas_on_cpu_and_resmgr_9999    FOR 999999999999990.0 HEA "CPU and RESMGR 99.99th";
-COL aas_on_cpu_9999               FOR 999999999999990.0 HEA "CPU 99.99th";
-COL aas_resmgr_cpu_quantum_9999   FOR 999999999999990.0 HEA "RESMGR 99.99th";
-COL aas_on_cpu_and_resmgr_999     FOR 999999999999990.0 HEA "CPU and RESMGR 99.9th";
-COL aas_on_cpu_999                FOR 999999999999990.0 HEA "CPU 99.9th";
-COL aas_resmgr_cpu_quantum_999    FOR 999999999999990.0 HEA "RESMGR 99.9th";
-COL aas_on_cpu_and_resmgr_99      FOR 999999999999990.0 HEA "CPU and RESMGR 99th";
-COL aas_on_cpu_99                 FOR 999999999999990.0 HEA "CPU 99th";
-COL aas_resmgr_cpu_quantum_99     FOR 999999999999990.0 HEA "RESMGR 99th";
-COL aas_on_cpu_and_resmgr_95      FOR 999999999999990.0 HEA "CPU and RESMGR 95th";
-COL aas_on_cpu_95                 FOR 999999999999990.0 HEA "CPU 95th";
-COL aas_resmgr_cpu_quantum_95     FOR 999999999999990.0 HEA "RESMGR 95th";
-COL aas_on_cpu_and_resmgr_90      FOR 999999999999990.0 HEA "CPU and RESMGR 90th";
-COL aas_on_cpu_90                 FOR 999999999999990.0 HEA "CPU 90th";
-COL aas_resmgr_cpu_quantum_90     FOR 999999999999990.0 HEA "RESMGR 90th";
-COL aas_on_cpu_and_resmgr_75      FOR 999999999999990.0 HEA "CPU and RESMGR 75th";
-COL aas_on_cpu_75                 FOR 999999999999990.0 HEA "CPU 75th";
-COL aas_resmgr_cpu_quantum_75     FOR 999999999999990.0 HEA "RESMGR 75th";
-COL aas_on_cpu_and_resmgr_median  FOR 999999999999990.0 HEA "CPU and RESMGR MEDIAN";
-COL aas_on_cpu_median             FOR 999999999999990.0 HEA "CPU MEDIAN";
-COL aas_resmgr_cpu_quantum_median FOR 999999999999990.0 HEA "RESMGR MEDIAN";
-COL aas_on_cpu_and_resmgr_avg     FOR 999999999999990.0 HEA "CPU and RESMGR AVG";
-COL aas_on_cpu_avg                FOR 999999999999990.0 HEA "CPU AVG";
-COL aas_resmgr_cpu_quantum_avg    FOR 999999999999990.0 HEA "RESMGR AVG";
-
-DEF title = 'CPU Demand (MEM)';
+DEF title = 'CPU Demand Percentiles (MEM)';
 DEF main_table = 'GV$ACTIVE_SESSION_HISTORY';
-DEF abstract = 'Number of Sessions demanding CPU. Includes Peak (max), percentiles and average.'
-DEF foot = 'Consider Peak for sizing. Instance Number -1 means aggregated values (SUM) while -2 means over all instances (combined).'
+DEF abstract = 'Number of Sessions on CPU or RESMGR. Includes Max (Peak), Percentiles, Median and Average.'
 BEGIN
   :sql_text := '
 WITH 
-samples_on_cpu AS (
-SELECT /*+ &&sq_fact_hints. */
+cpu_per_inst_and_sample AS (
+SELECT /*+ &&sq_fact_hints. &&ds_hint. */
        inst_id,
        sample_id,
        COUNT(*) aas_on_cpu_and_resmgr,
        SUM(CASE session_state WHEN ''ON CPU'' THEN 1 ELSE 0 END) aas_on_cpu,
-       SUM(CASE event WHEN ''resmgr:cpu quantum'' THEN 1 ELSE 0 END) aas_resmgr_cpu_quantum       
+       SUM(CASE event WHEN ''resmgr:cpu quantum'' THEN 1 ELSE 0 END) aas_resmgr_cpu_quantum,
+       MIN(sample_time) min_sample_time,
+       MAX(sample_time) max_sample_time           
   FROM gv$active_session_history
  WHERE (session_state = ''ON CPU'' OR event = ''resmgr:cpu quantum'')
  GROUP BY
        inst_id,
        sample_id
 ),
-sub_totals AS (
+cpu_per_inst AS (
 SELECT /*+ &&sq_fact_hints. */
-       d.dbid,
-       d.name db_name,
-       LOWER(SUBSTR(i.host_name||''.'', 1, INSTR(i.host_name||''.'', ''.'') - 1)) host_name,
-       i.instance_number,
-       i.instance_name,
-       MAX(c.aas_on_cpu_and_resmgr) aas_on_cpu_and_resmgr_peak,
-       MAX(c.aas_on_cpu) aas_on_cpu_peak,
-       MAX(c.aas_resmgr_cpu_quantum) aas_resmgr_cpu_quantum_peak,
-       PERCENTILE_DISC(0.9999) WITHIN GROUP (ORDER BY c.aas_on_cpu_and_resmgr) aas_on_cpu_and_resmgr_9999,
-       PERCENTILE_DISC(0.9999) WITHIN GROUP (ORDER BY c.aas_on_cpu) aas_on_cpu_9999,
-       PERCENTILE_DISC(0.9999) WITHIN GROUP (ORDER BY c.aas_resmgr_cpu_quantum) aas_resmgr_cpu_quantum_9999,
-       PERCENTILE_DISC(0.999) WITHIN GROUP (ORDER BY c.aas_on_cpu_and_resmgr) aas_on_cpu_and_resmgr_999,
-       PERCENTILE_DISC(0.999) WITHIN GROUP (ORDER BY c.aas_on_cpu) aas_on_cpu_999,
-       PERCENTILE_DISC(0.999) WITHIN GROUP (ORDER BY c.aas_resmgr_cpu_quantum) aas_resmgr_cpu_quantum_999,
-       PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY c.aas_on_cpu_and_resmgr) aas_on_cpu_and_resmgr_99,
-       PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY c.aas_on_cpu) aas_on_cpu_99,
-       PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY c.aas_resmgr_cpu_quantum) aas_resmgr_cpu_quantum_99,
-       PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY c.aas_on_cpu_and_resmgr) aas_on_cpu_and_resmgr_95,
-       PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY c.aas_on_cpu) aas_on_cpu_95,
-       PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY c.aas_resmgr_cpu_quantum) aas_resmgr_cpu_quantum_95,
-       PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY c.aas_on_cpu_and_resmgr) aas_on_cpu_and_resmgr_90,
-       PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY c.aas_on_cpu) aas_on_cpu_90,
-       PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY c.aas_resmgr_cpu_quantum) aas_resmgr_cpu_quantum_90,
-       PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY c.aas_on_cpu_and_resmgr) aas_on_cpu_and_resmgr_75,
-       PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY c.aas_on_cpu) aas_on_cpu_75,
-       PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY c.aas_resmgr_cpu_quantum) aas_resmgr_cpu_quantum_75,
-       MEDIAN(c.aas_on_cpu_and_resmgr) aas_on_cpu_and_resmgr_median,
-       MEDIAN(c.aas_on_cpu) aas_on_cpu_median,
-       MEDIAN(c.aas_resmgr_cpu_quantum) aas_resmgr_cpu_quantum_median,
-       ROUND(AVG(c.aas_on_cpu_and_resmgr), 1) aas_on_cpu_and_resmgr_avg,
-       ROUND(AVG(c.aas_on_cpu), 1) aas_on_cpu_avg,
-       ROUND(AVG(c.aas_resmgr_cpu_quantum), 1) aas_resmgr_cpu_quantum_avg
-  FROM samples_on_cpu c,
-       gv$instance i,
-       v$database d
- WHERE i.inst_id = c.inst_id
+       inst_id,
+       MIN(min_sample_time)                                                   min_sample_time,
+       MAX(max_sample_time)                                                   max_sample_time,
+       COUNT(DISTINCT sample_id)                                              samples,        
+       MAX(aas_on_cpu_and_resmgr)                                             aas_on_cpu_and_resmgr_max,
+       MAX(aas_on_cpu)                                                        aas_on_cpu_max,
+       MAX(aas_resmgr_cpu_quantum)                                            aas_resmgr_cpu_quantum_max,
+       PERCENTILE_DISC(0.9999) WITHIN GROUP (ORDER BY aas_on_cpu_and_resmgr)  aas_on_cpu_and_resmgr_9999,
+       PERCENTILE_DISC(0.9999) WITHIN GROUP (ORDER BY aas_on_cpu)             aas_on_cpu_9999,
+       PERCENTILE_DISC(0.9999) WITHIN GROUP (ORDER BY aas_resmgr_cpu_quantum) aas_resmgr_cpu_quantum_9999,
+       PERCENTILE_DISC(0.999) WITHIN GROUP (ORDER BY aas_on_cpu_and_resmgr)   aas_on_cpu_and_resmgr_999,
+       PERCENTILE_DISC(0.999) WITHIN GROUP (ORDER BY aas_on_cpu)              aas_on_cpu_999,
+       PERCENTILE_DISC(0.999) WITHIN GROUP (ORDER BY aas_resmgr_cpu_quantum)  aas_resmgr_cpu_quantum_999,
+       PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY aas_on_cpu_and_resmgr)    aas_on_cpu_and_resmgr_99,
+       PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY aas_on_cpu)               aas_on_cpu_99,
+       PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY aas_resmgr_cpu_quantum)   aas_resmgr_cpu_quantum_99,
+       PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY aas_on_cpu_and_resmgr)    aas_on_cpu_and_resmgr_97,
+       PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY aas_on_cpu)               aas_on_cpu_97,
+       PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY aas_resmgr_cpu_quantum)   aas_resmgr_cpu_quantum_97,
+       PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY aas_on_cpu_and_resmgr)    aas_on_cpu_and_resmgr_95,
+       PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY aas_on_cpu)               aas_on_cpu_95,
+       PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY aas_resmgr_cpu_quantum)   aas_resmgr_cpu_quantum_95,
+       PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY aas_on_cpu_and_resmgr)    aas_on_cpu_and_resmgr_90,
+       PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY aas_on_cpu)               aas_on_cpu_90,
+       PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY aas_resmgr_cpu_quantum)   aas_resmgr_cpu_quantum_90,
+       PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY aas_on_cpu_and_resmgr)    aas_on_cpu_and_resmgr_75,
+       PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY aas_on_cpu)               aas_on_cpu_75,
+       PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY aas_resmgr_cpu_quantum)   aas_resmgr_cpu_quantum_75,
+       MEDIAN(aas_on_cpu_and_resmgr)                                          aas_on_cpu_and_resmgr_med,
+       MEDIAN(aas_on_cpu)                                                     aas_on_cpu_med,
+       MEDIAN(aas_resmgr_cpu_quantum)                                         aas_resmgr_cpu_quantum_med,
+       ROUND(AVG(aas_on_cpu_and_resmgr), 1)                                   aas_on_cpu_and_resmgr_avg,
+       ROUND(AVG(aas_on_cpu), 1)                                              aas_on_cpu_avg,
+       ROUND(AVG(aas_resmgr_cpu_quantum), 1)                                  aas_resmgr_cpu_quantum_avg
+  FROM cpu_per_inst_and_sample
  GROUP BY
-       d.dbid,
-       d.name,
-       i.host_name,
-       i.instance_number,
-       i.instance_name
- ORDER BY
-       i.instance_number
+       inst_id
+),
+cpu_per_inst_and_perc AS (
+SELECT 01 order_by, ''Maximum or peak'' metric, inst_id, aas_on_cpu_max  on_cpu, aas_on_cpu_and_resmgr_max  on_cpu_and_resmgr, aas_resmgr_cpu_quantum_max  resmgr_cpu_quantum, min_sample_time, max_sample_time, samples FROM cpu_per_inst
+UNION ALL
+SELECT 02 order_by, ''99.99th percntl'' metric, inst_id, aas_on_cpu_9999 on_cpu, aas_on_cpu_and_resmgr_9999 on_cpu_and_resmgr, aas_resmgr_cpu_quantum_9999 resmgr_cpu_quantum, min_sample_time, max_sample_time, samples FROM cpu_per_inst
+UNION ALL
+SELECT 03 order_by, ''99.9th percentl'' metric, inst_id, aas_on_cpu_999  on_cpu, aas_on_cpu_and_resmgr_999  on_cpu_and_resmgr, aas_resmgr_cpu_quantum_999  resmgr_cpu_quantum, min_sample_time, max_sample_time, samples FROM cpu_per_inst
+UNION ALL
+SELECT 04 order_by, ''99th percentile'' metric, inst_id, aas_on_cpu_99   on_cpu, aas_on_cpu_and_resmgr_99   on_cpu_and_resmgr, aas_resmgr_cpu_quantum_99   resmgr_cpu_quantum, min_sample_time, max_sample_time, samples FROM cpu_per_inst
+UNION ALL
+SELECT 05 order_by, ''97th percentile'' metric, inst_id, aas_on_cpu_97   on_cpu, aas_on_cpu_and_resmgr_97   on_cpu_and_resmgr, aas_resmgr_cpu_quantum_97   resmgr_cpu_quantum, min_sample_time, max_sample_time, samples FROM cpu_per_inst
+UNION ALL
+SELECT 06 order_by, ''95th percentile'' metric, inst_id, aas_on_cpu_95   on_cpu, aas_on_cpu_and_resmgr_95   on_cpu_and_resmgr, aas_resmgr_cpu_quantum_95   resmgr_cpu_quantum, min_sample_time, max_sample_time, samples FROM cpu_per_inst
+UNION ALL
+SELECT 07 order_by, ''90th percentile'' metric, inst_id, aas_on_cpu_90   on_cpu, aas_on_cpu_and_resmgr_90   on_cpu_and_resmgr, aas_resmgr_cpu_quantum_90   resmgr_cpu_quantum, min_sample_time, max_sample_time, samples FROM cpu_per_inst
+UNION ALL
+SELECT 08 order_by, ''75th percentile'' metric, inst_id, aas_on_cpu_75   on_cpu, aas_on_cpu_and_resmgr_75   on_cpu_and_resmgr, aas_resmgr_cpu_quantum_75   resmgr_cpu_quantum, min_sample_time, max_sample_time, samples FROM cpu_per_inst
+UNION ALL
+SELECT 09 order_by, ''Median''          metric, inst_id, aas_on_cpu_med  on_cpu, aas_on_cpu_and_resmgr_med  on_cpu_and_resmgr, aas_resmgr_cpu_quantum_med  resmgr_cpu_quantum, min_sample_time, max_sample_time, samples FROM cpu_per_inst
+UNION ALL
+SELECT 10 order_by, ''Average''         metric, inst_id, aas_on_cpu_avg  on_cpu, aas_on_cpu_and_resmgr_avg  on_cpu_and_resmgr, aas_resmgr_cpu_quantum_avg  resmgr_cpu_quantum, min_sample_time, max_sample_time, samples FROM cpu_per_inst
+),
+cpu_per_db_and_perc AS (
+SELECT order_by,
+       metric,
+       TO_NUMBER(NULL) inst_id,
+       SUM(on_cpu) on_cpu,
+       SUM(on_cpu_and_resmgr) on_cpu_and_resmgr,
+       SUM(resmgr_cpu_quantum) resmgr_cpu_quantum,
+       MIN(min_sample_time) min_sample_time,
+       MAX(max_sample_time) max_sample_time,
+       SUM(samples) samples
+  FROM cpu_per_inst_and_perc
+ GROUP BY
+       order_by,
+       metric
 )
-SELECT dbid,
-       db_name,
-       host_name,
-       instance_number,
-       instance_name,
-       aas_on_cpu_and_resmgr_peak,
-       aas_on_cpu_peak,
-       aas_resmgr_cpu_quantum_peak,
-       aas_on_cpu_and_resmgr_9999,
-       aas_on_cpu_9999,
-       aas_resmgr_cpu_quantum_9999,
-       aas_on_cpu_and_resmgr_999,
-       aas_on_cpu_999,
-       aas_resmgr_cpu_quantum_999,
-       aas_on_cpu_and_resmgr_99,
-       aas_on_cpu_99,
-       aas_resmgr_cpu_quantum_99,
-       aas_on_cpu_and_resmgr_95,
-       aas_on_cpu_95,
-       aas_resmgr_cpu_quantum_95,
-       aas_on_cpu_and_resmgr_90,
-       aas_on_cpu_90,
-       aas_resmgr_cpu_quantum_90,
-       aas_on_cpu_and_resmgr_75,
-       aas_on_cpu_75,
-       aas_resmgr_cpu_quantum_75,
-       aas_on_cpu_and_resmgr_median,
-       aas_on_cpu_median,
-       aas_resmgr_cpu_quantum_median,
-       aas_on_cpu_and_resmgr_avg,
-       aas_on_cpu_avg,
-       aas_resmgr_cpu_quantum_avg
-  FROM sub_totals
+SELECT order_by,
+       metric,
+       inst_id,
+       on_cpu,
+       on_cpu_and_resmgr,
+       resmgr_cpu_quantum,
+       TO_CHAR(CAST(min_sample_time AS DATE), ''YYYY-MM-DD HH24:MI'') min_sample_time,
+       TO_CHAR(CAST(max_sample_time AS DATE), ''YYYY-MM-DD HH24:MI'') max_sample_time,
+       samples,
+       ROUND((CAST(max_sample_time AS DATE) - CAST(min_sample_time AS DATE)) * 24, 1) hours
+  FROM cpu_per_inst_and_perc
  UNION ALL
-SELECT MAX(dbid) dbid,
-       MAX(db_name) db_name,
-       NULL host_name,
-       -1 instance_number,
-       NULL instance_name,
-       SUM(aas_on_cpu_and_resmgr_peak)    aas_on_cpu_and_resmgr_peak,
-       SUM(aas_on_cpu_peak)               aas_on_cpu_peak,
-       SUM(aas_resmgr_cpu_quantum_peak)   aas_resmgr_cpu_quantum_peak,
-       SUM(aas_on_cpu_and_resmgr_9999)    aas_on_cpu_and_resmgr_9999,
-       SUM(aas_on_cpu_9999)               aas_on_cpu_9999,
-       SUM(aas_resmgr_cpu_quantum_9999)   aas_resmgr_cpu_quantum_9999,
-       SUM(aas_on_cpu_and_resmgr_999)     aas_on_cpu_and_resmgr_999,
-       SUM(aas_on_cpu_999)                aas_on_cpu_999,
-       SUM(aas_resmgr_cpu_quantum_999)    aas_resmgr_cpu_quantum_999,
-       SUM(aas_on_cpu_and_resmgr_99)      aas_on_cpu_and_resmgr_99,
-       SUM(aas_on_cpu_99)                 aas_on_cpu_99,
-       SUM(aas_resmgr_cpu_quantum_99)     aas_resmgr_cpu_quantum_99,
-       SUM(aas_on_cpu_and_resmgr_95)      aas_on_cpu_and_resmgr_95,
-       SUM(aas_on_cpu_95)                 aas_on_cpu_95,
-       SUM(aas_resmgr_cpu_quantum_95)     aas_resmgr_cpu_quantum_95,
-       SUM(aas_on_cpu_and_resmgr_90)      aas_on_cpu_and_resmgr_90,
-       SUM(aas_on_cpu_90)                 aas_on_cpu_90,
-       SUM(aas_resmgr_cpu_quantum_90)     aas_resmgr_cpu_quantum_90,
-       SUM(aas_on_cpu_and_resmgr_75)      aas_on_cpu_and_resmgr_75,
-       SUM(aas_on_cpu_75)                 aas_on_cpu_75,
-       SUM(aas_resmgr_cpu_quantum_75)     aas_resmgr_cpu_quantum_75,
-       SUM(aas_on_cpu_and_resmgr_median)  aas_on_cpu_and_resmgr_median,
-       SUM(aas_on_cpu_median)             aas_on_cpu_median,
-       SUM(aas_resmgr_cpu_quantum_median) aas_resmgr_cpu_quantum_median,
-       SUM(aas_on_cpu_and_resmgr_avg)     aas_on_cpu_and_resmgr_avg,
-       SUM(aas_on_cpu_avg)                aas_on_cpu_avg,
-       SUM(aas_resmgr_cpu_quantum_avg)    aas_resmgr_cpu_quantum_avg
-  FROM sub_totals
+SELECT order_by,
+       metric,
+       inst_id,
+       on_cpu,
+       on_cpu_and_resmgr,
+       resmgr_cpu_quantum,
+       TO_CHAR(CAST(min_sample_time AS DATE), ''YYYY-MM-DD HH24:MI'') min_sample_time,
+       TO_CHAR(CAST(max_sample_time AS DATE), ''YYYY-MM-DD HH24:MI'') max_sample_time,
+       samples,
+       ROUND((CAST(max_sample_time AS DATE) - CAST(min_sample_time AS DATE)) * 24, 1) hours
+  FROM cpu_per_db_and_perc
+ ORDER BY
+       order_by,
+       inst_id NULLS LAST
 ';
 END;
 /
 @@&&skip_diagnostics.edb360_9a_pre_one.sql
 
-DEF title = 'CPU Demand (AWR)';
+DEF title = 'CPU Demand Percentiles (AWR)';
 DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
-DEF abstract = 'Number of Sessions demanding CPU. Includes Peak (max), percentiles and average.'
-DEF foot = 'Consider Peak or high Percentile for sizing. Instance Number -1 means aggregated values (SUM) while -2 means over all instances (combined).'
+DEF abstract = 'Number of Sessions on CPU or RESMGR. Includes Max (Peak), Percentiles, Median and Average.'
 BEGIN
   :sql_text := '
 WITH 
 cpu_per_inst_and_sample AS (
 SELECT /*+ &&sq_fact_hints. &&ds_hint. */
-       dbid,
-       instance_number,
-       snap_id,
-       sample_id,
+       h.snap_id,
+       h.dbid,
+       h.instance_number,
+       h.sample_id,
        COUNT(*) aas_on_cpu_and_resmgr,
-       SUM(CASE session_state WHEN ''ON CPU'' THEN 1 ELSE 0 END) aas_on_cpu,
-       SUM(CASE event WHEN ''resmgr:cpu quantum'' THEN 1 ELSE 0 END) aas_resmgr_cpu_quantum       
-  FROM dba_hist_active_sess_history
- WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
-   AND dbid = &&edb360_dbid.
-   AND (session_state = ''ON CPU'' OR event = ''resmgr:cpu quantum'')
+       SUM(CASE h.session_state WHEN ''ON CPU'' THEN 1 ELSE 0 END) aas_on_cpu,
+       SUM(CASE h.event WHEN ''resmgr:cpu quantum'' THEN 1 ELSE 0 END) aas_resmgr_cpu_quantum,
+       MIN(s.begin_interval_time) begin_interval_time,
+       MAX(s.end_interval_time) end_interval_time      
+  FROM dba_hist_active_sess_history h,
+       dba_hist_snapshot s
+ WHERE (h.session_state = ''ON CPU'' OR h.event = ''resmgr:cpu quantum'')
+   AND s.snap_id = h.snap_id
+   AND s.dbid = h.dbid
+   AND s.instance_number = h.instance_number
  GROUP BY
+       h.snap_id,
+       h.dbid,
+       h.instance_number,
+       h.sample_id
+),
+cpu_per_db_and_inst AS (
+SELECT /*+ &&sq_fact_hints. */
        dbid,
        instance_number,
-       snap_id,
-       sample_id
-),
-cpu_per_inst AS (
-SELECT /*+ &&sq_fact_hints. &&ds_hint. */
-       c.dbid,
-       di.db_name,
-       LOWER(SUBSTR(di.host_name||''.'', 1, INSTR(di.host_name||''.'', ''.'') - 1)) host_name,
-       c.instance_number,
-       di.instance_name,
-       MAX(c.aas_on_cpu_and_resmgr) aas_on_cpu_and_resmgr_peak,
-       MAX(c.aas_on_cpu) aas_on_cpu_peak,
-       MAX(c.aas_resmgr_cpu_quantum) aas_resmgr_cpu_quantum_peak,
-       PERCENTILE_DISC(0.9999) WITHIN GROUP (ORDER BY c.aas_on_cpu_and_resmgr) aas_on_cpu_and_resmgr_9999,
-       PERCENTILE_DISC(0.9999) WITHIN GROUP (ORDER BY c.aas_on_cpu) aas_on_cpu_9999,
-       PERCENTILE_DISC(0.9999) WITHIN GROUP (ORDER BY c.aas_resmgr_cpu_quantum) aas_resmgr_cpu_quantum_9999,
-       PERCENTILE_DISC(0.999) WITHIN GROUP (ORDER BY c.aas_on_cpu_and_resmgr) aas_on_cpu_and_resmgr_999,
-       PERCENTILE_DISC(0.999) WITHIN GROUP (ORDER BY c.aas_on_cpu) aas_on_cpu_999,
-       PERCENTILE_DISC(0.999) WITHIN GROUP (ORDER BY c.aas_resmgr_cpu_quantum) aas_resmgr_cpu_quantum_999,
-       PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY c.aas_on_cpu_and_resmgr) aas_on_cpu_and_resmgr_99,
-       PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY c.aas_on_cpu) aas_on_cpu_99,
-       PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY c.aas_resmgr_cpu_quantum) aas_resmgr_cpu_quantum_99,
-       PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY c.aas_on_cpu_and_resmgr) aas_on_cpu_and_resmgr_95,
-       PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY c.aas_on_cpu) aas_on_cpu_95,
-       PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY c.aas_resmgr_cpu_quantum) aas_resmgr_cpu_quantum_95,
-       PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY c.aas_on_cpu_and_resmgr) aas_on_cpu_and_resmgr_90,
-       PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY c.aas_on_cpu) aas_on_cpu_90,
-       PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY c.aas_resmgr_cpu_quantum) aas_resmgr_cpu_quantum_90,
-       PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY c.aas_on_cpu_and_resmgr) aas_on_cpu_and_resmgr_75,
-       PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY c.aas_on_cpu) aas_on_cpu_75,
-       PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY c.aas_resmgr_cpu_quantum) aas_resmgr_cpu_quantum_75,
-       MEDIAN(c.aas_on_cpu_and_resmgr) aas_on_cpu_and_resmgr_median,
-       MEDIAN(c.aas_on_cpu) aas_on_cpu_median,
-       MEDIAN(c.aas_resmgr_cpu_quantum) aas_resmgr_cpu_quantum_median,
-       ROUND(AVG(c.aas_on_cpu_and_resmgr), 1) aas_on_cpu_and_resmgr_avg,
-       ROUND(AVG(c.aas_on_cpu), 1) aas_on_cpu_avg,
-       ROUND(AVG(c.aas_resmgr_cpu_quantum), 1) aas_resmgr_cpu_quantum_avg
-  FROM cpu_per_inst_and_sample c,
-       dba_hist_snapshot s,
-       dba_hist_database_instance di
- WHERE s.snap_id = c.snap_id
-   AND s.dbid = c.dbid
-   AND s.instance_number = c.instance_number
-   AND di.dbid = s.dbid
-   AND di.instance_number = s.instance_number
-   AND di.startup_time = s.startup_time
+       MIN(begin_interval_time)                                               begin_interval_time,
+       MAX(end_interval_time)                                                 end_interval_time,
+       COUNT(DISTINCT snap_id)                                                snap_shots,        
+       MAX(aas_on_cpu_and_resmgr)                                             aas_on_cpu_and_resmgr_max,
+       MAX(aas_on_cpu)                                                        aas_on_cpu_max,
+       MAX(aas_resmgr_cpu_quantum)                                            aas_resmgr_cpu_quantum_max,
+       PERCENTILE_DISC(0.9999) WITHIN GROUP (ORDER BY aas_on_cpu_and_resmgr)  aas_on_cpu_and_resmgr_9999,
+       PERCENTILE_DISC(0.9999) WITHIN GROUP (ORDER BY aas_on_cpu)             aas_on_cpu_9999,
+       PERCENTILE_DISC(0.9999) WITHIN GROUP (ORDER BY aas_resmgr_cpu_quantum) aas_resmgr_cpu_quantum_9999,
+       PERCENTILE_DISC(0.9990) WITHIN GROUP (ORDER BY aas_on_cpu_and_resmgr)  aas_on_cpu_and_resmgr_999,
+       PERCENTILE_DISC(0.9990) WITHIN GROUP (ORDER BY aas_on_cpu)             aas_on_cpu_999,
+       PERCENTILE_DISC(0.9990) WITHIN GROUP (ORDER BY aas_resmgr_cpu_quantum) aas_resmgr_cpu_quantum_999,
+       PERCENTILE_DISC(0.9900) WITHIN GROUP (ORDER BY aas_on_cpu_and_resmgr)  aas_on_cpu_and_resmgr_99,
+       PERCENTILE_DISC(0.9900) WITHIN GROUP (ORDER BY aas_on_cpu)             aas_on_cpu_99,
+       PERCENTILE_DISC(0.9900) WITHIN GROUP (ORDER BY aas_resmgr_cpu_quantum) aas_resmgr_cpu_quantum_99,
+       PERCENTILE_DISC(0.9700) WITHIN GROUP (ORDER BY aas_on_cpu_and_resmgr)  aas_on_cpu_and_resmgr_97,
+       PERCENTILE_DISC(0.9700) WITHIN GROUP (ORDER BY aas_on_cpu)             aas_on_cpu_97,
+       PERCENTILE_DISC(0.9700) WITHIN GROUP (ORDER BY aas_resmgr_cpu_quantum) aas_resmgr_cpu_quantum_97,
+       PERCENTILE_DISC(0.9500) WITHIN GROUP (ORDER BY aas_on_cpu_and_resmgr)  aas_on_cpu_and_resmgr_95,
+       PERCENTILE_DISC(0.9500) WITHIN GROUP (ORDER BY aas_on_cpu)             aas_on_cpu_95,
+       PERCENTILE_DISC(0.9500) WITHIN GROUP (ORDER BY aas_resmgr_cpu_quantum) aas_resmgr_cpu_quantum_95,
+       PERCENTILE_DISC(0.9000) WITHIN GROUP (ORDER BY aas_on_cpu_and_resmgr)  aas_on_cpu_and_resmgr_90,
+       PERCENTILE_DISC(0.9000) WITHIN GROUP (ORDER BY aas_on_cpu)             aas_on_cpu_90,
+       PERCENTILE_DISC(0.9000) WITHIN GROUP (ORDER BY aas_resmgr_cpu_quantum) aas_resmgr_cpu_quantum_90,
+       PERCENTILE_DISC(0.7500) WITHIN GROUP (ORDER BY aas_on_cpu_and_resmgr)  aas_on_cpu_and_resmgr_75,
+       PERCENTILE_DISC(0.7500) WITHIN GROUP (ORDER BY aas_on_cpu)             aas_on_cpu_75,
+       PERCENTILE_DISC(0.7500) WITHIN GROUP (ORDER BY aas_resmgr_cpu_quantum) aas_resmgr_cpu_quantum_75,
+       MEDIAN(aas_on_cpu_and_resmgr)                                          aas_on_cpu_and_resmgr_med,
+       MEDIAN(aas_on_cpu)                                                     aas_on_cpu_med,
+       MEDIAN(aas_resmgr_cpu_quantum)                                         aas_resmgr_cpu_quantum_med,
+       ROUND(AVG(aas_on_cpu_and_resmgr), 1)                                   aas_on_cpu_and_resmgr_avg,
+       ROUND(AVG(aas_on_cpu), 1)                                              aas_on_cpu_avg,
+       ROUND(AVG(aas_resmgr_cpu_quantum), 1)                                  aas_resmgr_cpu_quantum_avg
+  FROM cpu_per_inst_and_sample
  GROUP BY
-       c.dbid,
-       di.db_name,
-       di.host_name,
-       c.instance_number,
-       di.instance_name
- ORDER BY
-       c.instance_number
+       dbid,
+       instance_number
+),
+cpu_per_inst_and_perc AS (
+SELECT dbid, 01 order_by, ''Maximum or peak'' metric, instance_number, aas_on_cpu_max  on_cpu, aas_on_cpu_and_resmgr_max  on_cpu_and_resmgr, aas_resmgr_cpu_quantum_max  resmgr_cpu_quantum, begin_interval_time, end_interval_time, snap_shots FROM cpu_per_db_and_inst
+UNION ALL
+SELECT dbid, 02 order_by, ''99.99th percntl'' metric, instance_number, aas_on_cpu_9999 on_cpu, aas_on_cpu_and_resmgr_9999 on_cpu_and_resmgr, aas_resmgr_cpu_quantum_9999 resmgr_cpu_quantum, begin_interval_time, end_interval_time, snap_shots FROM cpu_per_db_and_inst
+UNION ALL
+SELECT dbid, 03 order_by, ''99.9th percentl'' metric, instance_number, aas_on_cpu_999  on_cpu, aas_on_cpu_and_resmgr_999  on_cpu_and_resmgr, aas_resmgr_cpu_quantum_999  resmgr_cpu_quantum, begin_interval_time, end_interval_time, snap_shots FROM cpu_per_db_and_inst
+UNION ALL
+SELECT dbid, 04 order_by, ''99th percentile'' metric, instance_number, aas_on_cpu_99   on_cpu, aas_on_cpu_and_resmgr_99   on_cpu_and_resmgr, aas_resmgr_cpu_quantum_99   resmgr_cpu_quantum, begin_interval_time, end_interval_time, snap_shots FROM cpu_per_db_and_inst
+UNION ALL
+SELECT dbid, 05 order_by, ''97th percentile'' metric, instance_number, aas_on_cpu_97   on_cpu, aas_on_cpu_and_resmgr_97   on_cpu_and_resmgr, aas_resmgr_cpu_quantum_97   resmgr_cpu_quantum, begin_interval_time, end_interval_time, snap_shots FROM cpu_per_db_and_inst
+UNION ALL
+SELECT dbid, 06 order_by, ''95th percentile'' metric, instance_number, aas_on_cpu_95   on_cpu, aas_on_cpu_and_resmgr_95   on_cpu_and_resmgr, aas_resmgr_cpu_quantum_95   resmgr_cpu_quantum, begin_interval_time, end_interval_time, snap_shots FROM cpu_per_db_and_inst
+UNION ALL
+SELECT dbid, 07 order_by, ''90th percentile'' metric, instance_number, aas_on_cpu_90   on_cpu, aas_on_cpu_and_resmgr_90   on_cpu_and_resmgr, aas_resmgr_cpu_quantum_90   resmgr_cpu_quantum, begin_interval_time, end_interval_time, snap_shots FROM cpu_per_db_and_inst
+UNION ALL
+SELECT dbid, 08 order_by, ''75th percentile'' metric, instance_number, aas_on_cpu_75   on_cpu, aas_on_cpu_and_resmgr_75   on_cpu_and_resmgr, aas_resmgr_cpu_quantum_75   resmgr_cpu_quantum, begin_interval_time, end_interval_time, snap_shots FROM cpu_per_db_and_inst
+UNION ALL
+SELECT dbid, 09 order_by, ''Median''          metric, instance_number, aas_on_cpu_med  on_cpu, aas_on_cpu_and_resmgr_med  on_cpu_and_resmgr, aas_resmgr_cpu_quantum_med  resmgr_cpu_quantum, begin_interval_time, end_interval_time, snap_shots FROM cpu_per_db_and_inst
+UNION ALL
+SELECT dbid, 10 order_by, ''Average''         metric, instance_number, aas_on_cpu_avg  on_cpu, aas_on_cpu_and_resmgr_avg  on_cpu_and_resmgr, aas_resmgr_cpu_quantum_avg  resmgr_cpu_quantum, begin_interval_time, end_interval_time, snap_shots FROM cpu_per_db_and_inst
+),
+cpu_per_db_and_perc AS (
+SELECT dbid,
+       order_by,
+       metric,
+       TO_NUMBER(NULL) instance_number,
+       SUM(on_cpu) on_cpu,
+       SUM(on_cpu_and_resmgr) on_cpu_and_resmgr,
+       SUM(resmgr_cpu_quantum) resmgr_cpu_quantum,
+       MIN(begin_interval_time) begin_interval_time,
+       MAX(end_interval_time) end_interval_time,
+       SUM(snap_shots) snap_shots
+  FROM cpu_per_inst_and_perc
+ GROUP BY
+       dbid,
+       order_by,
+       metric
 )
 SELECT dbid,
-       db_name,
-       host_name,
+       order_by,
+       metric,
        instance_number,
-       instance_name,
-       aas_on_cpu_and_resmgr_peak,
-       aas_on_cpu_peak,
-       aas_resmgr_cpu_quantum_peak,
-       aas_on_cpu_and_resmgr_9999,
-       aas_on_cpu_9999,
-       aas_resmgr_cpu_quantum_9999,
-       aas_on_cpu_and_resmgr_999,
-       aas_on_cpu_999,
-       aas_resmgr_cpu_quantum_999,
-       aas_on_cpu_and_resmgr_99,
-       aas_on_cpu_99,
-       aas_resmgr_cpu_quantum_99,
-       aas_on_cpu_and_resmgr_95,
-       aas_on_cpu_95,
-       aas_resmgr_cpu_quantum_95,
-       aas_on_cpu_and_resmgr_90,
-       aas_on_cpu_90,
-       aas_resmgr_cpu_quantum_90,
-       aas_on_cpu_and_resmgr_75,
-       aas_on_cpu_75,
-       aas_resmgr_cpu_quantum_75,
-       aas_on_cpu_and_resmgr_median,
-       aas_on_cpu_median,
-       aas_resmgr_cpu_quantum_median,
-       aas_on_cpu_and_resmgr_avg,
-       aas_on_cpu_avg,
-       aas_resmgr_cpu_quantum_avg
-  FROM cpu_per_inst
+       on_cpu,
+       on_cpu_and_resmgr,
+       resmgr_cpu_quantum,
+       TO_CHAR(CAST(begin_interval_time AS DATE), ''YYYY-MM-DD HH24:MI'') begin_interval_time,
+       TO_CHAR(CAST(end_interval_time AS DATE), ''YYYY-MM-DD HH24:MI'') end_interval_time,
+       snap_shots,
+       ROUND(CAST(end_interval_time AS DATE) - CAST(begin_interval_time AS DATE), 1) days,
+       ROUND(snap_shots / (CAST(end_interval_time AS DATE) - CAST(begin_interval_time AS DATE)), 1) avg_snaps_per_day
+  FROM cpu_per_inst_and_perc
  UNION ALL
-SELECT MAX(dbid) dbid,
-       MAX(db_name) db_name,
-       NULL host_name,
-       -1 instance_number,
-       NULL instance_name,
-       SUM(aas_on_cpu_and_resmgr_peak)    aas_on_cpu_and_resmgr_peak,
-       SUM(aas_on_cpu_peak)               aas_on_cpu_peak,
-       SUM(aas_resmgr_cpu_quantum_peak)   aas_resmgr_cpu_quantum_peak,
-       SUM(aas_on_cpu_and_resmgr_9999)    aas_on_cpu_and_resmgr_9999,
-       SUM(aas_on_cpu_9999)               aas_on_cpu_9999,
-       SUM(aas_resmgr_cpu_quantum_9999)   aas_resmgr_cpu_quantum_9999,
-       SUM(aas_on_cpu_and_resmgr_999)     aas_on_cpu_and_resmgr_999,
-       SUM(aas_on_cpu_999)                aas_on_cpu_999,
-       SUM(aas_resmgr_cpu_quantum_999)    aas_resmgr_cpu_quantum_999,
-       SUM(aas_on_cpu_and_resmgr_99)      aas_on_cpu_and_resmgr_99,
-       SUM(aas_on_cpu_99)                 aas_on_cpu_99,
-       SUM(aas_resmgr_cpu_quantum_99)     aas_resmgr_cpu_quantum_99,
-       SUM(aas_on_cpu_and_resmgr_95)      aas_on_cpu_and_resmgr_95,
-       SUM(aas_on_cpu_95)                 aas_on_cpu_95,
-       SUM(aas_resmgr_cpu_quantum_95)     aas_resmgr_cpu_quantum_95,
-       SUM(aas_on_cpu_and_resmgr_90)      aas_on_cpu_and_resmgr_90,
-       SUM(aas_on_cpu_90)                 aas_on_cpu_90,
-       SUM(aas_resmgr_cpu_quantum_90)     aas_resmgr_cpu_quantum_90,
-       SUM(aas_on_cpu_and_resmgr_75)      aas_on_cpu_and_resmgr_75,
-       SUM(aas_on_cpu_75)                 aas_on_cpu_75,
-       SUM(aas_resmgr_cpu_quantum_75)     aas_resmgr_cpu_quantum_75,
-       SUM(aas_on_cpu_and_resmgr_median)  aas_on_cpu_and_resmgr_median,
-       SUM(aas_on_cpu_median)             aas_on_cpu_median,
-       SUM(aas_resmgr_cpu_quantum_median) aas_resmgr_cpu_quantum_median,
-       SUM(aas_on_cpu_and_resmgr_avg)     aas_on_cpu_and_resmgr_avg,
-       SUM(aas_on_cpu_avg)                aas_on_cpu_avg,
-       SUM(aas_resmgr_cpu_quantum_avg)    aas_resmgr_cpu_quantum_avg
-  FROM cpu_per_inst
+SELECT dbid,
+       order_by,
+       metric,
+       instance_number,
+       on_cpu,
+       on_cpu_and_resmgr,
+       resmgr_cpu_quantum,
+       TO_CHAR(CAST(begin_interval_time AS DATE), ''YYYY-MM-DD HH24:MI'') begin_interval_time,
+       TO_CHAR(CAST(end_interval_time AS DATE), ''YYYY-MM-DD HH24:MI'') end_interval_time,
+       snap_shots,
+       ROUND(CAST(end_interval_time AS DATE) - CAST(begin_interval_time AS DATE), 1) days,
+       ROUND(snap_shots / (CAST(end_interval_time AS DATE) - CAST(begin_interval_time AS DATE)), 1) avg_snaps_per_day
+  FROM cpu_per_db_and_perc
+ ORDER BY
+       dbid,
+       order_by,
+       instance_number NULLS LAST
 ';
 END;
 /
@@ -331,7 +296,7 @@ END;
 DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
 DEF chartype = 'LineChart';
 DEF stacked = '';
-DEF vaxis = 'Sessions "ON CPU" or "ON CPU" + "resmgr:cpu quantum"';
+DEF vaxis = 'Sessions on CPU or RESMGR';
 DEF tit_01 = 'ON CPU + resmgr:cpu quantum';
 DEF tit_02 = 'ON CPU';
 DEF tit_03 = 'resmgr:cpu quantum';
@@ -504,15 +469,15 @@ DEF skip_pch = 'Y';
 DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
 DEF chartype = 'LineChart';
 DEF stacked = '';
-DEF vaxis = 'Sessions "ON CPU"';
-DEF tit_01 = 'Maximum (peak)';
+DEF vaxis = 'Sessions on CPU';
+DEF tit_01 = 'Maximum (Peak)';
 DEF tit_02 = '99th Percentile';
-DEF tit_03 = '95th Percentile';
-DEF tit_04 = '90th Percentile';
-DEF tit_05 = '75th Percentile';
-DEF tit_06 = 'Median';
-DEF tit_07 = 'Average';
-DEF tit_08 = '';
+DEF tit_03 = '97th Percentile';
+DEF tit_04 = '95th Percentile';
+DEF tit_05 = '90th Percentile';
+DEF tit_06 = '75th Percentile';
+DEF tit_07 = 'Median';
+DEF tit_08 = 'Average';
 DEF tit_09 = '';
 DEF tit_10 = '';
 DEF tit_11 = '';
@@ -549,6 +514,7 @@ SELECT /*+ &&sq_fact_hints. */
        TRUNC(CAST(sample_time AS DATE), ''HH'') + (1/24)    end_time, 
        MAX(on_cpu)                                          on_cpu_max,
        PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY on_cpu) on_cpu_99p,
+       PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY on_cpu) on_cpu_97p,
        PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY on_cpu) on_cpu_95p,
        PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY on_cpu) on_cpu_90p,
        PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY on_cpu) on_cpu_75p,
@@ -564,12 +530,12 @@ SELECT MIN(snap_id) snap_id,
        TO_CHAR(end_time, ''YYYY-MM-DD HH24:MI'') end_time,
        SUM(on_cpu_max) on_cpu_max,
        SUM(on_cpu_99p) on_cpu_99p,
+       SUM(on_cpu_97p) on_cpu_97p,
        SUM(on_cpu_95p) on_cpu_95p,
        SUM(on_cpu_90p) on_cpu_90p,
        SUM(on_cpu_75p) on_cpu_75p,
        SUM(on_cpu_med) on_cpu_med,
        SUM(on_cpu_avg) on_cpu_avg,
-       0 dummy_08,
        0 dummy_09,
        0 dummy_10,
        0 dummy_11,
@@ -679,6 +645,145 @@ DEF skip_lch = 'Y';
 DEF skip_pch = 'Y';
 
 /*****************************************************************************************/
+
+COL mem_gb FOR 99990.0 HEA "Mem GB";
+COL sga_gb FOR 99990.0 HEA "SGA GB";
+COL pga_gb FOR 99990.0 HEA "PGA GB";
+
+DEF title = 'Memory Size Percentiles (AWR)';
+DEF main_table = 'DBA_HIST_SGA';
+BEGIN
+  :sql_text := '
+WITH mem_per_inst_and_snap AS (
+SELECT /*+ &&sq_fact_hints. &&ds_hint. */
+       s.snap_id,
+       s.dbid,
+       s.instance_number,
+       SUM(g.value) sga_bytes,
+       MAX(p.value) pga_bytes,
+       SUM(g.value) + MAX(p.value) mem_bytes,
+       MIN(s.begin_interval_time) begin_interval_time,
+       MAX(s.end_interval_time) end_interval_time      
+  FROM dba_hist_snapshot s,
+       dba_hist_sga g,
+       dba_hist_pgastat p
+ WHERE g.snap_id = s.snap_id
+   AND g.dbid = s.dbid
+   AND g.instance_number = s.instance_number
+   AND p.snap_id = s.snap_id
+   AND p.dbid = s.dbid
+   AND p.instance_number = s.instance_number
+   AND p.name = ''total PGA allocated''
+ GROUP BY
+       s.snap_id,
+       s.dbid,
+       s.instance_number
+),
+mem_per_db_and_inst AS (
+SELECT /*+ &&sq_fact_hints. */
+       dbid,
+       instance_number,
+       MIN(begin_interval_time)                                begin_interval_time,
+       MAX(end_interval_time)                                  end_interval_time,
+       COUNT(DISTINCT snap_id)                                 snap_shots,        
+       MAX(mem_bytes)                                          mem_bytes_max,
+       MAX(sga_bytes)                                          sga_bytes_max,
+       MAX(pga_bytes)                                          pga_bytes_max,
+       PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY mem_bytes) mem_bytes_99,
+       PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY sga_bytes) sga_bytes_99,
+       PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY pga_bytes) pga_bytes_99,
+       PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY mem_bytes) mem_bytes_97,
+       PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY sga_bytes) sga_bytes_97,
+       PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY pga_bytes) pga_bytes_97,
+       PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY mem_bytes) mem_bytes_95,
+       PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY sga_bytes) sga_bytes_95,
+       PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY pga_bytes) pga_bytes_95,
+       PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY mem_bytes) mem_bytes_90,
+       PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY sga_bytes) sga_bytes_90,
+       PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY pga_bytes) pga_bytes_90,
+       PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY mem_bytes) mem_bytes_75,
+       PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY sga_bytes) sga_bytes_75,
+       PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY pga_bytes) pga_bytes_75,
+       MEDIAN(mem_bytes)                                       mem_bytes_med,
+       MEDIAN(sga_bytes)                                       sga_bytes_med,
+       MEDIAN(pga_bytes)                                       pga_bytes_med,
+       ROUND(AVG(mem_bytes), 1)                                mem_bytes_avg,
+       ROUND(AVG(sga_bytes), 1)                                sga_bytes_avg,
+       ROUND(AVG(pga_bytes), 1)                                pga_bytes_avg
+  FROM mem_per_inst_and_snap
+ GROUP BY
+       dbid,
+       instance_number
+),
+mem_per_inst_and_perc AS (
+SELECT dbid, 01 order_by, ''Maximum or peak'' metric, instance_number, mem_bytes_max mem_bytes, sga_bytes_max sga_bytes, pga_bytes_max pga_bytes, begin_interval_time, end_interval_time, snap_shots FROM mem_per_db_and_inst
+ UNION ALL
+SELECT dbid, 02 order_by, ''99th percentile'' metric, instance_number, mem_bytes_99  mem_bytes, sga_bytes_99  sga_bytes, pga_bytes_99  pga_bytes, begin_interval_time, end_interval_time, snap_shots FROM mem_per_db_and_inst
+ UNION ALL
+SELECT dbid, 03 order_by, ''97th percentile'' metric, instance_number, mem_bytes_97  mem_bytes, sga_bytes_97  sga_bytes, pga_bytes_97  pga_bytes, begin_interval_time, end_interval_time, snap_shots FROM mem_per_db_and_inst
+ UNION ALL
+SELECT dbid, 04 order_by, ''95th percentile'' metric, instance_number, mem_bytes_95  mem_bytes, sga_bytes_95  sga_bytes, pga_bytes_95  pga_bytes, begin_interval_time, end_interval_time, snap_shots FROM mem_per_db_and_inst
+ UNION ALL
+SELECT dbid, 05 order_by, ''90th percentile'' metric, instance_number, mem_bytes_90  mem_bytes, sga_bytes_90  sga_bytes, pga_bytes_90  pga_bytes, begin_interval_time, end_interval_time, snap_shots FROM mem_per_db_and_inst
+ UNION ALL
+SELECT dbid, 06 order_by, ''75th percentile'' metric, instance_number, mem_bytes_75  mem_bytes, sga_bytes_75  sga_bytes, pga_bytes_75  pga_bytes, begin_interval_time, end_interval_time, snap_shots FROM mem_per_db_and_inst
+ UNION ALL
+SELECT dbid, 07 order_by, ''Median''          metric, instance_number, mem_bytes_med mem_bytes, sga_bytes_med sga_bytes, pga_bytes_med pga_bytes, begin_interval_time, end_interval_time, snap_shots FROM mem_per_db_and_inst
+ UNION ALL
+SELECT dbid, 08 order_by, ''Average''         metric, instance_number, mem_bytes_avg mem_bytes, sga_bytes_avg sga_bytes, pga_bytes_avg pga_bytes, begin_interval_time, end_interval_time, snap_shots FROM mem_per_db_and_inst
+),
+mem_per_db_and_perc AS (
+SELECT dbid,
+       order_by,
+       metric,
+       TO_NUMBER(NULL) instance_number,
+       SUM(mem_bytes) mem_bytes,
+       SUM(sga_bytes) sga_bytes,
+       SUM(pga_bytes) pga_bytes,
+       MIN(begin_interval_time) begin_interval_time,
+       MAX(end_interval_time) end_interval_time,
+       SUM(snap_shots) snap_shots
+  FROM mem_per_inst_and_perc
+ GROUP BY
+       dbid,
+       order_by,
+       metric
+)
+SELECT dbid,
+       order_by,
+       metric,
+       instance_number,
+       ROUND(mem_bytes / POWER(2, 30), 1) mem_gb,
+       ROUND(sga_bytes / POWER(2, 30), 1) sga_gb,
+       ROUND(pga_bytes / POWER(2, 30), 1) pga_gb,
+       TO_CHAR(CAST(begin_interval_time AS DATE), ''YYYY-MM-DD HH24:MI'') begin_interval_time,
+       TO_CHAR(CAST(end_interval_time AS DATE), ''YYYY-MM-DD HH24:MI'') end_interval_time,
+       snap_shots,
+       ROUND(CAST(end_interval_time AS DATE) - CAST(begin_interval_time AS DATE), 1) days,
+       ROUND(snap_shots / (CAST(end_interval_time AS DATE) - CAST(begin_interval_time AS DATE)), 1) avg_snaps_per_day
+  FROM mem_per_inst_and_perc
+ UNION ALL
+SELECT dbid,
+       order_by,
+       metric,
+       instance_number,
+       ROUND(mem_bytes / POWER(2, 30), 1) mem_gb,
+       ROUND(sga_bytes / POWER(2, 30), 1) sga_gb,
+       ROUND(pga_bytes / POWER(2, 30), 1) pga_gb,
+       TO_CHAR(CAST(begin_interval_time AS DATE), ''YYYY-MM-DD HH24:MI'') begin_interval_time,
+       TO_CHAR(CAST(end_interval_time AS DATE), ''YYYY-MM-DD HH24:MI'') end_interval_time,
+       snap_shots,
+       ROUND(CAST(end_interval_time AS DATE) - CAST(begin_interval_time AS DATE), 1) days,
+       ROUND(snap_shots / (CAST(end_interval_time AS DATE) - CAST(begin_interval_time AS DATE)), 1) avg_snaps_per_day
+  FROM mem_per_db_and_perc
+ ORDER BY
+       dbid,
+       order_by,
+       instance_number NULLS LAST
+';
+END;
+/
+@@&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF title = 'Memory Size (MEM)';
 DEF main_table = 'GV$SYSTEM_PARAMETER2';
@@ -1474,7 +1579,7 @@ DEF skip_pch = 'Y';
 
 /*****************************************************************************************/
 
-DEF title = 'IOPS and MBPS';
+DEF title = 'IOPS and MBPS Percentiles';
 DEF main_table = 'DBA_HIST_SYSSTAT';
 DEF abstract = 'I/O Operations per Second (IOPS) and I/O Mega Bytes per Second (MBPS). Includes Peak (max), percentiles and average for read (R), write (W) and read+write (RW) operations.'
 DEF foot = 'Consider Peak or high Percentile for sizing. Instance Number -1 means aggregated values (SUM) while -2 means over all instances (combined).'
@@ -1483,84 +1588,71 @@ BEGIN
 WITH
 sysstat_io AS (
 SELECT /*+ &&sq_fact_hints. */
-       d.dbid,
-       d.name db_name,
-       LOWER(SUBSTR(i.host_name||''.'', 1, INSTR(i.host_name||''.'', ''.'') - 1)) host_name,
-       h.instance_number,
-       i.instance_name,
        h.snap_id,
+       h.dbid,
+       h.instance_number,
        SUM(CASE WHEN h.stat_name = ''physical read total IO requests'' THEN value ELSE 0 END) r_reqs,
        SUM(CASE WHEN h.stat_name IN (''physical write total IO requests'', ''redo writes'') THEN value ELSE 0 END) w_reqs,
        SUM(CASE WHEN h.stat_name = ''physical read total bytes'' THEN value ELSE 0 END) r_bytes,
        SUM(CASE WHEN h.stat_name IN (''physical write total bytes'', ''redo size'') THEN value ELSE 0 END) w_bytes
-  FROM gv$instance i,
-       gv$database d,
-       dba_hist_sysstat h
- WHERE d.inst_id = i.inst_id
-   AND h.instance_number = i.instance_number
-   AND h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
-   AND h.dbid = &&edb360_dbid.
-   AND h.stat_name IN (''physical read total IO requests'', ''physical write total IO requests'', ''redo writes'', ''physical read total bytes'', ''physical write total bytes'', ''redo size'')
+  FROM dba_hist_sysstat h
+ WHERE h.stat_name IN (''physical read total IO requests'', ''physical write total IO requests'', ''redo writes'', ''physical read total bytes'', ''physical write total bytes'', ''redo size'')
  GROUP BY
-       d.dbid,
-       d.name,
-       i.host_name,
-       h.instance_number,
-       i.instance_name,
-       h.snap_id
+       h.snap_id,
+       h.dbid,
+       h.instance_number
 ),
 io_per_inst_and_snap_id AS (
 SELECT /*+ &&sq_fact_hints. */
        h1.dbid,
-       h1.db_name,
-       h1.host_name,
        h1.instance_number,
-       h1.instance_name,
        h1.snap_id,
        (h1.r_reqs - h0.r_reqs) r_reqs,
        (h1.w_reqs - h0.w_reqs) w_reqs,
        (h1.r_bytes - h0.r_bytes) r_bytes,
        (h1.w_bytes - h0.w_bytes) w_bytes,
-       (CAST(s1.end_interval_time AS DATE) - CAST(s1.begin_interval_time AS DATE)) * 86400 elapsed_sec
+       (CAST(s1.end_interval_time AS DATE) - CAST(s1.begin_interval_time AS DATE)) * 86400 elapsed_sec,
+       CAST(s1.begin_interval_time AS DATE) begin_interval_time,
+       CAST(s1.end_interval_time AS DATE) end_interval_time        
   FROM sysstat_io h0,
        dba_hist_snapshot s0,
        sysstat_io h1,
        dba_hist_snapshot s1
- WHERE s0.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
-   AND s0.dbid = &&edb360_dbid.
-   AND s0.snap_id = h0.snap_id
+ WHERE s0.snap_id = h0.snap_id
+   AND s0.dbid = h0.dbid
    AND s0.instance_number = h0.instance_number
-   AND h1.instance_number = h0.instance_number
    AND h1.snap_id = h0.snap_id + 1
-   AND s1.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
-   AND s1.dbid = &&edb360_dbid.
+   AND h1.dbid = h0.dbid
+   AND h1.instance_number = h0.instance_number
    AND s1.snap_id = h1.snap_id
+   AND s1.dbid = h1.dbid
    AND s1.instance_number = h1.instance_number
    AND s1.snap_id = s0.snap_id + 1
+   AND s1.dbid = s0.dbid
+   AND s1.instance_number = s0.instance_number
    AND s1.startup_time = s0.startup_time
 ),
 io_per_snap_id AS (
-SELECT /*+ &&sq_fact_hints. */
-       dbid,
-       db_name,
+SELECT dbid,
        snap_id,
        SUM(r_reqs) r_reqs,
        SUM(w_reqs) w_reqs,
        SUM(r_bytes) r_bytes,
        SUM(w_bytes) w_bytes,
-       AVG(elapsed_sec) elapsed_sec
+       AVG(elapsed_sec) elapsed_sec,
+       MIN(begin_interval_time) begin_interval_time,
+       MAX(end_interval_time) end_interval_time
   FROM io_per_inst_and_snap_id
  GROUP BY
        dbid,
-       db_name,
        snap_id
 ),
 io_per_inst AS (
 SELECT dbid,
-       db_name,
-       host_name,
        instance_number,
-       instance_name,
+       MIN(begin_interval_time) begin_interval_time,
+       MAX(end_interval_time) end_interval_time,
+       COUNT(DISTINCT snap_id) snap_shots,        
        ROUND(100 * SUM(r_reqs) / (SUM(r_reqs) + SUM(w_reqs)), 1) r_reqs_perc,
        ROUND(100 * SUM(w_reqs) / (SUM(r_reqs) + SUM(w_reqs)), 1) w_reqs_perc,
        ROUND(MAX((r_reqs + w_reqs) / elapsed_sec)) rw_iops_peak,
@@ -1572,6 +1664,9 @@ SELECT dbid,
        ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY (r_reqs + w_reqs) / elapsed_sec)) rw_iops_99,
        ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY r_reqs / elapsed_sec)) r_iops_99,
        ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY w_reqs / elapsed_sec)) w_iops_99,
+       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY (r_reqs + w_reqs) / elapsed_sec)) rw_iops_97,
+       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY r_reqs / elapsed_sec)) r_iops_97,
+       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY w_reqs / elapsed_sec)) w_iops_97,
        ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY (r_reqs + w_reqs) / elapsed_sec)) rw_iops_95,
        ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY r_reqs / elapsed_sec)) r_iops_95,
        ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY w_reqs / elapsed_sec)) w_iops_95,
@@ -1581,9 +1676,9 @@ SELECT dbid,
        ROUND(PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY (r_reqs + w_reqs) / elapsed_sec)) rw_iops_75,
        ROUND(PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY r_reqs / elapsed_sec)) r_iops_75,
        ROUND(PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY w_reqs / elapsed_sec)) w_iops_75,
-       ROUND(MEDIAN((r_reqs + w_reqs) / elapsed_sec)) rw_iops_median,
-       ROUND(MEDIAN(r_reqs / elapsed_sec)) r_iops_median,
-       ROUND(MEDIAN(w_reqs / elapsed_sec)) w_iops_median,
+       ROUND(MEDIAN((r_reqs + w_reqs) / elapsed_sec)) rw_iops_med,
+       ROUND(MEDIAN(r_reqs / elapsed_sec)) r_iops_med,
+       ROUND(MEDIAN(w_reqs / elapsed_sec)) w_iops_med,
        ROUND(AVG((r_reqs + w_reqs) / elapsed_sec)) rw_iops_avg,
        ROUND(AVG(r_reqs / elapsed_sec)) r_iops_avg,
        ROUND(AVG(w_reqs / elapsed_sec)) w_iops_avg,
@@ -1598,6 +1693,9 @@ SELECT dbid,
        ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY (r_bytes + w_bytes) / POWER(2, 20) / elapsed_sec)) rw_mbps_99,
        ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY r_bytes / POWER(2, 20) / elapsed_sec)) r_mbps_99,
        ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY w_bytes / POWER(2, 20) / elapsed_sec)) w_mbps_99,
+       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY (r_bytes + w_bytes) / POWER(2, 20) / elapsed_sec)) rw_mbps_97,
+       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY r_bytes / POWER(2, 20) / elapsed_sec)) r_mbps_97,
+       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY w_bytes / POWER(2, 20) / elapsed_sec)) w_mbps_97,
        ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY (r_bytes + w_bytes) / POWER(2, 20) / elapsed_sec)) rw_mbps_95,
        ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY r_bytes / POWER(2, 20) / elapsed_sec)) r_mbps_95,
        ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY w_bytes / POWER(2, 20) / elapsed_sec)) w_mbps_95,
@@ -1607,9 +1705,9 @@ SELECT dbid,
        ROUND(PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY (r_bytes + w_bytes) / POWER(2, 20) / elapsed_sec)) rw_mbps_75,
        ROUND(PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY r_bytes / POWER(2, 20) / elapsed_sec)) r_mbps_75,
        ROUND(PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY w_bytes / POWER(2, 20) / elapsed_sec)) w_mbps_75,
-       ROUND(MEDIAN((r_bytes + w_bytes) / POWER(2, 20) / elapsed_sec)) rw_mbps_median,
-       ROUND(MEDIAN(r_bytes / POWER(2, 20) / elapsed_sec)) r_mbps_median,
-       ROUND(MEDIAN(w_bytes / POWER(2, 20) / elapsed_sec)) w_mbps_median,
+       ROUND(MEDIAN((r_bytes + w_bytes) / POWER(2, 20) / elapsed_sec)) rw_mbps_med,
+       ROUND(MEDIAN(r_bytes / POWER(2, 20) / elapsed_sec)) r_mbps_med,
+       ROUND(MEDIAN(w_bytes / POWER(2, 20) / elapsed_sec)) w_mbps_med,
        ROUND(AVG((r_bytes + w_bytes) / POWER(2, 20) / elapsed_sec)) rw_mbps_avg,
        ROUND(AVG(r_bytes / POWER(2, 20) / elapsed_sec)) r_mbps_avg,
        ROUND(AVG(w_bytes / POWER(2, 20) / elapsed_sec)) w_mbps_avg
@@ -1617,17 +1715,14 @@ SELECT dbid,
  WHERE elapsed_sec > 60 -- ignore snaps too close
  GROUP BY
        dbid,
-       db_name,
-       host_name,
-       instance_number,
-       instance_name
+       instance_number
 ),
 io_per_cluster AS ( -- combined
 SELECT dbid,
-       db_name,
-       NULL host_name,
-       -2 instance_number,
-       NULL instance_name,
+       TO_NUMBER(NULL) instance_number,
+       MIN(begin_interval_time) begin_interval_time,
+       MAX(end_interval_time) end_interval_time,
+       COUNT(DISTINCT snap_id) snap_shots,        
        ROUND(100 * SUM(r_reqs) / (SUM(r_reqs) + SUM(w_reqs)), 1) r_reqs_perc,
        ROUND(100 * SUM(w_reqs) / (SUM(r_reqs) + SUM(w_reqs)), 1) w_reqs_perc,
        ROUND(MAX((r_reqs + w_reqs) / elapsed_sec)) rw_iops_peak,
@@ -1639,6 +1734,9 @@ SELECT dbid,
        ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY (r_reqs + w_reqs) / elapsed_sec)) rw_iops_99,
        ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY r_reqs / elapsed_sec)) r_iops_99,
        ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY w_reqs / elapsed_sec)) w_iops_99,
+       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY (r_reqs + w_reqs) / elapsed_sec)) rw_iops_97,
+       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY r_reqs / elapsed_sec)) r_iops_97,
+       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY w_reqs / elapsed_sec)) w_iops_97,
        ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY (r_reqs + w_reqs) / elapsed_sec)) rw_iops_95,
        ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY r_reqs / elapsed_sec)) r_iops_95,
        ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY w_reqs / elapsed_sec)) w_iops_95,
@@ -1648,9 +1746,9 @@ SELECT dbid,
        ROUND(PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY (r_reqs + w_reqs) / elapsed_sec)) rw_iops_75,
        ROUND(PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY r_reqs / elapsed_sec)) r_iops_75,
        ROUND(PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY w_reqs / elapsed_sec)) w_iops_75,
-       ROUND(MEDIAN((r_reqs + w_reqs) / elapsed_sec)) rw_iops_median,
-       ROUND(MEDIAN(r_reqs / elapsed_sec)) r_iops_median,
-       ROUND(MEDIAN(w_reqs / elapsed_sec)) w_iops_median,
+       ROUND(MEDIAN((r_reqs + w_reqs) / elapsed_sec)) rw_iops_med,
+       ROUND(MEDIAN(r_reqs / elapsed_sec)) r_iops_med,
+       ROUND(MEDIAN(w_reqs / elapsed_sec)) w_iops_med,
        ROUND(AVG((r_reqs + w_reqs) / elapsed_sec)) rw_iops_avg,
        ROUND(AVG(r_reqs / elapsed_sec)) r_iops_avg,
        ROUND(AVG(w_reqs / elapsed_sec)) w_iops_avg,
@@ -1665,6 +1763,9 @@ SELECT dbid,
        ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY (r_bytes + w_bytes) / POWER(2, 20) / elapsed_sec)) rw_mbps_99,
        ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY r_bytes / POWER(2, 20) / elapsed_sec)) r_mbps_99,
        ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY w_bytes / POWER(2, 20) / elapsed_sec)) w_mbps_99,
+       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY (r_bytes + w_bytes) / POWER(2, 20) / elapsed_sec)) rw_mbps_97,
+       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY r_bytes / POWER(2, 20) / elapsed_sec)) r_mbps_97,
+       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY w_bytes / POWER(2, 20) / elapsed_sec)) w_mbps_97,
        ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY (r_bytes + w_bytes) / POWER(2, 20) / elapsed_sec)) rw_mbps_95,
        ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY r_bytes / POWER(2, 20) / elapsed_sec)) r_mbps_95,
        ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY w_bytes / POWER(2, 20) / elapsed_sec)) w_mbps_95,
@@ -1674,86 +1775,73 @@ SELECT dbid,
        ROUND(PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY (r_bytes + w_bytes) / POWER(2, 20) / elapsed_sec)) rw_mbps_75,
        ROUND(PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY r_bytes / POWER(2, 20) / elapsed_sec)) r_mbps_75,
        ROUND(PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY w_bytes / POWER(2, 20) / elapsed_sec)) w_mbps_75,
-       ROUND(MEDIAN((r_bytes + w_bytes) / POWER(2, 20) / elapsed_sec)) rw_mbps_median,
-       ROUND(MEDIAN(r_bytes / POWER(2, 20) / elapsed_sec)) r_mbps_median,
-       ROUND(MEDIAN(w_bytes / POWER(2, 20) / elapsed_sec)) w_mbps_median,
+       ROUND(MEDIAN((r_bytes + w_bytes) / POWER(2, 20) / elapsed_sec)) rw_mbps_med,
+       ROUND(MEDIAN(r_bytes / POWER(2, 20) / elapsed_sec)) r_mbps_med,
+       ROUND(MEDIAN(w_bytes / POWER(2, 20) / elapsed_sec)) w_mbps_med,
        ROUND(AVG((r_bytes + w_bytes) / POWER(2, 20) / elapsed_sec)) rw_mbps_avg,
        ROUND(AVG(r_bytes / POWER(2, 20) / elapsed_sec)) r_mbps_avg,
        ROUND(AVG(w_bytes / POWER(2, 20) / elapsed_sec)) w_mbps_avg
   FROM io_per_snap_id
  WHERE elapsed_sec > 60 -- ignore snaps too close
  GROUP BY
-       dbid,
-       db_name
+       dbid
 ),
-io_sum AS ( -- simple aggregate
-SELECT dbid,
-       db_name,
-       NULL host_name,
-       -1 instance_number,
-       NULL instance_name,
-       ROUND(AVG(r_reqs_perc), 1) r_reqs_perc,
-       ROUND(AVG(w_reqs_perc), 1) w_reqs_perc,
-       SUM(rw_iops_peak),
-       SUM(r_iops_peak),
-       SUM(w_iops_peak),
-       SUM(rw_iops_999),
-       SUM(r_iops_999),
-       SUM(w_iops_999),
-       SUM(rw_iops_99),
-       SUM(r_iops_99),
-       SUM(w_iops_99),
-       SUM(rw_iops_95),
-       SUM(r_iops_95),
-       SUM(w_iops_95),
-       SUM(rw_iops_90),
-       SUM(r_iops_90),
-       SUM(w_iops_90),
-       SUM(rw_iops_75),
-       SUM(r_iops_75),
-       SUM(w_iops_75),
-       SUM(rw_iops_median),
-       SUM(r_iops_median),
-       SUM(w_iops_median),
-       SUM(rw_iops_avg),
-       SUM(r_iops_avg),
-       SUM(w_iops_avg),
-       ROUND(AVG(r_bytes_perc), 1) r_bytes_perc,
-       ROUND(AVG(w_bytes_perc), 1) w_bytes_perc,
-       SUM(rw_mbps_peak),
-       SUM(r_mbps_peak),
-       SUM(w_mbps_peak),
-       SUM(rw_mbps_999),
-       SUM(r_mbps_999),
-       SUM(w_mbps_999),
-       SUM(rw_mbps_99),
-       SUM(r_mbps_99),
-       SUM(w_mbps_99),
-       SUM(rw_mbps_95),
-       SUM(r_mbps_95),
-       SUM(w_mbps_95),
-       SUM(rw_mbps_90),
-       SUM(r_mbps_90),
-       SUM(w_mbps_90),
-       SUM(rw_mbps_75),
-       SUM(r_mbps_75),
-       SUM(w_mbps_75),
-       SUM(rw_mbps_median),
-       SUM(r_mbps_median),
-       SUM(w_mbps_median),
-       SUM(rw_mbps_avg),
-       SUM(r_mbps_avg),
-       SUM(w_mbps_avg)
-  FROM io_per_inst
- GROUP BY
-       dbid,
-       db_name
+io_per_inst_or_cluster AS (
+SELECT dbid, 01 order_by, ''Maximum or peak'' metric, instance_number, rw_iops_peak rw_iops, r_iops_peak r_iops, w_iops_peak w_iops, rw_mbps_peak rw_mbps, r_mbps_peak r_mbps, w_mbps_peak w_mbps, begin_interval_time, end_interval_time, snap_shots FROM io_per_inst
+ UNION ALL
+SELECT dbid, 02 order_by, ''99.9th percentl'' metric, instance_number, rw_iops_999 rw_iops,  r_iops_999 r_iops,  w_iops_999 w_iops,  rw_mbps_999 rw_mbps,  r_mbps_999 r_mbps,  w_mbps_999 w_mbps,  begin_interval_time, end_interval_time, snap_shots FROM io_per_inst
+ UNION ALL
+SELECT dbid, 03 order_by, ''99th percentile'' metric, instance_number, rw_iops_99 rw_iops,   r_iops_99 r_iops,   w_iops_99 w_iops,   rw_mbps_99 rw_mbps,   r_mbps_99 r_mbps,   w_mbps_99 w_mbps,   begin_interval_time, end_interval_time, snap_shots FROM io_per_inst
+ UNION ALL
+SELECT dbid, 04 order_by, ''97th percentile'' metric, instance_number, rw_iops_97 rw_iops,   r_iops_97 r_iops,   w_iops_97 w_iops,   rw_mbps_97 rw_mbps,   r_mbps_97 r_mbps,   w_mbps_97 w_mbps,   begin_interval_time, end_interval_time, snap_shots FROM io_per_inst
+ UNION ALL
+SELECT dbid, 05 order_by, ''95th percentile'' metric, instance_number, rw_iops_95 rw_iops,   r_iops_95 r_iops,   w_iops_95 w_iops,   rw_mbps_95 rw_mbps,   r_mbps_95 r_mbps,   w_mbps_95 w_mbps,   begin_interval_time, end_interval_time, snap_shots FROM io_per_inst
+ UNION ALL
+SELECT dbid, 06 order_by, ''90th percentile'' metric, instance_number, rw_iops_90 rw_iops,   r_iops_90 r_iops,   w_iops_90 w_iops,   rw_mbps_90 rw_mbps,   r_mbps_90 r_mbps,   w_mbps_90 w_mbps,   begin_interval_time, end_interval_time, snap_shots FROM io_per_inst
+ UNION ALL
+SELECT dbid, 07 order_by, ''75th percentile'' metric, instance_number, rw_iops_75 rw_iops,   r_iops_75 r_iops,   w_iops_75 w_iops,   rw_mbps_75 rw_mbps,   r_mbps_75 r_mbps,   w_mbps_75 w_mbps,   begin_interval_time, end_interval_time, snap_shots FROM io_per_inst
+ UNION ALL
+SELECT dbid, 08 order_by, ''Median''          metric, instance_number, rw_iops_med rw_iops,  r_iops_med r_iops,  w_iops_med w_iops,  rw_mbps_med rw_mbps,  r_mbps_med r_mbps,  w_mbps_med w_mbps,  begin_interval_time, end_interval_time, snap_shots FROM io_per_inst
+ UNION ALL
+SELECT dbid, 09 order_by, ''Average''         metric, instance_number, rw_iops_avg rw_iops,  r_iops_avg r_iops,  w_iops_avg w_iops,  rw_mbps_avg rw_mbps,  r_mbps_avg r_mbps,  w_mbps_avg w_mbps,  begin_interval_time, end_interval_time, snap_shots FROM io_per_inst
+ UNION ALL
+SELECT dbid, 01 order_by, ''Maximum or peak'' metric, instance_number, rw_iops_peak rw_iops, r_iops_peak r_iops, w_iops_peak w_iops, rw_mbps_peak rw_mbps, r_mbps_peak r_mbps, w_mbps_peak w_mbps, begin_interval_time, end_interval_time, snap_shots FROM io_per_cluster
+ UNION ALL
+SELECT dbid, 02 order_by, ''99.9th percentl'' metric, instance_number, rw_iops_999 rw_iops,  r_iops_999 r_iops,  w_iops_999 w_iops,  rw_mbps_999 rw_mbps,  r_mbps_999 r_mbps,  w_mbps_999 w_mbps,  begin_interval_time, end_interval_time, snap_shots FROM io_per_cluster
+ UNION ALL
+SELECT dbid, 03 order_by, ''99th percentile'' metric, instance_number, rw_iops_99 rw_iops,   r_iops_99 r_iops,   w_iops_99 w_iops,   rw_mbps_99 rw_mbps,   r_mbps_99 r_mbps,   w_mbps_99 w_mbps,   begin_interval_time, end_interval_time, snap_shots FROM io_per_cluster
+ UNION ALL
+SELECT dbid, 04 order_by, ''97th percentile'' metric, instance_number, rw_iops_97 rw_iops,   r_iops_97 r_iops,   w_iops_97 w_iops,   rw_mbps_97 rw_mbps,   r_mbps_97 r_mbps,   w_mbps_97 w_mbps,   begin_interval_time, end_interval_time, snap_shots FROM io_per_cluster
+ UNION ALL
+SELECT dbid, 05 order_by, ''95th percentile'' metric, instance_number, rw_iops_95 rw_iops,   r_iops_95 r_iops,   w_iops_95 w_iops,   rw_mbps_95 rw_mbps,   r_mbps_95 r_mbps,   w_mbps_95 w_mbps,   begin_interval_time, end_interval_time, snap_shots FROM io_per_cluster
+ UNION ALL
+SELECT dbid, 06 order_by, ''90th percentile'' metric, instance_number, rw_iops_90 rw_iops,   r_iops_90 r_iops,   w_iops_90 w_iops,   rw_mbps_90 rw_mbps,   r_mbps_90 r_mbps,   w_mbps_90 w_mbps,   begin_interval_time, end_interval_time, snap_shots FROM io_per_cluster
+ UNION ALL
+SELECT dbid, 07 order_by, ''75th percentile'' metric, instance_number, rw_iops_75 rw_iops,   r_iops_75 r_iops,   w_iops_75 w_iops,   rw_mbps_75 rw_mbps,   r_mbps_75 r_mbps,   w_mbps_75 w_mbps,   begin_interval_time, end_interval_time, snap_shots FROM io_per_cluster
+ UNION ALL
+SELECT dbid, 08 order_by, ''Median''          metric, instance_number, rw_iops_med rw_iops,  r_iops_med r_iops,  w_iops_med w_iops,  rw_mbps_med rw_mbps,  r_mbps_med r_mbps,  w_mbps_med w_mbps,  begin_interval_time, end_interval_time, snap_shots FROM io_per_cluster
+ UNION ALL
+SELECT dbid, 09 order_by, ''Average''         metric, instance_number, rw_iops_avg rw_iops,  r_iops_avg r_iops,  w_iops_avg w_iops,  rw_mbps_avg rw_mbps,  r_mbps_avg r_mbps,  w_mbps_avg w_mbps,  begin_interval_time, end_interval_time, snap_shots FROM io_per_cluster
 )
-SELECT * FROM io_per_inst
-UNION ALL
-SELECT * FROM io_sum
-UNION ALL
-SELECT * FROM io_per_cluster 
+SELECT dbid,
+       metric,
+       instance_number,
+       rw_iops,
+       r_iops,
+       w_iops,
+       rw_mbps,
+       r_mbps,
+       w_mbps,
+       TO_CHAR(CAST(begin_interval_time AS DATE), ''YYYY-MM-DD HH24:MI'') begin_interval_time,
+       TO_CHAR(CAST(end_interval_time AS DATE), ''YYYY-MM-DD HH24:MI'') end_interval_time,
+       snap_shots,
+       ROUND(CAST(end_interval_time AS DATE) - CAST(begin_interval_time AS DATE), 1) days,
+       ROUND(snap_shots / (CAST(end_interval_time AS DATE) - CAST(begin_interval_time AS DATE)), 1) avg_snaps_per_day
+  FROM io_per_inst_or_cluster
+ ORDER BY
+       dbid,
+       order_by,
+       instance_number NULLS LAST
 ';
 END;
 /
