@@ -1,6 +1,6 @@
 PRO <html>
-PRO <!-- $Header: &&main_report_name. &&tool_vrsn. carlos.sierra $ -->
-PRO <!-- Copyright&&copyright., All rights reserved. -->
+PRO <!-- $Header: &&edb360_main_report. &&edb360_vrsn. carlos.sierra $ -->
+PRO <!-- edb360_copyright&&edb360_copyright., All rights reserved. -->
 PRO <!-- Author: carlos.sierra.usa@gmail.com -->
 PRO
 PRO <head>

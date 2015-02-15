@@ -11,7 +11,7 @@ SPO OFF;
 SET TERM OFF;
 
 -- update main report
-SPO &&main_report_name..html APP;
+SPO &&edb360_main_report..html APP;
 PRO <a href="&&one_spool_filename._pie_chart.html">chart</a>
 SPO OFF;
 
@@ -113,4 +113,4 @@ SPO OFF;
 SET HEA ON;
 
 -- zip
-HOS zip -mq &&main_compressed_filename._&&file_creation_time. &&one_spool_filename._pie_chart.html
+HOS zip -mq &&edb360_main_filename._&&edb360_file_time. &&one_spool_filename._pie_chart.html

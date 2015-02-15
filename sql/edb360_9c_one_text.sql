@@ -11,7 +11,7 @@ SPO OFF;
 SET TERM OFF;
 
 -- update main report
-SPO &&main_report_name..html APP;
+SPO &&edb360_main_report..html APP;
 PRO <a href="&&one_spool_filename..txt">text</a>
 SPO OFF;
 
@@ -19,7 +19,7 @@ SPO OFF;
 EXEC :get_time_t0 := DBMS_UTILITY.get_time;
 
 -- get sql
-GET &&common_prefix._query.sql
+GET &&common_edb360_prefix._query.sql
 
 -- header
 SPO &&one_spool_filename..txt;
@@ -43,7 +43,7 @@ SET HEA ON;
 PRO &&row_count. rows selected.
 
 PRO 
-PRO &&prefix.&&copyright. Version &&tool_vrsn.. Report executed on &&time_stamp. for database &&db_version. &&database_name_short. from host &&host_name_short..
+PRO &&edb360_prefix.&&edb360_copyright. Version &&edb360_vrsn.. Report executed on &&edb360_time_stamp. for database &&db_version. &&database_name_short. from host &&host_name_short..
 SPO OFF;
 
 -- get time t1
@@ -61,4 +61,4 @@ SPO OFF;
 SET HEA ON;
 
 -- zip
-HOS zip -mq &&main_compressed_filename._&&file_creation_time. &&one_spool_filename..txt
+HOS zip -mq &&edb360_main_filename._&&edb360_file_time. &&one_spool_filename..txt

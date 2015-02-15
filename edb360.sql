@@ -1,7 +1,7 @@
 /*****************************************************************************************
    
     EDB360 - Enkitec's Oracle Database 360-degree View
-    Copyright (C) 2014  Carlos Sierra
+    edb360_copyright (C) 2014  Carlos Sierra
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,4 +18,4 @@
 
 *****************************************************************************************/
 @@sql/edb360_0a_main.sql
-HOS unzip -l &&main_compressed_filename._&&file_creation_time.
+HOS unzip -l &&edb360_main_filename._&&edb360_file_time.

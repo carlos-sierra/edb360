@@ -1,4 +1,4 @@
-SPO &&main_report_name..html APP;
+SPO &&edb360_main_report..html APP;
 @@edb360_0e_html_footer.sql
 SPO OFF;
 
@@ -12,8 +12,8 @@ PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -- readme
 SPO 0000_readme_first.txt
-PRO 1. Unzip &&main_compressed_filename._&&file_creation_time..zip into a directory
-PRO 2. Review &&main_report_name..html
+PRO 1. Unzip &&edb360_main_filename._&&edb360_file_time..zip into a directory
+PRO 2. Review &&edb360_main_report..html
 SPO OFF;
 
 -- cleanup
@@ -46,18 +46,18 @@ SELECT value background_dump_dest FROM v$parameter WHERE name = 'background_dump
 HOS cp &&background_dump_dest./alert_&&db_name_upper.*.log .
 HOS cp &&background_dump_dest./alert_&&db_name_lower.*.log .
 HOS cp &&background_dump_dest./alert_&&_connect_identifier..log .
-HOS rename alert_ 0005_&&common_prefix._alert_ alert_*.log
+HOS rename alert_ 0005_&&common_edb360_prefix._alert_ alert_*.log
 
 -- zip 
-HOS zip -mq &&main_compressed_filename._&&file_creation_time. &&common_prefix._query.sql
-HOS zip -dq &&main_compressed_filename._&&file_creation_time. &&common_prefix._query.sql
-HOS zip -mq &&main_compressed_filename._&&file_creation_time. 0005_&&common_prefix._alert_*.log
-HOS zip -jq 0006_&&common_prefix._opatch $ORACLE_HOME/cfgtoollogs/opatch/opatch*
-HOS zip -mq &&main_compressed_filename._&&file_creation_time. 0006_&&common_prefix._opatch.zip
-HOS zip -mq &&main_compressed_filename._&&file_creation_time. &&edb360_log2..txt
-HOS zip -mq &&main_compressed_filename._&&file_creation_time. &&edb360_tkprof._sort.txt
-HOS zip -mq &&main_compressed_filename._&&file_creation_time. &&edb360_log..txt
-HOS zip -mq &&main_compressed_filename._&&file_creation_time. &&main_report_name..html
-HOS zip -mq &&main_compressed_filename._&&file_creation_time. 0000_readme_first.txt 
-HOS unzip -l &&main_compressed_filename._&&file_creation_time.
+HOS zip -mq &&edb360_main_filename._&&edb360_file_time. &&common_edb360_prefix._query.sql
+HOS zip -dq &&edb360_main_filename._&&edb360_file_time. &&common_edb360_prefix._query.sql
+HOS zip -mq &&edb360_main_filename._&&edb360_file_time. 0005_&&common_edb360_prefix._alert_*.log
+HOS zip -jq 0006_&&common_edb360_prefix._opatch $ORACLE_HOME/cfgtoollogs/opatch/opatch*
+HOS zip -mq &&edb360_main_filename._&&edb360_file_time. 0006_&&common_edb360_prefix._opatch.zip
+HOS zip -mq &&edb360_main_filename._&&edb360_file_time. &&edb360_log2..txt
+HOS zip -mq &&edb360_main_filename._&&edb360_file_time. &&edb360_tkprof._sort.txt
+HOS zip -mq &&edb360_main_filename._&&edb360_file_time. &&edb360_log..txt
+HOS zip -mq &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html
+HOS zip -mq &&edb360_main_filename._&&edb360_file_time. 0000_readme_first.txt 
+HOS unzip -l &&edb360_main_filename._&&edb360_file_time.
 SET TERM ON;

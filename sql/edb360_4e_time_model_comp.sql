@@ -1,11 +1,11 @@
 @@edb360_0g_tkprof.sql
 DEF section_name = 'System Time Model Components';
-SPO &&main_report_name..html APP;
+SPO &&edb360_main_report..html APP;
 PRO <h2>&&section_name.</h2>
 SPO OFF;
 
 SET SERVEROUT ON;
-SPO 9985_&&common_prefix._chart_setup_driver3.sql;
+SPO 9985_&&common_edb360_prefix._chart_setup_driver3.sql;
 DECLARE
   l_count NUMBER;
 BEGIN
@@ -24,8 +24,8 @@ END;
 /
 SPO OFF;
 SET SERVEROUT OFF;
-@9985_&&common_prefix._chart_setup_driver3.sql;
-HOS zip -mq &&main_compressed_filename._&&file_creation_time. 9985_&&common_prefix._chart_setup_driver3.sql
+@9985_&&common_edb360_prefix._chart_setup_driver3.sql;
+HOS zip -mq &&edb360_main_filename._&&edb360_file_time. 9985_&&common_edb360_prefix._chart_setup_driver3.sql
 
 BEGIN
   :sql_text_backup := '

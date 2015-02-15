@@ -1,12 +1,12 @@
 @@edb360_0g_tkprof.sql
 SET VER OFF FEED OFF SERVEROUT ON HEAD OFF PAGES 50000 LIN 32767 TRIMS ON TRIM ON TI OFF TIMI OFF ARRAY 100;
 DEF section_name = 'AWR/ADDM/ASH Reports';
-SPO &&main_report_name..html APP;
+SPO &&edb360_main_report..html APP;
 PRO <h2 title="For max/min/med 'DB time' + 'background elapsed time' for past 7 and &&history_days. days (for each instance)">&&section_name.</h2>
 SPO OFF;
 
 COL hh_mm_ss NEW_V hh_mm_ss NOPRI FOR A8;
-SPO 9991_&&common_prefix._rpt_driver.sql;
+SPO 9991_&&common_edb360_prefix._rpt_driver.sql;
 PRO VAR inst_num VARCHAR2(1023);;
 DECLARE
   l_standard_filename VARCHAR2(32767);
@@ -310,14 +310,14 @@ BEGIN
       
       -- main report
       put_line('-- update main report');
-      put_line('SPO &&main_report_name..html APP;');
+      put_line('SPO &&edb360_main_report..html APP;');
       put_line('PRO <li>'||i.instance_number||'_'||j.bid||'_'||j.eid||'_'||j.rep||' <small><em>('||TO_CHAR(j.end_date,'DD-Mon-YY HH24:MI:SS')||')</em></small>');
       put_line('SPO OFF;');
-      put_line('HOS zip -q &&main_compressed_filename._&&file_creation_time. &&main_report_name..html');
+      put_line('HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html');
 
       -- awr one node
       l_standard_filename := 'awrrpt_'||i.instance_number||'_'||j.bid||'_'||j.eid||'_'||j.rep;
-      l_spool_filename := '&&common_prefix._'||l_standard_filename;
+      l_spool_filename := '&&common_edb360_prefix._'||l_standard_filename;
       put_line('COL hh_mm_ss NEW_V hh_mm_ss NOPRI FOR A8;');
       put_line('SELECT TO_CHAR(SYSDATE, ''HH24:MI:SS'') hh_mm_ss FROM DUAL;');
       put_line('-- update log');
@@ -327,7 +327,7 @@ BEGIN
       put_line('PRO');
       put_line('PRO '||CHR(38)||chr(38)||'hh_mm_ss. '||l_spool_filename);
       put_line('SPO OFF;');
-      put_line('HOS zip -q &&main_compressed_filename._&&file_creation_time. &&edb360_log..txt');
+      put_line('HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_log..txt');
       BEGIN
         :file_seq := :file_seq + 1;
         l_one_spool_filename := LPAD(:file_seq, 4, '0')||'_'||l_spool_filename;
@@ -336,12 +336,12 @@ BEGIN
         put_line('SELECT output FROM TABLE(DBMS_WORKLOAD_REPOSITORY.awr_report_html('||j.dbid||','||i.instance_number||','||j.bid||','||j.eid||',8));');
         put_line('SPO OFF;');
         put_line('-- update main report');
-        put_line('SPO &&main_report_name..html APP;');
+        put_line('SPO &&edb360_main_report..html APP;');
         put_line('PRO <a href="'||l_one_spool_filename||'.html">awr html</a>');
         put_line('SPO OFF;');
         put_line('-- zip');
-        put_line('HOS zip -mq &&main_compressed_filename._&&file_creation_time. '||l_one_spool_filename||'.html');
-        put_line('HOS zip -q &&main_compressed_filename._&&file_creation_time. &&main_report_name..html');
+        put_line('HOS zip -mq &&edb360_main_filename._&&edb360_file_time. '||l_one_spool_filename||'.html');
+        put_line('HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html');
       END;
       BEGIN
         :file_seq := :file_seq + 1;
@@ -351,12 +351,12 @@ BEGIN
         put_line('SELECT output FROM TABLE(DBMS_WORKLOAD_REPOSITORY.awr_report_text('||j.dbid||','||i.instance_number||','||j.bid||','||j.eid||',8));');
         put_line('SPO OFF;');
         put_line('-- update main report');
-        put_line('SPO &&main_report_name..html APP;');
+        put_line('SPO &&edb360_main_report..html APP;');
         put_line('PRO <a href="'||l_one_spool_filename||'.txt">awr text</a>');
         put_line('SPO OFF;');
         put_line('-- zip');
-        put_line('HOS zip -mq &&main_compressed_filename._&&file_creation_time. '||l_one_spool_filename||'.txt');
-        put_line('HOS zip -q &&main_compressed_filename._&&file_creation_time. &&main_report_name..html');
+        put_line('HOS zip -mq &&edb360_main_filename._&&edb360_file_time. '||l_one_spool_filename||'.txt');
+        put_line('HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html');
       END;
 
       -- addm one node
@@ -373,7 +373,7 @@ BEGIN
       put_line('/');
       put_line('PRINT l_task_name;');
       l_standard_filename := 'addmrpt_'||i.instance_number||'_'||j.bid||'_'||j.eid||'_'||j.rep;
-      l_spool_filename := '&&common_prefix._'||l_standard_filename;
+      l_spool_filename := '&&common_edb360_prefix._'||l_standard_filename;
       put_line('COL hh_mm_ss NEW_V hh_mm_ss NOPRI FOR A8;');
       put_line('SELECT TO_CHAR(SYSDATE, ''HH24:MI:SS'') hh_mm_ss FROM DUAL;');
       put_line('-- update log');
@@ -383,7 +383,7 @@ BEGIN
       put_line('PRO');
       put_line('PRO '||CHR(38)||chr(38)||'hh_mm_ss. '||l_spool_filename);
       put_line('SPO OFF;');
-      put_line('HOS zip -q &&main_compressed_filename._&&file_creation_time. &&edb360_log..txt');
+      put_line('HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_log..txt');
       BEGIN
         :file_seq := :file_seq + 1;
         l_one_spool_filename := LPAD(:file_seq, 4, '0')||'_'||l_spool_filename;
@@ -392,18 +392,18 @@ BEGIN
         put_line('SELECT DBMS_ADVISOR.get_task_report(:l_task_name) FROM DUAL;');
         put_line('SPO OFF;');
         put_line('-- update main report');
-        put_line('SPO &&main_report_name..html APP;');
+        put_line('SPO &&edb360_main_report..html APP;');
         put_line('PRO <a href="'||l_one_spool_filename||'.txt">addm text</a>');
         put_line('SPO OFF;');
         put_line('-- zip');
-        put_line('HOS zip -mq &&main_compressed_filename._&&file_creation_time. '||l_one_spool_filename||'.txt');
-        put_line('HOS zip -q &&main_compressed_filename._&&file_creation_time. &&main_report_name..html');
+        put_line('HOS zip -mq &&edb360_main_filename._&&edb360_file_time. '||l_one_spool_filename||'.txt');
+        put_line('HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html');
       END;
       put_line('EXEC DBMS_ADVISOR.DELETE_TASK(task_name => :l_task_name);');
 
       -- ash one node
       l_standard_filename := 'ashrpt_'||i.instance_number||'_'||j.bid||'_'||j.eid||'_'||j.rep;
-      l_spool_filename := '&&common_prefix._'||l_standard_filename;
+      l_spool_filename := '&&common_edb360_prefix._'||l_standard_filename;
       put_line('COL hh_mm_ss NEW_V hh_mm_ss NOPRI FOR A8;');
       put_line('SELECT TO_CHAR(SYSDATE, ''HH24:MI:SS'') hh_mm_ss FROM DUAL;');
       put_line('-- update log');
@@ -421,12 +421,12 @@ BEGIN
         put_line('SELECT output FROM TABLE(DBMS_WORKLOAD_REPOSITORY.ash_report_html('||j.dbid||','||i.instance_number||',TO_DATE('''||l_begin_date||''',''YYYYMMDDHH24MISS''),TO_DATE('''||l_end_date||''',''YYYYMMDDHH24MISS'')));');
         put_line('SPO OFF;');
         put_line('-- update main report');
-        put_line('SPO &&main_report_name..html APP;');
+        put_line('SPO &&edb360_main_report..html APP;');
         put_line('PRO <a href="'||l_one_spool_filename||'.html">ash html</a>');
         put_line('SPO OFF;');
         put_line('-- zip');
-        put_line('HOS zip -mq &&main_compressed_filename._&&file_creation_time. '||l_one_spool_filename||'.html');
-        put_line('HOS zip -q &&main_compressed_filename._&&file_creation_time. &&main_report_name..html');
+        put_line('HOS zip -mq &&edb360_main_filename._&&edb360_file_time. '||l_one_spool_filename||'.html');
+        put_line('HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html');
       END;
       BEGIN
         :file_seq := :file_seq + 1;
@@ -436,20 +436,20 @@ BEGIN
         put_line('SELECT output FROM TABLE(DBMS_WORKLOAD_REPOSITORY.ash_report_text('||j.dbid||','||i.instance_number||',TO_DATE('''||l_begin_date||''',''YYYYMMDDHH24MISS''),TO_DATE('''||l_end_date||''',''YYYYMMDDHH24MISS'')));');
         put_line('SPO OFF;');
         put_line('-- update main report');
-        put_line('SPO &&main_report_name..html APP;');
+        put_line('SPO &&edb360_main_report..html APP;');
         put_line('PRO <a href="'||l_one_spool_filename||'.txt">ash text</a>');
         put_line('SPO OFF;');
         put_line('-- zip');
-        put_line('HOS zip -mq &&main_compressed_filename._&&file_creation_time. '||l_one_spool_filename||'.txt');
-        put_line('HOS zip -q &&main_compressed_filename._&&file_creation_time. &&main_report_name..html');
+        put_line('HOS zip -mq &&edb360_main_filename._&&edb360_file_time. '||l_one_spool_filename||'.txt');
+        put_line('HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html');
       END;
 
       -- main report
       put_line('-- update main report');
-      put_line('SPO &&main_report_name..html APP;');
+      put_line('SPO &&edb360_main_report..html APP;');
       put_line('PRO </li>');
       put_line('SPO OFF;');
-      put_line('HOS zip -q &&main_compressed_filename._&&file_creation_time. &&main_report_name..html');
+      put_line('HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html');
     END LOOP;
   END LOOP;
 
@@ -728,14 +728,14 @@ BEGIN
       
       -- main report
       put_line('-- update main report');
-      put_line('SPO &&main_report_name..html APP;');
+      put_line('SPO &&edb360_main_report..html APP;');
       put_line('PRO <li>rac_'||j.bid||'_'||j.eid||'_'||j.rep||' <small><em>('||TO_CHAR(j.end_date,'DD-Mon-YY HH24:MI:SS')||')</em></small>');
-      put_line('HOS zip -q &&main_compressed_filename._&&file_creation_time. &&main_report_name..html');
+      put_line('HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html');
 
       -- awr all modes
       IF l_instances > 1 AND '&&db_version.' >= '11' THEN
         l_standard_filename := 'awrrpt_rac_'||j.bid||'_'||j.eid||'_'||j.rep;
-        l_spool_filename := '&&common_prefix._'||l_standard_filename;
+        l_spool_filename := '&&common_edb360_prefix._'||l_standard_filename;
         put_line('COL hh_mm_ss NEW_V hh_mm_ss NOPRI FOR A8;');
         put_line('SELECT TO_CHAR(SYSDATE, ''HH24:MI:SS'') hh_mm_ss FROM DUAL;');
         put_line('-- update log');
@@ -745,7 +745,7 @@ BEGIN
         put_line('PRO');
         put_line('PRO '||CHR(38)||chr(38)||'hh_mm_ss. '||l_spool_filename);
         put_line('SPO OFF;');
-        put_line('HOS zip -q &&main_compressed_filename._&&file_creation_time. &&edb360_log..txt');
+        put_line('HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_log..txt');
         BEGIN
           :file_seq := :file_seq + 1;
           l_one_spool_filename := LPAD(:file_seq, 4, '0')||'_'||l_spool_filename;
@@ -754,12 +754,12 @@ BEGIN
           put_line('SELECT output FROM TABLE(DBMS_WORKLOAD_REPOSITORY.awr_global_report_html('||j.dbid||',:inst_num,'||j.bid||','||j.eid||',8));');
           put_line('SPO OFF;');
           put_line('-- update main report');
-          put_line('SPO &&main_report_name..html APP;');
+          put_line('SPO &&edb360_main_report..html APP;');
           put_line('PRO <a href="'||l_one_spool_filename||'.html">awr html</a>');
           put_line('SPO OFF;');
           put_line('-- zip');
-          put_line('HOS zip -mq &&main_compressed_filename._&&file_creation_time. '||l_one_spool_filename||'.html');
-          put_line('HOS zip -q &&main_compressed_filename._&&file_creation_time. &&main_report_name..html');
+          put_line('HOS zip -mq &&edb360_main_filename._&&edb360_file_time. '||l_one_spool_filename||'.html');
+          put_line('HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html');
         END; 
         BEGIN
           :file_seq := :file_seq + 1;
@@ -769,12 +769,12 @@ BEGIN
           put_line('SELECT output FROM TABLE(DBMS_WORKLOAD_REPOSITORY.awr_global_report_text('||j.dbid||',:inst_num,'||j.bid||','||j.eid||',8));');
           put_line('SPO OFF;');
           put_line('-- update main report');
-          put_line('SPO &&main_report_name..html APP;');
+          put_line('SPO &&edb360_main_report..html APP;');
           put_line('PRO <a href="'||l_one_spool_filename||'.txt">awr text</a>');
           put_line('SPO OFF;');
           put_line('-- zip');
-          put_line('HOS zip -mq &&main_compressed_filename._&&file_creation_time. '||l_one_spool_filename||'.txt');
-          put_line('HOS zip -q &&main_compressed_filename._&&file_creation_time. &&main_report_name..html');
+          put_line('HOS zip -mq &&edb360_main_filename._&&edb360_file_time. '||l_one_spool_filename||'.txt');
+          put_line('HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html');
         END;
       END IF;
 
@@ -792,7 +792,7 @@ BEGIN
         put_line('/');
         put_line('PRINT l_task_name;');
         l_standard_filename := 'addmrpt_rac_'||j.bid||'_'||j.eid||'_'||j.rep;
-        l_spool_filename := '&&common_prefix._'||l_standard_filename;
+        l_spool_filename := '&&common_edb360_prefix._'||l_standard_filename;
         put_line('COL hh_mm_ss NEW_V hh_mm_ss NOPRI FOR A8;');
         put_line('SELECT TO_CHAR(SYSDATE, ''HH24:MI:SS'') hh_mm_ss FROM DUAL;');
         put_line('-- update log');
@@ -810,12 +810,12 @@ BEGIN
           put_line('SELECT DBMS_ADVISOR.get_task_report(:l_task_name) FROM DUAL;');
           put_line('SPO OFF;');
           put_line('-- update main report');
-          put_line('SPO &&main_report_name..html APP;');
+          put_line('SPO &&edb360_main_report..html APP;');
           put_line('PRO <a href="'||l_one_spool_filename||'.txt">addm text</a>');
           put_line('SPO OFF;');
           put_line('-- zip');
-          put_line('HOS zip -mq &&main_compressed_filename._&&file_creation_time. '||l_one_spool_filename||'.txt');
-          put_line('HOS zip -q &&main_compressed_filename._&&file_creation_time. &&main_report_name..html');
+          put_line('HOS zip -mq &&edb360_main_filename._&&edb360_file_time. '||l_one_spool_filename||'.txt');
+          put_line('HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html');
         END;
         put_line('EXEC DBMS_ADVISOR.DELETE_TASK(task_name => :l_task_name);');
       END IF;
@@ -823,7 +823,7 @@ BEGIN
       -- ash all nodes
       IF l_instances > 1 AND '&&db_version.' >= '11' THEN
         l_standard_filename := 'ashrpt_rac_'||j.bid||'_'||j.eid||'_'||j.rep;
-        l_spool_filename := '&&common_prefix._'||l_standard_filename;
+        l_spool_filename := '&&common_edb360_prefix._'||l_standard_filename;
         put_line('COL hh_mm_ss NEW_V hh_mm_ss NOPRI FOR A8;');
         put_line('SELECT TO_CHAR(SYSDATE, ''HH24:MI:SS'') hh_mm_ss FROM DUAL;');
         put_line('-- update log');
@@ -841,12 +841,12 @@ BEGIN
           put_line('SELECT output FROM TABLE(DBMS_WORKLOAD_REPOSITORY.ash_global_report_html('||j.dbid||',:inst_num,TO_DATE('''||l_begin_date||''',''YYYYMMDDHH24MISS''),TO_DATE('''||l_end_date||''',''YYYYMMDDHH24MISS'')));');
           put_line('SPO OFF;');
           put_line('-- update main report');
-          put_line('SPO &&main_report_name..html APP;');
+          put_line('SPO &&edb360_main_report..html APP;');
           put_line('PRO <a href="'||l_one_spool_filename||'.html">ash html</a>');
           put_line('SPO OFF;');
           put_line('-- zip');
-          put_line('HOS zip -mq &&main_compressed_filename._&&file_creation_time. '||l_one_spool_filename||'.html');
-          put_line('HOS zip -q &&main_compressed_filename._&&file_creation_time. &&main_report_name..html');
+          put_line('HOS zip -mq &&edb360_main_filename._&&edb360_file_time. '||l_one_spool_filename||'.html');
+          put_line('HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html');
         END; 
         BEGIN
           :file_seq := :file_seq + 1;
@@ -856,26 +856,26 @@ BEGIN
           put_line('SELECT output FROM TABLE(DBMS_WORKLOAD_REPOSITORY.ash_global_report_text('||j.dbid||',:inst_num,TO_DATE('''||l_begin_date||''',''YYYYMMDDHH24MISS''),TO_DATE('''||l_end_date||''',''YYYYMMDDHH24MISS'')));');
           put_line('SPO OFF;');
           put_line('-- update main report');
-          put_line('SPO &&main_report_name..html APP;');
+          put_line('SPO &&edb360_main_report..html APP;');
           put_line('PRO <a href="'||l_one_spool_filename||'.txt">ash text</a>');
           put_line('SPO OFF;');
           put_line('-- zip');
-          put_line('HOS zip -mq &&main_compressed_filename._&&file_creation_time. '||l_one_spool_filename||'.txt');
-          put_line('HOS zip -q &&main_compressed_filename._&&file_creation_time. &&main_report_name..html');
+          put_line('HOS zip -mq &&edb360_main_filename._&&edb360_file_time. '||l_one_spool_filename||'.txt');
+          put_line('HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html');
         END;
       END IF;
               
       -- main report
       put_line('-- update main report');
-      put_line('SPO &&main_report_name..html APP;');
+      put_line('SPO &&edb360_main_report..html APP;');
       put_line('PRO </li>');
       put_line('SPO OFF;');
-      put_line('HOS zip -q &&main_compressed_filename._&&file_creation_time. &&main_report_name..html');
+      put_line('HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html');
     END LOOP;
   END IF;
 END;
 /
 SPO OFF;
-@9991_&&common_prefix._rpt_driver.sql;
+@9991_&&common_edb360_prefix._rpt_driver.sql;
 SET SERVEROUT OFF HEAD ON PAGES &&def_max_rows.;
-HOS zip -mq &&main_compressed_filename._&&file_creation_time. 9991_&&common_prefix._rpt_driver.sql
+HOS zip -mq &&edb360_main_filename._&&edb360_file_time. 9991_&&common_edb360_prefix._rpt_driver.sql

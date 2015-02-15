@@ -119,8 +119,8 @@ COL is_single_instance NEW_V is_single_instance FOR A1;
 SELECT CASE COUNT(*) WHEN 1 THEN 'Y' END is_single_instance FROM gv$instance;
 
 -- timestamp on filename
-COL file_creation_time NEW_V file_creation_time FOR A20;
-SELECT TO_CHAR(SYSDATE, 'YYYYMMDD_HH24MI') file_creation_time FROM DUAL;
+COL edb360_file_time NEW_V edb360_file_time FOR A20;
+SELECT TO_CHAR(SYSDATE, 'YYYYMMDD_HH24MI') edb360_file_time FROM DUAL;
 
 -- snapshot ranges
 SELECT '0' history_days FROM DUAL WHERE TRIM('&&history_days.') IS NULL;
@@ -159,22 +159,22 @@ SELECT owner psft_schema FROM sys.dba_tab_columns WHERE table_name = 'PSSTATUS' 
 SELECT toolsrel psft_tools_rel FROM &&psft_schema..psstatus WHERE ROWNUM = 1;
 
 -- setup
-DEF tool_vYYNN = 'v1503';
-DEF tool_vrsn = '&&tool_vYYNN. (2015-02-08)';
-DEF prefix = 'edb360';
+DEF edb360_vYYNN = 'v1504';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2015-02-15)';
+DEF edb360_prefix = 'edb360';
 DEF sql_trace_level = '8';
 DEF main_table = '';
 DEF title = '';
 DEF title_no_spaces = '';
 DEF title_suffix = '';
-DEF common_prefix = '&&prefix._&&database_name_short.';
-DEF main_report_name = '0001_&&common_prefix._index';
-DEF edb360_log = '0002_&&common_prefix._log';
-DEF edb360_tkprof = '0003_&&common_prefix._tkprof';
-DEF main_compressed_filename = '&&common_prefix._&&host_name_short.';
-DEF edb360_log2 = '0004_&&common_prefix._log2';
-DEF edb360_tracefile_identifier = '&&common_prefix.';
-DEF copyright = ' (c) 2014';
+DEF common_edb360_prefix = '&&edb360_prefix._&&database_name_short.';
+DEF edb360_main_report = '0001_&&common_edb360_prefix._index';
+DEF edb360_log = '0002_&&common_edb360_prefix._log';
+DEF edb360_tkprof = '0003_&&common_edb360_prefix._tkprof';
+DEF edb360_main_filename = '&&common_edb360_prefix._&&host_name_short.';
+DEF edb360_log2 = '0004_&&common_edb360_prefix._log2';
+DEF edb360_tracefile_identifier = '&&common_edb360_prefix.';
+DEF edb360_copyright = ' (c) 2014';
 DEF top_level_hints = 'NO_MERGE';
 DEF sq_fact_hints = 'MATERIALIZE NO_MERGE';
 DEF ds_hint = 'DYNAMIC_SAMPLING(4)';
@@ -268,8 +268,8 @@ COL dummy_12 NOPRI;
 COL dummy_13 NOPRI;
 COL dummy_14 NOPRI;
 COL dummy_15 NOPRI;
-COL time_stamp NEW_V time_stamp FOR A20;
-SELECT TO_CHAR(SYSDATE, 'YYYY-MM-DD/HH24:MI:SS') time_stamp FROM DUAL;
+COL edb360_time_stamp NEW_V edb360_time_stamp FOR A20;
+SELECT TO_CHAR(SYSDATE, 'YYYY-MM-DD/HH24:MI:SS') edb360_time_stamp FROM DUAL;
 COL hh_mm_ss NEW_V hh_mm_ss FOR A8;
 COL title_no_spaces NEW_V title_no_spaces;
 COL spool_filename NEW_V spool_filename;
@@ -337,22 +337,22 @@ DEF;
 SPO OFF;
 
 -- main header
-SPO &&main_report_name..html;
+SPO &&edb360_main_report..html;
 @@edb360_0d_html_header.sql
 PRO </head>
 PRO <body>
-PRO <h1><a href="http://www.enkitec.com" target="_blank">Enkitec</a>: DataBase 360-degree view <em>(<a href="http://www.enkitec.com/products/edb360" target="_blank">edb360</a>)</em> &&tool_vYYNN.</h1>
+PRO <h1><a href="http://www.enkitec.com" target="_blank">Enkitec</a>: DataBase 360-degree view <em>(<a href="http://www.enkitec.com/products/edb360" target="_blank">edb360</a>)</em> &&edb360_vYYNN.</h1>
 PRO
 PRO <pre>
-PRO dbname:&&database_name_short. version:&&db_version. host:&&host_name_short. license:&&license_pack. days:&&history_days. today:&&time_stamp.
+PRO dbname:&&database_name_short. version:&&db_version. host:&&host_name_short. license:&&license_pack. days:&&history_days. today:&&edb360_time_stamp.
 PRO </pre>
 PRO
 SPO OFF;
 
 -- zip
-HOS zip -qmT &&main_compressed_filename._&&file_creation_time. esp_requirements_&&esp_host_name_short..zip 
-HOS zip -jq &&main_compressed_filename._&&file_creation_time. js/sorttable.js
+HOS zip -qmT &&edb360_main_filename._&&edb360_file_time. esp_requirements_&&esp_host_name_short..zip 
+HOS zip -jq &&edb360_main_filename._&&edb360_file_time. js/sorttable.js
 HOS zip -r osw_&&esp_host_name_short..zip `ps -ef | grep OSW | grep FM | awk -F 'OSW' '{print $2}' | cut -f 3 -d ' '`
-HOS zip -qmT &&main_compressed_filename._&&file_creation_time. osw_&&esp_host_name_short..zip
+HOS zip -qmT &&edb360_main_filename._&&edb360_file_time. osw_&&esp_host_name_short..zip
 
 --WHENEVER SQLERROR CONTINUE;

@@ -1,6 +1,6 @@
 @@edb360_0g_tkprof.sql
 DEF section_name = 'Active Session History (ASH) - Top SQL';
-SPO &&main_report_name..html APP;
+SPO &&edb360_main_report..html APP;
 PRO <h2>&&section_name.</h2>
 SPO OFF;
 

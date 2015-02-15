@@ -1,6 +1,6 @@
 @@edb360_0g_tkprof.sql
 DEF section_name = 'Active Session History (ASH)';
-SPO &&main_report_name..html APP;
+SPO &&edb360_main_report..html APP;
 PRO <h2>&&section_name.</h2>
 SPO OFF;
 
@@ -217,7 +217,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '8');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
 SET SERVEROUT ON;
-SPO 9983_&&common_prefix._chart_setup_driver2.sql;
+SPO 9983_&&common_edb360_prefix._chart_setup_driver2.sql;
 DECLARE
   l_count NUMBER;
 BEGIN
@@ -236,8 +236,8 @@ END;
 /
 SPO OFF;
 SET SERVEROUT OFF;
-@9983_&&common_prefix._chart_setup_driver2.sql;
-HOS zip -mq &&main_compressed_filename._&&file_creation_time. 9983_&&common_prefix._chart_setup_driver2.sql
+@9983_&&common_edb360_prefix._chart_setup_driver2.sql;
+HOS zip -mq &&edb360_main_filename._&&edb360_file_time. 9983_&&common_edb360_prefix._chart_setup_driver2.sql
 
 DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
 DEF vaxis = 'Average Active Sessions - AAS (stacked)';

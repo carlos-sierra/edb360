@@ -1,7 +1,7 @@
 @@edb360_0b_pre.sql
 DEF max_col_number = '7';
 DEF column_number = '0';
-SPO &&main_report_name..html APP;
+SPO &&edb360_main_report..html APP;
 PRO <table><tr class="main">
 PRO <td class="c">1/&&max_col_number.</td>
 PRO <td class="c">2/&&max_col_number.</td>
@@ -29,7 +29,7 @@ PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 DEF column_number = '2';
 
-SPO &&main_report_name..html APP;
+SPO &&edb360_main_report..html APP;
 PRO
 PRO </td><td>
 PRO
@@ -44,7 +44,7 @@ PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 DEF column_number = '3';
 
-SPO &&main_report_name..html APP;
+SPO &&edb360_main_report..html APP;
 PRO
 PRO </td><td>
 PRO
@@ -60,7 +60,7 @@ PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 DEF column_number = '4';
 
-SPO &&main_report_name..html APP;
+SPO &&edb360_main_report..html APP;
 PRO
 PRO </td><td>
 PRO
@@ -79,7 +79,7 @@ PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 DEF column_number = '5';
 
-SPO &&main_report_name..html APP;
+SPO &&edb360_main_report..html APP;
 PRO
 PRO </td><td>
 PRO
@@ -93,7 +93,7 @@ PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 DEF column_number = '6';
 
-SPO &&main_report_name..html APP;
+SPO &&edb360_main_report..html APP;
 PRO
 PRO </td><td>
 PRO
@@ -110,7 +110,7 @@ PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 DEF column_number = '7';
 
-SPO &&main_report_name..html APP;
+SPO &&edb360_main_report..html APP;
 PRO
 PRO </td><td>
 PRO
@@ -132,7 +132,7 @@ PRO end log
 SPO OFF;
 
 -- main footer
-SPO &&main_report_name..html APP;
+SPO &&edb360_main_report..html APP;
 PRO
 PRO </td></tr></table>
 SPO OFF;

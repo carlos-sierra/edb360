@@ -1,6 +1,6 @@
 @@edb360_0g_tkprof.sql
 DEF section_name = 'I/O Waits';
-SPO &&main_report_name..html APP;
+SPO &&edb360_main_report..html APP;
 PRO <h2>&&section_name.</h2>
 SPO OFF;
 
@@ -55,7 +55,7 @@ END;
 
 
 SET SERVEROUT ON;
-SPO 9987_&&common_prefix._chart_setup_driver4.sql;
+SPO 9987_&&common_edb360_prefix._chart_setup_driver4.sql;
 DECLARE
   l_count NUMBER;
 BEGIN
@@ -74,8 +74,8 @@ END;
 /
 SPO OFF;
 SET SERVEROUT OFF;
-@9987_&&common_prefix._chart_setup_driver4.sql;
-HOS zip -mq &&main_compressed_filename._&&file_creation_time. 9987_&&common_prefix._chart_setup_driver4.sql
+@9987_&&common_edb360_prefix._chart_setup_driver4.sql;
+HOS zip -mq &&edb360_main_filename._&&edb360_file_time. 9987_&&common_edb360_prefix._chart_setup_driver4.sql
 
 DEF title = 'User plus System I/O Waits Counts per Instance';
 DEF main_table = 'DBA_HIST_EVENT_HISTOGRAM';
