@@ -78,32 +78,32 @@ BEGIN
                GROUP BY
                      dbid, bid, eid, begin_date, end_date
               ),
-              max_&&history_days.wd1 AS (
+              max_&&hist_work_days.wd1 AS (
               SELECT MAX(value) value
                 FROM expensive
                WHERE end_date BETWEEN TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - &&history_days. AND TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - 7 -- avoids selecting same twice
                  AND TO_CHAR(end_date, 'D') BETWEEN '2' AND '6' /* between Monday and Friday */
                  AND TO_CHAR(end_date, 'HH24') BETWEEN '0730' AND '1930' /* between 7:30AM to 7:30PM */
               ),
-              max_&&history_days.wd2 AS (
+              max_&&hist_work_days.wd2 AS (
               SELECT MAX(value) value
                 FROM expensive
                WHERE end_date BETWEEN TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - &&history_days. AND TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - 7 -- avoids selecting same twice
                  AND TO_CHAR(end_date, 'D') BETWEEN '2' AND '6' /* between Monday and Friday */
                  AND TO_CHAR(end_date, 'HH24') BETWEEN '0730' AND '1930' /* between 7:30AM to 7:30PM */
-                 AND value NOT IN (SELECT value FROM max_&&history_days.wd1)
+                 AND value NOT IN (SELECT value FROM max_&&hist_work_days.wd1)
               ),
-              max_&&history_days.wd3 AS (
+              max_&&hist_work_days.wd3 AS (
               SELECT MAX(value) value
                 FROM expensive
                WHERE end_date BETWEEN TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - &&history_days. AND TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - 7 -- avoids selecting same twice
                  AND TO_CHAR(end_date, 'D') BETWEEN '2' AND '6' /* between Monday and Friday */
                  AND TO_CHAR(end_date, 'HH24') BETWEEN '0730' AND '1930' /* between 7:30AM to 7:30PM */
-                 AND value NOT IN (SELECT value FROM max_&&history_days.wd1
+                 AND value NOT IN (SELECT value FROM max_&&hist_work_days.wd1
                                    UNION
-                                   SELECT value FROM max_&&history_days.wd2)
+                                   SELECT value FROM max_&&hist_work_days.wd2)
               ),
-              min_&&history_days.wd AS (
+              min_&&hist_work_days.wd AS (
               SELECT MIN(value) value
                 FROM expensive
                WHERE end_date BETWEEN TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - &&history_days. AND TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - 7 -- avoids selecting same twice
@@ -114,21 +114,21 @@ BEGIN
               SELECT MAX(value) value
                 FROM expensive
                WHERE end_date BETWEEN TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - &&history_days. AND TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - 7 -- avoids selecting same twice
-                 AND value NOT IN (SELECT value FROM max_&&history_days.wd1
+                 AND value NOT IN (SELECT value FROM max_&&hist_work_days.wd1
                                    UNION
-                                   SELECT value FROM max_&&history_days.wd2
+                                   SELECT value FROM max_&&hist_work_days.wd2
                                    UNION
-                                   SELECT value FROM max_&&history_days.wd3)
+                                   SELECT value FROM max_&&hist_work_days.wd3)
               ),
               max_&&history_days.d2 AS (
               SELECT MAX(value) value
                 FROM expensive
                WHERE end_date BETWEEN TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - &&history_days. AND TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - 7 -- avoids selecting same twice
-                 AND value NOT IN (SELECT value FROM max_&&history_days.wd1
+                 AND value NOT IN (SELECT value FROM max_&&hist_work_days.wd1
                                    UNION 
-                                   SELECT value FROM max_&&history_days.wd2
+                                   SELECT value FROM max_&&hist_work_days.wd2
                                    UNION
-                                   SELECT value FROM max_&&history_days.wd3
+                                   SELECT value FROM max_&&hist_work_days.wd3
                                    UNION
                                    SELECT value FROM max_&&history_days.d1)
               ),
@@ -136,11 +136,11 @@ BEGIN
               SELECT MAX(value) value
                 FROM expensive
                WHERE end_date BETWEEN TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - &&history_days. AND TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - 7 -- avoids selecting same twice
-                 AND value NOT IN (SELECT value FROM max_&&history_days.wd1
+                 AND value NOT IN (SELECT value FROM max_&&hist_work_days.wd1
                                    UNION 
-                                   SELECT value FROM max_&&history_days.wd2
+                                   SELECT value FROM max_&&hist_work_days.wd2
                                    UNION
-                                   SELECT value FROM max_&&history_days.wd3
+                                   SELECT value FROM max_&&hist_work_days.wd3
                                    UNION
                                    SELECT value FROM max_&&history_days.d1
                                    UNION
@@ -224,24 +224,24 @@ BEGIN
                 FROM expensive
                WHERE end_date BETWEEN TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - 7 AND TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - 1 -- avoids selecting same twice
               )
-              SELECT e.dbid, e.bid, e.eid, e.begin_date, e.end_date, 'max&&history_days.wd1' rep, 50 ob
+              SELECT e.dbid, e.bid, e.eid, e.begin_date, e.end_date, 'max&&hist_work_days.wd1' rep, 50 ob
                 FROM expensive e,
-                     max_&&history_days.wd1 m
+                     max_&&hist_work_days.wd1 m
                WHERE m.value = e.value
                UNION
-              SELECT e.dbid, e.bid, e.eid, e.begin_date, e.end_date, 'max&&history_days.wd2' rep, 53 ob
+              SELECT e.dbid, e.bid, e.eid, e.begin_date, e.end_date, 'max&&hist_work_days.wd2' rep, 53 ob
                 FROM expensive e,
-                     max_&&history_days.wd2 m
+                     max_&&hist_work_days.wd2 m
                WHERE m.value = e.value
                UNION
-              SELECT e.dbid, e.bid, e.eid, e.begin_date, e.end_date, 'max&&history_days.wd3' rep, 56 ob
+              SELECT e.dbid, e.bid, e.eid, e.begin_date, e.end_date, 'max&&hist_work_days.wd3' rep, 56 ob
                 FROM expensive e,
-                     max_&&history_days.wd3 m
+                     max_&&hist_work_days.wd3 m
                WHERE m.value = e.value
                UNION
-              SELECT e.dbid, e.bid, e.eid, e.begin_date, e.end_date, 'min&&history_days.wd' rep, 100 ob
+              SELECT e.dbid, e.bid, e.eid, e.begin_date, e.end_date, 'min&&hist_work_days.wd' rep, 100 ob
                 FROM expensive e,
-                     min_&&history_days.wd m
+                     min_&&hist_work_days.wd m
                WHERE m.value = e.value
                UNION
               SELECT e.dbid, e.bid, e.eid, e.begin_date, e.end_date, 'max&&history_days.d1' rep, 60 ob
@@ -496,32 +496,32 @@ BEGIN
                GROUP BY
                      dbid, bid, eid, begin_date, end_date
               ),
-              max_&&history_days.wd1 AS (
+              max_&&hist_work_days.wd1 AS (
               SELECT MAX(value) value
                 FROM expensive
                WHERE end_date BETWEEN TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - &&history_days. AND TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - 7 -- avoids selecting same twice
                  AND TO_CHAR(end_date, 'D') BETWEEN '2' AND '6' /* between Monday and Friday */
                  AND TO_CHAR(end_date, 'HH24') BETWEEN '0730' AND '1930' /* between 7:30AM to 7:30PM */
               ),
-              max_&&history_days.wd2 AS (
+              max_&&hist_work_days.wd2 AS (
               SELECT MAX(value) value
                 FROM expensive
                WHERE end_date BETWEEN TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - &&history_days. AND TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - 7 -- avoids selecting same twice
                  AND TO_CHAR(end_date, 'D') BETWEEN '2' AND '6' /* between Monday and Friday */
                  AND TO_CHAR(end_date, 'HH24') BETWEEN '0730' AND '1930' /* between 7:30AM to 7:30PM */
-                 AND value NOT IN (SELECT value FROM max_&&history_days.wd1)
+                 AND value NOT IN (SELECT value FROM max_&&hist_work_days.wd1)
               ),
-              max_&&history_days.wd3 AS (
+              max_&&hist_work_days.wd3 AS (
               SELECT MAX(value) value
                 FROM expensive
                WHERE end_date BETWEEN TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - &&history_days. AND TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - 7 -- avoids selecting same twice
                  AND TO_CHAR(end_date, 'D') BETWEEN '2' AND '6' /* between Monday and Friday */
                  AND TO_CHAR(end_date, 'HH24') BETWEEN '0730' AND '1930' /* between 7:30AM to 7:30PM */
-                 AND value NOT IN (SELECT value FROM max_&&history_days.wd1
+                 AND value NOT IN (SELECT value FROM max_&&hist_work_days.wd1
                                    UNION
-                                   SELECT value FROM max_&&history_days.wd2)
+                                   SELECT value FROM max_&&hist_work_days.wd2)
               ),
-              min_&&history_days.wd AS (
+              min_&&hist_work_days.wd AS (
               SELECT MIN(value) value
                 FROM expensive
                WHERE end_date BETWEEN TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - &&history_days. AND TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - 7 -- avoids selecting same twice
@@ -532,21 +532,21 @@ BEGIN
               SELECT MAX(value) value
                 FROM expensive
                WHERE end_date BETWEEN TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - &&history_days. AND TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - 7 -- avoids selecting same twice
-                 AND value NOT IN (SELECT value FROM max_&&history_days.wd1
+                 AND value NOT IN (SELECT value FROM max_&&hist_work_days.wd1
                                    UNION
-                                   SELECT value FROM max_&&history_days.wd2
+                                   SELECT value FROM max_&&hist_work_days.wd2
                                    UNION
-                                   SELECT value FROM max_&&history_days.wd3)
+                                   SELECT value FROM max_&&hist_work_days.wd3)
               ),
               max_&&history_days.d2 AS (
               SELECT MAX(value) value
                 FROM expensive
                WHERE end_date BETWEEN TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - &&history_days. AND TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - 7 -- avoids selecting same twice
-                 AND value NOT IN (SELECT value FROM max_&&history_days.wd1
+                 AND value NOT IN (SELECT value FROM max_&&hist_work_days.wd1
                                    UNION 
-                                   SELECT value FROM max_&&history_days.wd2
+                                   SELECT value FROM max_&&hist_work_days.wd2
                                    UNION
-                                   SELECT value FROM max_&&history_days.wd3
+                                   SELECT value FROM max_&&hist_work_days.wd3
                                    UNION
                                    SELECT value FROM max_&&history_days.d1)
               ),
@@ -554,11 +554,11 @@ BEGIN
               SELECT MAX(value) value
                 FROM expensive
                WHERE end_date BETWEEN TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - &&history_days. AND TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - 7 -- avoids selecting same twice
-                 AND value NOT IN (SELECT value FROM max_&&history_days.wd1
+                 AND value NOT IN (SELECT value FROM max_&&hist_work_days.wd1
                                    UNION 
-                                   SELECT value FROM max_&&history_days.wd2
+                                   SELECT value FROM max_&&hist_work_days.wd2
                                    UNION
-                                   SELECT value FROM max_&&history_days.wd3
+                                   SELECT value FROM max_&&hist_work_days.wd3
                                    UNION
                                    SELECT value FROM max_&&history_days.d1
                                    UNION
@@ -642,24 +642,24 @@ BEGIN
                 FROM expensive
                WHERE end_date BETWEEN TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - 7 AND TO_DATE('&&tool_sysdate.', 'YYYYMMDDHH24MISS') - 1 -- avoids selecting same twice
               )
-              SELECT e.dbid, e.bid, e.eid, e.begin_date, e.end_date, 'max&&history_days.wd1' rep, 50 ob
+              SELECT e.dbid, e.bid, e.eid, e.begin_date, e.end_date, 'max&&hist_work_days.wd1' rep, 50 ob
                 FROM expensive e,
-                     max_&&history_days.wd1 m
+                     max_&&hist_work_days.wd1 m
                WHERE m.value = e.value
                UNION
-              SELECT e.dbid, e.bid, e.eid, e.begin_date, e.end_date, 'max&&history_days.wd2' rep, 53 ob
+              SELECT e.dbid, e.bid, e.eid, e.begin_date, e.end_date, 'max&&hist_work_days.wd2' rep, 53 ob
                 FROM expensive e,
-                     max_&&history_days.wd2 m
+                     max_&&hist_work_days.wd2 m
                WHERE m.value = e.value
                UNION
-              SELECT e.dbid, e.bid, e.eid, e.begin_date, e.end_date, 'max&&history_days.wd3' rep, 56 ob
+              SELECT e.dbid, e.bid, e.eid, e.begin_date, e.end_date, 'max&&hist_work_days.wd3' rep, 56 ob
                 FROM expensive e,
-                     max_&&history_days.wd3 m
+                     max_&&hist_work_days.wd3 m
                WHERE m.value = e.value
                UNION
-              SELECT e.dbid, e.bid, e.eid, e.begin_date, e.end_date, 'min&&history_days.wd' rep, 100 ob
+              SELECT e.dbid, e.bid, e.eid, e.begin_date, e.end_date, 'min&&hist_work_days.wd' rep, 100 ob
                 FROM expensive e,
-                     min_&&history_days.wd m
+                     min_&&hist_work_days.wd m
                WHERE m.value = e.value
                UNION
               SELECT e.dbid, e.bid, e.eid, e.begin_date, e.end_date, 'max&&history_days.d1' rep, 60 ob

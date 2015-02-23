@@ -2165,10 +2165,855 @@ EXEC :sql_text := REPLACE(:sql_text, '@column3@', 'w_mbps');
 
 /*****************************************************************************************/
 
-DEF skip_lch = 'Y';
-DEF skip_pch = 'Y';
-DEF abstract = '';
+DEF main_table = 'DBA_HIST_SYSSTAT';
+DEF chartype = 'LineChart';
+DEF stacked = '';
+DEF vbaseline = '';
+
+BEGIN
+  :sql_text_backup := '
+WITH
+sysstat_io AS (
+SELECT /*+ &&sq_fact_hints. */
+       instance_number,
+       snap_id,
+       SUM(CASE WHEN stat_name = ''physical read bytes'' THEN value ELSE 0 END) r_appl_bytes,
+       SUM(CASE WHEN stat_name = ''physical read flash cache hits'' THEN value ELSE 0 END) r_flash_cache_hits,
+       SUM(CASE WHEN stat_name = ''physical read IO requests'' THEN value ELSE 0 END) r_IO_requests,
+       SUM(CASE WHEN stat_name = ''physical read requests optimized'' THEN value ELSE 0 END) r_requests_optimized,
+       SUM(CASE WHEN stat_name = ''physical read total bytes'' THEN value ELSE 0 END) r_total_bytes,
+       SUM(CASE WHEN stat_name = ''physical read total IO requests'' THEN value ELSE 0 END) r_total_IO_requests,
+       SUM(CASE WHEN stat_name = ''physical read total multi block requests'' THEN value ELSE 0 END) r_total_multi_block_requests,
+       SUM(CASE WHEN stat_name = ''physical reads'' THEN value ELSE 0 END) reads,
+       SUM(CASE WHEN stat_name = ''physical reads cache'' THEN value ELSE 0 END) r_cache,
+       SUM(CASE WHEN stat_name = ''physical reads cache prefetch'' THEN value ELSE 0 END) r_cache_prefetch,
+       SUM(CASE WHEN stat_name = ''physical reads direct'' THEN value ELSE 0 END) r_direct,
+       SUM(CASE WHEN stat_name = ''physical reads direct (lob)'' THEN value ELSE 0 END) r_direct_lob,
+       SUM(CASE WHEN stat_name = ''physical reads direct temporary tablespace'' THEN value ELSE 0 END) r_direct_temporary_tablespace,
+       SUM(CASE WHEN stat_name = ''physical reads for flashback new'' THEN value ELSE 0 END) r_for_flashback_new,
+       SUM(CASE WHEN stat_name = ''physical reads prefetch warmup'' THEN value ELSE 0 END) r_prefetch_warmup,
+       SUM(CASE WHEN stat_name = ''physical write bytes'' THEN value ELSE 0 END) w_appl_bytes,
+       SUM(CASE WHEN stat_name = ''physical write IO requests'' THEN value ELSE 0 END) w_IO_requests,
+       SUM(CASE WHEN stat_name = ''physical write total bytes'' THEN value ELSE 0 END) w_total_bytes,
+       SUM(CASE WHEN stat_name = ''physical write total IO requests'' THEN value ELSE 0 END) w_total_IO_requests,
+       SUM(CASE WHEN stat_name = ''physical write total multi block requests'' THEN value ELSE 0 END) w_total_multi_block_requests,
+       SUM(CASE WHEN stat_name = ''physical writes'' THEN value ELSE 0 END) writes,
+       SUM(CASE WHEN stat_name = ''physical writes direct'' THEN value ELSE 0 END) w_direct,
+       SUM(CASE WHEN stat_name = ''physical writes direct (lob)'' THEN value ELSE 0 END) w_direct_lob,
+       SUM(CASE WHEN stat_name = ''physical writes direct temporary tablespace'' THEN value ELSE 0 END) w_direct_temporary_tablespace,
+       SUM(CASE WHEN stat_name = ''physical writes from cache'' THEN value ELSE 0 END) w_from_cache,
+       SUM(CASE WHEN stat_name = ''physical writes non checkpoint'' THEN value ELSE 0 END) w_non_checkpoint,
+       SUM(CASE WHEN stat_name = ''redo size'' THEN value ELSE 0 END) redo_size,
+       SUM(CASE WHEN stat_name = ''redo writes'' THEN value ELSE 0 END) redo_writes,
+       SUM(CASE WHEN stat_name = ''physical read total IO requests'' THEN value ELSE 0 END) r_reqs,
+       SUM(CASE WHEN stat_name IN (''physical write total IO requests'', ''redo writes'') THEN value ELSE 0 END) w_reqs,
+       SUM(CASE WHEN stat_name = ''physical read total bytes'' THEN value ELSE 0 END) r_bytes,
+       SUM(CASE WHEN stat_name IN (''physical write total bytes'', ''redo size'') THEN value ELSE 0 END) w_bytes
+  FROM dba_hist_sysstat
+ WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND dbid = &&edb360_dbid.
+   AND instance_number = @instance_number@
+   AND stat_name IN (
+   ''physical read bytes'',
+   ''physical read flash cache hits'',
+   ''physical read IO requests'',
+   ''physical read requests optimized'',
+   ''physical read total bytes'', /* r_bytes */
+   ''physical read total IO requests'', /* r_reqs */
+   ''physical read total multi block requests'',
+   ''physical reads'',
+   ''physical reads cache'',
+   ''physical reads cache prefetch'',
+   ''physical reads direct'',
+   ''physical reads direct (lob)'',
+   ''physical reads direct temporary tablespace'',
+   ''physical reads for flashback new'',
+   ''physical reads prefetch warmup'',
+   ''physical write bytes'',
+   ''physical write IO requests'',
+   ''physical write total bytes'', /* w_bytes */
+   ''physical write total IO requests'', /* w_reqs */
+   ''physical write total multi block requests'',
+   ''physical writes'',
+   ''physical writes direct'',
+   ''physical writes direct (lob)'',
+   ''physical writes direct temporary tablespace'',
+   ''physical writes from cache'',
+   ''physical writes non checkpoint'',
+   ''redo size'', /* w_bytes */
+   ''redo writes'') /* w_reqs */
+ GROUP BY
+       instance_number,
+       snap_id
+),
+io_per_inst_and_snap_id AS (
+SELECT /*+ &&sq_fact_hints. */
+       s1.snap_id,
+       h1.instance_number,
+       TRUNC(CAST(s1.end_interval_time AS DATE), ''HH'') begin_time,
+       (h1.r_appl_bytes - h0.r_appl_bytes) r_appl_bytes,
+       (h1.r_flash_cache_hits - h0.r_flash_cache_hits) r_flash_cache_hits,
+       (h1.r_IO_requests - h0.r_IO_requests) r_IO_requests,
+       (h1.r_requests_optimized - h0.r_requests_optimized) r_requests_optimized,
+       (h1.r_total_bytes - h0.r_total_bytes) r_total_bytes,
+       (h1.r_total_IO_requests - h0.r_total_IO_requests) r_total_IO_requests,
+       (h1.r_total_multi_block_requests - h0.r_total_multi_block_requests) r_total_multi_block_requests,
+       (h1.reads - h0.reads) reads,
+       (h1.r_cache - h0.r_cache) r_cache,
+       (h1.r_cache_prefetch - h0.r_cache_prefetch) r_cache_prefetch,
+       (h1.r_direct - h0.r_direct) r_direct,
+       (h1.r_direct_lob - h0.r_direct_lob) r_direct_lob,
+       (h1.r_direct_temporary_tablespace - h0.r_direct_temporary_tablespace) r_direct_temporary_tablespace,
+       (h1.r_for_flashback_new - h0.r_for_flashback_new) r_for_flashback_new,
+       (h1.r_prefetch_warmup - h0.r_prefetch_warmup) r_prefetch_warmup,
+       (h1.w_appl_bytes - h0.w_appl_bytes) w_appl_bytes,
+       (h1.w_IO_requests - h0.w_IO_requests) w_IO_requests,
+       (h1.w_total_bytes - h0.w_total_bytes) w_total_bytes,
+       (h1.w_total_IO_requests - h0.w_total_IO_requests) w_total_IO_requests,
+       (h1.w_total_multi_block_requests - h0.w_total_multi_block_requests) w_total_multi_block_requests,
+       (h1.writes - h0.writes) writes,
+       (h1.w_direct - h0.w_direct) w_direct,
+       (h1.w_direct_lob - h0.w_direct_lob) w_direct_lob,
+       (h1.w_direct_temporary_tablespace - h0.w_direct_temporary_tablespace) w_direct_temporary_tablespace,
+       (h1.w_from_cache - h0.w_from_cache) w_from_cache,
+       (h1.w_non_checkpoint - h0.w_non_checkpoint) w_non_checkpoint,
+       (h1.redo_size - h0.redo_size) redo_size,
+       (h1.redo_writes - h0.redo_writes) redo_writes,
+       (h1.r_reqs - h0.r_reqs) r_reqs,
+       (h1.w_reqs - h0.w_reqs) w_reqs,
+       (h1.r_bytes - h0.r_bytes) r_bytes,
+       (h1.w_bytes - h0.w_bytes) w_bytes,
+       (h1.r_total_IO_requests - h0.r_total_IO_requests) - (h1.r_total_multi_block_requests - h0.r_total_multi_block_requests) r_total_single_block_requests,
+       (h1.w_total_IO_requests - h0.w_total_IO_requests) - (h1.w_total_multi_block_requests - h0.w_total_multi_block_requests) w_total_single_block_requests,
+       --(h1.reads - h0.reads) - (h1.r_direct - h0.r_direct) - (h1.r_cache - h0.r_cache) r_buffered_multi_block_req,
+       (&&database_block_size. * ((h1.r_total_IO_requests - h0.r_total_IO_requests) - (h1.r_total_multi_block_requests - h0.r_total_multi_block_requests))) r_total_bytes_single_block_req,
+       (h1.r_total_bytes - h0.r_total_bytes) - (&&database_block_size. * ((h1.r_total_IO_requests - h0.r_total_IO_requests) - (h1.r_total_multi_block_requests - h0.r_total_multi_block_requests))) r_total_bytes_multi_block_req,
+       (CAST(s1.end_interval_time AS DATE) - CAST(s1.begin_interval_time AS DATE)) * 86400 elapsed_sec
+  FROM sysstat_io h0,
+       dba_hist_snapshot s0,
+       sysstat_io h1,
+       dba_hist_snapshot s1
+ WHERE s0.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND s0.dbid = &&edb360_dbid.
+   AND s0.snap_id = h0.snap_id
+   AND s0.instance_number = h0.instance_number
+   AND h1.instance_number = h0.instance_number
+   AND h1.snap_id = h0.snap_id + 1
+   AND s1.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND s1.dbid = &&edb360_dbid.
+   AND s1.snap_id = h1.snap_id
+   AND s1.instance_number = h1.instance_number
+   AND s1.snap_id = s0.snap_id + 1
+   AND s1.startup_time = s0.startup_time
+   AND (CAST(s1.end_interval_time AS DATE) - CAST(s1.begin_interval_time AS DATE)) * 86400 > 60 -- ignore snaps too close
+),
+io_per_inst_and_hr AS (
+SELECT /*+ &&sq_fact_hints. */
+       MIN(snap_id) snap_id,
+       instance_number,
+       begin_time,
+       begin_time + (1/24) end_time,
+       ROUND(MAX(reads / elapsed_sec)) reads_ps,
+       ROUND(MAX(writes / elapsed_sec)) writes_ps,
+       ROUND(MAX(r_flash_cache_hits / elapsed_sec)) r_flash_cache_hits_ps,
+       ROUND(MAX(r_IO_requests / elapsed_sec)) r_appl_iops,
+       ROUND(MAX(r_requests_optimized / elapsed_sec)) r_requests_optimized_iops,
+       ROUND(MAX(r_total_IO_requests / elapsed_sec)) r_total_iops,
+       ROUND(MAX(r_total_multi_block_requests / elapsed_sec)) r_total_multi_block_iops,
+       ROUND(MAX(r_cache / elapsed_sec)) r_cache_ps,
+       ROUND(MAX(r_cache_prefetch / elapsed_sec)) r_cache_prefetch_ps,
+       ROUND(MAX(r_direct / elapsed_sec)) r_direct_ps,
+       ROUND(MAX(r_direct_lob / elapsed_sec)) r_direct_lob_ps,
+       ROUND(MAX(r_direct_temporary_tablespace / elapsed_sec)) r_direct_temp_tablespace_ps,
+       ROUND(MAX(r_for_flashback_new / elapsed_sec)) r_for_flashback_new_ps,
+       ROUND(MAX(r_prefetch_warmup / elapsed_sec)) r_prefetch_warmup_ps,
+       ROUND(MAX(w_IO_requests / elapsed_sec)) w_appl_iops,
+       ROUND(MAX(w_total_IO_requests / elapsed_sec)) w_total_iops,
+       ROUND(MAX(w_total_multi_block_requests / elapsed_sec)) w_total_multi_block_iops,
+       ROUND(MAX(w_direct / elapsed_sec)) w_direct_ps,
+       ROUND(MAX(w_direct_lob / elapsed_sec)) w_direct_lob_ps,
+       ROUND(MAX(w_direct_temporary_tablespace / elapsed_sec)) w_direct_temp_tablespace_ps,
+       ROUND(MAX(w_from_cache / elapsed_sec)) w_from_cache_ps,
+       ROUND(MAX(w_non_checkpoint / elapsed_sec)) w_non_checkpoint_ps,
+       ROUND(MAX(redo_writes / elapsed_sec)) w_redo_iops,
+       ROUND(MAX(r_total_single_block_requests / elapsed_sec)) r_total_single_block_iops,
+       ROUND(MAX(w_total_single_block_requests / elapsed_sec)) w_total_single_block_iops,
+       --ROUND(MAX(r_buffered_multi_block_req / elapsed_sec)) r_buffered_multi_block_iops,
+       ROUND(MAX((r_reqs + w_reqs) / elapsed_sec)) rw_iops,
+       ROUND(MAX(r_reqs / elapsed_sec)) r_iops,
+       ROUND(MAX(w_reqs / elapsed_sec)) w_iops,
+       ROUND(MAX(r_total_bytes / POWER(2, 20) / elapsed_sec), 3) r_total_mbps,
+       ROUND(MAX(r_appl_bytes / POWER(2, 20) / elapsed_sec), 3) r_appl_mbps,
+       ROUND(MAX(w_total_bytes / POWER(2, 20) / elapsed_sec), 3) w_total_mbps,
+       ROUND(MAX(w_appl_bytes / POWER(2, 20) / elapsed_sec), 3) w_appl_mbps,
+       ROUND(MAX(redo_size / POWER(2, 20) / elapsed_sec), 3) redo_size_mbps,
+       ROUND(MAX(r_total_bytes_single_block_req / POWER(2, 20) / elapsed_sec), 3) r_total_single_block_mbps,
+       ROUND(MAX(r_total_bytes_multi_block_req / POWER(2, 20) / elapsed_sec), 3) r_total_multi_block_mbps,
+       --ROUND(MAX(r_total_bytes_multi_block_req * (r_buffered_multi_block_req / GREATEST(r_total_multi_block_requests, 1)) / POWER(2, 20) / elapsed_sec), 3) r_buffered_multi_block_mbps,
+       --ROUND(MAX(r_total_bytes_multi_block_req * (r_direct / GREATEST(r_total_multi_block_requests, 1)) / POWER(2, 20) / elapsed_sec), 3) r_direct_multi_block_mbps,
+       ROUND(MAX((r_bytes + w_bytes) / POWER(2, 20) / elapsed_sec), 3) rw_mbps,
+       ROUND(MAX(r_bytes / POWER(2, 20) / elapsed_sec), 3) r_mbps,
+       ROUND(MAX(w_bytes / POWER(2, 20) / elapsed_sec), 3) w_mbps
+  FROM io_per_inst_and_snap_id
+ GROUP BY
+       instance_number,
+       begin_time
+)
+SELECT MIN(snap_id) snap_id,
+       begin_time,
+       end_time,
+       #column01#
+       #column02#
+       #column03#
+       #column04#
+       #column05#
+       #column06#
+       #column07#
+       #column08#
+       #column09#
+       #column10#
+       #column11#
+       #column12#
+       #column13#
+       #column14#
+       #column15#
+  FROM io_per_inst_and_hr
+ GROUP BY
+       begin_time,
+       end_time
+ ORDER BY
+       end_time
+';
+END;
+/
+
+DEF tit_01 = 'R-IOPS';
+DEF tit_02 = 'Total IO Requests';
+DEF tit_03 = 'Total single-block Requests';
+DEF tit_04 = 'Total multi-block Requests';
+DEF tit_05 = 'Requests Optimized';
+DEF tit_06 = 'Application IO Requests';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
+DEF vaxis = 'Read I/O Operations per Second (R-IOPS)';
+
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup,  '#column01#', 'SUM(r_iops) r_iops,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column02#', 'SUM(r_total_iops) total_IO_requests,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column03#', 'SUM(r_total_single_block_iops) total_single_block_requests,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column04#', 'SUM(r_total_multi_block_iops) total_multi_block_requests,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column05#', 'SUM(r_requests_optimized_iops) requests_optimized,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column06#', 'SUM(r_appl_iops) appl_IO_requests,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column07#', '0 dummy_07,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column08#', '0 dummy_08,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column09#', '0 dummy_09,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column10#', '0 dummy_10,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column11#', '0 dummy_11,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column12#', '0 dummy_12,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column13#', '0 dummy_13,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column14#', '0 dummy_14,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column15#', '0 dummy_15');
+
+DEF skip_lch = '';
+DEF skip_all = '&&is_single_instance.';
+DEF abstract = 'Read I/O Operations per Second (R-IOPS).'
+DEF title = 'R-IOPS Series for Cluster';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', 'instance_number');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Read I/O Operations per Second (R-IOPS).'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 1;
+DEF title = 'R-IOPS Series for Instance 1';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '1');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Read I/O Operations per Second (R-IOPS).'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 2;
+DEF title = 'R-IOPS Series for Instance 2';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '2');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Read I/O Operations per Second (R-IOPS).'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 3;
+DEF title = 'R-IOPS Series for Instance 3';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '3');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Read I/O Operations per Second (R-IOPS).'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 4;
+DEF title = 'R-IOPS Series for Instance 4';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '4');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Read I/O Operations per Second (R-IOPS).'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 5;
+DEF title = 'R-IOPS Series for Instance 5';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '5');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Read I/O Operations per Second (R-IOPS).'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 6;
+DEF title = 'R-IOPS Series for Instance 6';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '6');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Read I/O Operations per Second (R-IOPS).'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 7;
+DEF title = 'R-IOPS Series for Instance 7';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '7');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Read I/O Operations per Second (R-IOPS).'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 8;
+DEF title = 'R-IOPS Series for Instance 8';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '8');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF tit_01 = 'Reads';
+DEF tit_02 = 'Direct';
+DEF tit_03 = 'Direct LOB';
+DEF tit_04 = 'Direct Temporary Tablespace';
+DEF tit_05 = 'Cache';
+DEF tit_06 = 'Cache pre-fetch';
+DEF tit_07 = 'Flash Cache Hits';
+DEF tit_08 = 'For Flashback New';
+DEF tit_09 = 'Pre-fetch warmup';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
+DEF vaxis = 'Reads per Second';
+
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup,  '#column01#', 'SUM(reads_ps) reads,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column02#', 'SUM(r_direct_ps) direct,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column03#', 'SUM(r_direct_lob_ps) direct_lob,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column04#', 'SUM(r_direct_temp_tablespace_ps) direct_temporary_tablespace,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column05#', 'SUM(r_cache_ps) cache,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column06#', 'SUM(r_cache_prefetch_ps) cache_prefetch,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column07#', 'SUM(r_flash_cache_hits_ps) flash_cache_hits,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column08#', 'SUM(r_for_flashback_new_ps) for_flashback_new,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column09#', 'SUM(r_prefetch_warmup_ps) prefetch_warmup,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column10#', '0 dummy_10,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column11#', '0 dummy_11,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column12#', '0 dummy_12,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column13#', '0 dummy_13,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column14#', '0 dummy_14,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column15#', '0 dummy_15');
+
+DEF skip_lch = '';
+DEF skip_all = '&&is_single_instance.';
+DEF abstract = 'Reads per Second.'
+DEF title = 'Reads (per second) Series for Cluster';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', 'instance_number');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Reads per Second.'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 1;
+DEF title = 'Reads (per second) Series for Instance 1';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '1');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Reads per Second.'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 2;
+DEF title = 'Reads (per second) Series for Instance 2';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '2');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Reads per Second.'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 3;
+DEF title = 'Reads (per second) Series for Instance 3';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '3');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Reads per Second.'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 4;
+DEF title = 'Reads (per second) Series for Instance 4';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '4');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Reads per Second.'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 5;
+DEF title = 'Reads (per second) Series for Instance 5';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '5');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Reads per Second.'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 6;
+DEF title = 'Reads (per second) Series for Instance 6';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '6');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Reads per Second.'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 7;
+DEF title = 'Reads (per second) Series for Instance 7';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '7');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Reads per Second.'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 8;
+DEF title = 'Reads (per second) Series for Instance 8';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '8');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF tit_01 = 'R-MBPS';
+DEF tit_02 = 'Total MBPS';
+DEF tit_03 = 'Total single-block MBPS';
+DEF tit_04 = 'Total multi-block MBPS';
+DEF tit_05 = 'Application MBPS';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
+DEF vaxis = 'Read Megabytes per Second (R-MBPS)';
+
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup,  '#column01#', 'SUM(r_mbps) r_mbps,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column02#', 'SUM(r_total_mbps) total_mbps,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column03#', 'SUM(r_total_single_block_mbps) total_single_block_mbps,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column04#', 'SUM(r_total_multi_block_mbps) total_multi_block_mbps,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column05#', 'SUM(r_appl_mbps) appl_mbps,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column06#', '0 dummy_06,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column07#', '0 dummy_07,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column08#', '0 dummy_08,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column09#', '0 dummy_09,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column10#', '0 dummy_10,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column11#', '0 dummy_11,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column12#', '0 dummy_12,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column13#', '0 dummy_13,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column14#', '0 dummy_14,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column15#', '0 dummy_15');
+
+DEF skip_lch = '';
+DEF skip_all = '&&is_single_instance.';
+DEF abstract = 'Read Megabytes per Second (R-MBPS).'
+DEF title = 'R-MBPS Series for Cluster';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', 'instance_number');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Read Megabytes per Second (R-MBPS).'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 1;
+DEF title = 'R-MBPS Series for Instance 1';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '1');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Read Megabytes per Second (R-MBPS).'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 2;
+DEF title = 'R-MBPS Series for Instance 2';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '2');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Read Megabytes per Second (R-MBPS).'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 3;
+DEF title = 'R-MBPS Series for Instance 3';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '3');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Read Megabytes per Second (R-MBPS).'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 4;
+DEF title = 'R-MBPS Series for Instance 4';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '4');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Read Megabytes per Second (R-MBPS).'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 5;
+DEF title = 'R-MBPS Series for Instance 5';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '5');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Read Megabytes per Second (R-MBPS).'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 6;
+DEF title = 'R-MBPS Series for Instance 6';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '6');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Read Megabytes per Second (R-MBPS).'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 7;
+DEF title = 'R-MBPS Series for Instance 7';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '7');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Read Megabytes per Second (R-MBPS).'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 8;
+DEF title = 'R-MBPS Series for Instance 8';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '8');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF tit_01 = 'W-IOPS';
+DEF tit_02 = 'Total IO Requests';
+DEF tit_03 = 'Redo Writes';
+DEF tit_04 = 'Total single-block Requests';
+DEF tit_05 = 'Total multi-block Requests';
+DEF tit_06 = 'Application IO Requests';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
+DEF vaxis = 'Write I/O Operations per Second (W-IOPS)';
+
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup,  '#column01#', 'SUM(w_iops) w_iops,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column02#', 'SUM(w_total_iops) total_IO_requests,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column03#', 'SUM(w_redo_iops) redo_writes,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column04#', 'SUM(w_total_single_block_iops) total_single_block_requests,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column05#', 'SUM(w_total_multi_block_iops) total_multi_block_requests,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column06#', 'SUM(w_appl_iops) appl_IO_requests,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column07#', '0 dummy_07,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column08#', '0 dummy_08,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column09#', '0 dummy_09,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column10#', '0 dummy_10,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column11#', '0 dummy_11,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column12#', '0 dummy_12,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column13#', '0 dummy_13,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column14#', '0 dummy_14,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column15#', '0 dummy_15');
+
+DEF skip_lch = '';
+DEF skip_all = '&&is_single_instance.';
+DEF abstract = 'Write I/O Operations per Second (W-IOPS).'
+DEF title = 'W-IOPS Series for Cluster';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', 'instance_number');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Write I/O Operations per Second (W-IOPS).'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 1;
+DEF title = 'W-IOPS Series for Instance 1';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '1');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Write I/O Operations per Second (W-IOPS).'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 2;
+DEF title = 'W-IOPS Series for Instance 2';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '2');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Write I/O Operations per Second (W-IOPS).'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 3;
+DEF title = 'W-IOPS Series for Instance 3';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '3');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Write I/O Operations per Second (W-IOPS).'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 4;
+DEF title = 'W-IOPS Series for Instance 4';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '4');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Write I/O Operations per Second (W-IOPS).'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 5;
+DEF title = 'W-IOPS Series for Instance 5';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '5');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Write I/O Operations per Second (W-IOPS).'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 6;
+DEF title = 'W-IOPS Series for Instance 6';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '6');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Write I/O Operations per Second (W-IOPS).'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 7;
+DEF title = 'W-IOPS Series for Instance 7';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '7');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Write I/O Operations per Second (W-IOPS).'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 8;
+DEF title = 'W-IOPS Series for Instance 8';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '8');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF tit_01 = 'Writes';
+DEF tit_02 = 'Direct';
+DEF tit_03 = 'Direct LOB';
+DEF tit_04 = 'Direct Temporary Tablespace';
+DEF tit_05 = 'From Cache';
+DEF tit_06 = 'Non Checkpoint';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
+DEF vaxis = 'Reads per Second';
+
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup,  '#column01#', 'SUM(writes_ps) writes,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column02#', 'SUM(w_direct_ps) direct,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column03#', 'SUM(w_direct_lob_ps) direct_lob,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column04#', 'SUM(w_direct_temp_tablespace_ps) direct_temporary_tablespace,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column05#', 'SUM(w_from_cache_ps) from_cache,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column06#', 'SUM(w_non_checkpoint_ps) non_checkpoint,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column07#', '0 dummy_07,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column08#', '0 dummy_08,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column09#', '0 dummy_09,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column10#', '0 dummy_10,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column11#', '0 dummy_11,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column12#', '0 dummy_12,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column13#', '0 dummy_13,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column14#', '0 dummy_14,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column15#', '0 dummy_15');
+
+DEF skip_lch = '';
+DEF skip_all = '&&is_single_instance.';
+DEF abstract = 'Writes per Second.'
+DEF title = 'Writes (per second) Series for Cluster';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', 'instance_number');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Writes per Second.'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 1;
+DEF title = 'Writes (per second) Series for Instance 1';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '1');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Writes per Second.'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 2;
+DEF title = 'Writes (per second) Series for Instance 2';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '2');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Writes per Second.'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 3;
+DEF title = 'Writes (per second) Series for Instance 3';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '3');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Writes per Second.'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 4;
+DEF title = 'Writes (per second) Series for Instance 4';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '4');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Writes per Second.'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 5;
+DEF title = 'Writes (per second) Series for Instance 5';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '5');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Writes per Second.'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 6;
+DEF title = 'Writes (per second) Series for Instance 6';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '6');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Writes per Second.'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 7;
+DEF title = 'Writes (per second) Series for Instance 7';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '7');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Writes per Second.'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 8;
+DEF title = 'Writes (per second) Series for Instance 8';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '8');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF tit_01 = 'W-MBPS';
+DEF tit_02 = 'Total MBPS';
+DEF tit_03 = 'Redo Size MBPS';
+DEF tit_04 = 'Application MBPS';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
+DEF vaxis = 'Write Megabytes per Second (W-MBPS)';
+
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup,  '#column01#', 'SUM(w_mbps) w_mbps,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column02#', 'SUM(w_total_mbps) total_mbps,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column03#', 'SUM(redo_size_mbps) redo_size_mbps,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column04#', 'SUM(w_appl_mbps) appl_mbps,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column05#', '0 dummy_06,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column06#', '0 dummy_06,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column07#', '0 dummy_07,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column08#', '0 dummy_08,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column09#', '0 dummy_09,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column10#', '0 dummy_10,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column11#', '0 dummy_11,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column12#', '0 dummy_12,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column13#', '0 dummy_13,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column14#', '0 dummy_14,');
+EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column15#', '0 dummy_15');
+
+DEF skip_lch = '';
+DEF skip_all = '&&is_single_instance.';
+DEF abstract = 'Write Megabytes per Second (W-MBPS).'
+DEF title = 'W-MBPS Series for Cluster';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', 'instance_number');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Write Megabytes per Second (W-MBPS).'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 1;
+DEF title = 'W-MBPS Series for Instance 1';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '1');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Write Megabytes per Second (W-MBPS).'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 2;
+DEF title = 'W-MBPS Series for Instance 2';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '2');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Write Megabytes per Second (W-MBPS).'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 3;
+DEF title = 'W-MBPS Series for Instance 3';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '3');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Write Megabytes per Second (W-MBPS).'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 4;
+DEF title = 'W-MBPS Series for Instance 4';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '4');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Write Megabytes per Second (W-MBPS).'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 5;
+DEF title = 'W-MBPS Series for Instance 5';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '5');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Write Megabytes per Second (W-MBPS).'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 6;
+DEF title = 'W-MBPS Series for Instance 6';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '6');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Write Megabytes per Second (W-MBPS).'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 7;
+DEF title = 'W-MBPS Series for Instance 7';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '7');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+DEF abstract = 'Write Megabytes per Second (W-MBPS).'
+SELECT NULL skip_all FROM gv$instance WHERE instance_number = 8;
+DEF title = 'W-MBPS Series for Instance 8';
+EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '8');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
 /*****************************************************************************************/
 
+DEF skip_lch = 'Y';
+DEF skip_pch = 'Y';
 
+/*****************************************************************************************/

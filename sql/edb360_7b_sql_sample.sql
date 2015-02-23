@@ -18,6 +18,7 @@ COL hh_mm_ss NEW_V hh_mm_ss NOPRI FOR A8;
 SET VER OFF FEED OFF SERVEROUT ON HEAD OFF PAGES 50000 LIN 32767 TRIMS ON TRIM ON TI OFF TIMI OFF ARRAY 100;
 SPO 9993_&&common_edb360_prefix._top_sql_driver.sql;
 DECLARE
+  l_count NUMBER := 0;
   PROCEDURE put_line(p_line IN VARCHAR2) IS
   BEGIN
     DBMS_OUTPUT.PUT_LINE(p_line);
@@ -48,7 +49,7 @@ BEGIN
              GROUP BY
                    dbid,
                    sql_id
-            HAVING COUNT(*) > 60 -- >10mins
+            HAVING COUNT(*) > 6 -- >1min
             --HAVING COUNT(*) > 360 -- >1hr
             ),
             ranked_sql AS (
@@ -81,6 +82,7 @@ BEGIN
             )
             SELECT * FROM top_sql ORDER BY sql_id)
   LOOP
+    l_count := l_count + 1;
     put_line('COL hh_mm_ss NEW_V hh_mm_ss NOPRI FOR A8;');
     put_line('SELECT TO_CHAR(SYSDATE, ''HH24:MI:SS'') hh_mm_ss FROM DUAL;');
     put_line('-- update log');
@@ -158,7 +160,10 @@ BEGIN
     put_line('SPO OFF;');
     put_line('HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html');
   END LOOP;
-  put_line('@sql/sqld360.sql');
+  IF l_count > 0 THEN
+    put_line('UNDEF 1 2');
+    put_line('@sql/sqld360.sql');
+  END IF;
 END;
 /
 SPO OFF;
@@ -167,6 +172,7 @@ SPO OFF;
 SET VER OFF FEED OFF SERVEROUT ON HEAD OFF PAGES 50000 LIN 32767 TRIMS ON TRIM ON TI OFF TIMI OFF ARRAY 100;
 SPO 9995_&&common_edb360_prefix._top_sql_driver.sql;
 DECLARE
+  l_count NUMBER := 0;
   PROCEDURE put_line(p_line IN VARCHAR2) IS
   BEGIN
     DBMS_OUTPUT.PUT_LINE(p_line);
@@ -183,14 +189,17 @@ DECLARE
 BEGIN
   FOR i IN (SELECT operation, remarks FROM plan_table WHERE statement_id = 'SQLD360_SQLID')
   LOOP
+    l_count := l_count + 1;
     put_line('HOS mv '||i.remarks||' sqld360_&&database_name_short._'||i.operation||'_&&host_name_short._&&edb360_file_time..zip');
     put_line('HOS zip -mq &&edb360_main_filename._&&edb360_file_time. sqld360_&&database_name_short._'||i.operation||'_&&host_name_short._&&edb360_file_time..zip');
   END LOOP;
-  put_line('-- just in case individual file "mv" failed');
-  put_line('HOS zip -mq &&edb360_main_filename._&&edb360_file_time. sqld360_*.zip');
-  put_line('-- deleting content of global temporary table "plan_table" as cleanup after sqld360');
-  put_line('-- this delete affects nothing');
-  put_line('DELETE plan_table;');
+  IF l_count > 0 THEN
+    put_line('-- just in case individual file "mv" failed');
+    put_line('HOS zip -mq &&edb360_main_filename._&&edb360_file_time. sqld360_*.zip');
+    put_line('-- deleting content of global temporary table "plan_table" as cleanup after sqld360');
+    put_line('-- this delete affects nothing');
+    put_line('DELETE plan_table;');
+  END IF;
 END;
 /
 SPO OFF;

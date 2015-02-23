@@ -64,7 +64,8 @@ PRO          backgroundColor: {fill: '#fcfcf0', stroke: '#336699', strokeWidth: 
 PRO          title: '&&title.&&title_suffix.',
 PRO          titleTextStyle: {fontSize: 16, bold: false},
 PRO          legend: {position: 'right', textStyle: {fontSize: 12}},
-PRO          tooltip: {textStyle: {fontSize: 14}}
+PRO          tooltip: {textStyle: {fontSize: 14}},
+PRO          sliceVisibilityThreshold: 1/1440
 PRO        };
 PRO
 PRO        var chart = new google.visualization.PieChart(document.getElementById('piechart_3d'));

@@ -1,4 +1,4 @@
-EDB360 v1504 (2015-02-15) by Carlos Sierra
+EDB360 v1505 (2015-02-23) by Carlos Sierra
 
 EDB360 is a "free to use" tool to perform an initial assessment of a remote system. 
 It gives a glance of a database state. It also helps to document any findings.
@@ -39,19 +39,16 @@ Notes
    $ cd edb360
    $ sh run_db360.sh
 
-   note: this method requires Oracle Diagostics or Tuning pack license.
+   note: this method requires Oracle Tuning pack license in all databases in such host.
 
-2. If you need to execute only a portion of edb360 (i.e. resources and os stats) use 
-   these commands. Notice 0b_pre and 0c_post scripts.
+2. If you need to execute only a portion of edb360 (i.e. a column, section or range) use 
+   these commands. Notice hidden parameter _o_release can be set to one section (i.e. 3b),
+   one column (i.e. 3), a range of sections (i.e. 5c-6b) or range of columns (i.e. 5-7):
 
-   SQL> @sql/edb360_0b_pre.sql T 31
-   SQL> @sql/edb360_1d_resources.sql
-   SQL> @sql/edb360_3e_os_stats.sql
-   SQL> @sql/edb360_0c_post.sql
-
-3. If you decide to include SQLHC from MOS 1366133.1, be aware that sqlhc.sql uses
-   global temporary table plan_table as staging repository, so it has some inserts into
-   it and a rollback. Just place sqlhc.sql inside the edb360/sql directory.
+   SQL> DEF _o_release = '3b';
+   SQL> @edb360.sql T 31
+   
+   note: valid column range is 1 to 7. 
 
 ****************************************************************************************
    

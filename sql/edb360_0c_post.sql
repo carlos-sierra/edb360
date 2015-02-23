@@ -34,7 +34,7 @@ SET NUMF "";
 SET SQLBL OFF; 
 SET BLO ON; 
 SET RECSEP WR;
-UNDEF 1 2 3 4 5 6
+UNDEF 1 2
 
 -- alert log (3 methods)
 COL db_name_upper NEW_V db_name_upper;

@@ -18,12 +18,12 @@ PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 DEF column_number = '1';
 
-@@edb360_1a_configuration.sql
-@@edb360_1b_security.sql
-@@edb360_1c_memory.sql
-@@edb360_1d_resources.sql
-@@edb360_1e_resources_statspack.sql
-@@edb360_1f_resources_outdated.sql
+@@&&edb360_1a.configuration.sql
+@@&&edb360_1b.security.sql
+@@&&edb360_1c.memory.sql
+@@&&edb360_1d.resources.sql
+@@&&edb360_1e.resources_statspack.sql
+@@&&edb360_1f.resources_outdated.sql
 
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -35,10 +35,10 @@ PRO </td><td>
 PRO
 SPO OFF;
 
-@@edb360_2a_admin.sql
-@@edb360_2b_storage.sql
-@@edb360_2c_asm.sql
-@@edb360_2d_rman.sql
+@@&&edb360_2a.admin.sql
+@@&&edb360_2b.storage.sql
+@@&&edb360_2c.asm.sql
+@@&&edb360_2d.rman.sql
 
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -50,11 +50,11 @@ PRO </td><td>
 PRO
 SPO OFF;
 
-@@edb360_3a_resource_mgm.sql
-@@edb360_3b_plan_stability.sql
-@@edb360_3c_cbo_stats.sql
-@@edb360_3d_performance.sql
-@@&&skip_diagnostics.edb360_3e_os_stats.sql
+@@&&edb360_3a.resource_mgm.sql
+@@&&edb360_3b.plan_stability.sql
+@@&&edb360_3c.cbo_stats.sql
+@@&&edb360_3d.performance.sql
+@@&&skip_diagnostics.&&edb360_3e.os_stats.sql
 
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -66,14 +66,14 @@ PRO </td><td>
 PRO
 SPO OFF;
 
-@@&&skip_diagnostics.edb360_4a_sga_stats.sql
-@@&&skip_diagnostics.edb360_4b_pga_stats.sql
-@@&&skip_diagnostics.edb360_4c_mem_stats.sql
-@@&&skip_diagnostics.edb360_4d_time_model.sql
-@@&&skip_diagnostics.edb360_4e_time_model_comp.sql
-@@&&skip_diagnostics.&&skip_10g.edb360_4f_io_waits.sql
-@@&&skip_diagnostics.&&skip_10g.edb360_4g_io_waits_top.sql
-@@edb360_4h_parallel_execution.sql
+@@&&skip_diagnostics.&&edb360_4a.sga_stats.sql
+@@&&skip_diagnostics.&&edb360_4b.pga_stats.sql
+@@&&skip_diagnostics.&&edb360_4c.mem_stats.sql
+@@&&skip_diagnostics.&&edb360_4d.time_model.sql
+@@&&skip_diagnostics.&&edb360_4e.time_model_comp.sql
+@@&&skip_diagnostics.&&skip_10g.&&edb360_4f.io_waits.sql
+@@&&skip_diagnostics.&&skip_10g.&&edb360_4g.io_waits_top.sql
+@@&&edb360_4h.parallel_execution.sql
 
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -85,9 +85,9 @@ PRO </td><td>
 PRO
 SPO OFF;
 
-@@&&skip_diagnostics.edb360_5a_ash.sql
-@@&&skip_diagnostics.edb360_5b_ash_wait.sql
-@@&&skip_diagnostics.edb360_5c_ash_top.sql
+@@&&skip_diagnostics.&&edb360_5a.ash.sql
+@@&&skip_diagnostics.&&edb360_5b.ash_wait.sql
+@@&&skip_diagnostics.&&edb360_5c.ash_top.sql
 
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -99,12 +99,13 @@ PRO </td><td>
 PRO
 SPO OFF;
 
-@@&&skip_diagnostics.edb360_6a_ash_event.sql
-@@&&skip_diagnostics.edb360_6b_ash_sql.sql
-@@&&skip_diagnostics.edb360_6c_ash_programs.sql
-@@&&skip_diagnostics.edb360_6d_ash_modules.sql
-@@&&skip_diagnostics.edb360_6e_ash_users.sql
-@@&&skip_diagnostics.edb360_6f_ash_plsql.sql
+@@&&skip_diagnostics.&&edb360_6a.ash_class.sql
+@@&&skip_diagnostics.&&edb360_6b.ash_event.sql
+@@&&skip_diagnostics.&&edb360_6c.ash_sql.sql
+@@&&skip_diagnostics.&&edb360_6d.ash_programs.sql
+@@&&skip_diagnostics.&&edb360_6e.ash_modules.sql
+@@&&skip_diagnostics.&&edb360_6f.ash_users.sql
+@@&&skip_diagnostics.&&edb360_6g.ash_plsql.sql
 
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -116,8 +117,8 @@ PRO </td><td>
 PRO
 SPO OFF;
 
-@@&&skip_diagnostics.edb360_7a_rpt.sql
-@@&&skip_diagnostics.edb360_7b_sql_sample.sql
+@@&&skip_diagnostics.&&edb360_7a.rpt.sql
+@@&&skip_diagnostics.&&edb360_7b.sql_sample.sql
 
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

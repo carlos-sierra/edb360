@@ -11,19 +11,19 @@ DEF vaxis = 'Average Active Sessions - AAS (stacked)';
 DEF vbaseline = '';
 DEF tit_01 = '';
 DEF tit_02 = 'On CPU';
-DEF tit_03 = 'Administrative';
-DEF tit_04 = 'Application';
+DEF tit_03 = 'User I/O';
+DEF tit_04 = 'System I/O';
 DEF tit_05 = 'Cluster';
 DEF tit_06 = 'Commit';
 DEF tit_07 = 'Concurrency';
-DEF tit_08 = 'Configuration';
-DEF tit_09 = 'Idle';
-DEF tit_10 = 'Network';
-DEF tit_11 = 'Other';
+DEF tit_08 = 'Application';
+DEF tit_09 = 'Administrative';
+DEF tit_10 = 'Configuration';
+DEF tit_11 = 'Network';
 DEF tit_12 = 'Queueing';
 DEF tit_13 = 'Scheduler';
-DEF tit_14 = 'System I/O';
-DEF tit_15 = 'User I/O';
+DEF tit_14 = 'Idle';
+DEF tit_15 = 'Other';
 COL aas_total FOR 999990.000;
 COL aas_on_cpu FOR 999990.000;
 COL aas_administrative FOR 999990.000;
@@ -132,19 +132,19 @@ SELECT snap_id,
        MIN(end_time)                     end_time,
        ROUND(SUM(aas_total), 3)          aas_total,
        ROUND(SUM(aas_on_cpu), 3)         aas_on_cpu,
-       ROUND(SUM(aas_administrative), 3) aas_administrative,
-       ROUND(SUM(aas_application), 3)    aas_application,
+       ROUND(SUM(aas_user_io), 3)        aas_user_io,
+       ROUND(SUM(aas_system_io), 3)      aas_system_io,
        ROUND(SUM(aas_cluster), 3)        aas_cluster,
        ROUND(SUM(aas_commit), 3)         aas_commit,
        ROUND(SUM(aas_concurrency), 3)    aas_concurrency,
+       ROUND(SUM(aas_application), 3)    aas_application,
+       ROUND(SUM(aas_administrative), 3) aas_administrative,
        ROUND(SUM(aas_configuration), 3)  aas_configuration,
-       ROUND(SUM(aas_idle), 3)           aas_idle,
        ROUND(SUM(aas_network), 3)        aas_network,
-       ROUND(SUM(aas_other), 3)          aas_other,
        ROUND(SUM(aas_queueing), 3)       aas_queueing,
        ROUND(SUM(aas_scheduler), 3)      aas_scheduler,
-       ROUND(SUM(aas_system_io), 3)      aas_system_io,
-       ROUND(SUM(aas_user_io), 3)        aas_user_io
+       ROUND(SUM(aas_idle), 3)           aas_idle,
+       ROUND(SUM(aas_other), 3)          aas_other
   FROM ash_aas
  GROUP BY
        snap_id

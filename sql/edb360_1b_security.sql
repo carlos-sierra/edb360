@@ -132,6 +132,112 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+DEF title = 'Proxy Users';
+DEF main_table = 'PROXY_USERS';
+BEGIN
+  :sql_text := '
+-- provided by Simon Pane
+SELECT /*+ &&top_level_hints. */ *
+  FROM proxy_users
+ ORDER BY client';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+DEF title = 'Profile Verification Functions';
+DEF main_table = 'DBA_PROFILES';
+BEGIN
+  :sql_text := '
+-- provided by Simon Pane
+SELECT /*+ &&top_level_hints. */ 
+       owner, object_name, created, last_ddl_time, status
+  FROM dba_objects
+ WHERE object_name IN (SELECT limit
+                         FROM dba_profiles
+                        WHERE resource_name = ''PASSWORD_VERIFY_FUNCTION'')
+ ORDER BY 1,2';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+DEF title = 'Users with CREATE SESSION privilege';
+DEF main_table = 'DBA_USERS';
+BEGIN
+  :sql_text := '
+-- provided by Simon Pane
+SELECT /*+ &&top_level_hints. */ DISTINCT 
+       u.NAME "SCHEMA", d.account_status
+  FROM SYS.user$ u, SYS.dba_users d
+ WHERE u.NAME = d.username
+   AND d.account_status NOT LIKE ''%LOCKED%''
+   AND u.type# = 1
+   AND u.NAME != ''SYS''
+   AND u.NAME != ''SYSTEM''
+   AND u.user# IN (
+              SELECT     grantee#
+                    FROM SYS.sysauth$
+              CONNECT BY PRIOR grantee# = privilege#
+              START WITH privilege# =
+                                     (SELECT PRIVILEGE
+                                        FROM SYS.system_privilege_map
+                                       WHERE NAME = ''CREATE SESSION''))
+   AND u.NAME IN (SELECT DISTINCT owner
+                    FROM dba_objects
+                   WHERE object_type != ''SYNONYM'')
+ORDER BY 1';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+DEF title = 'Orphaned Synonyms';
+DEF main_table = 'DBA_SYNONYMS';
+BEGIN
+  :sql_text := '
+-- provided by Simon Pane
+SELECT /*+ &&top_level_hints. */ 
+       s.owner, s.table_owner, COUNT(1)
+  FROM sys.dba_synonyms s
+ WHERE s.table_owner||''.''||s.table_name NOT IN
+       (select o.owner||''.''||o.object_name
+          from sys.dba_objects o
+         where o.object_name = s.table_name
+           and o.owner = s.table_owner)
+   AND s.owner NOT IN (''SYS'',''SYSTEM'')
+   AND s.table_owner NOT IN (''SYS'',''SYSTEM'')
+   AND s.db_link IS NULL
+and s.owner not in &&exclusion_list.
+and s.owner not in &&exclusion_list2.
+ GROUP BY s.owner, s.table_owner
+ ORDER BY s.owner';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+DEF title = 'Segments in Reserved Tablespaces';
+DEF main_table = 'DBA_SEGMENTS';
+BEGIN
+  :sql_text := '
+-- provided by Simon Pane
+SELECT /*+ &&top_level_hints. */ 
+       s.owner, s.segment_type, s.tablespace_name, COUNT(1)
+  FROM sys.dba_segments s
+ WHERE s.owner NOT IN (''SYS'',''SYSTEM'',''OUTLN'',''AURORA$JIS$UTILITY$'',''OSE$HTTP$ADMIN'',''ORACACHE'',''ORDSYS'',
+                       ''CTXSYS'',''DBSNMP'',''DMSYS'',''EXFSYS'',''MDSYS'',''OLAPSYS'',''SYSMAN'',''TSMSYS'',''WMSYS'',''XDB'')
+   AND s.tablespace_name IN (''SYSTEM'',''SYSAUX'',''TEMP'',''TEMPORARY'',''RBS'',''ROLLBACK'',''ROLLBACKS'',''RBSEGS'')
+   AND s.tablespace_name NOT IN (SELECT tablespace_name
+                                   FROM sys.dba_tablespaces
+                                  WHERE contents IN (''UNDO'',''TEMPORARY'')
+                                )
+and s.owner not in &&exclusion_list.
+and s.owner not in &&exclusion_list2.
+ GROUP BY s.owner, s.segment_type, s.tablespace_name
+ ORDER BY 1,2,3';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+
+
 
 
 

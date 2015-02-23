@@ -38,7 +38,8 @@ BEGIN
   -- if standalone execution then need to insert metadata   
   IF '&&from_edb360.' = '' THEN
     -- no need to clean, it's a GTT
-    INSERT INTO plan_table (statement_id, timestamp, operation) VALUES ('SQLD360_SQLID',sysdate,'&&sqld360_sqlid.');
+    -- column options set to 1 is safe here, if no diagnostics then ASH is not extracted at all anyway
+    INSERT INTO plan_table (statement_id, timestamp, operation, options) VALUES ('SQLD360_SQLID',sysdate,'&&sqld360_sqlid.','1');
     INSERT INTO plan_table (statement_id, timestamp, operation) VALUES ('SQLD360_ASH_LOAD',sysdate, NULL);
   END IF;
   
@@ -187,8 +188,8 @@ SELECT SUBSTR(sql_text,1,50) sqld360_sqltxt FROM v$sqltext_with_newlines WHERE s
 SELECT SUBSTR(sql_text,1,50) sqld360_sqltxt FROM dba_hist_sqltext WHERE sql_id = '&&sqld360_sqlid.' AND rownum = 1;
 
 -- setup
-DEF sqld360_vYYNN = 'v1501';
-DEF sqld360_vrsn = '&&sqld360_vYYNN. (2015-01-01)';
+DEF sqld360_vYYNN = 'v1502';
+DEF sqld360_vrsn = '&&sqld360_vYYNN. (2015-03-01)';
 DEF sqld360_prefix = 'sqld360';
 DEF sql_trace_level = '8';
 DEF main_table = '';

@@ -6,6 +6,8 @@ SET ECHO OFF;
 SET TIM OFF;
 SET TIMI OFF;
 CL COL;
+DEF edb360_vYYNN = 'v1505';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2015-02-23)';
 
 -- parameters
 PRO
@@ -48,16 +50,130 @@ PRO
 COL history_days NEW_V history_days;
 -- range: takes at least 31 days and at most as many as actual history, with a default of 31. parameter restricts within that range. 
 SELECT TO_CHAR(LEAST(CEIL(SYSDATE - CAST(MIN(begin_interval_time) AS DATE)), GREATEST(31, TO_NUMBER(NVL(TRIM('&2.'), '31'))))) history_days FROM dba_hist_snapshot WHERE '&&diagnostics_pack.' = 'Y' AND dbid = (SELECT dbid FROM v$database);
+SET TERM OFF;
 SELECT '0' history_days FROM DUAL WHERE NVL(TRIM('&&diagnostics_pack.'), 'N') = 'N';
+COL hist_work_days NEW_V hist_work_days;
+SELECT TRIM(TO_CHAR(ROUND(TO_NUMBER('&&history_days.')*5/7))) hist_work_days FROM DUAL;
+
+-- hidden parameter _o_release: report column, or section, or range of columns or range of sections i.e. 3, 3-4, 3a, 3a-4c, 3-4c, 3c-4
+VAR edb360_sec_from VARCHAR2(2);
+VAR edb360_sec_to   VARCHAR2(2);
+BEGIN
+  IF LENGTH('&&_o_release.') > 5 THEN -- no hidden parameter passed
+    :edb360_sec_from := '1a';
+    :edb360_sec_to := '9z';
+  ELSIF LENGTH('&&_o_release.') = 5 AND SUBSTR('&&_o_release.', 3, 1) = '-' AND LOWER(SUBSTR('&&_o_release.', 1, 2)) BETWEEN '1a' AND '9z' AND LOWER(SUBSTR('&&_o_release.', 4, 2)) BETWEEN '1a' AND '9z' THEN -- i.e. 1a-7b
+    :edb360_sec_from := LOWER(SUBSTR('&&_o_release.', 1, 2));
+    :edb360_sec_to := LOWER(SUBSTR('&&_o_release.', 4, 2));
+  ELSIF LENGTH('&&_o_release.') = 4 AND SUBSTR('&&_o_release.', 3, 1) = '-' AND LOWER(SUBSTR('&&_o_release.', 1, 2)) BETWEEN '1a' AND '9z' AND LOWER(SUBSTR('&&_o_release.', 4, 1)) BETWEEN '1' AND '9' THEN -- i.e. 3b-7
+    :edb360_sec_from := LOWER(SUBSTR('&&_o_release.', 1, 2));
+    :edb360_sec_to := LOWER(SUBSTR('&&_o_release.', 4, 1))||'z';
+  ELSIF LENGTH('&&_o_release.') = 4 AND SUBSTR('&&_o_release.', 2, 1) = '-' AND LOWER(SUBSTR('&&_o_release.', 1, 1)) BETWEEN '1' AND '9' AND LOWER(SUBSTR('&&_o_release.', 3, 2)) BETWEEN '1a' AND '9z' THEN -- i.e. 3-5b
+    :edb360_sec_from := LOWER(SUBSTR('&&_o_release.', 1, 1))||'a';
+    :edb360_sec_to := LOWER(SUBSTR('&&_o_release.', 3, 2));
+  ELSIF LENGTH('&&_o_release.') = 3 AND SUBSTR('&&_o_release.', 2, 1) = '-' AND LOWER(SUBSTR('&&_o_release.', 1, 1)) BETWEEN '1' AND '9' AND LOWER(SUBSTR('&&_o_release.', 3, 1)) BETWEEN '1' AND '9' THEN -- i.e. 3-5
+    :edb360_sec_from := LOWER(SUBSTR('&&_o_release.', 1, 1))||'a';
+    :edb360_sec_to := LOWER(SUBSTR('&&_o_release.', 3, 1))||'z';
+  ELSIF LENGTH('&&_o_release.') = 2 AND LOWER(SUBSTR('&&_o_release.', 1, 2)) BETWEEN '1a' AND '9z' THEN -- i.e. 7b
+    :edb360_sec_from := LOWER(SUBSTR('&&_o_release.', 1, 2));
+    :edb360_sec_to := :edb360_sec_from;
+  ELSIF LENGTH('&&_o_release.') = 1 AND LOWER(SUBSTR('&&_o_release.', 1, 1)) BETWEEN '1' AND '9' THEN -- i.e. 7
+    :edb360_sec_from := LOWER(SUBSTR('&&_o_release.', 1, 1))||'a';
+    :edb360_sec_to := LOWER(SUBSTR('&&_o_release.', 1, 1))||'z';
+  ELSE -- wrong use of hidden parameter
+    :edb360_sec_from := '1a';
+    :edb360_sec_to := '9z';
+  END IF;
+END;
+/
+PRINT edb360_sec_from;
+PRINT edb360_sec_to;
+COL edb360_1a NEW_V edb360_1a;
+COL edb360_1b NEW_V edb360_1b;
+COL edb360_1c NEW_V edb360_1c;
+COL edb360_1d NEW_V edb360_1d;
+COL edb360_1e NEW_V edb360_1e;
+COL edb360_1f NEW_V edb360_1f;
+COL edb360_2a NEW_V edb360_2a;
+COL edb360_2b NEW_V edb360_2b;
+COL edb360_2c NEW_V edb360_2c;
+COL edb360_2d NEW_V edb360_2d;
+COL edb360_3a NEW_V edb360_3a;
+COL edb360_3b NEW_V edb360_3b;
+COL edb360_3c NEW_V edb360_3c;
+COL edb360_3d NEW_V edb360_3d;
+COL edb360_3e NEW_V edb360_3e;
+COL edb360_4a NEW_V edb360_4a;
+COL edb360_4b NEW_V edb360_4b;
+COL edb360_4c NEW_V edb360_4c;
+COL edb360_4d NEW_V edb360_4d;
+COL edb360_4e NEW_V edb360_4e;
+COL edb360_4f NEW_V edb360_4f;
+COL edb360_4g NEW_V edb360_4g;
+COL edb360_4h NEW_V edb360_4h;
+COL edb360_5a NEW_V edb360_5a;
+COL edb360_5b NEW_V edb360_5b;
+COL edb360_5c NEW_V edb360_5c;
+COL edb360_6a NEW_V edb360_6a;
+COL edb360_6b NEW_V edb360_6b;
+COL edb360_6c NEW_V edb360_6c;
+COL edb360_6d NEW_V edb360_6d;
+COL edb360_6e NEW_V edb360_6e;
+COL edb360_6f NEW_V edb360_6f;
+COL edb360_6g NEW_V edb360_6g;
+COL edb360_7a NEW_V edb360_7a;
+COL edb360_7b NEW_V edb360_7b;
+SELECT CASE WHEN '1a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_1a_' ELSE '--' END edb360_1a FROM DUAL;
+SELECT CASE WHEN '1b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_1b_' ELSE '--' END edb360_1b FROM DUAL;
+SELECT CASE WHEN '1c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_1c_' ELSE '--' END edb360_1c FROM DUAL;
+SELECT CASE WHEN '1d' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_1d_' ELSE '--' END edb360_1d FROM DUAL;
+SELECT CASE WHEN '1e' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_1e_' ELSE '--' END edb360_1e FROM DUAL;
+SELECT CASE WHEN '1f' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_1f_' ELSE '--' END edb360_1f FROM DUAL;
+SELECT CASE WHEN '2a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_2a_' ELSE '--' END edb360_2a FROM DUAL;
+SELECT CASE WHEN '2b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_2b_' ELSE '--' END edb360_2b FROM DUAL;
+SELECT CASE WHEN '2c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_2c_' ELSE '--' END edb360_2c FROM DUAL;
+SELECT CASE WHEN '2d' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_2d_' ELSE '--' END edb360_2d FROM DUAL;
+SELECT CASE WHEN '3a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3a_' ELSE '--' END edb360_3a FROM DUAL;
+SELECT CASE WHEN '3b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3b_' ELSE '--' END edb360_3b FROM DUAL;
+SELECT CASE WHEN '3c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3c_' ELSE '--' END edb360_3c FROM DUAL;
+SELECT CASE WHEN '3d' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3d_' ELSE '--' END edb360_3d FROM DUAL;
+SELECT CASE WHEN '3e' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3e_' ELSE '--' END edb360_3e FROM DUAL;
+SELECT CASE WHEN '4a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4a_' ELSE '--' END edb360_4a FROM DUAL;
+SELECT CASE WHEN '4b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4b_' ELSE '--' END edb360_4b FROM DUAL;
+SELECT CASE WHEN '4c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4c_' ELSE '--' END edb360_4c FROM DUAL;
+SELECT CASE WHEN '4d' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4d_' ELSE '--' END edb360_4d FROM DUAL;
+SELECT CASE WHEN '4e' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4e_' ELSE '--' END edb360_4e FROM DUAL;
+SELECT CASE WHEN '4f' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4f_' ELSE '--' END edb360_4f FROM DUAL;
+SELECT CASE WHEN '4g' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4g_' ELSE '--' END edb360_4g FROM DUAL;
+SELECT CASE WHEN '4h' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4h_' ELSE '--' END edb360_4h FROM DUAL;
+SELECT CASE WHEN '5a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_5a_' ELSE '--' END edb360_5a FROM DUAL;
+SELECT CASE WHEN '5b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_5b_' ELSE '--' END edb360_5b FROM DUAL;
+SELECT CASE WHEN '5c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_5c_' ELSE '--' END edb360_5c FROM DUAL;
+SELECT CASE WHEN '6a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6a_' ELSE '--' END edb360_6a FROM DUAL;
+SELECT CASE WHEN '6b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6b_' ELSE '--' END edb360_6b FROM DUAL;
+SELECT CASE WHEN '6c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6c_' ELSE '--' END edb360_6c FROM DUAL;
+SELECT CASE WHEN '6d' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6d_' ELSE '--' END edb360_6d FROM DUAL;
+SELECT CASE WHEN '6e' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6e_' ELSE '--' END edb360_6e FROM DUAL;
+SELECT CASE WHEN '6f' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6f_' ELSE '--' END edb360_6f FROM DUAL;
+SELECT CASE WHEN '6g' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6g_' ELSE '--' END edb360_6g FROM DUAL;
+SELECT CASE WHEN '7a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_7a_' ELSE '--' END edb360_7a FROM DUAL;
+SELECT CASE WHEN '7b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_7b_' ELSE '--' END edb360_7b FROM DUAL;
+
+-- filename prefix
+COL edb360_prefix NEW_V edb360_prefix;
+SELECT CASE WHEN :edb360_sec_from = '1a' AND :edb360_sec_to = '9z' THEN 'edb360' ELSE 'edb360_'||:edb360_sec_from||'_'||:edb360_sec_to END edb360_prefix FROM DUAL;
 
 -- esp collection
 DEF rr_host_name_short = '';
 DEF esp_host_name_short = '';
 HOS cat /proc/cpuinfo | grep -i name | sort | uniq >> cpuinfo_model_name.txt
+
+SET TERM ON;
 PRO Please wait ...
 @@&&skip_diagnostics.resources_requirements.sql
 PRO Please wait ...
 @@&&skip_diagnostics.esp_collect_requirements.sql
+SET TERM OFF; 
 HOS zip -qmT esp_requirements_&&esp_host_name_short..zip res_requirements_&&rr_host_name_short..txt esp_requirements_&&esp_host_name_short..csv cpuinfo_model_name.txt 
 
 -- initialization
@@ -114,6 +230,10 @@ SELECT ROUND(AVG(TO_NUMBER(value))) avg_cpu_count FROM gv$system_parameter2 WHER
 COL sum_cpu_count NEW_V sum_cpu_count FOR A3;
 SELECT SUM(TO_NUMBER(value)) sum_cpu_count FROM gv$system_parameter2 WHERE name = 'cpu_count';
 
+-- get block_size
+COL database_block_size NEW_V database_block_size;
+SELECT TRIM(TO_NUMBER(value)) database_block_size FROM v$system_parameter2 WHERE name = 'db_block_size';
+
 -- determine if rac or single instance (null means rac)
 COL is_single_instance NEW_V is_single_instance FOR A1;
 SELECT CASE COUNT(*) WHEN 1 THEN 'Y' END is_single_instance FROM gv$instance;
@@ -159,9 +279,6 @@ SELECT owner psft_schema FROM sys.dba_tab_columns WHERE table_name = 'PSSTATUS' 
 SELECT toolsrel psft_tools_rel FROM &&psft_schema..psstatus WHERE ROWNUM = 1;
 
 -- setup
-DEF edb360_vYYNN = 'v1504';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2015-02-15)';
-DEF edb360_prefix = 'edb360';
 DEF sql_trace_level = '8';
 DEF main_table = '';
 DEF title = '';
