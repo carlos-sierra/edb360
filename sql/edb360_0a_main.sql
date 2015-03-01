@@ -55,6 +55,8 @@ SPO OFF;
 @@&&edb360_3c.cbo_stats.sql
 @@&&edb360_3d.performance.sql
 @@&&skip_diagnostics.&&edb360_3e.os_stats.sql
+@@&&is_single_instance.&&skip_diagnostics.&&edb360_3f.ic_latency.sql
+@@&&is_single_instance.&&skip_diagnostics.&&edb360_3g.ic_performance.sql
 
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -128,6 +130,7 @@ PRO
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 PRO
 DEF;
+SHOW PARAMETERS;
 PRO
 PRO end log
 SPO OFF;

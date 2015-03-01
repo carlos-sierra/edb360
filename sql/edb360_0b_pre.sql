@@ -6,8 +6,8 @@ SET ECHO OFF;
 SET TIM OFF;
 SET TIMI OFF;
 CL COL;
-DEF edb360_vYYNN = 'v1505';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2015-02-23)';
+DEF edb360_vYYNN = 'v1506';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2015-02-28)';
 
 -- parameters
 PRO
@@ -103,6 +103,8 @@ COL edb360_3b NEW_V edb360_3b;
 COL edb360_3c NEW_V edb360_3c;
 COL edb360_3d NEW_V edb360_3d;
 COL edb360_3e NEW_V edb360_3e;
+COL edb360_3f NEW_V edb360_3f;
+COL edb360_3g NEW_V edb360_3g;
 COL edb360_4a NEW_V edb360_4a;
 COL edb360_4b NEW_V edb360_4b;
 COL edb360_4c NEW_V edb360_4c;
@@ -138,6 +140,8 @@ SELECT CASE WHEN '3b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3
 SELECT CASE WHEN '3c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3c_' ELSE '--' END edb360_3c FROM DUAL;
 SELECT CASE WHEN '3d' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3d_' ELSE '--' END edb360_3d FROM DUAL;
 SELECT CASE WHEN '3e' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3e_' ELSE '--' END edb360_3e FROM DUAL;
+SELECT CASE WHEN '3f' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3f_' ELSE '--' END edb360_3f FROM DUAL;
+SELECT CASE WHEN '3g' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3g_' ELSE '--' END edb360_3g FROM DUAL;
 SELECT CASE WHEN '4a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4a_' ELSE '--' END edb360_4a FROM DUAL;
 SELECT CASE WHEN '4b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4b_' ELSE '--' END edb360_4b FROM DUAL;
 SELECT CASE WHEN '4c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4c_' ELSE '--' END edb360_4c FROM DUAL;
@@ -400,6 +404,15 @@ VAR file_seq NUMBER;
 EXEC :file_seq := 6;
 VAR get_time_t0 NUMBER;
 VAR get_time_t1 NUMBER;
+COL edb360_prev_sql_id NEW_V edb360_prev_sql_id;
+COL edb360_prev_child_number NEW_V edb360_prev_child_number;
+DEF current_time = '';
+COL edb360_tuning_pack_for_sqlmon NEW_V edb360_tuning_pack_for_sqlmon;
+COL skip_sqlmon_exec NEW_V skip_sqlmon_exec;
+COL edb360_sql_text_100 NEW_V edb360_sql_text_100;
+DEF exact_matching_signature = '';
+DEF force_matching_signature = '';
+
 -- Exadata
 ALTER SESSION SET "_serial_direct_read" = ALWAYS;
 ALTER SESSION SET "_small_table_threshold" = 1001;
@@ -411,6 +424,9 @@ ALTER SESSION SET NLS_TIMESTAMP_TZ_FORMAT = 'YYYY-MM-DD/HH24:MI:SS.FF TZH:TZM';
 -- adding to prevent slow access to ASH with non default NLS settings
 ALTER SESSION SET NLS_SORT = 'BINARY';
 ALTER SESSION SET NLS_COMP = 'BINARY';
+-- workaround Siebel
+ALTER SESSION SET optimizer_index_cost_adj = 100;
+ALTER SESSION SET optimizer_dynamic_sampling = 2;
 
 -- tracing script in case it takes long to execute so we can diagnose it
 ALTER SESSION SET MAX_DUMP_FILE_SIZE = '1G';
@@ -451,6 +467,7 @@ SPO &&edb360_log..txt;
 PRO begin log
 PRO
 DEF;
+SHOW PARAMETERS;
 SPO OFF;
 
 -- main header

@@ -1,4 +1,5 @@
 @@edb360_0g_tkprof.sql
+DEF section_id = '7b';
 DEF files_prefix = '';
 COL call_sqld360_bitmask NEW_V call_sqld360_bitmask FOR A6;
 SELECT SUBSTR(
@@ -131,6 +132,7 @@ BEGIN
       put_line('HOS zip -mq &&edb360_main_filename._&&edb360_file_time. sqlash_'||i.sql_id||'.zip');
       put_line('HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html');
     END IF;
+    /*
     IF i.rank_num <= 8 THEN
       update_log('SQLHC');
       put_line('@@sql/sqlhc.sql &&license_pack. '||i.sql_id);
@@ -142,6 +144,7 @@ BEGIN
       put_line('HOS zip -mq &&edb360_main_filename._&&edb360_file_time. '||CHR(38)||chr(38)||'files_prefix..zip');
       put_line('HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html');
     END IF;
+    */
     IF i.rank_num <= 8 THEN
       update_log('SQLD360');
       put_line('-- prepares execution of sqld360');

@@ -1,4 +1,5 @@
 @@edb360_0g_tkprof.sql
+DEF section_id = '7a';
 SET VER OFF FEED OFF SERVEROUT ON HEAD OFF PAGES 50000 LIN 32767 TRIMS ON TRIM ON TI OFF TIMI OFF ARRAY 100;
 DEF section_name = 'AWR/ADDM/ASH Reports';
 SPO &&edb360_main_report..html APP;

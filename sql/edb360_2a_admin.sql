@@ -1,4 +1,5 @@
 @@edb360_0g_tkprof.sql
+DEF section_id = '2a';
 DEF section_name = 'Database Administration';
 SPO &&edb360_main_report..html APP;
 PRO <h2>&&section_name.</h2>
@@ -326,7 +327,7 @@ SELECT /*+ &&top_level_hints. */
 END;
 /
 @@edb360_9a_pre_one.sql
-
+       
 DEF title = 'Indexes not recently used';
 DEF main_table = 'DBA_INDEXES';
 BEGIN
@@ -357,6 +358,18 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */
    AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
    AND current_obj# > 0
+),
+sql_mem AS (
+SELECT /*+ &&sq_fact_hints. &&ds_hint. */
+       DISTINCT object_owner, object_name
+  FROM gv$sql_plan 
+WHERE operation = ''INDEX''
+),
+sql_awr AS (
+SELECT /*+ &&sq_fact_hints. &&ds_hint. */
+       DISTINCT object_owner, object_name
+  FROM dba_hist_sql_plan
+ WHERE operation = ''INDEX'' AND dbid = &&edb360_dbid.
 )
 SELECT /*+ &&top_level_hints. */
        i.table_owner,
@@ -366,25 +379,10 @@ SELECT /*+ &&top_level_hints. */
  WHERE (index_type LIKE ''NORMAL%'' OR index_type = ''BITMAP''  OR index_type LIKE ''FUNCTION%'')
    AND i.table_owner NOT IN &&exclusion_list.
    AND i.table_owner NOT IN &&exclusion_list2.
-   AND (i.owner, i.index_name) NOT IN (
-SELECT o.owner, o.object_name
-  FROM ash_mem a,
-       objects o
- WHERE o.object_id = a.current_obj# )
-   AND (i.owner, i.index_name) NOT IN (
-SELECT o.owner, o.object_name
-  FROM ash_awr a,
-       objects o
- WHERE o.object_id = a.current_obj# )
-   AND (i.owner, i.index_name) NOT IN (
-SELECT object_owner, object_name
-  FROM gv$sql_plan
- WHERE operation = ''INDEX'' )
-   AND (i.owner, i.index_name) NOT IN (
-SELECT object_owner, object_name
-  FROM dba_hist_sql_plan
- WHERE operation = ''INDEX''
-   AND dbid = &&edb360_dbid. )
+   AND (i.owner, i.index_name) NOT IN ( SELECT o.owner, o.object_name FROM ash_mem a, objects o WHERE o.object_id = a.current_obj# )
+   AND (i.owner, i.index_name) NOT IN ( SELECT o.owner, o.object_name FROM ash_awr a, objects o WHERE o.object_id = a.current_obj# )
+   AND (i.owner, i.index_name) NOT IN ( SELECT object_owner, object_name FROM sql_mem)
+   AND (i.owner, i.index_name) NOT IN ( SELECT object_owner, object_name FROM sql_awr)
  ORDER BY
        i.table_owner,
        i.table_name,

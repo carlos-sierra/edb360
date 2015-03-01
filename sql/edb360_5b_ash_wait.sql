@@ -1,4 +1,5 @@
 @@edb360_0g_tkprof.sql
+DEF section_id = '5b';
 DEF section_name = 'Active Session History (ASH) on Wait Class';
 SPO &&edb360_main_report..html APP;
 PRO <h2>&&section_name.</h2>

@@ -1,4 +1,5 @@
 @@edb360_0g_tkprof.sql
+DEF section_id = '1f';
 DEF section_name = 'Resources (outdated section)';
 SPO &&edb360_main_report..html APP;
 PRO <h2>&&section_name.</h2>
@@ -61,8 +62,8 @@ SELECT /*+ &&sq_fact_hints. */
 ),
 sub_totals AS (
 SELECT /*+ &&sq_fact_hints. */
-       d.dbid,
-       d.name db_name,
+       (SELECT dbid FROM v$database) dbid,
+       (SELECT name FROM v$database) db_name,
        LOWER(SUBSTR(i.host_name||''.'', 1, INSTR(i.host_name||''.'', ''.'') - 1)) host_name,
        i.instance_number,
        i.instance_name,
@@ -94,12 +95,9 @@ SELECT /*+ &&sq_fact_hints. */
        ROUND(AVG(c.aas_on_cpu), 1) aas_on_cpu_avg,
        ROUND(AVG(c.aas_resmgr_cpu_quantum), 1) aas_resmgr_cpu_quantum_avg
   FROM samples_on_cpu c,
-       gv$instance i,
-       v$database d
- WHERE i.inst_id = c.inst_id
+       gv$instance i
+ WHERE i.inst_id(+) = c.inst_id
  GROUP BY
-       d.dbid,
-       d.name,
        i.host_name,
        i.instance_number,
        i.instance_name

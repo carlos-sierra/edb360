@@ -1,4 +1,5 @@
 @@edb360_0g_tkprof.sql
+DEF section_id = '6g';
 DEF section_name = 'Active Session History (ASH) - Top PLSQL Procedures';
 SPO &&edb360_main_report..html APP;
 PRO <h2>&&section_name.</h2>
@@ -31,8 +32,8 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */
    AND s.instance_number = h.instance_number
    AND s.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND s.dbid = &&edb360_dbid.
-   AND e.object_id = h.plsql_entry_object_id 
-   AND e.subprogram_id = h.plsql_entry_subprogram_id
+   AND e.object_id(+) = h.plsql_entry_object_id 
+   AND e.subprogram_id(+) = h.plsql_entry_subprogram_id
    AND p.object_id(+) = CASE WHEN h.plsql_entry_object_id != h.plsql_object_id AND h.plsql_entry_subprogram_id != h.plsql_subprogram_id THEN h.plsql_object_id END
    AND p.subprogram_id(+) = CASE WHEN h.plsql_entry_object_id != h.plsql_object_id AND h.plsql_entry_subprogram_id != h.plsql_subprogram_id THEN h.plsql_subprogram_id END
  GROUP BY
@@ -46,7 +47,8 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */
        1 DESC
 ),
 total AS (
-SELECT SUM(samples) samples,
+SELECT /*+ &&sq_fact_hints. */
+       SUM(samples) samples,
        SUM(CASE WHEN ROWNUM > &&slices. THEN samples ELSE 0 END) others
   FROM events
 )

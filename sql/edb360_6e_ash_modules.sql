@@ -1,4 +1,5 @@
 @@edb360_0g_tkprof.sql
+DEF section_id = '6e';
 DEF section_name = 'Active Session History (ASH) - Top Modules and Actions';
 SPO &&edb360_main_report..html APP;
 PRO <h2>&&section_name.</h2>

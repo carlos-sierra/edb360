@@ -67,6 +67,46 @@ HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..htm
 @@&&skip_lch.edb360_9e_one_line_chart.sql
 @@&&skip_pch.edb360_9f_one_pie_chart.sql
 HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_log2..txt
+
+-- sql monitor long executions of sql from edb360
+--SPO &&edb360_log..txt APP;
+--PRO sql monitor long executions of sql from edb360
+SELECT 'N' edb360_tuning_pack_for_sqlmon, '--' skip_sqlmon_exec FROM DUAL
+/
+SELECT '&&tuning_pack.' edb360_tuning_pack_for_sqlmon, NULL skip_sqlmon_exec, SUBSTR(sql_text, 1, 100) edb360_sql_text_100, elapsed_time FROM v$sql 
+WHERE sql_id = '&&edb360_prev_sql_id.' AND elapsed_time / 1e6 > 60 /* seconds */
+/
+--PRO edb360_prev_sql_id: "&&edb360_prev_sql_id."
+--PRO edb360_sql_text_100: "&&edb360_sql_text_100."
+--PRO edb360_tuning_pack_for_sqlmon: "&&edb360_tuning_pack_for_sqlmon."
+--PRO skip_tuning: "&&skip_tuning."
+--PRO skip_sqlmon_exec: "&&skip_sqlmon_exec."
+--PRO @@&&skip_tuning.&&skip_sqlmon_exec.sqlmon.sql &&edb360_tuning_pack_for_sqlmon. &&edb360_prev_sql_id.
+@@&&skip_tuning.&&skip_sqlmon_exec.sqlmon.sql &&edb360_tuning_pack_for_sqlmon. &&edb360_prev_sql_id.
+--PRO HOS zip -mq &&edb360_main_filename._&&edb360_file_time. sqlmon_&&edb360_prev_sql_id._&&current_time..zip
+HOS zip -mq &&edb360_main_filename._&&edb360_file_time. sqlmon_&&edb360_prev_sql_id._&&current_time..zip
+--SPO OFF;
+
+-- needed after sqlmon
+SET TERM OFF; 
+SET HEA ON; 
+SET LIN 32767; 
+SET NEWP NONE; 
+SET PAGES &&def_max_rows.; 
+SET LONG 32000; 
+SET LONGC 2000; 
+SET WRA ON; 
+SET TRIMS ON; 
+SET TRIM ON; 
+SET TI OFF; 
+SET TIMI OFF; 
+SET ARRAY 100; 
+SET NUM 20; 
+SET SQLBL ON; 
+SET BLO .; 
+SET RECSEP OFF;
+
+-- cleanup
 EXEC :sql_text := NULL;
 COL row_num FOR 9999999 HEA '#' PRI;
 DEF abstract = '';

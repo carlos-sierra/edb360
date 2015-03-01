@@ -1,4 +1,5 @@
 @@edb360_0g_tkprof.sql
+DEF section_id = '4g';
 DEF section_name = 'I/O Waits Histogram for Top Wait Events';
 SPO &&edb360_main_report..html APP;
 PRO <h2>&&section_name.</h2>

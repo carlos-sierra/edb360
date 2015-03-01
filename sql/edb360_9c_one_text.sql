@@ -32,6 +32,12 @@ PRO
 -- body
 /
 
+-- get sql_id
+--SPO &&edb360_log..txt APP;
+SELECT prev_sql_id edb360_prev_sql_id, TO_CHAR(prev_child_number) edb360_prev_child_number FROM v$session WHERE sid = SYS_CONTEXT('USERENV', 'SID')
+/
+--SPO &&one_spool_filename..txt;
+
 -- footer
 PRO &&foot.
 SET LIN 80;
@@ -53,8 +59,8 @@ EXEC :get_time_t1 := DBMS_UTILITY.get_time;
 SET HEA OFF;
 SPO &&edb360_log2..txt APP;
 SELECT TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS')||' , '||
-       TO_CHAR((:get_time_t1 - :get_time_t0)/100, '999999990.00')||' , '||
-       :row_count||' , &&main_table. , &&title_no_spaces., text , &&one_spool_filename..txt'
+       TO_CHAR((:get_time_t1 - :get_time_t0)/100, '999999990.00')||' , rows:'||
+       :row_count||' , &&section_id., &&main_table., &&edb360_prev_sql_id., &&edb360_prev_child_number., &&title_no_spaces., html , &&one_spool_filename..txt'
   FROM DUAL
 /
 SPO OFF;

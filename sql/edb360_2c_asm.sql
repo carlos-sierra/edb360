@@ -1,4 +1,5 @@
 @@edb360_0g_tkprof.sql
+DEF section_id = '2c';
 DEF section_name = 'Automatic Storage Management (ASM)';
 SPO &&edb360_main_report..html APP;
 PRO <h2>&&section_name.</h2>

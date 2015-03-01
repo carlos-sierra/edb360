@@ -1,4 +1,5 @@
 @@edb360_0g_tkprof.sql
+DEF section_id = '5c';
 DEF section_name = 'Active Session History (ASH) on CPU and Top 24 Wait Events';
 SPO &&edb360_main_report..html APP;
 PRO <h2>&&section_name.</h2>
@@ -6,7 +7,7 @@ SPO OFF;
 
 -- from 5a
 SET SERVEROUT ON;
-SPO 9983_&&common_edb360_prefix._chart_setup_driver2.sql;
+SPO 9984_&&common_edb360_prefix._chart_setup_driver2.sql;
 DECLARE
   l_count NUMBER;
 BEGIN
@@ -25,8 +26,8 @@ END;
 /
 SPO OFF;
 SET SERVEROUT OFF;
-@9983_&&common_edb360_prefix._chart_setup_driver2.sql;
-HOS zip -mq &&edb360_main_filename._&&edb360_file_time. 9983_&&common_edb360_prefix._chart_setup_driver2.sql
+@9984_&&common_edb360_prefix._chart_setup_driver2.sql;
+HOS zip -mq &&edb360_main_filename._&&edb360_file_time. 9984_&&common_edb360_prefix._chart_setup_driver2.sql
 
 DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
 DEF chartype = 'AreaChart';

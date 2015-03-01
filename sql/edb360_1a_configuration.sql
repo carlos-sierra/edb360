@@ -1,4 +1,5 @@
 @@edb360_0g_tkprof.sql
+DEF section_id = '1a';
 DEF section_name = 'Database Configuration';
 SPO &&edb360_main_report..html APP;
 PRO <h2>&&section_name.</h2>
@@ -211,6 +212,21 @@ SELECT /*+ &&top_level_hints. */
 END;
 /
 @@edb360_9a_pre_one.sql
+
+DEF title = 'HWM Statistics';
+DEF main_table = 'DBA_HIGH_WATER_MARK_STATISTICS';
+BEGIN
+  :sql_text := '
+SELECT /*+ &&top_level_hints. */
+       *
+  FROM dba_high_water_mark_statistics
+ ORDER BY
+       dbid,
+       name
+';
+END;
+/
+@@&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF title = 'Database Links';
 DEF main_table = 'DBA_DB_LINKS';
