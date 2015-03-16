@@ -23,7 +23,7 @@ DEF column_number = '1';
 @@&&edb360_1c.memory.sql
 @@&&edb360_1d.resources.sql
 @@&&edb360_1e.resources_statspack.sql
-@@&&edb360_1f.resources_outdated.sql
+--@@&&edb360_1f.resources_outdated.sql
 
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -141,3 +141,6 @@ PRO
 PRO </td></tr></table>
 SPO OFF;
 @@edb360_0c_post.sql
+
+-- list of generated files
+HOS unzip -l &&edb360_main_filename._&&edb360_file_time.

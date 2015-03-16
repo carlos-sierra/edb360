@@ -1,7 +1,8 @@
 @@edb360_0g_tkprof.sql
 DEF section_id = '7a';
 SET VER OFF FEED OFF SERVEROUT ON HEAD OFF PAGES 50000 LIN 32767 TRIMS ON TRIM ON TI OFF TIMI OFF ARRAY 100;
-DEF section_name = 'AWR/ADDM/ASH Reports';
+--DEF section_name = 'AWR/ADDM/ASH Reports';
+DEF section_name = 'AWR/ADDM Reports';
 SPO &&edb360_main_report..html APP;
 PRO <h2 title="For max/min/med 'DB time' + 'background elapsed time' for past 7 and &&history_days. days (for each instance)">&&section_name.</h2>
 SPO OFF;
@@ -403,6 +404,7 @@ BEGIN
       put_line('EXEC DBMS_ADVISOR.DELETE_TASK(task_name => :l_task_name);');
 
       -- ash one node
+      /*
       l_standard_filename := 'ashrpt_'||i.instance_number||'_'||j.bid||'_'||j.eid||'_'||j.rep;
       l_spool_filename := '&&common_edb360_prefix._'||l_standard_filename;
       put_line('COL hh_mm_ss NEW_V hh_mm_ss NOPRI FOR A8;');
@@ -444,6 +446,7 @@ BEGIN
         put_line('HOS zip -mq &&edb360_main_filename._&&edb360_file_time. '||l_one_spool_filename||'.txt');
         put_line('HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html');
       END;
+      */
 
       -- main report
       put_line('-- update main report');
@@ -822,6 +825,7 @@ BEGIN
       END IF;
       
       -- ash all nodes
+      /*
       IF l_instances > 1 AND '&&db_version.' >= '11' THEN
         l_standard_filename := 'ashrpt_rac_'||j.bid||'_'||j.eid||'_'||j.rep;
         l_spool_filename := '&&common_edb360_prefix._'||l_standard_filename;
@@ -865,6 +869,7 @@ BEGIN
           put_line('HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html');
         END;
       END IF;
+      */
               
       -- main report
       put_line('-- update main report');

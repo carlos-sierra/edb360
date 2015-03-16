@@ -6,8 +6,8 @@ SET ECHO OFF;
 SET TIM OFF;
 SET TIMI OFF;
 CL COL;
-DEF edb360_vYYNN = 'v1506';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2015-02-28)';
+DEF edb360_vYYNN = 'v1507';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2015-03-16)';
 
 -- parameters
 PRO
@@ -404,8 +404,8 @@ VAR file_seq NUMBER;
 EXEC :file_seq := 6;
 VAR get_time_t0 NUMBER;
 VAR get_time_t1 NUMBER;
-COL edb360_prev_sql_id NEW_V edb360_prev_sql_id;
-COL edb360_prev_child_number NEW_V edb360_prev_child_number;
+COL edb360_prev_sql_id NEW_V edb360_prev_sql_id NOPRI;
+COL edb360_prev_child_number NEW_V edb360_prev_child_number NOPRI;
 DEF current_time = '';
 COL edb360_tuning_pack_for_sqlmon NEW_V edb360_tuning_pack_for_sqlmon;
 COL skip_sqlmon_exec NEW_V skip_sqlmon_exec;
@@ -486,7 +486,7 @@ SPO OFF;
 -- zip
 HOS zip -qmT &&edb360_main_filename._&&edb360_file_time. esp_requirements_&&esp_host_name_short..zip 
 HOS zip -jq &&edb360_main_filename._&&edb360_file_time. js/sorttable.js
-HOS zip -r osw_&&esp_host_name_short..zip `ps -ef | grep OSW | grep FM | awk -F 'OSW' '{print $2}' | cut -f 3 -d ' '`
-HOS zip -qmT &&edb360_main_filename._&&edb360_file_time. osw_&&esp_host_name_short..zip
+--HOS zip -r osw_&&esp_host_name_short..zip `ps -ef | grep OSW | grep FM | awk -F 'OSW' '{print $2}' | cut -f 3 -d ' '`
+--HOS zip -qmT &&edb360_main_filename._&&edb360_file_time. osw_&&esp_host_name_short..zip
 
 --WHENEVER SQLERROR CONTINUE;

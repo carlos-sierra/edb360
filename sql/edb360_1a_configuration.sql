@@ -311,6 +311,7 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+-- removing since it may disconnect from Oracle when executed with user other than SYS
 DEF title = 'Alert Log';
 DEF main_table = 'X$DBGALERTEXT';
 BEGIN
@@ -324,7 +325,7 @@ ORDER BY originating_timestamp DESC
 ';
 END;
 /
-@@&&skip_10g.edb360_9a_pre_one.sql
+--@@&&skip_10g.edb360_9a_pre_one.sql
 
 DEF title = 'SQLTXPLAIN Version';
 DEF main_table = 'SQLTXPLAIN.SQLI$_PARAMETER';

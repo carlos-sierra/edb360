@@ -31,4 +31,6 @@ EOF
 
 done
 zip -qmT edb360_output.zip edb360_*.zip
+zip -r osw_output.zip `ps -ef | grep OSW | grep FM | awk -F 'OSW' '{print $2}' | cut -f 3 -d ' '`
+
 echo "End edb360 collector. Output: edb360_output.zip"

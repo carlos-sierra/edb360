@@ -121,6 +121,7 @@ BEGIN
       put_line('HOS zip -mq &&edb360_main_filename._&&edb360_file_time. sqlmon_'||i.sql_id||'_'||CHR(38)||chr(38)||'current_time..zip');
       put_line('HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html');
     END IF;
+    /*
     IF i.rank_num <= 16 AND '&&skip_diagnostics.' IS NULL THEN
       update_log('SQLASH');
       put_line('@@sql/sqlash.sql &&diagnostics_pack. '||i.sql_id);
@@ -132,6 +133,7 @@ BEGIN
       put_line('HOS zip -mq &&edb360_main_filename._&&edb360_file_time. sqlash_'||i.sql_id||'.zip');
       put_line('HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html');
     END IF;
+    */
     /*
     IF i.rank_num <= 8 THEN
       update_log('SQLHC');

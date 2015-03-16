@@ -73,7 +73,11 @@ SELECT /*+ &&top_level_hints. */
        MAX(blocks) max_blocks,
        MIN(last_analyzed) min_last_analyzed,
        MAX(last_analyzed) max_last_analyzed,
-       MEDIAN(last_analyzed) median_last_analyzed
+       MEDIAN(last_analyzed) median_last_analyzed,
+       PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_75_percentile,
+       PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_90_percentile,
+       PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_95_percentile,
+       PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_99_percentile
   FROM dba_tables
  WHERE table_name NOT LIKE ''BIN$%'' -- bug 9930151 reported by brad peek
  GROUP BY
@@ -102,7 +106,11 @@ SELECT /*+ &&top_level_hints. */
        MAX(blocks) max_blocks,
        MIN(last_analyzed) min_last_analyzed,
        MAX(last_analyzed) max_last_analyzed,
-       MEDIAN(last_analyzed) median_last_analyzed
+       MEDIAN(last_analyzed) median_last_analyzed,
+       PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_75_percentile,
+       PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_90_percentile,
+       PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_95_percentile,
+       PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_99_percentile
   FROM dba_tab_statistics
  WHERE table_name NOT LIKE ''BIN$%'' -- bug 9930151 reported by brad peek
  GROUP BY
@@ -128,7 +136,11 @@ SELECT /*+ &&top_level_hints. */
        SUM(DECODE(histogram, ''NONE'', 0, 1)) histogram,
        MIN(last_analyzed) min_last_analyzed,
        MAX(last_analyzed) max_last_analyzed,
-       MEDIAN(last_analyzed) median_last_analyzed
+       MEDIAN(last_analyzed) median_last_analyzed,
+       PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_75_percentile,
+       PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_90_percentile,
+       PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_95_percentile,
+       PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_99_percentile
   FROM dba_tab_cols
  WHERE table_name NOT LIKE ''BIN$%'' -- bug 9930151 reported by brad peek
    AND owner NOT IN &&exclusion_list.
@@ -165,7 +177,11 @@ SELECT /*+ &&top_level_hints. */
        MAX(blevel) max_blevel,
        MIN(last_analyzed) min_last_analyzed,
        MAX(last_analyzed) max_last_analyzed,
-       MEDIAN(last_analyzed) median_last_analyzed
+       MEDIAN(last_analyzed) median_last_analyzed,
+       PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_75_percentile,
+       PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_90_percentile,
+       PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_95_percentile,
+       PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_99_percentile
   FROM dba_indexes
  WHERE owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
@@ -194,7 +210,11 @@ SELECT /*+ &&top_level_hints. */
        MAX(blevel) max_blevel,
        MIN(last_analyzed) min_last_analyzed,
        MAX(last_analyzed) max_last_analyzed,
-       MEDIAN(last_analyzed) median_last_analyzed
+       MEDIAN(last_analyzed) median_last_analyzed,
+       PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_75_percentile,
+       PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_90_percentile,
+       PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_95_percentile,
+       PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_99_percentile
   FROM dba_ind_statistics
  WHERE owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
@@ -233,7 +253,11 @@ SELECT /*+ &&top_level_hints. */
        MAX(blocks) max_blocks,
        MIN(last_analyzed) min_last_analyzed,
        MAX(last_analyzed) max_last_analyzed,
-       MEDIAN(last_analyzed) median_last_analyzed
+       MEDIAN(last_analyzed) median_last_analyzed,
+       PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_75_percentile,
+       PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_90_percentile,
+       PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_95_percentile,
+       PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_99_percentile
   FROM dba_tab_partitions
  WHERE table_owner NOT IN &&exclusion_list.
    AND table_owner NOT IN &&exclusion_list2.
@@ -267,7 +291,11 @@ SELECT /*+ &&top_level_hints. */
        MAX(blevel) max_blevel,
        MIN(last_analyzed) min_last_analyzed,
        MAX(last_analyzed) max_last_analyzed,
-       MEDIAN(last_analyzed) median_last_analyzed
+       MEDIAN(last_analyzed) median_last_analyzed,
+       PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_75_percentile,
+       PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_90_percentile,
+       PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_95_percentile,
+       PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_99_percentile
   FROM dba_ind_partitions
  WHERE index_owner NOT IN &&exclusion_list.
    AND index_owner NOT IN &&exclusion_list2.
