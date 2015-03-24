@@ -26,11 +26,12 @@ for INST in $(ps axo cmd | grep ora_pmo[n] | sed 's/^ora_pmon_//' | grep -v 'sed
 sqlplus -s /nolog <<EOF
 connect / as sysdba
 
-@sql/edb360_0a_main.sql T 31
+@sql/edb360_0a_main.sql T
 EOF
 
 done
-zip -qmT edb360_output.zip edb360_*.zip
+zip -qmT esp_requirements_host.zip res_requirements_*.txt esp_requirements_*.csv cpuinfo_model_name.txt 
+zip -qmT edb360_output.zip edb360_*.zip esp_requirements_host.zip
 zip -r osw_output.zip `ps -ef | grep OSW | grep FM | awk -F 'OSW' '{print $2}' | cut -f 3 -d ' '`
 
-echo "End edb360 collector. Output: edb360_output.zip"
+echo "End edb360 collector. Output: edb360_output.zip and osw_output.zip"

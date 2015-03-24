@@ -647,6 +647,29 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+DEF title = 'Segments in Reserved Tablespaces';
+DEF main_table = 'DBA_SEGMENTS';
+BEGIN
+  :sql_text := '
+-- provided by Simon Pane
+SELECT /*+ &&top_level_hints. */ 
+       s.owner, s.segment_type, s.tablespace_name, COUNT(1)
+  FROM sys.dba_segments s
+ WHERE s.owner NOT IN (''SYS'',''SYSTEM'',''OUTLN'',''AURORA$JIS$UTILITY$'',''OSE$HTTP$ADMIN'',''ORACACHE'',''ORDSYS'',
+                       ''CTXSYS'',''DBSNMP'',''DMSYS'',''EXFSYS'',''MDSYS'',''OLAPSYS'',''SYSMAN'',''TSMSYS'',''WMSYS'',''XDB'')
+   AND s.tablespace_name IN (''SYSTEM'',''SYSAUX'',''TEMP'',''TEMPORARY'',''RBS'',''ROLLBACK'',''ROLLBACKS'',''RBSEGS'')
+   AND s.tablespace_name NOT IN (SELECT tablespace_name
+                                   FROM sys.dba_tablespaces
+                                  WHERE contents IN (''UNDO'',''TEMPORARY'')
+                                )
+and s.owner not in &&exclusion_list.
+and s.owner not in &&exclusion_list2.
+ GROUP BY s.owner, s.segment_type, s.tablespace_name
+ ORDER BY 1,2,3';
+END;
+/
+@@edb360_9a_pre_one.sql
+
 DEF title = 'Segment Shrink Recommendations';
 DEF main_table = 'DBMS_SPACE';
 BEGIN

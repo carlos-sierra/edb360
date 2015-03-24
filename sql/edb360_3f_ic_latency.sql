@@ -14,60 +14,57 @@ DEF vbaseline = '';
 BEGIN
   :sql_text_backup := '
 WITH
-per_source_and_target AS (
+interconnect_pings AS (
 SELECT /*+ &&sq_fact_hints. &&ds_hint. */
-       MAX(h1.snap_id) snap_id,
-       h1.instance_number,
-       h1.target_instance,
-       TO_CHAR(s1.begin_interval_time, ''YYYY-MM-DD HH24:MI'') begin_time,
-       TO_CHAR(s1.end_interval_time, ''YYYY-MM-DD HH24:MI'') end_time,
-       SUM(h1.cnt_500b - h0.cnt_500b) cnt_500b,
-       SUM(h1.cnt_8k - h0.cnt_8k) cnt_8k,
-       SUM(h1.wait_500b - h0.wait_500b) wait_500b,
-       SUM(h1.wait_8k - h0.wait_8k) wait_8k,
-       ROUND(SUM(h1.wait_500b - h0.wait_500b) / SUM(h1.cnt_500b - h0.cnt_500b) / 1000, 2) Avg_Latency_500B_msg,
-       ROUND(SUM(h1.wait_8k - h0.wait_8k) / SUM(h1.cnt_8k - h0.cnt_8k) / 1000, 2) Avg_Latency_8K_msg
-  FROM dba_hist_interconnect_pings h0,
-       dba_hist_interconnect_pings h1,
-       dba_hist_snapshot s0,
-       dba_hist_snapshot s1
- WHERE h0.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
-   AND h0.dbid = &&edb360_dbid.
-   AND h1.snap_id = h0.snap_id + 1
-   AND h1.dbid = h0.dbid
-   AND h1.instance_number = h0.instance_number
-   AND h1.target_instance = h0.target_instance
-   AND s0.snap_id = h0.snap_id
-   AND s0.dbid = h0.dbid
-   AND s0.instance_number = h0.instance_number
-   AND s0.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
-   AND s0.dbid = &&edb360_dbid.
-   AND s1.snap_id = h1.snap_id
-   AND s1.dbid = h1.dbid
-   AND s1.instance_number = h1.instance_number
-   AND s1.snap_id = s0.snap_id + 1
-   AND s1.startup_time = s0.startup_time
-   AND s1.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
-   AND s1.dbid = &&edb360_dbid.
-   AND s1.begin_interval_time > (s0.begin_interval_time + (1 / (24 * 60))) /* filter out snaps apart < 1 min */
-   AND ((TO_DATE(TO_CHAR(s1.end_interval_time, ''YYYY-MM-DD HH24:MI''), ''YYYY-MM-DD HH24:MI'') -
-         TO_DATE(TO_CHAR(s1.begin_interval_time, ''YYYY-MM-DD HH24:MI''), ''YYYY-MM-DD HH24:MI'')) * 24 * 3600) > 0
-   AND (h1.cnt_500b - h0.cnt_500b) > 0
-   AND (h1.cnt_8k - h0.cnt_8k) > 0
-   AND (h1.wait_500b - h0.wait_500b) > 0
-   AND (h1.wait_8k - h0.wait_8k) > 0
+       h.snap_id,
+       h.dbid,
+       h.instance_number,
+       h.target_instance,
+       s.end_interval_time,
+       s.startup_time - LAG(s.startup_time) OVER (PARTITION BY h.dbid, h.instance_number, h.target_instance ORDER BY h.snap_id) startup_time_interval,
+       h.cnt_500b - LAG(h.cnt_500b) OVER (PARTITION BY h.dbid, h.instance_number, h.target_instance ORDER BY h.snap_id) cnt_500b,
+       h.cnt_8k - LAG(h.cnt_8k) OVER (PARTITION BY h.dbid, h.instance_number, h.target_instance ORDER BY h.snap_id) cnt_8k,
+       h.wait_500b - LAG(h.wait_500b) OVER (PARTITION BY h.dbid, h.instance_number, h.target_instance ORDER BY h.snap_id) wait_500b,
+       h.wait_8k - LAG(h.wait_8k) OVER (PARTITION BY h.dbid, h.instance_number, h.target_instance ORDER BY h.snap_id) wait_8k
+  FROM dba_hist_interconnect_pings h,
+       dba_hist_snapshot s
+ WHERE h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND h.dbid = &&edb360_dbid.
+   AND h.cnt_500b > 100 -- else too small
+   AND h.cnt_8k > 100 -- else too small
+   AND s.snap_id = h.snap_id
+   AND s.dbid = h.dbid
+   AND s.instance_number = h.instance_number
+   AND s.end_interval_time - s.begin_interval_time > TO_DSINTERVAL(''+00 00:01:00.000000'') -- exclude snaps less than 1m appart
+),
+per_source_and_target AS (
+SELECT /*+ &&sq_fact_hints. */
+       MAX(snap_id) snap_id,
+       instance_number,
+       target_instance,
+       TRUNC(end_interval_time, ''HH'') end_time,
+       SUM(cnt_500b) cnt_500b,
+       SUM(cnt_8k) cnt_8k,
+       SUM(wait_500b) wait_500b,
+       SUM(wait_8k) wait_8k,
+       ROUND(SUM(wait_500b) / SUM(cnt_500b) / 1000, 2) Avg_Latency_500B_msg,
+       ROUND(SUM(wait_8k) / SUM(cnt_8k) / 1000, 2) Avg_Latency_8K_msg
+  FROM interconnect_pings
+ WHERE startup_time_interval = TO_DSINTERVAL(''+00 00:00:00.000000'') -- include only contiguous snaps
+   AND cnt_500b > 0
+   AND cnt_8k > 0 
+   AND wait_500b > 0
+   AND wait_8k > 0
  GROUP BY
-       h1.instance_number,
-       h1.target_instance,
-       TO_CHAR(s1.begin_interval_time, ''YYYY-MM-DD HH24:MI''),
-       TO_CHAR(s1.end_interval_time, ''YYYY-MM-DD HH24:MI'')
+       instance_number,
+       target_instance,
+       TRUNC(end_interval_time, ''HH'')
 ),
 per_source AS (
 SELECT /*+ &&sq_fact_hints. */
        snap_id,
        instance_number,
        -1 target_instance,
-       begin_time,
        end_time,
        SUM(cnt_500b) cnt_500b,
        SUM(cnt_8k) cnt_8k,
@@ -79,7 +76,6 @@ SELECT /*+ &&sq_fact_hints. */
  GROUP BY
        snap_id,
        instance_number,
-       begin_time,
        end_time
 ),
 per_target AS (
@@ -87,7 +83,6 @@ SELECT /*+ &&sq_fact_hints. */
        snap_id,
        -1 instance_number,
        target_instance,
-       begin_time,
        end_time,
        SUM(cnt_500b) cnt_500b,
        SUM(cnt_8k) cnt_8k,
@@ -99,7 +94,6 @@ SELECT /*+ &&sq_fact_hints. */
  GROUP BY
        snap_id,
        target_instance,
-       begin_time,
        end_time
 ),
 per_cluster AS (
@@ -107,7 +101,6 @@ SELECT /*+ &&sq_fact_hints. */
        snap_id,
        -1 instance_number,
        -1 target_instance,
-       begin_time,
        end_time,
        SUM(cnt_500b) cnt_500b,
        SUM(cnt_8k) cnt_8k,
@@ -118,15 +111,13 @@ SELECT /*+ &&sq_fact_hints. */
   FROM per_source_and_target
  GROUP BY
        snap_id,
-       begin_time,
        end_time
 ),
 source_and_target_extended AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. LEADING(st) */
        st.snap_id,
        st.instance_number,
        st.target_instance,
-       st.begin_time,
        st.end_time,
        st.Avg_Latency_500B_msg,
        st.Avg_Latency_8K_msg,
@@ -140,23 +131,26 @@ SELECT /*+ &&sq_fact_hints. */
        per_source s,
        per_target t,
        per_cluster c
--- all these outerjoins are not needed, but they workaround a performance issue here
- WHERE s.snap_id(+) = st.snap_id
-   AND s.instance_number(+) = st.instance_number
-   AND s.begin_time(+) = st.begin_time
-   AND s.end_time(+) = st.end_time
-   AND t.snap_id(+) = st.snap_id
-   AND t.target_instance(+) = st.target_instance
-   AND t.begin_time(+) = st.begin_time
-   AND t.end_time(+) = st.end_time
-   AND c.snap_id(+) = st.snap_id
-   AND c.begin_time(+) = st.begin_time
-   AND c.end_time(+) = st.end_time
+ WHERE s.snap_id = st.snap_id
+   AND s.instance_number = st.instance_number
+   AND s.end_time = st.end_time
+   AND t.snap_id = st.snap_id
+   AND t.target_instance = st.target_instance
+   AND t.end_time = st.end_time
+   AND c.snap_id = st.snap_id
+   AND c.end_time = st.end_time
+-- automatic transitivity does not apply to joins
+-- added predicates in case LEADING hint is not obeyed 
+   AND t.snap_id = s.snap_id
+   AND t.end_time = s.end_time
+   AND c.snap_id = s.snap_id
+   AND c.end_time = s.end_time
+   AND c.snap_id = t.snap_id
+   AND c.end_time = t.end_time
  UNION ALL
 SELECT s.snap_id,
        s.instance_number,
        s.target_instance,
-       s.begin_time,
        s.end_time,
        s.Avg_Latency_500B_msg,
        s.Avg_Latency_8K_msg,
@@ -169,13 +163,11 @@ SELECT s.snap_id,
   FROM per_source s,
        per_cluster c
  WHERE c.snap_id = s.snap_id
-   AND c.begin_time = s.begin_time
    AND c.end_time = s.end_time
  UNION ALL
 SELECT t.snap_id,
        t.instance_number,
        t.target_instance,
-       t.begin_time,
        t.end_time,
        t.Avg_Latency_500B_msg,
        t.Avg_Latency_8K_msg,
@@ -188,13 +180,11 @@ SELECT t.snap_id,
   FROM per_target t,
        per_cluster c
  WHERE c.snap_id = t.snap_id
-   AND c.begin_time = t.begin_time
    AND c.end_time = t.end_time
 ),
 denorm_target AS (
 SELECT /*+ &&sq_fact_hints. */
        snap_id,
-       begin_time,
        end_time,
        instance_number inst_num,
        SUM(CASE target_instance WHEN 1 THEN Avg_Latency_500B_msg ELSE 0 END) Avg_Latency_500B_msg_i1,
@@ -221,14 +211,12 @@ SELECT /*+ &&sq_fact_hints. */
  WHERE instance_number = @instance_number@
  GROUP BY
        snap_id,
-       begin_time,
        end_time,
        instance_number
 ),
 denorm_source AS (
 SELECT /*+ &&sq_fact_hints. */
        snap_id,
-       begin_time,
        end_time,
        target_instance inst_num,
        SUM(CASE instance_number WHEN 1 THEN Avg_Latency_500B_msg ELSE 0 END) Avg_Latency_500B_msg_i1,
@@ -255,13 +243,12 @@ SELECT /*+ &&sq_fact_hints. */
  WHERE target_instance = @instance_number@
  GROUP BY
        snap_id,
-       begin_time,
        end_time,
        target_instance
 )
 SELECT snap_id,
-       begin_time,
-       end_time,
+       TO_CHAR(end_time - (1/24), ''YYYY-MM-DD HH24:MI'') begin_time,
+       TO_CHAR(end_time, ''YYYY-MM-DD HH24:MI'') end_time,
        c_Avg_Latency_@msg@_msg cluster_avg,
        i_Avg_Latency_@msg@_msg instance_avg,
        Avg_Latency_@msg@_msg_i1 inst_1,
@@ -280,13 +267,13 @@ SELECT snap_id,
   FROM denorm_@denorm@
  ORDER BY       
        snap_id,
-       begin_time
+       end_time
 ';
 END;
 /
 
 SET SERVEROUT ON;
-SPO 9980_&&common_edb360_prefix._chart_setup_driver2.sql;
+SPO 99800_&&common_edb360_prefix._chart_setup_driver2.sql;
 DECLARE
   l_count NUMBER;
 BEGIN
@@ -305,8 +292,8 @@ END;
 /
 SPO OFF;
 SET SERVEROUT OFF;
-@9980_&&common_edb360_prefix._chart_setup_driver2.sql;
-HOS zip -mq &&edb360_main_filename._&&edb360_file_time. 9980_&&common_edb360_prefix._chart_setup_driver2.sql
+@99800_&&common_edb360_prefix._chart_setup_driver2.sql;
+HOS zip -mq &&edb360_main_filename._&&edb360_file_time. 99800_&&common_edb360_prefix._chart_setup_driver2.sql
 
 DEF tit_01 = 'Cluster Avg';
 DEF tit_02 = '';

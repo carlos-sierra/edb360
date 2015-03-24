@@ -320,7 +320,7 @@ SELECT /*+ &&top_level_hints. */
        originating_timestamp,
        message_text
 FROM sys.x$dbgalertext
-WHERE originating_timestamp > SYSDATE - &&history_days.
+WHERE originating_timestamp BETWEEN TO_DATE('&&edb360_date_from.', 'YYYY-MM-DD') AND TO_DATE('&&edb360_date_to.', 'YYYY-MM-DD') 
 ORDER BY originating_timestamp DESC
 ';
 END;

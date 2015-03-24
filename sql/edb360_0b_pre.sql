@@ -6,8 +6,8 @@ SET ECHO OFF;
 SET TIM OFF;
 SET TIMI OFF;
 CL COL;
-DEF edb360_vYYNN = 'v1507';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2015-03-16)';
+DEF edb360_vYYNN = 'v1508';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2015-03-23)';
 
 -- parameters
 PRO
@@ -43,17 +43,24 @@ BEGIN
   END IF;
 END;
 /
+SET TERM OFF;
 PRO
 PRO Parameter 2: Days of History? (default 31)
 PRO Use default value of 31 unless you have been instructed otherwise.
 PRO
 COL history_days NEW_V history_days;
 -- range: takes at least 31 days and at most as many as actual history, with a default of 31. parameter restricts within that range. 
-SELECT TO_CHAR(LEAST(CEIL(SYSDATE - CAST(MIN(begin_interval_time) AS DATE)), GREATEST(31, TO_NUMBER(NVL(TRIM('&2.'), '31'))))) history_days FROM dba_hist_snapshot WHERE '&&diagnostics_pack.' = 'Y' AND dbid = (SELECT dbid FROM v$database);
-SET TERM OFF;
+SELECT TO_CHAR(LEAST(CEIL(SYSDATE - CAST(MIN(begin_interval_time) AS DATE)), GREATEST(31, TO_NUMBER(NVL(TRIM('&&edb360_conf_days.'), '31'))))) history_days FROM dba_hist_snapshot WHERE '&&diagnostics_pack.' = 'Y' AND dbid = (SELECT dbid FROM v$database);
+SELECT TO_CHAR(TO_DATE('&&edb360_conf_date_to.', 'YYYY-MM-DD') - TO_DATE('&&edb360_conf_date_from.', 'YYYY-MM-DD') + 1) history_days FROM DUAL WHERE '&&edb360_conf_date_from.' != 'YYYY-MM-DD' AND '&&edb360_conf_date_to.' != 'YYYY-MM-DD';
 SELECT '0' history_days FROM DUAL WHERE NVL(TRIM('&&diagnostics_pack.'), 'N') = 'N';
+SET TERM OFF;
 COL hist_work_days NEW_V hist_work_days;
 SELECT TRIM(TO_CHAR(ROUND(TO_NUMBER('&&history_days.')*5/7))) hist_work_days FROM DUAL;
+
+COL edb360_date_from NEW_V edb360_date_from;
+COL edb360_date_to NEW_V edb360_date_to;
+SELECT CASE '&&edb360_conf_date_from.' WHEN 'YYYY-MM-DD' THEN TO_CHAR(SYSDATE - &&history_days., 'YYYY-MM-DD') ELSE '&&edb360_conf_date_from.' END edb360_date_from FROM DUAL;
+SELECT CASE '&&edb360_conf_date_to.' WHEN 'YYYY-MM-DD' THEN TO_CHAR(SYSDATE + 1, 'YYYY-MM-DD') ELSE '&&edb360_conf_date_to.' END edb360_date_to FROM DUAL;
 
 -- hidden parameter _o_release: report column, or section, or range of columns or range of sections i.e. 3, 3-4, 3a, 3a-4c, 3-4c, 3c-4
 VAR edb360_sec_from VARCHAR2(2);
@@ -94,6 +101,7 @@ COL edb360_1c NEW_V edb360_1c;
 COL edb360_1d NEW_V edb360_1d;
 COL edb360_1e NEW_V edb360_1e;
 COL edb360_1f NEW_V edb360_1f;
+COL edb360_1g NEW_V edb360_1g;
 COL edb360_2a NEW_V edb360_2a;
 COL edb360_2b NEW_V edb360_2b;
 COL edb360_2c NEW_V edb360_2c;
@@ -131,6 +139,7 @@ SELECT CASE WHEN '1c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_1
 SELECT CASE WHEN '1d' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_1d_' ELSE '--' END edb360_1d FROM DUAL;
 SELECT CASE WHEN '1e' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_1e_' ELSE '--' END edb360_1e FROM DUAL;
 SELECT CASE WHEN '1f' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_1f_' ELSE '--' END edb360_1f FROM DUAL;
+SELECT CASE WHEN '1g' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_1g_' ELSE '--' END edb360_1g FROM DUAL;
 SELECT CASE WHEN '2a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_2a_' ELSE '--' END edb360_2a FROM DUAL;
 SELECT CASE WHEN '2b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_2b_' ELSE '--' END edb360_2b FROM DUAL;
 SELECT CASE WHEN '2c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_2c_' ELSE '--' END edb360_2c FROM DUAL;
@@ -178,7 +187,8 @@ PRO Please wait ...
 PRO Please wait ...
 @@&&skip_diagnostics.esp_collect_requirements.sql
 SET TERM OFF; 
-HOS zip -qmT esp_requirements_&&esp_host_name_short..zip res_requirements_&&rr_host_name_short..txt esp_requirements_&&esp_host_name_short..csv cpuinfo_model_name.txt 
+-- zip esp files but preserve original files on file system until edb360 completes (one database or multiple)
+HOS zip -qT esp_requirements_&&esp_host_name_short..zip res_requirements_&&rr_host_name_short..txt esp_requirements_&&esp_host_name_short..csv cpuinfo_model_name.txt 
 
 -- initialization
 CL COL;
@@ -250,13 +260,15 @@ SELECT TO_CHAR(SYSDATE, 'YYYYMMDD_HH24MI') edb360_file_time FROM DUAL;
 SELECT '0' history_days FROM DUAL WHERE TRIM('&&history_days.') IS NULL;
 COL tool_sysdate NEW_V tool_sysdate;
 SELECT TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS') tool_sysdate FROM DUAL;
-COL as_of_date NEW_V as_of_date;
-SELECT ', as of '||TO_CHAR(SYSDATE, 'Dy Mon DD @HH12:MIAM') as_of_date FROM DUAL;
+--COL as_of_date NEW_V as_of_date;
+--SELECT ', as of '||TO_CHAR(SYSDATE, 'Dy Mon DD @HH12:MIAM') as_of_date FROM DUAL;
+COL between_dates NEW_V between_dates;
+SELECT ', between &&edb360_date_from. and &&edb360_date_to.' between_dates FROM DUAL;
 COL minimum_snap_id NEW_V minimum_snap_id;
-SELECT NVL(TO_CHAR(MAX(snap_id)), '0') minimum_snap_id FROM dba_hist_snapshot WHERE '&&diagnostics_pack.' = 'Y' AND dbid = &&edb360_dbid. AND begin_interval_time < SYSDATE - &&history_days.;
+SELECT NVL(TO_CHAR(MIN(snap_id)), '0') minimum_snap_id FROM dba_hist_snapshot WHERE '&&diagnostics_pack.' = 'Y' AND dbid = &&edb360_dbid. AND begin_interval_time > TO_DATE('&&edb360_date_from.', 'YYYY-MM-DD');
 SELECT '-1' minimum_snap_id FROM DUAL WHERE TRIM('&&minimum_snap_id.') IS NULL;
 COL maximum_snap_id NEW_V maximum_snap_id;
-SELECT NVL(TO_CHAR(MAX(snap_id)), '&&minimum_snap_id.') maximum_snap_id FROM dba_hist_snapshot WHERE '&&diagnostics_pack.' = 'Y' AND dbid = &&edb360_dbid.;
+SELECT NVL(TO_CHAR(MAX(snap_id)), '&&minimum_snap_id.') maximum_snap_id FROM dba_hist_snapshot WHERE '&&diagnostics_pack.' = 'Y' AND dbid = &&edb360_dbid. AND end_interval_time < TO_DATE('&&edb360_date_to.', 'YYYY-MM-DD') + 1;
 SELECT '-1' maximum_snap_id FROM DUAL WHERE TRIM('&&maximum_snap_id.') IS NULL;
 
 -- ebs
@@ -282,6 +294,18 @@ COL psft_tools_rel NEW_V psft_tools_rel;
 SELECT owner psft_schema FROM sys.dba_tab_columns WHERE table_name = 'PSSTATUS' AND column_name = 'TOOLSREL' AND data_type = 'VARCHAR2' AND ROWNUM = 1;
 SELECT toolsrel psft_tools_rel FROM &&psft_schema..psstatus WHERE ROWNUM = 1;
 
+-- inclusion config determine skip flags
+COL edb360_skip_html NEW_V edb360_skip_html;
+COL edb360_skip_text NEW_V edb360_skip_text;
+COL edb360_skip_csv  NEW_V edb360_skip_csv;
+COL edb360_skip_line NEW_V edb360_skip_line;
+COL edb360_skip_pie  NEW_V edb360_skip_pie;
+SELECT CASE '&&edb360_conf_incl_html.' WHEN 'N' THEN '--' END edb360_skip_html FROM DUAL;
+SELECT CASE '&&edb360_conf_incl_text.' WHEN 'N' THEN '--' END edb360_skip_text FROM DUAL;
+SELECT CASE '&&edb360_conf_incl_csv.'  WHEN 'N' THEN '--' END edb360_skip_csv  FROM DUAL;
+SELECT CASE '&&edb360_conf_incl_line.' WHEN 'N' THEN '--' END edb360_skip_line FROM DUAL;
+SELECT CASE '&&edb360_conf_incl_pie.'  WHEN 'N' THEN '--' END edb360_skip_pie  FROM DUAL;
+
 -- setup
 DEF sql_trace_level = '8';
 DEF main_table = '';
@@ -289,11 +313,11 @@ DEF title = '';
 DEF title_no_spaces = '';
 DEF title_suffix = '';
 DEF common_edb360_prefix = '&&edb360_prefix._&&database_name_short.';
-DEF edb360_main_report = '0001_&&common_edb360_prefix._index';
-DEF edb360_log = '0002_&&common_edb360_prefix._log';
-DEF edb360_tkprof = '0003_&&common_edb360_prefix._tkprof';
+DEF edb360_main_report = '00001_&&common_edb360_prefix._index';
+DEF edb360_log = '00002_&&common_edb360_prefix._log';
+DEF edb360_tkprof = '00003_&&common_edb360_prefix._tkprof';
 DEF edb360_main_filename = '&&common_edb360_prefix._&&host_name_short.';
-DEF edb360_log2 = '0004_&&common_edb360_prefix._log2';
+DEF edb360_log2 = '00004_&&common_edb360_prefix._log2';
 DEF edb360_tracefile_identifier = '&&common_edb360_prefix.';
 DEF edb360_copyright = ' (c) 2014';
 DEF top_level_hints = 'NO_MERGE';
@@ -478,14 +502,16 @@ PRO <body>
 PRO <h1><a href="http://www.enkitec.com" target="_blank">Enkitec</a>: DataBase 360-degree view <em>(<a href="http://www.enkitec.com/products/edb360" target="_blank">edb360</a>)</em> &&edb360_vYYNN.</h1>
 PRO
 PRO <pre>
-PRO dbname:&&database_name_short. version:&&db_version. host:&&host_name_short. license:&&license_pack. days:&&history_days. today:&&edb360_time_stamp.
+PRO dbname:&&database_name_short. version:&&db_version. host:&&host_name_short. license:&&license_pack. days:&&history_days. from:&&edb360_date_from. to:&&edb360_date_to. today:&&edb360_time_stamp.
 PRO </pre>
 PRO
 SPO OFF;
 
--- zip
+-- zip into main the esp zip so far, then remove zip but preserve source esp files. let edb360.sql and run_edb360.sh do the clean up
 HOS zip -qmT &&edb360_main_filename._&&edb360_file_time. esp_requirements_&&esp_host_name_short..zip 
+-- zip other files
 HOS zip -jq &&edb360_main_filename._&&edb360_file_time. js/sorttable.js
+HOS zip -jq &&edb360_main_filename._&&edb360_file_time. js/edb360_img.jpg
 --HOS zip -r osw_&&esp_host_name_short..zip `ps -ef | grep OSW | grep FM | awk -F 'OSW' '{print $2}' | cut -f 3 -d ' '`
 --HOS zip -qmT &&edb360_main_filename._&&edb360_file_time. osw_&&esp_host_name_short..zip
 

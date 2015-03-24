@@ -1,6 +1,6 @@
 -- add seq to one_spool_filename
 EXEC :file_seq := :file_seq + 1;
-SELECT LPAD(:file_seq, 4, '0')||'_&&spool_filename.' one_spool_filename FROM DUAL;
+SELECT LPAD(:file_seq, 5, '0')||'_&&spool_filename.' one_spool_filename FROM DUAL;
 
 -- display
 SELECT TO_CHAR(SYSDATE, 'HH24:MI:SS') hh_mm_ss FROM DUAL;
@@ -35,10 +35,10 @@ PRO        var data = google.visualization.arrayToDataTable([
 SET SERVEROUT ON;
 DECLARE
   cur SYS_REFCURSOR;
-  l_slice VARCHAR2(1000);
+  l_slice VARCHAR2(32767);
   l_value NUMBER;
   l_percent NUMBER;
-  l_text VARCHAR2(4000);
+  l_text VARCHAR2(32767);
   l_sql_text VARCHAR2(32767);
 BEGIN
   DBMS_OUTPUT.PUT_LINE('[''Slice'', ''Value'']');

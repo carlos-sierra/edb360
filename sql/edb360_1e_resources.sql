@@ -1,5 +1,5 @@
 @@edb360_0g_tkprof.sql
-DEF section_id = '1d';
+DEF section_id = '1e';
 DEF section_name = 'Resources (as per AWR and MEM)';
 SPO &&edb360_main_report..html APP;
 PRO <h2>&&section_name.</h2>
@@ -168,7 +168,9 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */
        MAX(s.end_interval_time) end_interval_time      
   FROM dba_hist_active_sess_history h,
        dba_hist_snapshot s
- WHERE (h.session_state = ''ON CPU'' OR h.event = ''resmgr:cpu quantum'')
+ WHERE h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND h.dbid = &&edb360_dbid.
+   AND (h.session_state = ''ON CPU'' OR h.event = ''resmgr:cpu quantum'')
    AND s.snap_id = h.snap_id
    AND s.dbid = h.dbid
    AND s.instance_number = h.instance_number
@@ -1905,8 +1907,6 @@ SELECT /*+ &&sq_fact_hints. */
    AND s0.instance_number = h0.instance_number
    AND h1.instance_number = h0.instance_number
    AND h1.snap_id = h0.snap_id + 1
-   AND s1.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
-   AND s1.dbid = &&edb360_dbid.
    AND s1.snap_id = h1.snap_id
    AND s1.instance_number = h1.instance_number
    AND s1.snap_id = s0.snap_id + 1
@@ -2300,8 +2300,6 @@ SELECT /*+ &&sq_fact_hints. */
    AND s0.instance_number = h0.instance_number
    AND h1.instance_number = h0.instance_number
    AND h1.snap_id = h0.snap_id + 1
-   AND s1.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
-   AND s1.dbid = &&edb360_dbid.
    AND s1.snap_id = h1.snap_id
    AND s1.instance_number = h1.instance_number
    AND s1.snap_id = s0.snap_id + 1

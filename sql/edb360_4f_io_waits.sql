@@ -56,7 +56,7 @@ END;
 
 
 SET SERVEROUT ON;
-SPO 9987_&&common_edb360_prefix._chart_setup_driver4.sql;
+SPO 99870_&&common_edb360_prefix._chart_setup_driver4.sql;
 DECLARE
   l_count NUMBER;
 BEGIN
@@ -75,8 +75,8 @@ END;
 /
 SPO OFF;
 SET SERVEROUT OFF;
-@9987_&&common_edb360_prefix._chart_setup_driver4.sql;
-HOS zip -mq &&edb360_main_filename._&&edb360_file_time. 9987_&&common_edb360_prefix._chart_setup_driver4.sql
+@99870_&&common_edb360_prefix._chart_setup_driver4.sql;
+HOS zip -mq &&edb360_main_filename._&&edb360_file_time. 99870_&&common_edb360_prefix._chart_setup_driver4.sql
 
 DEF title = 'User plus System I/O Waits Counts per Instance';
 DEF main_table = 'DBA_HIST_EVENT_HISTOGRAM';
@@ -140,8 +140,6 @@ SELECT /*+ &&sq_fact_hints. */
    AND s1.instance_number = h1.instance_number
    AND s1.snap_id = s0.snap_id + 1
    AND s1.startup_time = s0.startup_time
-   AND s1.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
-   AND s1.dbid = &&edb360_dbid.
    AND s1.begin_interval_time > (s0.begin_interval_time + (1 / (24 * 60))) /* filter out snaps apart < 1 min */
    AND (h1.total - h0.total) > 0
 )
@@ -314,8 +312,6 @@ SELECT /*+ &&sq_fact_hints. */
    AND s1.instance_number = h1.instance_number
    AND s1.snap_id = s0.snap_id + 1
    AND s1.startup_time = s0.startup_time
-   AND s1.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
-   AND s1.dbid = &&edb360_dbid.
    AND s1.begin_interval_time > (s0.begin_interval_time + (1 / (24 * 60))) /* filter out snaps apart < 1 min */
    AND (h1.total - h0.total) > 0
 ),

@@ -1,6 +1,6 @@
 -- add seq to one_spool_filename
 EXEC :file_seq := :file_seq + 1;
-SELECT LPAD(:file_seq, 4, '0')||'_&&spool_filename.' one_spool_filename FROM DUAL;
+SELECT LPAD(:file_seq, 5, '0')||'_&&spool_filename.' one_spool_filename FROM DUAL;
 
 -- display
 SELECT TO_CHAR(SYSDATE, 'HH24:MI:SS') hh_mm_ss FROM DUAL;

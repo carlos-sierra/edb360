@@ -32,13 +32,16 @@ BEGIN
                    UNION 
                    SELECT owner object_owner, name object_name, type object_type
                      FROM gv$db_object_cache  
-                    WHERE type <> 'NONE'
+                    WHERE type IN ('INDEX', 'TABLE', 'CLUSTER', 'VIEW', 'SYNONYM', 'SEQUENCE', 'PROCEDURE', 'FUNCTION', 'PACKAGE', 'PACKAGE BODY' ) 
                       AND (inst_id, hash_value) IN (SELECT inst_id, to_hash
                                                       FROM gv$object_dependency
                                                      WHERE (inst_id, from_hash) IN (SELECT inst_id, hash_value
                                                                                       FROM gv$sql
                                                                                      WHERE sql_id = '&&sqld360_sqlid.')))
-           ORDER BY 1,2,3 DESC) 
+            WHERE object_owner NOT IN ('ANONYMOUS','APEX_030200','APEX_040000','APEX_SSO','APPQOSSYS','CTXSYS','DBSNMP','DIP','EXFSYS','FLOWS_FILES',
+		                               'MDSYS','OLAPSYS','ORACLE_OCM','ORDDATA','ORDPLUGINS','ORDSYS','OUTLN','OWBSYS', 'PUBLIC',
+								       'SI_INFORMTN_SCHEMA','SQLTXADMIN','SQLTXPLAIN','SYS','SYSMAN','SYSTEM','TRCANLZR','WMSYS','XDB','XS$NULL')
+		    ORDER BY 1,2,3 DESC) 
    LOOP
     put('BEGIN');
     put(':mymetadata :=');

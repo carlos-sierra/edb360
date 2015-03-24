@@ -1,5 +1,5 @@
 @@edb360_0g_tkprof.sql
-DEF section_id = '1e';
+DEF section_id = '1f';
 DEF section_name = 'Resources (as per Statspack)';
 SPO &&edb360_main_report..html APP;
 PRO <h2>&&section_name.</h2>
@@ -13,17 +13,18 @@ DEF statspack_user = 'perfstat';
 -- set snapshot ranges to STATSPACK ranges !!
 DEF sp_minimum_snap_id = '';
 COL sp_minimum_snap_id NEW_V sp_minimum_snap_id NOPRI;
-SELECT NVL(TO_CHAR(MAX(snap_id)), '0') sp_minimum_snap_id 
+SELECT NVL(TO_CHAR(MIN(snap_id)), '0') sp_minimum_snap_id 
 FROM &&statspack_user..stats$snapshot s
 WHERE 1=1 
-AND begin_interval_time < SYSDATE - &&history_days.;
+AND begin_interval_time > TO_DATE('&&edb360_date_from.', 'YYYY-MM-DD');
 SELECT '-1' sp_minimum_snap_id FROM DUAL WHERE TRIM('&&sp_minimum_snap_id.') IS NULL;
 
 DEF sp_maximum_snap_id = '';
 COL sp_maximum_snap_id NEW_V sp_maximum_snap_id NOPRI;
 SELECT NVL(TO_CHAR(MAX(snap_id)), '&&sp_minimum_snap_id.') sp_maximum_snap_id 
 FROM &&statspack_user..stats$snapshot s
-WHERE 1=1;
+WHERE 1=1
+AND end_interval_time < TO_DATE('&&edb360_date_to.', 'YYYY-MM-DD') + 1;
 SELECT '-1' sp_maximum_snap_id FROM DUAL WHERE TRIM('&&sp_maximum_snap_id.') IS NULL;
 
 

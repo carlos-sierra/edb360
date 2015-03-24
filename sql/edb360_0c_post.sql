@@ -11,7 +11,7 @@ ALTER SESSION SET SQL_TRACE = FALSE;
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -- readme
-SPO 0000_readme_first.txt
+SPO 00000_readme_first.txt
 PRO 1. Unzip &&edb360_main_filename._&&edb360_file_time..zip into a directory
 PRO 2. Review &&edb360_main_report..html
 SPO OFF;
@@ -34,7 +34,7 @@ SET NUMF "";
 SET SQLBL OFF; 
 SET BLO ON; 
 SET RECSEP WR;
-UNDEF 1 2
+UNDEF 1
 
 -- alert log (3 methods)
 COL db_name_upper NEW_V db_name_upper;
@@ -46,18 +46,18 @@ SELECT value background_dump_dest FROM v$parameter WHERE name = 'background_dump
 HOS cp &&background_dump_dest./alert_&&db_name_upper.*.log .
 HOS cp &&background_dump_dest./alert_&&db_name_lower.*.log .
 HOS cp &&background_dump_dest./alert_&&_connect_identifier..log .
-HOS rename alert_ 0005_&&common_edb360_prefix._alert_ alert_*.log
+HOS rename alert_ 00005_&&common_edb360_prefix._alert_ alert_*.log
 
 -- zip 
 HOS zip -mq &&edb360_main_filename._&&edb360_file_time. &&common_edb360_prefix._query.sql
 HOS zip -dq &&edb360_main_filename._&&edb360_file_time. &&common_edb360_prefix._query.sql
-HOS zip -mq &&edb360_main_filename._&&edb360_file_time. 0005_&&common_edb360_prefix._alert_*.log
-HOS zip -jq 0006_&&common_edb360_prefix._opatch $ORACLE_HOME/cfgtoollogs/opatch/opatch*
-HOS zip -mq &&edb360_main_filename._&&edb360_file_time. 0006_&&common_edb360_prefix._opatch.zip
+HOS zip -mq &&edb360_main_filename._&&edb360_file_time. 00005_&&common_edb360_prefix._alert_*.log
+HOS zip -jq 00006_&&common_edb360_prefix._opatch $ORACLE_HOME/cfgtoollogs/opatch/opatch*
+HOS zip -mq &&edb360_main_filename._&&edb360_file_time. 00006_&&common_edb360_prefix._opatch.zip
 HOS zip -mq &&edb360_main_filename._&&edb360_file_time. &&edb360_log2..txt
 HOS zip -mq &&edb360_main_filename._&&edb360_file_time. &&edb360_tkprof._sort.txt
 HOS zip -mq &&edb360_main_filename._&&edb360_file_time. &&edb360_log..txt
 HOS zip -mq &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html
-HOS zip -mq &&edb360_main_filename._&&edb360_file_time. 0000_readme_first.txt 
+HOS zip -mq &&edb360_main_filename._&&edb360_file_time. 00000_readme_first.txt 
 HOS unzip -l &&edb360_main_filename._&&edb360_file_time.
 SET TERM ON;

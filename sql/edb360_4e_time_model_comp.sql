@@ -6,7 +6,7 @@ PRO <h2>&&section_name.</h2>
 SPO OFF;
 
 SET SERVEROUT ON;
-SPO 9985_&&common_edb360_prefix._chart_setup_driver3.sql;
+SPO 99850_&&common_edb360_prefix._chart_setup_driver3.sql;
 DECLARE
   l_count NUMBER;
 BEGIN
@@ -25,8 +25,8 @@ END;
 /
 SPO OFF;
 SET SERVEROUT OFF;
-@9985_&&common_edb360_prefix._chart_setup_driver3.sql;
-HOS zip -mq &&edb360_main_filename._&&edb360_file_time. 9985_&&common_edb360_prefix._chart_setup_driver3.sql
+@99850_&&common_edb360_prefix._chart_setup_driver3.sql;
+HOS zip -mq &&edb360_main_filename._&&edb360_file_time. 99850_&&common_edb360_prefix._chart_setup_driver3.sql
 
 BEGIN
   :sql_text_backup := '
@@ -119,8 +119,6 @@ SELECT /*+ &&sq_fact_hints. */
    AND s1.dbid = s0.dbid
    AND s1.instance_number = s0.instance_number
    AND s1.startup_time = s0.startup_time
-   AND s1.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
-   AND s1.dbid = &&edb360_dbid.
    AND s1.begin_interval_time > (s0.begin_interval_time + (1 / (24 * 60))) /* filter out snaps apart < 1 min */
 ),
 sys_time_model_denorm_4 AS (

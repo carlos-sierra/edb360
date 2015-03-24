@@ -864,6 +864,70 @@ END;
 /
 @@&&skip_diagnostics.edb360_9a_pre_one.sql
 
+DEF title = 'Result Cache related parameters';
+DEF main_table = 'GV$SYSTEM_PARAMETER2';
+BEGIN
+  :sql_text := '
+-- provided by Simon Pane
+SELECT /*+ &&top_level_hints. */ 
+       inst_id, name "PARAMETER", value, isdefault, ismodified
+  FROM gv$system_parameter2
+ WHERE name IN (''result_cache_mode'',''result_cache_max_size'',''result_cache_max_result'')
+ ORDER BY 2,1,3
+';
+END;
+/
+@@edb360_9a_pre_one.sql
 
+DEF title = 'Result Cache status';
+DEF main_table = 'DBMS_RESULT_CACHE';
+BEGIN
+  :sql_text := '
+-- provided by Simon Pane
+SELECT dbms_result_cache.status FROM dual
+';
+END;
+/
+@@&&skip_10g.&&skip_11r1.edb360_9a_pre_one.sql
 
+DEF title = 'Result Cache memory';
+DEF main_table = 'GV$RESULT_CACHE_MEMORY';
+BEGIN
+  :sql_text := '
+-- provided by Simon Pane
+SELECT /*+ &&top_level_hints. */ 
+       inst_id, free, count(*)
+  FROM gv$result_cache_memory
+ GROUP BY inst_id, free
+';
+END;
+/
+@@&&skip_10g.&&skip_11r1.edb360_9a_pre_one.sql
 
+DEF title = 'Result Cache statistics';
+DEF main_table = 'GV$RESULT_CACHE_STATISTICS';
+BEGIN
+  :sql_text := '
+-- provided by Simon Pane
+SELECT /*+ &&top_level_hints. */ 
+       inst_id, name, value
+  FROM gv$result_cache_statistics
+ ORDER BY 1, 2
+';
+END;
+/
+@@&&skip_10g.&&skip_11r1.edb360_9a_pre_one.sql
+
+DEF title = 'Client Result Cache statistics';
+DEF main_table = 'CLIENT_RESULT_CACHE_STATS$';
+BEGIN
+  :sql_text := '
+-- provided by Simon Pane
+SELECT /*+ &&top_level_hints. */ 
+       stat_id, SUBSTR(name,1,20), value, cache_id
+  FROM client_result_cache_stats$
+ ORDER BY cache_id, stat_id
+';
+END;
+/
+@@&&skip_10g.&&skip_11r1.edb360_9a_pre_one.sql

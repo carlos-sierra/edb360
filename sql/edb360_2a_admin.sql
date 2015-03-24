@@ -290,6 +290,73 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+DEF title = 'Fat Indexes';
+DEF main_table = 'DBA_IND_COLUMNS';
+BEGIN
+  :sql_text := '
+WITH 
+indexes_list AS (
+SELECT /*+ &&sq_fact_hints. */
+       index_owner owner, /*index_name,*/ COUNT(*) columns
+  FROM dba_ind_columns
+ WHERE index_owner NOT IN &&exclusion_list.
+   AND index_owner NOT IN &&exclusion_list2.
+ GROUP BY
+       index_owner, index_name
+)
+SELECT /*+ &&top_level_hints. */
+       owner,
+       SUM(CASE columns WHEN  1 THEN 1 ELSE 0 END) "1 Col",
+       SUM(CASE columns WHEN  2 THEN 1 ELSE 0 END) "2 Cols",     
+       SUM(CASE columns WHEN  3 THEN 1 ELSE 0 END) "3 Cols",     
+       SUM(CASE columns WHEN  4 THEN 1 ELSE 0 END) "4 Cols",     
+       SUM(CASE columns WHEN  5 THEN 1 ELSE 0 END) "5 Cols",     
+       SUM(CASE columns WHEN  6 THEN 1 ELSE 0 END) "6 Cols",
+       SUM(CASE columns WHEN  7 THEN 1 ELSE 0 END) "7 Cols",
+       SUM(CASE columns WHEN  8 THEN 1 ELSE 0 END) "8 Cols",
+       SUM(CASE columns WHEN  9 THEN 1 ELSE 0 END) "9 Cols",
+       SUM(CASE columns WHEN 10 THEN 1 ELSE 0 END) "10 Cols",
+       SUM(CASE columns WHEN 11 THEN 1 ELSE 0 END) "11 Cols",
+       SUM(CASE columns WHEN 12 THEN 1 ELSE 0 END) "12 Cols",     
+       SUM(CASE columns WHEN 13 THEN 1 ELSE 0 END) "13 Cols",     
+       SUM(CASE columns WHEN 14 THEN 1 ELSE 0 END) "14 Cols",     
+       SUM(CASE columns WHEN 15 THEN 1 ELSE 0 END) "15 Cols",     
+       SUM(CASE columns WHEN 16 THEN 1 ELSE 0 END) "16 Cols",
+       SUM(CASE columns WHEN 17 THEN 1 ELSE 0 END) "17 Cols",
+       SUM(CASE columns WHEN 18 THEN 1 ELSE 0 END) "18 Cols",
+       SUM(CASE columns WHEN 19 THEN 1 ELSE 0 END) "19 Cols",
+       SUM(CASE columns WHEN 20 THEN 1 ELSE 0 END) "20 Cols",
+       SUM(CASE columns WHEN 21 THEN 1 ELSE 0 END) "21 Cols",
+       SUM(CASE columns WHEN 22 THEN 1 ELSE 0 END) "22 Cols",     
+       SUM(CASE columns WHEN 23 THEN 1 ELSE 0 END) "23 Cols",     
+       SUM(CASE columns WHEN 24 THEN 1 ELSE 0 END) "24 Cols",     
+       SUM(CASE columns WHEN 25 THEN 1 ELSE 0 END) "25 Cols",     
+       SUM(CASE columns WHEN 26 THEN 1 ELSE 0 END) "26 Cols",
+       SUM(CASE columns WHEN 27 THEN 1 ELSE 0 END) "27 Cols",
+       SUM(CASE columns WHEN 28 THEN 1 ELSE 0 END) "28 Cols",
+       SUM(CASE columns WHEN 29 THEN 1 ELSE 0 END) "29 Cols",
+       SUM(CASE columns WHEN 30 THEN 1 ELSE 0 END) "30 Cols",
+       SUM(CASE columns WHEN 31 THEN 1 ELSE 0 END) "31 Cols",
+       SUM(CASE columns WHEN 32 THEN 1 ELSE 0 END) "32 Cols",     
+       SUM(CASE columns WHEN 33 THEN 1 ELSE 0 END) "33 Cols",     
+       SUM(CASE columns WHEN 34 THEN 1 ELSE 0 END) "34 Cols",     
+       SUM(CASE columns WHEN 35 THEN 1 ELSE 0 END) "35 Cols",     
+       SUM(CASE columns WHEN 36 THEN 1 ELSE 0 END) "36 Cols",
+       SUM(CASE columns WHEN 37 THEN 1 ELSE 0 END) "37 Cols",
+       SUM(CASE columns WHEN 38 THEN 1 ELSE 0 END) "38 Cols",
+       SUM(CASE columns WHEN 39 THEN 1 ELSE 0 END) "39 Cols",
+       SUM(CASE columns WHEN 40 THEN 1 ELSE 0 END) "40 Cols",
+       SUM(CASE WHEN columns > 40 THEN 1 ELSE 0 END) "Over 40 Cols"
+  FROM indexes_list
+ GROUP BY
+       owner
+ ORDER BY
+       owner
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
 DEF title = 'Hidden Columns';
 DEF main_table = 'DBA_TAB_COLS';
 BEGIN
@@ -405,6 +472,8 @@ SELECT /*+ &&sq_fact_hints. */
        col.index_name,
        col.table_owner,
        col.table_name,
+       idx.index_type,
+       idx.uniqueness,
        MAX(CASE col.column_position WHEN 01 THEN      col.column_name END)||
        MAX(CASE col.column_position WHEN 02 THEN '':''||col.column_name END)||
        MAX(CASE col.column_position WHEN 03 THEN '':''||col.column_name END)||
@@ -422,34 +491,34 @@ SELECT /*+ &&sq_fact_hints. */
        MAX(CASE col.column_position WHEN 15 THEN '':''||col.column_name END)||
        MAX(CASE col.column_position WHEN 16 THEN '':''||col.column_name END)
        indexed_columns
-  FROM dba_ind_columns col
- WHERE table_owner NOT IN &&exclusion_list.
-   AND table_owner NOT IN &&exclusion_list2.
+  FROM dba_ind_columns col,
+       dba_indexes idx
+ WHERE col.table_owner NOT IN &&exclusion_list.
+   AND col.table_owner NOT IN &&exclusion_list2.
+   AND idx.owner = col.index_owner
+   AND idx.index_name = col.index_name
  GROUP BY
        col.index_owner,
        col.index_name,
        col.table_owner,
-       col.table_name
+       col.table_name,
+       idx.index_type,
+       idx.uniqueness
 )
 SELECT /*+ &&top_level_hints. */
        r.table_owner,
        r.table_name,
+       r.index_type,
        r.index_name||'' (''||r.indexed_columns||'')'' redundant_index,
        i.index_name||'' (''||i.indexed_columns||'')'' superset_index
   FROM indexed_columns r,
-       indexed_columns i,
-       dba_indexes d
- WHERE r.table_owner NOT IN &&exclusion_list.
-   AND r.table_owner NOT IN &&exclusion_list2.
-   AND i.table_owner = r.table_owner
+       indexed_columns i
+ WHERE i.table_owner = r.table_owner
    AND i.table_name = r.table_name
+   AND i.index_type = r.index_type
    AND i.index_name != r.index_name
    AND i.indexed_columns LIKE r.indexed_columns||'':%''
-   AND d.owner = r.index_owner
-   AND d.index_name = r.index_name
-   AND d.uniqueness = ''NONUNIQUE''
-   AND i.table_owner NOT IN &&exclusion_list.
-   AND i.table_owner NOT IN &&exclusion_list2.
+   AND r.uniqueness = ''NONUNIQUE''
  ORDER BY
        r.table_owner,
        r.table_name,
@@ -883,6 +952,24 @@ where
 and s.sequence_owner not in &&exclusion_list2.
 and s.max_value > 0
 order by s.sequence_owner, s.sequence_name
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+DEF title = 'Sequences prone to contention';
+DEF main_table = 'DBA_SEQUENCES';
+BEGIN
+  :sql_text := '
+SELECT /*+ &&top_level_hints. */
+       (s.last_number - CASE WHEN s.increment_by > 0 THEN s.min_value ELSE s.max_value END) / s.increment_by times_used, s.*
+  FROM dba_sequences s
+ WHERE s.sequence_owner not in &&exclusion_list.
+   AND s.sequence_owner not in &&exclusion_list2.
+   AND (s.cache_size < 1000 OR s.order_flag = ''Y'')
+   AND s.min_value != s.last_number
+   AND s.max_value != s.last_number
+ ORDER BY 1 DESC
 ';
 END;
 /
@@ -1441,3 +1528,28 @@ SELECT /*+ &&top_level_hints. */
 END;
 /
 @@edb360_9a_pre_one.sql
+
+DEF title = 'Orphaned Synonyms';
+DEF main_table = 'DBA_SYNONYMS';
+BEGIN
+  :sql_text := '
+-- provided by Simon Pane
+SELECT /*+ &&top_level_hints. */ 
+       s.owner, s.table_owner, COUNT(1)
+  FROM sys.dba_synonyms s
+ WHERE s.table_owner||''.''||s.table_name NOT IN
+       (select o.owner||''.''||o.object_name
+          from sys.dba_objects o
+         where o.object_name = s.table_name
+           and o.owner = s.table_owner)
+   AND s.owner NOT IN (''SYS'',''SYSTEM'')
+   AND s.table_owner NOT IN (''SYS'',''SYSTEM'')
+   AND s.db_link IS NULL
+and s.owner not in &&exclusion_list.
+and s.owner not in &&exclusion_list2.
+ GROUP BY s.owner, s.table_owner
+ ORDER BY s.owner';
+END;
+/
+@@edb360_9a_pre_one.sql
+

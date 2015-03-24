@@ -1,4 +1,4 @@
-EDB360 v1507 (2015-03-16) by Carlos Sierra
+EDB360 v1508 (2015-03-23) by Carlos Sierra
 
 EDB360 is a "free to use" tool to perform an initial assessment of a remote system. 
 It gives a glance of a database state. It also helps to document any findings.
@@ -16,18 +16,14 @@ Steps
    $ cd edb360
    $ sqlplus / as sysdba
 
-2. Execute edb360.sql indicating two input parameters. The first one is to specify if 
-   your database is licensed for the Oracle Tuning Pack, the Diagnostics Pack or None 
-   [ T | D | N ]. The second parameter indicates up to how many days of history you
-   want edb360 to query. Example below specifies Tuning Pack and 31 days of history.
-   Actual days of history used depends on retention period. Value used is raised up to
-   31 days if history permits.
+2. Execute edb360.sql indicating if your database is licensed for the Oracle Tuning Pack, 
+   the Diagnostics Pack or None [ T | D | N ]. Example below specifies Tuning Pack.
 
-   SQL> @edb360.sql T 31
+   SQL> @edb360.sql T
    
 3. Unzip output edb360_<dbname>_<host>_YYYYMMDD_HH24MI.zip into a directory on your PC
 
-4. Review main html file 0001_edb360_<dbname>_index.html
+4. Review main html file 00001_edb360_<dbname>_index.html
 
 ****************************************************************************************
 
@@ -46,9 +42,13 @@ Notes
    one column (i.e. 3), a range of sections (i.e. 5c-6b) or range of columns (i.e. 5-7):
 
    SQL> DEF _o_release = '3b';
-   SQL> @edb360.sql T 31
+   SQL> @edb360.sql T
    
-   note: valid column range is 1 to 7. 
+   note: valid column range for hidden parameter _o_release is 1 to 7. 
+
+3. If you need to generate edb360 for a range of dates other than last 31 days; or change
+   default "working hours" between 7:30AM and 7:30PM; or suppress an output format such as
+   text or csv; modify then file edb360_00_config.sql (back it up first).
 
 ****************************************************************************************
    

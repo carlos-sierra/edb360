@@ -7,7 +7,7 @@ SPO OFF;
 
 -- from 5a
 SET SERVEROUT ON;
-SPO 9984_&&common_edb360_prefix._chart_setup_driver2.sql;
+SPO 99840_&&common_edb360_prefix._chart_setup_driver2.sql;
 DECLARE
   l_count NUMBER;
 BEGIN
@@ -26,8 +26,8 @@ END;
 /
 SPO OFF;
 SET SERVEROUT OFF;
-@9984_&&common_edb360_prefix._chart_setup_driver2.sql;
-HOS zip -mq &&edb360_main_filename._&&edb360_file_time. 9984_&&common_edb360_prefix._chart_setup_driver2.sql
+@99840_&&common_edb360_prefix._chart_setup_driver2.sql;
+HOS zip -mq &&edb360_main_filename._&&edb360_file_time. 99840_&&common_edb360_prefix._chart_setup_driver2.sql
 
 DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
 DEF chartype = 'AreaChart';
@@ -214,30 +214,20 @@ COL wait_class_24 NEW_V wait_class_24;
 COL event_name_24 NEW_V event_name_24;
 
 WITH
-events AS (
+ranked AS (
 SELECT /*+ &&sq_fact_hints. &&ds_hint. */
        h.wait_class,
        h.event event_name,
-       COUNT(*) samples
+       COUNT(*) samples,
+       ROW_NUMBER () OVER (ORDER BY COUNT(*) DESC, h.wait_class, h.event) wrank
   FROM dba_hist_active_sess_history h
-       --dba_hist_snapshot s
  WHERE '&&diagnostics_pack.' = 'Y'
    AND h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND h.dbid = &&edb360_dbid.
    AND h.session_state = 'WAITING'
-   --AND s.snap_id = h.snap_id
-   --AND s.dbid = h.dbid
-   --AND s.instance_number = h.instance_number
-   --AND s.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
-   --AND s.dbid = &&edb360_dbid.
  GROUP BY
        h.wait_class,
        h.event
-),
-ranked AS (
-SELECT wait_class, event_name,
-       RANK () OVER (ORDER BY samples DESC) wrank
-  FROM events
 )
 SELECT MIN(CASE wrank WHEN 01 THEN wait_class END) wait_class_01,
        MIN(CASE wrank WHEN 01 THEN event_name END) event_name_01,
@@ -305,13 +295,9 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */
        h.dbid,
        COUNT(*) samples
   FROM dba_hist_active_sess_history h
-       --dba_hist_snapshot s
  WHERE @filter_predicate@
    AND h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND h.dbid = &&edb360_dbid.
-   --AND s.snap_id = h.snap_id
-   --AND s.dbid = h.dbid
-   --AND s.instance_number = h.instance_number
  GROUP BY
        h.sql_id,
        h.program,

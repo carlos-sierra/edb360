@@ -1,3 +1,4 @@
+@@edb360_00_config.sql
 @@edb360_0b_pre.sql
 DEF max_col_number = '7';
 DEF column_number = '0';
@@ -11,7 +12,16 @@ PRO <td class="c">5/&&max_col_number.</td>
 PRO <td class="c">6/&&max_col_number.</td>
 PRO <td class="c">7/&&max_col_number.</td>
 PRO </tr><tr class="main"><td>
+PRO <img src="edb360_img.jpg" alt="eDB360" height="123" width="195"
+PRO title="eDB360 is a free tool that provides a 360-degree view of an Oracle database. 
+PRO Its output can be used as a foundation for a database health-check, 
+PRO a performance evaluation or to collect OS resource utilization needed for a sizing and provisioning plan.
 PRO
+PRO With eDB360, a user with limited access can acquire a good understanding of an Oracle database 
+PRO without having to log into the server directly. 
+PRO This capability is of great value to developers, system administrators, 3rd party consultants, 
+PRO or any remote user with restricted access.">
+PRO <br>
 SPO OFF;
 
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -20,10 +30,10 @@ DEF column_number = '1';
 
 @@&&edb360_1a.configuration.sql
 @@&&edb360_1b.security.sql
-@@&&edb360_1c.memory.sql
-@@&&edb360_1d.resources.sql
-@@&&edb360_1e.resources_statspack.sql
---@@&&edb360_1f.resources_outdated.sql
+@@&&edb360_1c.audit.sql
+@@&&edb360_1d.memory.sql
+@@&&edb360_1e.resources.sql
+@@&&edb360_1f.resources_statspack.sql
 
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

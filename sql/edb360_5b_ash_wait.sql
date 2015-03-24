@@ -7,7 +7,7 @@ SPO OFF;
 
 -- from 5a
 SET SERVEROUT ON;
-SPO 9983_&&common_edb360_prefix._chart_setup_driver2.sql;
+SPO 99830_&&common_edb360_prefix._chart_setup_driver2.sql;
 DECLARE
   l_count NUMBER;
 BEGIN
@@ -26,8 +26,8 @@ END;
 /
 SPO OFF;
 SET SERVEROUT OFF;
-@9983_&&common_edb360_prefix._chart_setup_driver2.sql;
-HOS zip -mq &&edb360_main_filename._&&edb360_file_time. 9983_&&common_edb360_prefix._chart_setup_driver2.sql
+@99830_&&common_edb360_prefix._chart_setup_driver2.sql;
+HOS zip -mq &&edb360_main_filename._&&edb360_file_time. 99830_&&common_edb360_prefix._chart_setup_driver2.sql
 
 DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
 DEF chartype = 'AreaChart';

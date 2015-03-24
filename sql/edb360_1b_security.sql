@@ -33,62 +33,6 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
-DEF title = 'Default Object Auditing Options';
-DEF main_table = 'ALL_DEF_AUDIT_OPTS';
-BEGIN
-  :sql_text := '
-SELECT /*+ &&top_level_hints. */ 
-       *
-  FROM all_def_audit_opts
-';
-END;
-/
-@@edb360_9a_pre_one.sql
-
-DEF title = 'Object Auditing Options';
-DEF main_table = 'DBA_OBJ_AUDIT_OPTS';
-BEGIN
-  :sql_text := '
-SELECT /*+ &&top_level_hints. */ 
-       o.*
-  FROM dba_obj_audit_opts o
- WHERE (o.alt,o.aud,o.com,o.del,o.gra,o.ind,o.ins,o.loc,o.ren,o.sel,o.upd,o.ref,o.exe,o.fbk,o.rea) NOT IN 
-       (SELECT d.alt,d.aud,d.com,d.del,d.gra,d.ind,d.ins,d.loc,d.ren,d.sel,d.upd,d.ref,d.exe,d.fbk,d.rea FROM all_def_audit_opts d)
- ORDER BY
-       1, 2
-';
-END;
-/
-@@edb360_9a_pre_one.sql
-
-DEF title = 'Statement Auditing Options';
-DEF main_table = 'DBA_STMT_AUDIT_OPTS';
-BEGIN
-  :sql_text := '
-SELECT /*+ &&top_level_hints. */ 
-       *
-  FROM dba_stmt_audit_opts
- ORDER BY
-       1 NULLS FIRST, 2 NULLS FIRST
-';
-END;
-/
-@@edb360_9a_pre_one.sql
-
-DEF title = 'System Privileges Auditing Options';
-DEF main_table = 'DBA_PRIV_AUDIT_OPTS';
-BEGIN
-  :sql_text := '
-SELECT /*+ &&top_level_hints. */ 
-       *
-  FROM dba_priv_audit_opts
- ORDER BY
-       1 NULLS FIRST, 2 NULLS FIRST
-';
-END;
-/
-@@edb360_9a_pre_one.sql
-
 DEF title = 'Users With Sensitive Roles Granted';
 DEF main_table = 'DBA_ROLE_PRIVS';
 BEGIN
@@ -189,56 +133,6 @@ ORDER BY 1';
 END;
 /
 @@edb360_9a_pre_one.sql
-
-DEF title = 'Orphaned Synonyms';
-DEF main_table = 'DBA_SYNONYMS';
-BEGIN
-  :sql_text := '
--- provided by Simon Pane
-SELECT /*+ &&top_level_hints. */ 
-       s.owner, s.table_owner, COUNT(1)
-  FROM sys.dba_synonyms s
- WHERE s.table_owner||''.''||s.table_name NOT IN
-       (select o.owner||''.''||o.object_name
-          from sys.dba_objects o
-         where o.object_name = s.table_name
-           and o.owner = s.table_owner)
-   AND s.owner NOT IN (''SYS'',''SYSTEM'')
-   AND s.table_owner NOT IN (''SYS'',''SYSTEM'')
-   AND s.db_link IS NULL
-and s.owner not in &&exclusion_list.
-and s.owner not in &&exclusion_list2.
- GROUP BY s.owner, s.table_owner
- ORDER BY s.owner';
-END;
-/
-@@edb360_9a_pre_one.sql
-
-DEF title = 'Segments in Reserved Tablespaces';
-DEF main_table = 'DBA_SEGMENTS';
-BEGIN
-  :sql_text := '
--- provided by Simon Pane
-SELECT /*+ &&top_level_hints. */ 
-       s.owner, s.segment_type, s.tablespace_name, COUNT(1)
-  FROM sys.dba_segments s
- WHERE s.owner NOT IN (''SYS'',''SYSTEM'',''OUTLN'',''AURORA$JIS$UTILITY$'',''OSE$HTTP$ADMIN'',''ORACACHE'',''ORDSYS'',
-                       ''CTXSYS'',''DBSNMP'',''DMSYS'',''EXFSYS'',''MDSYS'',''OLAPSYS'',''SYSMAN'',''TSMSYS'',''WMSYS'',''XDB'')
-   AND s.tablespace_name IN (''SYSTEM'',''SYSAUX'',''TEMP'',''TEMPORARY'',''RBS'',''ROLLBACK'',''ROLLBACKS'',''RBSEGS'')
-   AND s.tablespace_name NOT IN (SELECT tablespace_name
-                                   FROM sys.dba_tablespaces
-                                  WHERE contents IN (''UNDO'',''TEMPORARY'')
-                                )
-and s.owner not in &&exclusion_list.
-and s.owner not in &&exclusion_list2.
- GROUP BY s.owner, s.segment_type, s.tablespace_name
- ORDER BY 1,2,3';
-END;
-/
-@@edb360_9a_pre_one.sql
-
-
-
 
 
 
