@@ -1,5 +1,7 @@
 @@edb360_00_config.sql
 @@edb360_0b_pre.sql
+DEF section_id = '0a';
+EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
 DEF max_col_number = '7';
 DEF column_number = '0';
 SPO &&edb360_main_report..html APP;
@@ -86,6 +88,7 @@ SPO OFF;
 @@&&skip_diagnostics.&&skip_10g.&&edb360_4f.io_waits.sql
 @@&&skip_diagnostics.&&skip_10g.&&edb360_4g.io_waits_top.sql
 @@&&edb360_4h.parallel_execution.sql
+@@&&skip_diagnostics.&&edb360_4i.sysmetric_history.sql
 
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -151,6 +154,7 @@ PRO
 PRO </td></tr></table>
 SPO OFF;
 @@edb360_0c_post.sql
+EXEC DBMS_APPLICATION_INFO.SET_MODULE(NULL,NULL);
 
 -- list of generated files
 HOS unzip -l &&edb360_main_filename._&&edb360_file_time.

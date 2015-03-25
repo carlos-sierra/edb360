@@ -229,8 +229,8 @@ SELECT DBMS_SQLTUNE.SQLTEXT_TO_SIGNATURE(:sqld360_fullsql,0) exact_matching_sign
 
 
 -- setup
-DEF sqld360_vYYNN = 'v1506';
-DEF sqld360_vrsn = '&&sqld360_vYYNN. (2015-03-19)';
+DEF sqld360_vYYNN = 'v1507';
+DEF sqld360_vrsn = '&&sqld360_vYYNN. (2015-03-24)';
 DEF sqld360_prefix = 'sqld360';
 DEF sql_trace_level = '8';
 DEF main_table = '';
@@ -350,6 +350,8 @@ ALTER SESSION SET NLS_TIMESTAMP_TZ_FORMAT = 'YYYY-MM-DD/HH24:MI:SS.FF TZH:TZM';
 -- adding to prevent slow access to ASH with non default NLS settings
 ALTER SESSION SET NLS_SORT = 'BINARY';
 ALTER SESSION SET NLS_COMP = 'BINARY';
+-- to work around bug 12672969
+ALTER SESSION SET "_optimizer_order_by_elimination_enabled"=false; 
 -- to work around Siebel
 --ALTER SESSION SET optimizer_index_cost_adj = 100;
 --ALTER SESSION SET optimizer_dynamic_sampling = 2;

@@ -1,7 +1,8 @@
-@@edb360_0g_tkprof.sql
+@@&&edb360_0g.tkprof.sql
 DEF section_id = '7a';
-SET VER OFF FEED OFF SERVEROUT ON HEAD OFF PAGES 50000 LIN 32767 TRIMS ON TRIM ON TI OFF TIMI OFF ARRAY 100;
 DEF section_name = 'AWR/ADDM/ASH Reports';
+EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
+SET VER OFF FEED OFF SERVEROUT ON HEAD OFF PAGES 50000 LIN 32767 TRIMS ON TRIM ON TI OFF TIMI OFF ARRAY 100;
 SPO &&edb360_main_report..html APP;
 PRO <h2 title="For max/min/med 'DB time' + 'background elapsed time' history (for each instance)">&&section_name.</h2>
 SPO OFF;

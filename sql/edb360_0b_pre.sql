@@ -6,8 +6,8 @@ SET ECHO OFF;
 SET TIM OFF;
 SET TIMI OFF;
 CL COL;
-DEF edb360_vYYNN = 'v1508';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2015-03-23)';
+DEF edb360_vYYNN = 'v1509';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2015-03-25)';
 
 -- parameters
 PRO
@@ -95,6 +95,7 @@ END;
 /
 PRINT edb360_sec_from;
 PRINT edb360_sec_to;
+COL edb360_0g NEW_V edb360_0g;
 COL edb360_1a NEW_V edb360_1a;
 COL edb360_1b NEW_V edb360_1b;
 COL edb360_1c NEW_V edb360_1c;
@@ -121,6 +122,7 @@ COL edb360_4e NEW_V edb360_4e;
 COL edb360_4f NEW_V edb360_4f;
 COL edb360_4g NEW_V edb360_4g;
 COL edb360_4h NEW_V edb360_4h;
+COL edb360_4i NEW_V edb360_4i;
 COL edb360_5a NEW_V edb360_5a;
 COL edb360_5b NEW_V edb360_5b;
 COL edb360_5c NEW_V edb360_5c;
@@ -133,6 +135,8 @@ COL edb360_6f NEW_V edb360_6f;
 COL edb360_6g NEW_V edb360_6g;
 COL edb360_7a NEW_V edb360_7a;
 COL edb360_7b NEW_V edb360_7b;
+COL edb360_7c NEW_V edb360_7c;
+SELECT CASE '&&edb360_conf_incl_tkprof.' WHEN 'Y' THEN 'edb360_0g_' ELSE '--' END edb360_0g FROM DUAL;
 SELECT CASE WHEN '1a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_1a_' ELSE '--' END edb360_1a FROM DUAL;
 SELECT CASE WHEN '1b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_1b_' ELSE '--' END edb360_1b FROM DUAL;
 SELECT CASE WHEN '1c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_1c_' ELSE '--' END edb360_1c FROM DUAL;
@@ -159,6 +163,7 @@ SELECT CASE WHEN '4e' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4
 SELECT CASE WHEN '4f' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4f_' ELSE '--' END edb360_4f FROM DUAL;
 SELECT CASE WHEN '4g' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4g_' ELSE '--' END edb360_4g FROM DUAL;
 SELECT CASE WHEN '4h' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4h_' ELSE '--' END edb360_4h FROM DUAL;
+SELECT CASE WHEN '4i' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4i_' ELSE '--' END edb360_4i FROM DUAL;
 SELECT CASE WHEN '5a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_5a_' ELSE '--' END edb360_5a FROM DUAL;
 SELECT CASE WHEN '5b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_5b_' ELSE '--' END edb360_5b FROM DUAL;
 SELECT CASE WHEN '5c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_5c_' ELSE '--' END edb360_5c FROM DUAL;
@@ -171,6 +176,7 @@ SELECT CASE WHEN '6f' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6
 SELECT CASE WHEN '6g' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6g_' ELSE '--' END edb360_6g FROM DUAL;
 SELECT CASE WHEN '7a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_7a_' ELSE '--' END edb360_7a FROM DUAL;
 SELECT CASE WHEN '7b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_7b_' ELSE '--' END edb360_7b FROM DUAL;
+SELECT CASE WHEN '7c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_7c_' ELSE '--' END edb360_7c FROM DUAL;
 
 -- filename prefix
 COL edb360_prefix NEW_V edb360_prefix;
@@ -319,6 +325,8 @@ DEF edb360_tkprof = '00003_&&common_edb360_prefix._tkprof';
 DEF edb360_main_filename = '&&common_edb360_prefix._&&host_name_short.';
 DEF edb360_log2 = '00004_&&common_edb360_prefix._log2';
 DEF edb360_tracefile_identifier = '&&common_edb360_prefix.';
+DEF edb360_tar_filename = '00007_&&edb360_main_filename._&&edb360_file_time.';
+
 DEF edb360_copyright = ' (c) 2014';
 DEF top_level_hints = 'NO_MERGE';
 DEF sq_fact_hints = 'MATERIALIZE NO_MERGE';
@@ -425,7 +433,7 @@ VAR sql_text_backup CLOB;
 VAR sql_text_backup2 CLOB;
 VAR sql_text_display CLOB;
 VAR file_seq NUMBER;
-EXEC :file_seq := 6;
+EXEC :file_seq := 7;
 VAR get_time_t0 NUMBER;
 VAR get_time_t1 NUMBER;
 COL edb360_prev_sql_id NEW_V edb360_prev_sql_id NOPRI;

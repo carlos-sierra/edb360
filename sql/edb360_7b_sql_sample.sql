@@ -1,6 +1,12 @@
-@@edb360_0g_tkprof.sql
+@@&&edb360_0g.tkprof.sql
 DEF section_id = '7b';
-DEF files_prefix = '';
+DEF section_name = 'SQL Sample';
+EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
+
+SPO &&edb360_main_report..html APP;
+PRO <h2 title="Top SQL as per ASH">&&section_name.</h2>
+SPO OFF;
+
 COL call_sqld360_bitmask NEW_V call_sqld360_bitmask FOR A6;
 SELECT SUBSTR(
 CASE '&&diagnostics_pack.' WHEN 'Y' THEN '1' ELSE '0' END||
@@ -11,10 +17,7 @@ LPAD(TRIM('&&edb360_conf_days.'), 3, '0')
 , 1, 6) call_sqld360_bitmask
 FROM DUAL;
 
-DEF section_name = 'SQL Sample';
-SPO &&edb360_main_report..html APP;
-PRO <h2 title="Top SQL as per ASH">&&section_name.</h2>
-SPO OFF;
+DEF files_prefix = '';
 
 COL hh_mm_ss NEW_V hh_mm_ss NOPRI FOR A8;
 SET VER OFF FEED OFF SERVEROUT ON HEAD OFF PAGES 50000 LIN 32767 TRIMS ON TRIM ON TI OFF TIMI OFF ARRAY 100;
@@ -153,22 +156,27 @@ BEGIN
     put_line('HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html');
   END LOOP;
   IF l_count > 0 THEN
-    put_line('UNDEF 1 2');
-    put_line('@sql/sqld360.sql');
+    put_line('UNDEF 1');
+    put_line('HOS zip -q &&edb360_main_filename._&&edb360_file_time. 99930_&&common_edb360_prefix._top_sql_driver.sql;');
+    put_line('SPO &&edb360_log..txt APP;');
+    put_line('PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
+    put_line('PRO -- plan_table before calling sqld360');
+    put_line('SELECT operation||'' ''||options sql_and_flags FROM plan_table WHERE statement_id = ''SQLD360_SQLID'';');
+    put_line('SPO OFF;');
+    put_line('HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_log..txt');
+    put_line('-- eadam (ash) for top sql');
+    put_line('EXEC DBMS_APPLICATION_INFO.SET_MODULE(''&&edb360_prefix.'',''eadam'');');
+    put_line('@@sql/&&skip_diagnostics.&&edb360_7c.eadam.sql');
+    put_line('-- sqld360');
+    put_line('EXEC DBMS_APPLICATION_INFO.SET_MODULE(''&&edb360_prefix.'',''sqld360'');');
+    put_line('@@sql/sqld360.sql');
   END IF;
 END;
 /
 SPO OFF;
-
--- update log
 HOS zip -q &&edb360_main_filename._&&edb360_file_time. 99930_&&common_edb360_prefix._top_sql_driver.sql;
-SPO &&edb360_log..txt APP;
-PRO -- plan_table before calling sqld360
-SELECT statement_id, operation, options FROM plan_table;
-SPO OFF;
-HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_log..txt
 
--- execute sqld360
+-- execute dynamic script with sqld360 and others
 @99930_&&common_edb360_prefix._top_sql_driver.sql;
 
 -- closing
@@ -190,6 +198,12 @@ DECLARE
 		put_line('SPO OFF;');
   END update_log;
 BEGIN
+  put_line('SPO &&edb360_log..txt APP;');
+  put_line('PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
+  put_line('PRO -- plan_table after calling sqld360');
+  put_line('SELECT operation||'' ''||remarks FROM plan_table WHERE statement_id = ''SQLD360_SQLID'';');
+  put_line('SPO OFF;');
+  put_line('HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_log..txt');
   FOR i IN (SELECT operation, remarks FROM plan_table WHERE statement_id = 'SQLD360_SQLID')
   LOOP
     l_count := l_count + 1;
@@ -206,20 +220,13 @@ BEGIN
 END;
 /
 SPO OFF;
-
--- update log
 HOS zip -q &&edb360_main_filename._&&edb360_file_time. 99950_&&common_edb360_prefix._top_sql_driver.sql;
-SPO &&edb360_log..txt APP;
-PRO -- plan_table after calling sqld360
-SELECT operation, remarks FROM plan_table WHERE statement_id = 'SQLD360_SQLID';
-SPO OFF;
-HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_log..txt
 
--- zip edb360 files into main zip
+-- execute dynamic script to rename sqld360 files and copy them into main zip
 @99950_&&common_edb360_prefix._top_sql_driver.sql;
 
 -- closing
-@@edb360_0g_tkprof.sql
+@@&&edb360_0g.tkprof.sql
 SET SERVEROUT OFF HEAD ON PAGES &&def_max_rows.;
 HOS zip -mq &&edb360_main_filename._&&edb360_file_time. 99930_&&common_edb360_prefix._top_sql_driver.sql 99950_&&common_edb360_prefix._top_sql_driver.sql sqld360_driver.sql
 SET HEA ON LIN 32767 NEWP NONE PAGES &&def_max_rows. LONG 32000 LONGC 2000 WRA ON TRIMS ON TRIM ON TI OFF TIMI OFF ARRAY 100 NUM 20 SQLBL ON BLO . RECSEP OFF;

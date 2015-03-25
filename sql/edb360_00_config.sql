@@ -28,6 +28,7 @@ DEF edb360_conf_incl_pie = 'Y';
 DEF edb360_conf_incl_awr_rpt = 'Y';
 DEF edb360_conf_incl_addm_rpt = 'Y';
 DEF edb360_conf_incl_ash_rpt = 'Y';
+DEF edb360_conf_incl_tkprof = 'Y';
 
 -- top sql to execute further diagnostics (range 0-128)
 DEF edb360_conf_top_sql = '32';

@@ -1,6 +1,7 @@
-@@edb360_0g_tkprof.sql
+@@&&edb360_0g.tkprof.sql
 DEF section_id = '6b';
 DEF section_name = 'Active Session History (ASH) - Top Timed Events';
+EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
 SPO &&edb360_main_report..html APP;
 PRO <h2>&&section_name.</h2>
 SPO OFF;

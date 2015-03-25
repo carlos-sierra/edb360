@@ -7,7 +7,7 @@ SELECT TO_CHAR(SYSDATE, 'HH24:MI:SS') hh_mm_ss FROM DUAL;
 SELECT REPLACE(TRANSLATE('&&title.',
 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ''`~!@#$%^*()-_=+[]{}\|;:",.<>/?'||CHR(0)||CHR(9)||CHR(10)||CHR(13)||CHR(38),
 'abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz0123456789_'), '__', '_') title_no_spaces FROM DUAL;
-SELECT '&&common_edb360_prefix._&&column_number._&&title_no_spaces.' spool_filename FROM DUAL;
+SELECT '&&common_edb360_prefix._&&section_id._&&title_no_spaces.' spool_filename FROM DUAL;
 SET HEA OFF;
 SET TERM ON;
 
