@@ -6,6 +6,9 @@ EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
 SPO &&edb360_main_report..html APP;
 PRO <h2 title="Top SQL as per ASH">&&section_name.</h2>
 SPO OFF;
+SET TERM ON;
+PRO Please wait ...
+SET TERM OFF; 
 
 COL call_sqld360_bitmask NEW_V call_sqld360_bitmask FOR A6;
 SELECT SUBSTR(
@@ -20,7 +23,7 @@ FROM DUAL;
 DEF files_prefix = '';
 
 COL hh_mm_ss NEW_V hh_mm_ss NOPRI FOR A8;
-SET VER OFF FEED OFF SERVEROUT ON HEAD OFF PAGES 50000 LIN 32767 TRIMS ON TRIM ON TI OFF TIMI OFF ARRAY 100;
+SET VER OFF FEED OFF SERVEROUT ON HEAD OFF PAGES 50000 LIN 32767 TRIMS ON TRIM ON TI OFF TIMI OFF ARRAY 1000;
 SPO 99930_&&common_edb360_prefix._top_sql_driver.sql;
 DECLARE
   l_count NUMBER := 0;
@@ -88,11 +91,12 @@ BEGIN
     put_line('PRO');
     put_line('PRO rank:'||i.rank_num||' sql_id:'||i.sql_id);
     put_line('SPO OFF;');
-    put_line('HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_log..txt');
+    put_line('HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_log..txt >> &&edb360_log3..txt');
+    put_line('HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_log3..txt');
     put_line('-- update main report');
     put_line('SPO &&edb360_main_report..html APP;');
     put_line('PRO <li title="'||i.sql_text_1000||'">'||i.sql_id||' rank:'||i.rank_num||' et:'||i.db_time_hrs||'h cpu:'||i.cpu_time_hrs||'h');
-    put_line('HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html');
+    put_line('HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html >> &&edb360_log3..txt');
     put_line('SPO OFF;');
     IF i.rank_num <= &&edb360_conf_planx_top. THEN
       update_log('PLANX');
@@ -102,8 +106,8 @@ BEGIN
       put_line('PRO <a href="planx_'||i.sql_id||'_'||CHR(38)||chr(38)||'current_time..txt">planx(text)</a>');
       put_line('SPO OFF;');
       put_line('-- zip');
-      put_line('HOS zip -mq &&edb360_main_filename._&&edb360_file_time. planx_'||i.sql_id||'_'||CHR(38)||chr(38)||'current_time..txt');
-      put_line('HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html');
+      put_line('HOS zip -m &&edb360_main_filename._&&edb360_file_time. planx_'||i.sql_id||'_'||CHR(38)||chr(38)||'current_time..txt >> &&edb360_log3..txt');
+      put_line('HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html >> &&edb360_log3..txt');
     END IF;
     IF i.rank_num <= &&edb360_conf_sqlmon_top. AND '&&skip_10g.' IS NULL AND '&&skip_diagnostics.' IS NULL AND '&&skip_tuning.' IS NULL THEN
       update_log('SQLMON');
@@ -113,8 +117,8 @@ BEGIN
       put_line('PRO <a href="sqlmon_'||i.sql_id||'_'||CHR(38)||chr(38)||'current_time..zip">sqlmon(zip)</a>');
       put_line('SPO OFF;');
       put_line('-- zip');
-      put_line('HOS zip -mq &&edb360_main_filename._&&edb360_file_time. sqlmon_'||i.sql_id||'_'||CHR(38)||chr(38)||'current_time..zip');
-      put_line('HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html');
+      put_line('HOS zip -m &&edb360_main_filename._&&edb360_file_time. sqlmon_'||i.sql_id||'_'||CHR(38)||chr(38)||'current_time..zip >> &&edb360_log3..txt');
+      put_line('HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html >> &&edb360_log3..txt');
     END IF;
     IF i.rank_num <= &&edb360_conf_sqlash_top. AND '&&skip_diagnostics.' IS NULL THEN
       update_log('SQLASH');
@@ -124,8 +128,8 @@ BEGIN
       put_line('PRO <a href="sqlash_'||i.sql_id||'.zip">sqlash(zip)</a>');
       put_line('SPO OFF;');
       put_line('-- zip');
-      put_line('HOS zip -mq &&edb360_main_filename._&&edb360_file_time. sqlash_'||i.sql_id||'.zip');
-      put_line('HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html');
+      put_line('HOS zip -m &&edb360_main_filename._&&edb360_file_time. sqlash_'||i.sql_id||'.zip >> &&edb360_log3..txt');
+      put_line('HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html >> &&edb360_log3..txt');
     END IF;
     IF i.rank_num <= &&edb360_conf_sqlhc_top. THEN
       update_log('SQLHC');
@@ -135,8 +139,8 @@ BEGIN
       put_line('PRO <a href="'||CHR(38)||chr(38)||'files_prefix..zip">sqlhc(zip)</a>');
       put_line('SPO OFF;');
       put_line('-- zip');
-      put_line('HOS zip -mq &&edb360_main_filename._&&edb360_file_time. '||CHR(38)||chr(38)||'files_prefix..zip');
-      put_line('HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html');
+      put_line('HOS zip -m &&edb360_main_filename._&&edb360_file_time. '||CHR(38)||chr(38)||'files_prefix..zip >> &&edb360_log3..txt');
+      put_line('HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html >> &&edb360_log3..txt');
     END IF;
     IF i.rank_num <= &&edb360_conf_sqld360_top. THEN
       update_log('SQLD360');
@@ -147,23 +151,24 @@ BEGIN
       put_line('PRO <a href="sqld360_&&database_name_short._'||i.sql_id||'_&&host_name_short._&&edb360_file_time..zip">sqld360(zip)</a>');
       put_line('SPO OFF;');
       put_line('-- zip');
-      put_line('HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html');
+      put_line('HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html >> &&edb360_log3..txt');
     END IF;
     put_line('-- update main report');
     put_line('SPO &&edb360_main_report..html APP;');
     put_line('PRO </li>');
     put_line('SPO OFF;');
-    put_line('HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html');
+    put_line('HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html >> &&edb360_log3..txt');
   END LOOP;
   IF l_count > 0 THEN
     put_line('UNDEF 1');
-    put_line('HOS zip -q &&edb360_main_filename._&&edb360_file_time. 99930_&&common_edb360_prefix._top_sql_driver.sql;');
+    put_line('HOS zip &&edb360_main_filename._&&edb360_file_time. 99930_&&common_edb360_prefix._top_sql_driver.sql >> &&edb360_log3..txt');
     put_line('SPO &&edb360_log..txt APP;');
     put_line('PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
     put_line('PRO -- plan_table before calling sqld360');
     put_line('SELECT operation||'' ''||options sql_and_flags FROM plan_table WHERE statement_id = ''SQLD360_SQLID'';');
     put_line('SPO OFF;');
-    put_line('HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_log..txt');
+    put_line('HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_log..txt >> &&edb360_log3..txt');
+    put_line('HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_log3..txt');
     put_line('-- eadam (ash) for top sql');
     put_line('EXEC DBMS_APPLICATION_INFO.SET_MODULE(''&&edb360_prefix.'',''eadam'');');
     put_line('@@sql/&&skip_diagnostics.&&edb360_7c.eadam.sql');
@@ -174,13 +179,21 @@ BEGIN
 END;
 /
 SPO OFF;
-HOS zip -q &&edb360_main_filename._&&edb360_file_time. 99930_&&common_edb360_prefix._top_sql_driver.sql;
+HOS zip &&edb360_main_filename._&&edb360_file_time. 99930_&&common_edb360_prefix._top_sql_driver.sql >> &&edb360_log3..txt
+
+SET TERM ON;
+PRO Please wait ...
+SET TERM OFF; 
 
 -- execute dynamic script with sqld360 and others
 @99930_&&common_edb360_prefix._top_sql_driver.sql;
 
+SET TERM ON;
+PRO Please wait ...
+SET TERM OFF; 
+
 -- closing
-SET VER OFF FEED OFF SERVEROUT ON HEAD OFF PAGES 50000 LIN 32767 TRIMS ON TRIM ON TI OFF TIMI OFF ARRAY 100;
+SET VER OFF FEED OFF SERVEROUT ON HEAD OFF PAGES 50000 LIN 32767 TRIMS ON TRIM ON TI OFF TIMI OFF ARRAY 1000;
 SPO 99950_&&common_edb360_prefix._top_sql_driver.sql;
 DECLARE
   l_count NUMBER := 0;
@@ -203,16 +216,17 @@ BEGIN
   put_line('PRO -- plan_table after calling sqld360');
   put_line('SELECT operation||'' ''||remarks FROM plan_table WHERE statement_id = ''SQLD360_SQLID'';');
   put_line('SPO OFF;');
-  put_line('HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_log..txt');
+  put_line('HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_log..txt >> &&edb360_log3..txt');
+  put_line('HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_log3..txt');
   FOR i IN (SELECT operation, remarks FROM plan_table WHERE statement_id = 'SQLD360_SQLID')
   LOOP
     l_count := l_count + 1;
-    put_line('HOS mv '||i.remarks||' sqld360_&&database_name_short._'||i.operation||'_&&host_name_short._&&edb360_file_time..zip');
-    put_line('HOS zip -mq &&edb360_main_filename._&&edb360_file_time. sqld360_&&database_name_short._'||i.operation||'_&&host_name_short._&&edb360_file_time..zip');
+    put_line('HOS mv '||i.remarks||' sqld360_&&database_name_short._'||i.operation||'_&&host_name_short._&&edb360_file_time..zip >> &&edb360_log3..txt');
+    put_line('HOS zip -m &&edb360_main_filename._&&edb360_file_time. sqld360_&&database_name_short._'||i.operation||'_&&host_name_short._&&edb360_file_time..zip >> &&edb360_log3..txt');
   END LOOP;
   IF l_count > 0 THEN
     put_line('-- just in case individual file "mv" failed');
-    put_line('HOS zip -mq &&edb360_main_filename._&&edb360_file_time. sqld360_*.zip');
+    put_line('HOS zip -m &&edb360_main_filename._&&edb360_file_time. sqld360_*.zip >> &&edb360_log3..txt');
     put_line('-- deleting content of global temporary table "plan_table" as cleanup after sqld360');
     put_line('-- this delete affects nothing');
     put_line('DELETE plan_table;');
@@ -220,16 +234,24 @@ BEGIN
 END;
 /
 SPO OFF;
-HOS zip -q &&edb360_main_filename._&&edb360_file_time. 99950_&&common_edb360_prefix._top_sql_driver.sql;
+HOS zip &&edb360_main_filename._&&edb360_file_time. 99950_&&common_edb360_prefix._top_sql_driver.sql >> &&edb360_log3..txt
+
+SET TERM ON;
+PRO Please wait ...
+SET TERM OFF; 
 
 -- execute dynamic script to rename sqld360 files and copy them into main zip
 @99950_&&common_edb360_prefix._top_sql_driver.sql;
 
+SET TERM ON;
+PRO Please wait ...
+SET TERM OFF; 
+
 -- closing
 @@&&edb360_0g.tkprof.sql
 SET SERVEROUT OFF HEAD ON PAGES &&def_max_rows.;
-HOS zip -mq &&edb360_main_filename._&&edb360_file_time. 99930_&&common_edb360_prefix._top_sql_driver.sql 99950_&&common_edb360_prefix._top_sql_driver.sql sqld360_driver.sql
-SET HEA ON LIN 32767 NEWP NONE PAGES &&def_max_rows. LONG 32000 LONGC 2000 WRA ON TRIMS ON TRIM ON TI OFF TIMI OFF ARRAY 100 NUM 20 SQLBL ON BLO . RECSEP OFF;
+HOS zip -m &&edb360_main_filename._&&edb360_file_time. 99930_&&common_edb360_prefix._top_sql_driver.sql 99950_&&common_edb360_prefix._top_sql_driver.sql sqld360_driver.sql >> &&edb360_log3..txt
+SET HEA ON LIN 32767 NEWP NONE PAGES &&def_max_rows. LONG 32000 LONGC 2000 WRA ON TRIMS ON TRIM ON TI OFF TIMI OFF ARRAY 1000 NUM 20 SQLBL ON BLO . RECSEP OFF;
 CL COL;
 COL row_num FOR 9999999 HEA '#' PRI;
 

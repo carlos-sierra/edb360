@@ -88,6 +88,22 @@ SELECT /*+ &&top_level_hints. */
 END;
 /
 
+DEF tit_01 = '';
+DEF tit_02 = '';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
+
 DEF skip_lch = '';
 DEF title = 'Cell Blocks per Hour';
 DEF vaxis = 'Cell Blocks';
@@ -111,6 +127,22 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_05', '"'||SUBSTR('&&tit_05.',13,30)|
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_06', '"'||SUBSTR('&&tit_06.',13,30)||'"');
 @@edb360_9a_pre_one.sql
 
+DEF tit_01 = '';
+DEF tit_02 = '';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
+
 DEF skip_lch = '';
 DEF title = 'Cell Commit Cache per Hour';
 DEF vaxis = 'Counts';
@@ -121,6 +153,22 @@ EXEC :sql_text := REPLACE(:sql_text, '@stat_name_02@', '&&tit_02.');
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_01', '"'||SUBSTR('&&tit_01.',1,30)||'"');
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_02', '"'||SUBSTR('&&tit_02.',1,30)||'"');
 @@edb360_9a_pre_one.sql
+
+DEF tit_01 = '';
+DEF tit_02 = '';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
 
 DEF skip_lch = '';
 DEF title = 'Cell Compression Units per Hour';
@@ -142,6 +190,22 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_04', '"'||SUBSTR('&&tit_04.',10,30)|
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_05', '"'||SUBSTR('&&tit_05.',10,30)||'"');
 @@edb360_9a_pre_one.sql
 
+DEF tit_01 = '';
+DEF tit_02 = '';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
+
 DEF skip_lch = '';
 DEF title = 'Cell Flash Cache Read Hits per Hour';
 DEF vaxis = 'Read Hits';
@@ -149,6 +213,22 @@ DEF tit_01 = 'cell flash cache read hits';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name_01@', '&&tit_01.');
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_01', '"'||SUBSTR('&&tit_01.',1,30)||'"');
 @@edb360_9a_pre_one.sql
+
+DEF tit_01 = '';
+DEF tit_02 = '';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
 
 DEF skip_lch = '';
 DEF title = 'Cell I/O Bytes per Hour';
@@ -185,6 +265,22 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_09', '"'||SUBSTR('&&tit_09.',34,30)|
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_10', '"'||SUBSTR('&&tit_10.',34,30)||'"');
 @@edb360_9a_pre_one.sql
 
+DEF tit_01 = '';
+DEF tit_02 = '';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
+
 DEF skip_lch = '';
 DEF title = 'Cell Scans per Hour';
 DEF vaxis = 'Scans';
@@ -195,6 +291,23 @@ EXEC :sql_text := REPLACE(:sql_text, '@stat_name_02@', '&&tit_02.');
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_01', '"'||SUBSTR('&&tit_01.',1,30)||'"');
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_02', '"'||SUBSTR('&&tit_02.',1,30)||'"');
 @@edb360_9a_pre_one.sql
+
+DEF tit_01 = '';
+DEF tit_02 = '';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
+
 DEF skip_lch = '';
 DEF title = 'Cell Smart Scan Sessions per Hour';
 DEF vaxis = 'Sessions';
@@ -242,6 +355,22 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_13', '"'||SUBSTR('&&tit_13.',12,30)|
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_14', '"'||SUBSTR('&&tit_14.',12,30)||'"');
 @@edb360_9a_pre_one.sql
 
+DEF tit_01 = '';
+DEF tit_02 = '';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
+
 DEF skip_lch = '';
 DEF title = 'Chained or Migrated Rows per Hour';
 DEF vaxis = 'Rows';
@@ -259,6 +388,22 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_03', '"'||SUBSTR('&&tit_03.',1,30)||
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_04', '"'||SUBSTR('&&tit_04.',1,30)||'"');
 @@edb360_9a_pre_one.sql
 
+DEF tit_01 = '';
+DEF tit_02 = '';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
+
 DEF skip_lch = '';
 DEF title = 'Checkpoints per Hour';
 DEF vaxis = 'Checkpoints';
@@ -273,6 +418,22 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_02', '"'||SUBSTR('&&tit_02.',1,30)||
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_03', '"'||SUBSTR('&&tit_03.',1,30)||'"');
 @@edb360_9a_pre_one.sql
 
+DEF tit_01 = '';
+DEF tit_02 = '';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
+
 DEF skip_lch = '';
 DEF title = 'Commits and Rollbacks per Hour';
 DEF vaxis = 'Commits and Rollbacks';
@@ -283,6 +444,22 @@ EXEC :sql_text := REPLACE(:sql_text, '@stat_name_02@', '&&tit_02.');
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_01', '"'||SUBSTR('&&tit_01.',1,30)||'"');
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_02', '"'||SUBSTR('&&tit_02.',1,30)||'"');
 @@edb360_9a_pre_one.sql
+
+DEF tit_01 = '';
+DEF tit_02 = '';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
 
 DEF skip_lch = '';
 DEF title = 'Current and Consistent Blocks per Hour';
@@ -331,6 +508,22 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_13', '"'||SUBSTR('&&tit_13.',1,30)||
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_14', '"'||SUBSTR('&&tit_14.',1,30)||'"');
 @@edb360_9a_pre_one.sql
 
+DEF tit_01 = '';
+DEF tit_02 = '';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
+
 DEF skip_lch = '';
 DEF title = 'Cursor and SQL Area evicted per Hour';
 DEF vaxis = 'Count';
@@ -341,6 +534,22 @@ EXEC :sql_text := REPLACE(:sql_text, '@stat_name_02@', '&&tit_02.');
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_01', '"'||SUBSTR('&&tit_01.',1,30)||'"');
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_02', '"'||SUBSTR('&&tit_02.',1,30)||'"');
 @@edb360_9a_pre_one.sql
+
+DEF tit_01 = '';
+DEF tit_02 = '';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
 
 DEF skip_lch = '';
 DEF title = 'En(De)cryption per Hour';
@@ -355,6 +564,22 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_01', '"'||SUBSTR('&&tit_01.',1,30)||
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_02', '"'||SUBSTR('&&tit_02.',1,30)||'"');
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_03', '"'||SUBSTR('&&tit_03.',1,30)||'"');
 @@edb360_9a_pre_one.sql
+
+DEF tit_01 = '';
+DEF tit_02 = '';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
 
 DEF skip_lch = '';
 DEF title = 'EHCC Compression Units (De)Compressed per Hour';
@@ -406,6 +631,22 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_14', '"'||SUBSTR('&&tit_14.',1,30)||
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_15', '"'||SUBSTR('&&tit_15.',1,30)||'"');
 @@edb360_9a_pre_one.sql
 
+DEF tit_01 = '';
+DEF tit_02 = '';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
+
 DEF skip_lch = '';
 DEF title = 'Enqueues per Hour';
 DEF vaxis = 'Enqueues';
@@ -437,6 +678,22 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_07', '"'||SUBSTR('&&tit_07.',1,30)||
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_08', '"'||SUBSTR('&&tit_08.',1,30)||'"');
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_09', '"'||SUBSTR('&&tit_09.',1,30)||'"');
 @@edb360_9a_pre_one.sql
+
+DEF tit_01 = '';
+DEF tit_02 = '';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
 
 DEF skip_lch = '';
 DEF title = 'Flash Cache Inserts and Evictions per Hour';
@@ -482,6 +739,22 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_12', '"'||SUBSTR('&&tit_12.',1,30)||
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_13', '"'||SUBSTR('&&tit_13.',1,30)||'"');
 @@edb360_9a_pre_one.sql
 
+DEF tit_01 = '';
+DEF tit_02 = '';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
+
 DEF skip_lch = '';
 DEF title = 'Global Blocks and Reads per Hour';
 DEF vaxis = 'Counts';
@@ -526,6 +799,22 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_12', '"'||SUBSTR('&&tit_12.',1,30)||
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_13', '"'||SUBSTR('&&tit_13.',1,30)||'"');
 @@edb360_9a_pre_one.sql
 
+DEF tit_01 = '';
+DEF tit_02 = '';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
+
 DEF skip_lch = '';
 DEF title = 'Logons per Hour';
 DEF vaxis = 'Logons';
@@ -533,6 +822,22 @@ DEF tit_01 = 'logons cumulative';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name_01@', '&&tit_01.');
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_01', '"'||SUBSTR('&&tit_01.',1,30)||'"');
 @@edb360_9a_pre_one.sql
+
+DEF tit_01 = '';
+DEF tit_02 = '';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
 
 DEF skip_lch = '';
 DEF title = 'Node Splits per Hour';
@@ -551,6 +856,22 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_03', '"'||SUBSTR('&&tit_03.',1,30)||
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_04', '"'||SUBSTR('&&tit_04.',1,30)||'"');
 @@edb360_9a_pre_one.sql
 
+DEF tit_01 = '';
+DEF tit_02 = '';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
+
 DEF skip_lch = '';
 DEF title = 'Parse Counts per Hour';
 DEF vaxis = 'Parse Counts';
@@ -567,6 +888,22 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_02', '"'||SUBSTR('&&tit_02.',1,30)||
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_03', '"'||SUBSTR('&&tit_03.',1,30)||'"');
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_04', '"'||SUBSTR('&&tit_04.',1,30)||'"');
 @@edb360_9a_pre_one.sql
+
+DEF tit_01 = '';
+DEF tit_02 = '';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
 
 DEF skip_lch = '';
 DEF title = 'Parallel Operations per Hour';
@@ -603,6 +940,22 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_09', '"'||SUBSTR('&&tit_09.',21,30)|
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_10', '"'||SUBSTR('&&tit_10.',1,30)||'"');
 @@edb360_9a_pre_one.sql
 
+DEF tit_01 = '';
+DEF tit_02 = '';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
+
 DEF skip_lch = '';
 DEF title = 'Physical Reads Blocks per Hour';
 DEF vaxis = 'Blocks';
@@ -635,6 +988,22 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_08', '"'||SUBSTR('&&tit_08.',1,30)||
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_09', '"'||SUBSTR('&&tit_09.',1,30)||'"');
 @@edb360_9a_pre_one.sql
 
+DEF tit_01 = '';
+DEF tit_02 = '';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
+
 DEF skip_lch = '';
 DEF title = 'Physical Reads Bytes per Hour';
 DEF vaxis = 'Bytes';
@@ -648,6 +1017,22 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_01', '"'||SUBSTR('&&tit_01.',1,30)||
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_02', '"'||SUBSTR('&&tit_02.',1,30)||'"');
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_03', '"'||SUBSTR('&&tit_03.',1,30)||'"');
 @@edb360_9a_pre_one.sql
+
+DEF tit_01 = '';
+DEF tit_02 = '';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
 
 DEF skip_lch = '';
 DEF title = 'Physical Reads Requests per Hour';
@@ -665,6 +1050,22 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_02', '"'||SUBSTR('&&tit_02.',1,30)||
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_03', '"'||SUBSTR('&&tit_03.',1,30)||'"');
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_04', '"'||SUBSTR('&&tit_04.',1,30)||'"');
 @@edb360_9a_pre_one.sql
+
+DEF tit_01 = '';
+DEF tit_02 = '';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
 
 DEF skip_lch = '';
 DEF title = 'Physical Writes Blocks per Hour';
@@ -689,6 +1090,22 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_05', '"'||SUBSTR('&&tit_05.',1,30)||
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_06', '"'||SUBSTR('&&tit_06.',1,30)||'"');
 @@edb360_9a_pre_one.sql
 
+DEF tit_01 = '';
+DEF tit_02 = '';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
+
 DEF skip_lch = '';
 DEF title = 'Physical Writes Bytes per Hour';
 DEF vaxis = 'Bytes';
@@ -702,6 +1119,22 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_01', '"'||SUBSTR('&&tit_01.',1,30)||
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_02', '"'||SUBSTR('&&tit_02.',1,30)||'"');
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_03', '"'||SUBSTR('&&tit_03.',1,30)||'"');
 @@edb360_9a_pre_one.sql
+
+DEF tit_01 = '';
+DEF tit_02 = '';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
 
 DEF skip_lch = '';
 DEF title = 'Physical Writes Requests per Hour';
@@ -720,6 +1153,22 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_03', '"'||SUBSTR('&&tit_03.',1,30)||
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_04', '"'||SUBSTR('&&tit_04.',1,30)||'"');
 @@edb360_9a_pre_one.sql
 
+DEF tit_01 = '';
+DEF tit_02 = '';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
+
 DEF skip_lch = '';
 DEF title = 'PX messages per Hour';
 DEF vaxis = 'Messages';
@@ -737,6 +1186,22 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_02', '"'||SUBSTR('&&tit_02.',1,30)||
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_03', '"'||SUBSTR('&&tit_03.',1,30)||'"');
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_04', '"'||SUBSTR('&&tit_04.',1,30)||'"');
 @@edb360_9a_pre_one.sql
+
+DEF tit_01 = '';
+DEF tit_02 = '';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
 
 DEF skip_lch = '';
 DEF title = 'Redo and Undo Bytes per Hour';
@@ -758,6 +1223,22 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_04', '"'||SUBSTR('&&tit_04.',1,30)||
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_05', '"'||SUBSTR('&&tit_05.',1,30)||'"');
 @@edb360_9a_pre_one.sql
 
+DEF tit_01 = '';
+DEF tit_02 = '';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
+
 DEF skip_lch = '';
 DEF title = 'Rollback Activity per Hour';
 DEF vaxis = 'Counts';
@@ -769,6 +1250,22 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_01', '"'||SUBSTR('&&tit_01.',1,30)||
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_02', '"'||SUBSTR('&&tit_02.',1,30)||'"');
 @@edb360_9a_pre_one.sql
 
+DEF tit_01 = '';
+DEF tit_02 = '';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
+
 DEF skip_lch = '';
 DEF title = 'Sorts per Hour';
 DEF vaxis = 'Sorts';
@@ -779,6 +1276,22 @@ EXEC :sql_text := REPLACE(:sql_text, '@stat_name_02@', '&&tit_02.');
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_01', '"'||SUBSTR('&&tit_01.',1,30)||'"');
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_02', '"'||SUBSTR('&&tit_02.',1,30)||'"');
 @@edb360_9a_pre_one.sql
+
+DEF tit_01 = '';
+DEF tit_02 = '';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
 
 DEF skip_lch = '';
 DEF title = 'SQL*Net Bytes per Hour';
@@ -809,6 +1322,22 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_07', '"'||SUBSTR('&&tit_07.',7,30)||
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_08', '"'||SUBSTR('&&tit_08.',7,30)||'"');
 @@edb360_9a_pre_one.sql
 
+DEF tit_01 = '';
+DEF tit_02 = '';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
+
 DEF skip_lch = '';
 DEF title = 'SQL*Net Roundtrips per Hour';
 DEF vaxis = 'Roundtrips';
@@ -819,6 +1348,22 @@ EXEC :sql_text := REPLACE(:sql_text, '@stat_name_02@', '&&tit_02.');
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_01', '"'||SUBSTR('&&tit_01.',1,30)||'"');
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_02', '"'||SUBSTR('&&tit_02.',1,30)||'"');
 @@edb360_9a_pre_one.sql
+
+DEF tit_01 = '';
+DEF tit_02 = '';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
 
 DEF skip_lch = '';
 DEF title = 'Table Scans per Hour';
@@ -842,6 +1387,22 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_04', '"'||SUBSTR('&&tit_04.',1,30)||
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_05', '"'||SUBSTR('&&tit_05.',1,30)||'"');
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_06', '"'||SUBSTR('&&tit_06.',1,30)||'"');
 @@edb360_9a_pre_one.sql
+
+DEF tit_01 = '';
+DEF tit_02 = '';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
 
 DEF skip_lch = '';
 DEF title = 'Wait Time per Hour';
@@ -875,6 +1436,22 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_08', '"'||SUBSTR('&&tit_08.',1,30)||
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_09', '"'||SUBSTR('&&tit_09.',1,30)||'"');
 @@edb360_9a_pre_one.sql
 
+DEF tit_01 = '';
+DEF tit_02 = '';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
+
 DEF skip_lch = '';
 DEF title = 'Workarea Executions per Hour';
 DEF vaxis = 'Executions';
@@ -888,6 +1465,22 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_01', '"'||SUBSTR('&&tit_01.',1,30)||
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_02', '"'||SUBSTR('&&tit_02.',1,30)||'"');
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_03', '"'||SUBSTR('&&tit_03.',1,30)||'"');
 @@edb360_9a_pre_one.sql
+
+DEF tit_01 = '';
+DEF tit_02 = '';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
 
 DEF skip_lch = 'Y';
 

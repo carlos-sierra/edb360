@@ -6,8 +6,8 @@ SET ECHO OFF;
 SET TIM OFF;
 SET TIMI OFF;
 CL COL;
-DEF edb360_vYYNN = 'v1510';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2015-03-30)';
+DEF edb360_vYYNN = 'v1511';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2015-04-01)';
 
 -- parameters
 PRO
@@ -198,7 +198,7 @@ PRO Please wait ...
 @@&&skip_diagnostics.esp_collect_requirements.sql
 SET TERM OFF; 
 -- zip esp files but preserve original files on file system until edb360 completes (one database or multiple)
-HOS zip -qT esp_requirements_&&esp_host_name_short..zip res_requirements_&&rr_host_name_short..txt esp_requirements_&&esp_host_name_short..csv cpuinfo_model_name.txt 
+HOS zip -T esp_requirements_&&esp_host_name_short..zip res_requirements_&&rr_host_name_short..txt esp_requirements_&&esp_host_name_short..csv cpuinfo_model_name.txt
 
 -- initialization
 CL COL;
@@ -317,7 +317,7 @@ SELECT CASE '&&edb360_conf_incl_line.' WHEN 'N' THEN '--' END edb360_skip_line F
 SELECT CASE '&&edb360_conf_incl_pie.'  WHEN 'N' THEN '--' END edb360_skip_pie  FROM DUAL;
 
 -- setup
-DEF sql_trace_level = '8';
+DEF sql_trace_level = '1';
 DEF main_table = '';
 DEF title = '';
 DEF title_no_spaces = '';
@@ -325,11 +325,12 @@ DEF title_suffix = '';
 DEF common_edb360_prefix = '&&edb360_prefix._&&database_name_short.';
 DEF edb360_main_report = '00001_&&common_edb360_prefix._index';
 DEF edb360_log = '00002_&&common_edb360_prefix._log';
-DEF edb360_tkprof = '00003_&&common_edb360_prefix._tkprof';
+DEF edb360_log2 = '00003_&&common_edb360_prefix._log2';
+DEF edb360_log3 = '00004_&&common_edb360_prefix._log3';
+DEF edb360_tkprof = '00005_&&common_edb360_prefix._tkprof';
 DEF edb360_main_filename = '&&common_edb360_prefix._&&host_name_short.';
-DEF edb360_log2 = '00004_&&common_edb360_prefix._log2';
 DEF edb360_tracefile_identifier = '&&common_edb360_prefix.';
-DEF edb360_tar_filename = '00007_&&edb360_main_filename._&&edb360_file_time.';
+DEF edb360_tar_filename = '00008_&&edb360_main_filename._&&edb360_file_time.';
 
 DEF edb360_copyright = ' (c) 2014';
 DEF top_level_hints = 'NO_MERGE';
@@ -437,7 +438,7 @@ VAR sql_text_backup CLOB;
 VAR sql_text_backup2 CLOB;
 VAR sql_text_display CLOB;
 VAR file_seq NUMBER;
-EXEC :file_seq := 7;
+EXEC :file_seq := 8;
 VAR get_time_t0 NUMBER;
 VAR get_time_t1 NUMBER;
 COL edb360_prev_sql_id NEW_V edb360_prev_sql_id NOPRI;
@@ -465,6 +466,9 @@ ALTER SESSION SET "_optimizer_order_by_elimination_enabled"=false;
 -- workaround Siebel
 ALTER SESSION SET optimizer_index_cost_adj = 100;
 ALTER SESSION SET optimizer_dynamic_sampling = 2;
+ALTER SESSION SET "_always_semi_join" = CHOOSE;
+ALTER SESSION SET "_and_pruning_enabled" = TRUE;
+ALTER SESSION SET "_subquery_pruning_enabled" = TRUE;
 
 -- tracing script in case it takes long to execute so we can diagnose it
 ALTER SESSION SET MAX_DUMP_FILE_SIZE = '1G';
@@ -492,7 +496,7 @@ SET TRIMS ON;
 SET TRIM ON; 
 SET TI OFF; 
 SET TIMI OFF; 
-SET ARRAY 100; 
+SET ARRAY 1000; 
 SET NUM 20; 
 SET SQLBL ON; 
 SET BLO .; 
@@ -505,7 +509,51 @@ SPO &&edb360_log..txt;
 PRO begin log
 PRO
 DEF;
+PRO Parameters
 SHOW PARAMETERS;
+PRO SYS.WR_$% Tables
+SELECT table_name, blocks, num_rows, last_analyzed
+  FROM dba_tables
+ WHERE owner = 'SYS'
+   AND table_name LIKE 'WR_$%'
+ ORDER BY
+       table_name;
+PRO SYS.WR_$% Table Partitions
+SELECT table_name, partition_name, blocks, num_rows, last_analyzed
+  FROM dba_tab_partitions
+ WHERE table_owner = 'SYS'
+   AND table_name LIKE 'WR_$%'
+ ORDER BY
+       table_name, partition_name;
+PRO SYS.WR_$% Tables and Partitions
+SELECT table_name, partition_name, inserts, updates, deletes, timestamp, truncated
+  FROM dba_tab_modifications
+ WHERE table_owner = 'SYS'
+   AND table_name LIKE 'WR_$%'
+ ORDER BY
+       table_name, partition_name;
+PRO SYS.WR_$% Indexes
+SELECT table_name, index_name, leaf_blocks, num_rows, last_analyzed
+  FROM dba_indexes
+ WHERE table_owner = 'SYS'
+   AND table_name LIKE 'WR_$%'
+ ORDER BY
+       table_name, index_name;
+PRO SYS.WR_$% Index Partitions
+SELECT index_name, partition_name, leaf_blocks, num_rows, last_analyzed
+  FROM dba_ind_partitions
+ WHERE index_owner = 'SYS'
+   AND index_name LIKE 'WR_$%'
+ ORDER BY
+       index_name, partition_name;
+PRO SYS.WR_$% Segments
+COL seg_part_name FOR A61;
+SELECT segment_name||' '||partition_name seg_part_name, segment_type, blocks
+  FROM dba_segments
+ WHERE owner = 'SYS'
+   AND segment_name LIKE 'WR_$%'
+ ORDER BY
+       segment_name, partition_name;
 SPO OFF;
 
 -- main header
@@ -522,11 +570,11 @@ PRO
 SPO OFF;
 
 -- zip into main the esp zip so far, then remove zip but preserve source esp files. let edb360.sql and run_edb360.sh do the clean up
-HOS zip -qmT &&edb360_main_filename._&&edb360_file_time. esp_requirements_&&esp_host_name_short..zip 
+HOS zip -mT &&edb360_main_filename._&&edb360_file_time. esp_requirements_&&esp_host_name_short..zip >> &&edb360_log3..txt
 -- zip other files
-HOS zip -jq &&edb360_main_filename._&&edb360_file_time. js/sorttable.js
-HOS zip -jq &&edb360_main_filename._&&edb360_file_time. js/edb360_img.jpg
+HOS zip -j &&edb360_main_filename._&&edb360_file_time. js/sorttable.js >> &&edb360_log3..txt
+HOS zip -j &&edb360_main_filename._&&edb360_file_time. js/edb360_img.jpg >> &&edb360_log3..txt
 --HOS zip -r osw_&&esp_host_name_short..zip `ps -ef | grep OSW | grep FM | awk -F 'OSW' '{print $2}' | cut -f 3 -d ' '`
---HOS zip -qmT &&edb360_main_filename._&&edb360_file_time. osw_&&esp_host_name_short..zip
+--HOS zip -mT &&edb360_main_filename._&&edb360_file_time. osw_&&esp_host_name_short..zip
 
 --WHENEVER SQLERROR CONTINUE;

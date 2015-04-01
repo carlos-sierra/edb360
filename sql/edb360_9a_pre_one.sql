@@ -16,12 +16,12 @@ SPO &&edb360_log..txt APP;
 PRO
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 PRO
-PRO &&hh_mm_ss. col:&&column_number.of&&max_col_number. "&&section_name."
+PRO &&hh_mm_ss. &&section_id. "&&section_name."
 PRO &&hh_mm_ss. &&title.&&title_suffix.
 
 -- count
 PRINT sql_text;
-PRO &&hh_mm_ss. col:&&column_number.of&&max_col_number.. Computing COUNT(*)...
+PRO &&hh_mm_ss. &&section_id.. Computing COUNT(*)...
 EXEC :row_count := -1;
 EXEC :sql_text_display := TRIM(CHR(10) FROM :sql_text)||';';
 SET TIMI ON;
@@ -45,7 +45,7 @@ SET TERM OFF;
 COL row_count NEW_V row_count NOPRI;
 SELECT TRIM(TO_CHAR(:row_count)) row_count FROM DUAL;
 SPO OFF;
-HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_log..txt
+HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_log..txt >> &&edb360_log3..txt
 
 -- spools query
 SPO &&common_edb360_prefix._query.sql;
@@ -58,7 +58,7 @@ GET &&common_edb360_prefix._query.sql
 SPO &&edb360_main_report..html APP;
 PRO <li title="&&main_table.">&&title. <small><em>(&&row_count.)</em></small>
 SPO OFF;
-HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html
+HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html >> &&edb360_log3..txt
 
 -- execute one sql
 @@&&skip_html.&&edb360_skip_html.edb360_9b_one_html.sql
@@ -66,7 +66,8 @@ HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..htm
 @@&&skip_csv.&&edb360_skip_csv.edb360_9d_one_csv.sql
 @@&&skip_lch.&&edb360_skip_line.edb360_9e_one_line_chart.sql
 @@&&skip_pch.&&edb360_skip_pie.edb360_9f_one_pie_chart.sql
-HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_log2..txt
+HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_log2..txt >> &&edb360_log3..txt
+HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_log3..txt
 
 -- sql monitor long executions of sql from edb360
 SELECT 'N' edb360_tuning_pack_for_sqlmon, '--' skip_sqlmon_exec FROM DUAL
@@ -75,7 +76,7 @@ SELECT '&&tuning_pack.' edb360_tuning_pack_for_sqlmon, NULL skip_sqlmon_exec, SU
 WHERE sql_id = '&&edb360_prev_sql_id.' AND elapsed_time / 1e6 > 60 /* seconds */
 /
 @@&&skip_tuning.&&skip_sqlmon_exec.sqlmon.sql &&edb360_tuning_pack_for_sqlmon. &&edb360_prev_sql_id.
-HOS zip -mq &&edb360_main_filename._&&edb360_file_time. sqlmon_&&edb360_prev_sql_id._&&current_time..zip
+HOS zip -m &&edb360_main_filename._&&edb360_file_time. sqlmon_&&edb360_prev_sql_id._&&current_time..zip >> &&edb360_log3..txt
 
 -- needed reset after eventual sqlmon above
 SET TERM OFF; 
@@ -90,7 +91,7 @@ SET TRIMS ON;
 SET TRIM ON; 
 SET TI OFF; 
 SET TIMI OFF; 
-SET ARRAY 100; 
+SET ARRAY 1000; 
 SET NUM 20; 
 SET SQLBL ON; 
 SET BLO .; 
@@ -110,24 +111,9 @@ DEF skip_lch = 'Y';
 DEF skip_pch = 'Y';
 DEF title_suffix = '';
 DEF haxis = '&&db_version. dbname:&&database_name_short. host:&&host_name_short. (avg cpu_count: &&avg_cpu_count.)';
-DEF tit_01 = '';
-DEF tit_02 = '';
-DEF tit_03 = '';
-DEF tit_04 = '';
-DEF tit_05 = '';
-DEF tit_06 = '';
-DEF tit_07 = '';
-DEF tit_08 = '';
-DEF tit_09 = '';
-DEF tit_10 = '';
-DEF tit_11 = '';
-DEF tit_12 = '';
-DEF tit_13 = '';
-DEF tit_14 = '';
-DEF tit_15 = '';
 
 -- update main report
 SPO &&edb360_main_report..html APP;
 PRO </li>
 SPO OFF;
-HOS zip -q &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html
+HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html >> &&edb360_log3..txt

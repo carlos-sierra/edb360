@@ -159,4 +159,4 @@ SPO OFF;
 EXEC DBMS_APPLICATION_INFO.SET_MODULE(NULL,NULL);
 
 -- list of generated files
-HOS unzip -l &&edb360_main_filename._&&edb360_file_time.
+--HOS unzip -l &&edb360_main_filename._&&edb360_file_time. >> &&edb360_log3..txt
