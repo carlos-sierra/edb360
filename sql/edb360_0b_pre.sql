@@ -279,8 +279,10 @@ ALTER SESSION SET EVENTS '10046 TRACE NAME CONTEXT FOREVER, LEVEL &&sql_trace_le
 -- esp collection
 HOS cat /proc/cpuinfo | grep -i name | sort | uniq >> cpuinfo_model_name.txt
 SET TERM ON;
+PRO Getting resources_requirements
 PRO Please wait ...
 @@&&skip_diagnostics.resources_requirements.sql
+PRO Getting esp_collect_requirements
 PRO Please wait ...
 @@&&skip_diagnostics.esp_collect_requirements.sql
 SET TERM OFF; 
@@ -533,42 +535,62 @@ PRO
 DEF;
 PRO Parameters
 SHOW PARAMETERS;
-PRO SYS.WR_$% Tables
+SET TI ON;
+SET TIMI ON;
+SET TERM ON;
+PRO Getting SYS.WR_$% Tables
+PRO Please wait ...
+SET TERM OFF; 
 SELECT table_name, blocks, num_rows, last_analyzed
   FROM dba_tables
  WHERE owner = 'SYS'
    AND table_name LIKE 'WR_$%'
  ORDER BY
        table_name;
-PRO SYS.WR_$% Table Partitions
+SET TERM ON;
+PRO Getting SYS.WR_$% Table Partitions
+PRO Please wait ...
+SET TERM OFF; 
 SELECT table_name, partition_name, blocks, num_rows, last_analyzed
   FROM dba_tab_partitions
  WHERE table_owner = 'SYS'
    AND table_name LIKE 'WR_$%'
  ORDER BY
        table_name, partition_name;
-PRO SYS.WR_$% Tables and Partitions
+SET TERM ON;
+PRO Getting SYS.WR_$% Tables and Partitions
+PRO Please wait ...
+SET TERM OFF; 
 SELECT table_name, partition_name, inserts, updates, deletes, timestamp, truncated
   FROM dba_tab_modifications
  WHERE table_owner = 'SYS'
    AND table_name LIKE 'WR_$%'
  ORDER BY
        table_name, partition_name;
-PRO SYS.WR_$% Indexes
+SET TERM ON;
+PRO Getting SYS.WR_$% Indexes
+PRO Please wait ...
+SET TERM OFF; 
 SELECT table_name, index_name, leaf_blocks, num_rows, last_analyzed
   FROM dba_indexes
  WHERE table_owner = 'SYS'
    AND table_name LIKE 'WR_$%'
  ORDER BY
        table_name, index_name;
-PRO SYS.WR_$% Index Partitions
+SET TERM ON;
+PRO Getting SYS.WR_$% Index Partitions
+PRO Please wait ...
+SET TERM OFF; 
 SELECT index_name, partition_name, leaf_blocks, num_rows, last_analyzed
   FROM dba_ind_partitions
  WHERE index_owner = 'SYS'
    AND index_name LIKE 'WR_$%'
  ORDER BY
        index_name, partition_name;
-PRO SYS.WR_$% Segments
+SET TERM ON;
+PRO Getting SYS.WR_$% Segments
+PRO Please wait ...
+SET TERM OFF; 
 COL seg_part_name FOR A61;
 SELECT segment_name||' '||partition_name seg_part_name, segment_type, blocks
   FROM dba_segments
@@ -576,6 +598,8 @@ SELECT segment_name||' '||partition_name seg_part_name, segment_type, blocks
    AND segment_name LIKE 'WR_$%'
  ORDER BY
        segment_name, partition_name;
+SET TI OFF; 
+SET TIMI OFF; 
 SPO OFF;
 
 -- main header
