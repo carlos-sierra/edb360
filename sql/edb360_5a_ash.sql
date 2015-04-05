@@ -81,63 +81,63 @@ DEF skip_lch = '';
 DEF skip_all = '&&is_single_instance.';
 DEF title = 'AAS per Wait Class for Cluster';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', 'instance_number');
-@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+@@&&skip_all.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 1;
 DEF title = 'AAS per Wait Class for Instance 1';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '1');
-@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+@@&&skip_all.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 2;
 DEF title = 'AAS per Wait Class for Instance 2';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '2');
-@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+@@&&skip_all.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 3;
 DEF title = 'AAS per Wait Class for Instance 3';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '3');
-@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+@@&&skip_all.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 4;
 DEF title = 'AAS per Wait Class for Instance 4';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '4');
-@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+@@&&skip_all.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 5;
 DEF title = 'AAS per Wait Class for Instance 5';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '5');
-@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+@@&&skip_all.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 6;
 DEF title = 'AAS per Wait Class for Instance 6';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '6');
-@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+@@&&skip_all.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 7;
 DEF title = 'AAS per Wait Class for Instance 7';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '7');
-@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+@@&&skip_all.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 8;
 DEF title = 'AAS per Wait Class for Instance 8';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '8');
-@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+@@&&skip_all.edb360_9a_pre_one.sql
 
 SET SERVEROUT ON;
 SPO 99820_&&common_edb360_prefix._chart_setup_driver2.sql;
@@ -202,10 +202,10 @@ END;
 DEF skip_lch = '';
 DEF title = 'AAS Total per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', '1 = 1');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS On CPU per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'session_state = ''ON CPU''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 

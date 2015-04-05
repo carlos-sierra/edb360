@@ -33,7 +33,6 @@ ALTER SESSION SET NLS_NUMERIC_CHARACTERS = ".,";
 ALTER SESSION SET NLS_SORT = 'BINARY';
 ALTER SESSION SET NLS_COMP = 'BINARY';
 
-CL COL;
 SPO res_requirements_&&rr_host_name_short..txt APP;
 
 /*****************************************************************************************/

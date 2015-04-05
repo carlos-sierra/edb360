@@ -105,6 +105,8 @@ SPO OFF;
 @@&&skip_diagnostics.&&edb360_5b.ash_wait.sql
 @@&&skip_diagnostics.&&edb360_5c.ash_top.sql
 @@&&skip_diagnostics.&&edb360_5d.sysstat.sql
+@@&&skip_diagnostics.&&edb360_5e.sysstat_exa.sql
+@@&&skip_diagnostics.&&edb360_5f.sysstat_current.sql
 
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -119,10 +121,12 @@ SPO OFF;
 @@&&skip_diagnostics.&&edb360_6a.ash_class.sql
 @@&&skip_diagnostics.&&edb360_6b.ash_event.sql
 @@&&skip_diagnostics.&&edb360_6c.ash_sql.sql
-@@&&skip_diagnostics.&&edb360_6d.ash_programs.sql
-@@&&skip_diagnostics.&&edb360_6e.ash_modules.sql
-@@&&skip_diagnostics.&&edb360_6f.ash_users.sql
-@@&&skip_diagnostics.&&edb360_6g.ash_plsql.sql
+@@&&skip_diagnostics.&&edb360_6d.ash_sql_ts.sql
+@@&&skip_diagnostics.&&edb360_6e.ash_programs.sql
+@@&&skip_diagnostics.&&edb360_6f.ash_modules.sql
+@@&&skip_diagnostics.&&edb360_6g.ash_users.sql
+@@&&skip_diagnostics.&&edb360_6h.ash_plsql.sql
+@@&&skip_diagnostics.&&edb360_6i.ash_objects.sql
 
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

@@ -73,65 +73,65 @@ END;
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on User IO per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''User I/O''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on System IO per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''System I/O''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on Cluster per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''Cluster''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on Commit per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''Commit''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on Concurrency per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''Concurrency''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on Application per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''Application''');
 EXEC :sql_text := REPLACE(:sql_text, '@column_name@', 'aas_application');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on Administrative per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''Administrative''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on Configuration per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''Configuration''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on Network per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''Network''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on Queueing per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''Queueing''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on Scheduler per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''Scheduler''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on Idle per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''Idle''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on Other per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''Other''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql

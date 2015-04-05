@@ -241,156 +241,156 @@ DEF title = 'AAS on CPU per Instance';
 DEF abstract = 'Average Active Sessions (AAS) on CPU'
 DEF vaxis = 'Average Active Sessions (AAS) on CPU (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'session_state = ''ON CPU''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_pch = '';
 DEF title = 'AAS on CPU per Source';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@filter_predicate@', 'session_state = ''ON CPU''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on &&wait_class_01. "&&event_name_01." per Instance';
 DEF abstract = 'Average Active Sessions (AAS) Waiting on &&wait_class_01. "&&event_name_01."'
 DEF vaxis = 'Average Active Sessions (AAS) Waiting on &&wait_class_01. "&&event_name_01." (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''&&wait_class_01.'' AND event = ''&&event_name_01.''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_pch = '';
 DEF title = 'AAS Waiting on &&wait_class_01. "&&event_name_01." per Source';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@filter_predicate@', 'wait_class = ''&&wait_class_01.'' AND event = ''&&event_name_01.''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on &&wait_class_02. "&&event_name_02." per Instance';
 DEF abstract = 'Average Active Sessions (AAS) Waiting on &&wait_class_02. "&&event_name_02."'
 DEF vaxis = 'Average Active Sessions (AAS) Waiting on &&wait_class_02. "&&event_name_02." (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''&&wait_class_02.'' AND event = ''&&event_name_02.''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_pch = '';
 DEF title = 'AAS Waiting on &&wait_class_02. "&&event_name_02." per Source';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@filter_predicate@', 'wait_class = ''&&wait_class_02.'' AND event = ''&&event_name_02.''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on &&wait_class_03. "&&event_name_03." per Instance';
 DEF abstract = 'Average Active Sessions (AAS) Waiting on &&wait_class_03. "&&event_name_03."'
 DEF vaxis = 'Average Active Sessions (AAS) Waiting on &&wait_class_03. "&&event_name_03." (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''&&wait_class_03.'' AND event = ''&&event_name_03.''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_pch = '';
 DEF title = 'AAS Waiting on &&wait_class_03. "&&event_name_03." per Source';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@filter_predicate@', 'wait_class = ''&&wait_class_03.'' AND event = ''&&event_name_03.''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on &&wait_class_04. "&&event_name_04." per Instance';
 DEF abstract = 'Average Active Sessions (AAS) Waiting on &&wait_class_04. "&&event_name_04."'
 DEF vaxis = 'Average Active Sessions (AAS) Waiting on &&wait_class_04. "&&event_name_04." (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''&&wait_class_04.'' AND event = ''&&event_name_04.''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_pch = '';
 DEF title = 'AAS Waiting on &&wait_class_04. "&&event_name_04." per Source';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@filter_predicate@', 'wait_class = ''&&wait_class_04.'' AND event = ''&&event_name_04.''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on &&wait_class_05. "&&event_name_05." per Instance';
 DEF abstract = 'Average Active Sessions (AAS) Waiting on &&wait_class_05. "&&event_name_05."'
 DEF vaxis = 'Average Active Sessions (AAS) Waiting on &&wait_class_05. "&&event_name_05." (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''&&wait_class_05.'' AND event = ''&&event_name_05.''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_pch = '';
 DEF title = 'AAS Waiting on &&wait_class_05. "&&event_name_05." per Source';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@filter_predicate@', 'wait_class = ''&&wait_class_05.'' AND event = ''&&event_name_05.''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on &&wait_class_06. "&&event_name_06." per Instance';
 DEF abstract = 'Average Active Sessions (AAS) Waiting on &&wait_class_06. "&&event_name_06."'
 DEF vaxis = 'Average Active Sessions (AAS) Waiting on &&wait_class_06. "&&event_name_06." (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''&&wait_class_06.'' AND event = ''&&event_name_06.''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_pch = '';
 DEF title = 'AAS Waiting on &&wait_class_06. "&&event_name_06." per Source';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@filter_predicate@', 'wait_class = ''&&wait_class_06.'' AND event = ''&&event_name_06.''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on &&wait_class_07. "&&event_name_07." per Instance';
 DEF abstract = 'Average Active Sessions (AAS) Waiting on &&wait_class_07. "&&event_name_07."'
 DEF vaxis = 'Average Active Sessions (AAS) Waiting on &&wait_class_07. "&&event_name_07." (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''&&wait_class_07.'' AND event = ''&&event_name_07.''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_pch = '';
 DEF title = 'AAS Waiting on &&wait_class_07. "&&event_name_07." per Source';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@filter_predicate@', 'wait_class = ''&&wait_class_07.'' AND event = ''&&event_name_07.''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on &&wait_class_08. "&&event_name_08." per Instance';
 DEF abstract = 'Average Active Sessions (AAS) Waiting on &&wait_class_08. "&&event_name_08."'
 DEF vaxis = 'Average Active Sessions (AAS) Waiting on &&wait_class_08. "&&event_name_08." (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''&&wait_class_08.'' AND event = ''&&event_name_08.''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_pch = '';
 DEF title = 'AAS Waiting on &&wait_class_08. "&&event_name_08." per Source';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@filter_predicate@', 'wait_class = ''&&wait_class_08.'' AND event = ''&&event_name_08.''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on &&wait_class_09. "&&event_name_09." per Instance';
 DEF abstract = 'Average Active Sessions (AAS) Waiting on &&wait_class_09. "&&event_name_09."'
 DEF vaxis = 'Average Active Sessions (AAS) Waiting on &&wait_class_09. "&&event_name_09." (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''&&wait_class_09.'' AND event = ''&&event_name_09.''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_pch = '';
 DEF title = 'AAS Waiting on &&wait_class_09. "&&event_name_09." per Source';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@filter_predicate@', 'wait_class = ''&&wait_class_09.'' AND event = ''&&event_name_09.''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on &&wait_class_10. "&&event_name_10." per Instance';
 DEF abstract = 'Average Active Sessions (AAS) Waiting on &&wait_class_10. "&&event_name_10."'
 DEF vaxis = 'Average Active Sessions (AAS) Waiting on &&wait_class_10. "&&event_name_10." (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''&&wait_class_10.'' AND event = ''&&event_name_10.''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_pch = '';
 DEF title = 'AAS Waiting on &&wait_class_10. "&&event_name_10." per Source';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@filter_predicate@', 'wait_class = ''&&wait_class_10.'' AND event = ''&&event_name_10.''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on &&wait_class_11. "&&event_name_11." per Instance';
 DEF abstract = 'Average Active Sessions (AAS) Waiting on &&wait_class_11. "&&event_name_11."'
 DEF vaxis = 'Average Active Sessions (AAS) Waiting on &&wait_class_11. "&&event_name_11." (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''&&wait_class_11.'' AND event = ''&&event_name_11.''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_pch = '';
 DEF title = 'AAS Waiting on &&wait_class_11. "&&event_name_11." per Source';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@filter_predicate@', 'wait_class = ''&&wait_class_11.'' AND event = ''&&event_name_11.''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on &&wait_class_12. "&&event_name_12." per Instance';
 DEF abstract = 'Average Active Sessions (AAS) Waiting on &&wait_class_12. "&&event_name_12."'
 DEF vaxis = 'Average Active Sessions (AAS) Waiting on &&wait_class_12. "&&event_name_12." (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''&&wait_class_12.'' AND event = ''&&event_name_12.''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_pch = '';
 DEF title = 'AAS Waiting on &&wait_class_12. "&&event_name_12." per Source';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@filter_predicate@', 'wait_class = ''&&wait_class_12.'' AND event = ''&&event_name_12.''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on &&wait_class_13. "&&event_name_13." per Instance';
@@ -481,36 +481,36 @@ DEF title = 'AAS Waiting on &&wait_class_20. "&&event_name_20." per Instance';
 DEF abstract = 'Average Active Sessions (AAS) Waiting on &&wait_class_20. "&&event_name_20."'
 DEF vaxis = 'Average Active Sessions (AAS) Waiting on &&wait_class_20. "&&event_name_20." (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''&&wait_class_20.'' AND event = ''&&event_name_20.''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_pch = '';
 DEF title = 'AAS Waiting on &&wait_class_20. "&&event_name_20." per Source';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@filter_predicate@', 'wait_class = ''&&wait_class_20.'' AND event = ''&&event_name_20.''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on &&wait_class_21. "&&event_name_21." per Instance';
 DEF abstract = 'Average Active Sessions (AAS) Waiting on &&wait_class_21. "&&event_name_21."'
 DEF vaxis = 'Average Active Sessions (AAS) Waiting on &&wait_class_21. "&&event_name_21." (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''&&wait_class_21.'' AND event = ''&&event_name_21.''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_pch = '';
 DEF title = 'AAS Waiting on &&wait_class_21. "&&event_name_21." per Source';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@filter_predicate@', 'wait_class = ''&&wait_class_21.'' AND event = ''&&event_name_21.''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on &&wait_class_22. "&&event_name_22." per Instance';
 DEF abstract = 'Average Active Sessions (AAS) Waiting on &&wait_class_22. "&&event_name_22."'
 DEF vaxis = 'Average Active Sessions (AAS) Waiting on &&wait_class_22. "&&event_name_22." (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''&&wait_class_22.'' AND event = ''&&event_name_22.''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_pch = '';
 DEF title = 'AAS Waiting on &&wait_class_22. "&&event_name_22." per Source';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@filter_predicate@', 'wait_class = ''&&wait_class_22.'' AND event = ''&&event_name_22.''');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on &&wait_class_23. "&&event_name_23." per Instance';
