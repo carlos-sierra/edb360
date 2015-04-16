@@ -13,6 +13,7 @@ BEGIN
   :sql_text := '
 SELECT COUNT(*),
        inst_id,
+       type,
        server,
        status,
        state,
@@ -22,6 +23,7 @@ SELECT COUNT(*),
   FROM gv$session
  GROUP BY
        inst_id,
+       type,
        server,
        status,
        state,
@@ -29,7 +31,7 @@ SELECT COUNT(*),
        failover_method,
        blocking_session_status
  ORDER BY
-       1 DESC, 2, 3, 4, 5, 6, 7, 8
+       1 DESC, 2, 3, 4, 5, 6, 7, 8, 9
 ';
 END;
 /
@@ -1437,6 +1439,18 @@ BEGIN
 SELECT /*+ &&top_level_hints. */ 
        *
   FROM dba_hist_wr_control
+';
+END;
+/
+@@&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF title = 'ASH Info';
+DEF main_table = 'V$ASH_INFO';
+BEGIN
+  :sql_text := '
+SELECT /*+ &&top_level_hints. */ 
+       *
+  FROM v$ash_info
 ';
 END;
 /

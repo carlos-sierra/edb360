@@ -138,11 +138,11 @@ SELECT phv,
        TRUNC(100*RATIO_TO_REPORT(num_samples) OVER (),2) percent,
        NULL dummy_01	
   FROM (SELECT cost phv,
-	           COUNT(*) num_samples
-		  FROM plan_table
+               COUNT(*) num_samples
+          FROM plan_table
          WHERE remarks = ''&&sqld360_sqlid.'' 
-		   AND statement_id = ''SQLD360_ASH_DATA_MEM'' 
-		   AND position =  @instance_number@
+           AND statement_id = ''SQLD360_ASH_DATA_MEM'' 
+           AND position =  @instance_number@
            AND ''&&diagnostics_pack.'' = ''Y''
          GROUP BY cost)
 ';
@@ -224,13 +224,13 @@ BEGIN
 SELECT phv,
        num_samples,
        TRUNC(100*RATIO_TO_REPORT(num_samples) OVER (),2) percent,
-       NULL dummy_01	
+       NULL dummy_01
   FROM (SELECT cost phv,
-	           SUM(10) num_samples
-		  FROM plan_table
+               SUM(10) num_samples
+          FROM plan_table
          WHERE remarks = ''&&sqld360_sqlid.'' 
-		   AND statement_id = ''SQLD360_ASH_DATA_HIST'' 
-		   AND position =  @instance_number@
+           AND statement_id = ''SQLD360_ASH_DATA_HIST'' 
+           AND position =  @instance_number@
            AND ''&&diagnostics_pack.'' = ''Y''
          GROUP BY cost)
 ';
@@ -919,7 +919,7 @@ SELECT MAX(CASE WHEN ranking = 1  THEN TO_CHAR(phv) ELSE '' END) tit_01,
                          GROUP BY cost)) 
          WHERE (ranking BETWEEN 1 AND 5 -- top 5 best performing plans
              OR ranking BETWEEN num_plans-10 AND num_plans)) ash, -- top 10 worse plans
-	   (SELECT 1 fake FROM dual) b -- this is in case there is no row in ASH
+       (SELECT 1 fake FROM dual) b -- this is in case there is no row in ASH
  WHERE ash.fake(+) = b.fake	
 /
 
@@ -1155,7 +1155,7 @@ SELECT MAX(CASE WHEN ranking = 1  THEN TO_CHAR(phv) ELSE '' END) tit_01,
                          GROUP BY cost)) 
          WHERE (ranking BETWEEN 1 AND 5 -- top 5 best performing plans
              OR ranking BETWEEN num_plans-10 AND num_plans)) ash, -- top 10 worse plans
-	   (SELECT 1 fake FROM dual) b  -- this is in case there is no row in ASH
+       (SELECT 1 fake FROM dual) b  -- this is in case there is no row in ASH
  WHERE ash.fake(+) = b.fake
 /
 
@@ -1322,26 +1322,33 @@ DEF skip_lch = 'Y';
 ---------------------
 
 DEF main_table = 'V$ACTIVE_SESSION_HISTORY';
-DEF abstract = 'Elapsed Time per recent executions, in seconds';
+DEF abstract = 'Elapsed Time per recent executions, in seconds, rounded to the 1 second';
 DEF foot = 'Data rounded to the 1 second';
 DEF skip_lch = 'Y';
 
 BEGIN
   :sql_text_backup := '
-SELECT cpu_cost session_id,
-       io_cost session_serial#,
+SELECT NVL(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'','',1,3)+1,INSTR(partition_stop,'','',1,4)-INSTR(partition_stop,'','',1,3)-1)),position) instance_id,
+       NVL(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'','',1,4)+1,INSTR(partition_stop,'','',1,5)-INSTR(partition_stop,'','',1,4)-1)),cpu_cost) session_id,
+       NVL(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'','',1,5)+1,INSTR(partition_stop,'','',1,6)-INSTR(partition_stop,'','',1,5)-1)),io_cost) session_serial#,
        partition_id sql_exec_id,
        TO_CHAR(MIN(timestamp), ''YYYY-MM-DD HH24:MI:SS'')  start_time,
        TO_CHAR(MAX(timestamp), ''YYYY-MM-DD HH24:MI:SS'')  end_time,
        MIN(cost) plan_hash_value,
-       COUNT(*) elapsed_time, 
-       SUM(CASE WHEN object_node = ''ON CPU'' THEN 1 ELSE 0 END) cpu_time
+       COUNT(DISTINCT position||''-''||cpu_cost||''-''||io_cost) num_px_processes,
+       MAX(TRUNC(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'','',1,10)+1)) / 2097152)) max_px_degree,
+       SUM(CASE WHEN TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'','',1,4)+1,INSTR(partition_stop,'','',1,5)-INSTR(partition_stop,'','',1,4)-1)) IS NULL THEN 1 ELSE 0 END) elapsed_time, 
+       SUM(CASE WHEN TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'','',1,4)+1,INSTR(partition_stop,'','',1,5)-INSTR(partition_stop,'','',1,4)-1)) IS NULL AND object_node = ''ON CPU'' THEN 1 ELSE 0 END) cpu_time,
+       COUNT(*) db_time
   FROM plan_table
  WHERE statement_id = ''SQLD360_ASH_DATA_MEM''
    AND position =  @instance_number@
    AND remarks = ''&&sqld360_sqlid.''
    AND ''&&diagnostics_pack.'' = ''Y''
- GROUP BY partition_id, cpu_cost, io_cost
+ GROUP BY partition_id, 
+       NVL(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'','',1,3)+1,INSTR(partition_stop,'','',1,4)-INSTR(partition_stop,'','',1,3)-1)),position),
+       NVL(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'','',1,4)+1,INSTR(partition_stop,'','',1,5)-INSTR(partition_stop,'','',1,4)-1)),cpu_cost),
+       NVL(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'','',1,5)+1,INSTR(partition_stop,'','',1,6)-INSTR(partition_stop,'','',1,5)-1)),io_cost)
  ORDER BY
        TO_CHAR(MIN(timestamp), ''YYYY-MM-DD HH24:MI:SS''),
        partition_id
@@ -1402,31 +1409,37 @@ DEF title = 'Elapsed Time per recent execs for Instance 8';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '8');
 @@&&skip_all.&&skip_diagnostics.sqld360_9a_pre_one.sql
 
-
 ------------------------------------------------
 ------------------------------------------------
 
 DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
-DEF abstract = 'Elapsed Time per historical execution, in seconds';
+DEF abstract = 'Elapsed Time per historical execution, in seconds, rounded to the 10 seconds';
 DEF foot = 'Data rounded to the 10 seconds';
 
 
 BEGIN
   :sql_text_backup := '
-SELECT cpu_cost session_id,
-       io_cost session_serial#,
+SELECT NVL(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'','',1,3)+1,INSTR(partition_stop,'','',1,4)-INSTR(partition_stop,'','',1,3)-1)),position) instance_id,
+       NVL(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'','',1,4)+1,INSTR(partition_stop,'','',1,5)-INSTR(partition_stop,'','',1,4)-1)),cpu_cost) session_id,
+       NVL(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'','',1,5)+1,INSTR(partition_stop,'','',1,6)-INSTR(partition_stop,'','',1,5)-1)),io_cost) session_serial#,
        partition_id sql_exec_id,
        TO_CHAR(MIN(timestamp), ''YYYY-MM-DD HH24:MI:SS'')  start_time,
        TO_CHAR(MAX(timestamp), ''YYYY-MM-DD HH24:MI:SS'')  end_time,
        MIN(cost) plan_hash_value,
-       SUM(10) elapsed_time, 
-       SUM(CASE WHEN object_node = ''ON CPU'' THEN 10 ELSE 0 END) cpu_time
+       COUNT(DISTINCT position||''-''||cpu_cost||''-''||io_cost) num_px_processes,
+       MAX(TRUNC(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'','',1,10)+1)) / 2097152)) max_px_degree,
+       SUM(CASE WHEN TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'','',1,4)+1,INSTR(partition_stop,'','',1,5)-INSTR(partition_stop,'','',1,4)-1)) IS NULL THEN 10 ELSE 0 END) elapsed_time, 
+       SUM(CASE WHEN TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'','',1,4)+1,INSTR(partition_stop,'','',1,5)-INSTR(partition_stop,'','',1,4)-1)) IS NULL AND object_node = ''ON CPU'' THEN 10 ELSE 0 END) cpu_time,
+       SUM(10) db_time
   FROM plan_table
  WHERE statement_id = ''SQLD360_ASH_DATA_HIST''
    AND position =  @instance_number@
    AND remarks = ''&&sqld360_sqlid.''
    AND ''&&diagnostics_pack.'' = ''Y''
- GROUP BY partition_id, cpu_cost, io_cost
+ GROUP BY partition_id, 
+       NVL(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'','',1,3)+1,INSTR(partition_stop,'','',1,4)-INSTR(partition_stop,'','',1,3)-1)),position),
+       NVL(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'','',1,4)+1,INSTR(partition_stop,'','',1,5)-INSTR(partition_stop,'','',1,4)-1)),cpu_cost),
+       NVL(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'','',1,5)+1,INSTR(partition_stop,'','',1,6)-INSTR(partition_stop,'','',1,5)-1)),io_cost)
  ORDER BY
        TO_CHAR(MIN(timestamp), ''YYYY-MM-DD HH24:MI:SS''),
        partition_id

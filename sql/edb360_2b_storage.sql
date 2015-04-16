@@ -381,11 +381,15 @@ SELECT v.rank,
        v.owner,
        v.segment_name,
        v.tablespace_name,
-       CASE 
+       CASE
        WHEN v.segment_type LIKE ''INDEX%'' THEN
          (SELECT i.table_name
             FROM dba_indexes i
-           WHERE i.owner = v.owner AND i.index_name = v.segment_name)
+           WHERE i.owner = v.owner AND i.index_name = v.segment_name)       
+       WHEN v.segment_type LIKE ''LOB%'' THEN
+         (SELECT l.table_name
+            FROM dba_lobs l
+           WHERE l.owner = v.owner AND l.segment_name = v.segment_name)
        END table_name,
        v.segments,
        v.extents,

@@ -48,8 +48,11 @@ BEGIN
             SELECT /*+ &&sq_fact_hints. &&ds_hint. */
                    dbid,
                    sql_id,
+                   MAX(user_id) user_id,
+                   MAX(module) module,
                    ROUND(COUNT(*) / 360, 6) db_time_hrs,
                    ROUND(SUM(CASE session_state WHEN 'ON CPU' THEN 1 ELSE 0 END) / 360, 6) cpu_time_hrs,
+                   ROUND(SUM(CASE WHEN session_state = 'WAITING' AND wait_class IN ('User I/O', 'System I/O') THEN 1 ELSE 0 END) / 360, 6) io_time_hrs,
                    ROW_NUMBER () OVER (ORDER BY COUNT(*) DESC) rank_num
               FROM dba_hist_active_sess_history
              WHERE sql_id IS NOT NULL
@@ -65,7 +68,11 @@ BEGIN
                    r.sql_id,
                    TO_CHAR(ROUND(r.db_time_hrs, 2), '9990.00') db_time_hrs,
                    TO_CHAR(ROUND(r.cpu_time_hrs, 2), '9990.00') cpu_time_hrs,
+                   TO_CHAR(ROUND(r.io_time_hrs, 2), '9990.00') io_time_hrs,
                    r.rank_num,
+                   NVL((SELECT a.name FROM audit_actions a WHERE a.action = h.command_type), TO_CHAR(h.command_type)) command_type,
+                   NVL((SELECT u.username FROM dba_users u WHERE u.user_id = r.user_id), TO_CHAR(r.user_id)) username,
+                   r.module,
                    --h.sql_text,
                    CASE 
                    WHEN h.sql_text IS NULL THEN 'unknown'
@@ -76,10 +83,8 @@ BEGIN
              WHERE r.rank_num <= &&edb360_conf_top_sql.
                AND h.dbid(+) = r.dbid
                AND h.sql_id(+) = r.sql_id
-             ORDER BY
-                   r.sql_id
             )
-            SELECT * FROM top_sql ORDER BY sql_id)
+            SELECT * FROM top_sql ORDER BY rank_num, sql_id)
   LOOP
     l_count := l_count + 1;
     put_line('COL hh_mm_ss NEW_V hh_mm_ss NOPRI FOR A8;');
@@ -95,7 +100,9 @@ BEGIN
     put_line('HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_log3..txt');
     put_line('-- update main report');
     put_line('SPO &&edb360_main_report..html APP;');
-    put_line('PRO <li title="'||i.sql_text_1000||'">'||i.sql_id||' rank:'||i.rank_num||' et:'||i.db_time_hrs||'h cpu:'||i.cpu_time_hrs||'h');
+    put_line('PRO <li title="user:'||i.username||' module:'||i.module);
+    put_line('PRO '||i.sql_text_1000||'">');
+    put_line('PRO rank:'||i.rank_num||' '||i.sql_id||' et:'||i.db_time_hrs||'h cpu:'||i.cpu_time_hrs||'h io:'||i.io_time_hrs||'h type:'||SUBSTR(i.command_type, 1, 6));
     put_line('HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html >> &&edb360_log3..txt');
     put_line('SPO OFF;');
     IF i.rank_num <= &&edb360_conf_planx_top. THEN
@@ -252,7 +259,6 @@ SET TERM OFF;
 SET SERVEROUT OFF HEAD ON PAGES &&def_max_rows.;
 HOS zip -m &&edb360_main_filename._&&edb360_file_time. 99930_&&common_edb360_prefix._top_sql_driver.sql 99950_&&common_edb360_prefix._top_sql_driver.sql sqld360_driver.sql >> &&edb360_log3..txt
 SET HEA ON LIN 32767 NEWP NONE PAGES &&def_max_rows. LONG 32000 LONGC 2000 WRA ON TRIMS ON TRIM ON TI OFF TIMI OFF ARRAY 1000 NUM 20 SQLBL ON BLO . RECSEP OFF;
-CL COL;
 COL row_num FOR 9999999 HEA '#' PRI;
 
 

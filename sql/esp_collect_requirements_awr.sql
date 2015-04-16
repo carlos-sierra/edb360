@@ -1,23 +1,25 @@
 ----------------------------------------------------------------------------------------
 --
--- File name:   esp_collect_requirements.sql
+-- File name:   esp_collect_requirements_awr.sql
 --
 -- Purpose:     Collect Database Requirements (CPU, Memory, Disk and IO Perf)
 --
--- Author:      Carlos Sierra
+-- Author:      Carlos Sierra, Rodrigo Righetti
 --
--- Version:     v1503 (2015/02/08)
+-- Version:     v1504 (2015/04/02)
 --
--- Usage:       Collects Requirements from AWR and ASH views, thus it should only be
---              executed on systems with the Oracle Diagnostics Pack license.
+-- Usage:       Collects Requirements from AWR and ASH views on databases with the 
+--				Oracle Diagnostics Pack license, it also collect from Statspack starting
+--				9i databases up to 12c. 				 
+--				 
 --              The output of this script can be used to feed a Sizing and Provisioning
 --              application.
 --
 -- Example:     # cd esp_collect
 --              # sqlplus / as sysdba
---              SQL> START sql/esp_collect_requirements.sql
+--              SQL> START sql/esp_master.sql
 --
---  Notes:      Developed and tested on 11.2.0.3 and 10.2.0.4
+--  Notes:      Developed and tested on 12.1.0.2, 11.2.0.3, 10.2.0.4, 9.2.0.1
 --             
 ---------------------------------------------------------------------------------------
 --
