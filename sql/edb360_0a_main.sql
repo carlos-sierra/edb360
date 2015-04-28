@@ -107,7 +107,10 @@ SPO OFF;
 @@&&skip_diagnostics.&&edb360_5d.sysstat.sql
 @@&&skip_diagnostics.&&edb360_5e.sysstat_exa.sql
 @@&&skip_diagnostics.&&edb360_5f.sysstat_current.sql
+<<<<<<< HEAD
 @@&&skip_diagnostics.&&edb360_5g.exadata.sql
+=======
+>>>>>>> origin/master
 
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

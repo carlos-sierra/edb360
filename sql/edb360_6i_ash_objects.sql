@@ -27,11 +27,15 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */
 total AS (
 SELECT /*+ &&sq_fact_hints. */ SUM(samples) samples FROM hist
 )
+<<<<<<< HEAD
 SELECT h.current_obj#||
        NVL(
        (SELECT TRIM(''.'' FROM '' ''||o.owner||''.''||o.object_name||''.''||o.subobject_name) FROM dba_objects o WHERE o.object_id = h.current_obj# AND ROWNUM = 1), 
        (SELECT TRIM(''.'' FROM '' ''||o.owner||''.''||o.object_name||''.''||o.subobject_name) FROM dba_objects o WHERE o.data_object_id = h.current_obj# AND ROWNUM = 1) 
        ) data_object,
+=======
+SELECT NVL((SELECT TRIM(''.'' FROM h.current_obj#||'' ''||o.owner||''.''||o.object_name||''.''||o.subobject_name) FROM dba_objects o WHERE o.data_object_id = h.current_obj# AND ROWNUM = 1), h.current_obj#) data_object,
+>>>>>>> origin/master
        h.samples,
        ROUND(100 * h.samples / t.samples, 1) percent,
        NULL dummy_01

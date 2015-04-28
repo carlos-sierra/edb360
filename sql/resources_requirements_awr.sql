@@ -37,11 +37,14 @@ ALTER SESSION SET NLS_NUMERIC_CHARACTERS = ".,";
 ALTER SESSION SET NLS_SORT = 'BINARY';
 ALTER SESSION SET NLS_COMP = 'BINARY';
 
+<<<<<<< HEAD:sql/resources_requirements_awr.sql
 DEF use_on_10g = '--';
 COL use_on_10g NEW_V use_on_10g;
 SELECT '' use_on_10g FROM v$instance WHERE version LIKE '10%';
 
 CL COL;
+=======
+>>>>>>> origin/master:sql/resources_requirements.sql
 SPO res_requirements_&&rr_host_name_short..txt APP;
 
 /*****************************************************************************************/

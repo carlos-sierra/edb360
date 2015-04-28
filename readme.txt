@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 EDB360 v1513 (2015-04-16) by Carlos Sierra
+=======
+EDB360 v1512 (2015-04-04) by Carlos Sierra
+>>>>>>> origin/master
 
 EDB360 is a "free to use" tool to perform an initial assessment of a remote system. 
 It gives a glance of a database state. It also helps to document any findings.
