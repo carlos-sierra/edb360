@@ -26,7 +26,7 @@ SPO &&one_spool_filename..csv;
 
 -- body
 SET PAGES 50000;
-SET COLSEP ',';
+SET COLSEP '<,>';
 /
 SET PAGES &&def_max_rows.;
 SET COLSEP ' ';

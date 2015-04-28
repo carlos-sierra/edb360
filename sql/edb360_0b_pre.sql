@@ -6,13 +6,8 @@ SET FEED OFF;
 SET ECHO OFF;
 SET TIM OFF;
 SET TIMI OFF;
-<<<<<<< HEAD
-DEF edb360_vYYNN = 'v1513';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2015-04-16)';
-=======
-DEF edb360_vYYNN = 'v1512';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2015-04-04)';
->>>>>>> origin/master
+DEF edb360_vYYNN = 'v1514';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2015-04-27)';
 
 -- parameters
 PRO
@@ -136,10 +131,7 @@ COL edb360_5c NEW_V edb360_5c;
 COL edb360_5d NEW_V edb360_5d;
 COL edb360_5e NEW_V edb360_5e;
 COL edb360_5f NEW_V edb360_5f;
-<<<<<<< HEAD
 COL edb360_5g NEW_V edb360_5g;
-=======
->>>>>>> origin/master
 COL edb360_6a NEW_V edb360_6a;
 COL edb360_6b NEW_V edb360_6b;
 COL edb360_6c NEW_V edb360_6c;
@@ -187,10 +179,7 @@ SELECT CASE WHEN '5c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_5
 SELECT CASE WHEN '5d' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_5d_' ELSE '--' END edb360_5d FROM DUAL;
 SELECT CASE WHEN '5e' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_5e_' ELSE '--' END edb360_5e FROM DUAL;
 SELECT CASE WHEN '5f' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_5f_' ELSE '--' END edb360_5f FROM DUAL;
-<<<<<<< HEAD
 SELECT CASE WHEN '5g' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_5g_' ELSE '--' END edb360_5g FROM DUAL;
-=======
->>>>>>> origin/master
 SELECT CASE WHEN '6a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6a_' ELSE '--' END edb360_6a FROM DUAL;
 SELECT CASE WHEN '6b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6b_' ELSE '--' END edb360_6b FROM DUAL;
 SELECT CASE WHEN '6c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6c_' ELSE '--' END edb360_6c FROM DUAL;
@@ -282,6 +271,8 @@ ALTER SESSION SET optimizer_dynamic_sampling = 2;
 ALTER SESSION SET "_always_semi_join" = CHOOSE;
 ALTER SESSION SET "_and_pruning_enabled" = TRUE;
 ALTER SESSION SET "_subquery_pruning_enabled" = TRUE;
+-- workaround 19567916
+ALTER SESSION SET "_optimizer_aggr_groupby_elim" = FALSE;
 
 -- tracing script in case it takes long to execute so we can diagnose it
 ALTER SESSION SET MAX_DUMP_FILE_SIZE = '1G';
@@ -294,7 +285,6 @@ HOS cat /proc/cpuinfo | grep -i name | sort | uniq >> cpuinfo_model_name.txt
 SET TERM ON;
 PRO Getting resources_requirements
 PRO Please wait ...
-<<<<<<< HEAD
 @@&&skip_diagnostics.resources_requirements_awr.sql
 @@resources_requirements_statspack.sql
 PRO Getting esp_collect_requirements
@@ -305,15 +295,6 @@ SET TERM OFF;
 -- zip esp files but preserve original files on file system until edb360 completes (one database or multiple)
 HOS zip esp_requirements_&&esp_host_name_short..zip res_requirements_&&rr_host_name_short..txt esp_requirements_&&esp_host_name_short..csv cpuinfo_model_name.txt
 HOS zip esp_requirements_&&esp_host_name_short..zip res_requirements_stp_&&rr_host_name_short._&&ecr_collection_key..txt esp_requirements_stp_&&esp_host_name_short._&&ecr_collection_key..csv 
-=======
-@@&&skip_diagnostics.resources_requirements.sql
-PRO Getting esp_collect_requirements
-PRO Please wait ...
-@@&&skip_diagnostics.esp_collect_requirements.sql
-SET TERM OFF; 
--- zip esp files but preserve original files on file system until edb360 completes (one database or multiple)
-HOS zip esp_requirements_&&esp_host_name_short..zip res_requirements_&&rr_host_name_short..txt esp_requirements_&&esp_host_name_short..csv cpuinfo_model_name.txt
->>>>>>> origin/master
 
 -- initialization
 COL row_num FOR 9999999 HEA '#' PRI;

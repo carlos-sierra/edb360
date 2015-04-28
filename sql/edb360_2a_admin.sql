@@ -6,7 +6,7 @@ SPO &&edb360_main_report..html APP;
 PRO <h2>&&section_name.</h2>
 SPO OFF;
 
-DEF title = 'Sessions Aggregate';
+DEF title = 'Sessions Aggregate per Type';
 DEF main_table = 'GV$SESSION';
 DEF foot = 'Content of &&main_table. is very dynamic. This report just tells state at the time when edb360 was executed.';
 BEGIN
@@ -32,6 +32,39 @@ SELECT COUNT(*),
        blocking_session_status
  ORDER BY
        1 DESC, 2, 3, 4, 5, 6, 7, 8, 9
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+DEF title = 'Sessions Aggregate per User and Type';
+DEF main_table = 'GV$SESSION';
+DEF foot = 'Content of &&main_table. is very dynamic. This report just tells state at the time when edb360 was executed.';
+BEGIN
+  :sql_text := '
+SELECT COUNT(*),
+       username,
+       inst_id,
+       type,
+       server,
+       status,
+       state,
+       failover_type,
+       failover_method,
+       blocking_session_status
+  FROM gv$session
+ GROUP BY
+       username,
+       inst_id,
+       type,
+       server,
+       status,
+       state,
+       failover_type,
+       failover_method,
+       blocking_session_status
+ ORDER BY
+       1 DESC, 2, 3, 4, 5, 6, 7, 8, 9, 10
 ';
 END;
 /
@@ -831,6 +864,7 @@ SELECT /*+ &&top_level_hints. */
   FROM dba_indexes
  WHERE owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
+   AND index_type != ''LOB''
  GROUP BY
        owner
 HAVING COUNT(*) > SUM(CASE WHEN TRIM(degree) IN (''0'', ''1'') THEN 1 ELSE 0 END)
@@ -852,6 +886,7 @@ SELECT /*+ &&top_level_hints. */
   FROM dba_indexes
  WHERE owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
+   AND index_type != ''LOB''
    AND TRIM(degree) NOT IN (''0'', ''1'')
  ORDER BY
        LENGTH(TRIM(degree)) DESC,
@@ -955,6 +990,20 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+DEF title = 'Scheduler Window Group Members';
+DEF main_table = 'DBA_SCHEDULER_WINGROUP_MEMBERS';
+BEGIN
+  :sql_text := '
+SELECT /*+ &&top_level_hints. */
+       *
+  FROM dba_scheduler_wingroup_members
+ ORDER BY
+       1,2
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
 DEF title = 'Automated Maintenance Tasks';
 DEF main_table = 'DBA_AUTOTASK_CLIENT';
 BEGIN
@@ -964,6 +1013,20 @@ SELECT /*+ &&top_level_hints. */
   FROM dba_autotask_client
  ORDER BY
        client_name
+';
+END;
+/
+@@&&skip_10g.edb360_9a_pre_one.sql
+
+DEF title = 'Automated Maintenance Tasks History';
+DEF main_table = 'DBA_AUTOTASK_CLIENT_HISTORY';
+BEGIN
+  :sql_text := '
+SELECT /*+ &&top_level_hints. */
+       *
+  FROM dba_autotask_client_history
+ ORDER BY
+       1,2,3
 ';
 END;
 /
@@ -1217,7 +1280,7 @@ from
       buffer_gets desc
   ) v1
 where
-   sql_rank < 31
+   sql_rank < 101
 ';
 END;
 /
@@ -1273,7 +1336,7 @@ from
       count(*) desc
   ) v1
 where
-   sql_rank < 31
+   sql_rank < 101
 ';
 END;
 /

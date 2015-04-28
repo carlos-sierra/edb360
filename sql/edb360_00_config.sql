@@ -33,12 +33,12 @@ DEF edb360_conf_incl_ash_rpt = 'Y';
 DEF edb360_conf_incl_tkprof = 'Y';
 
 -- top sql to execute further diagnostics (range 0-128)
-DEF edb360_conf_top_sql = '28';
-DEF edb360_conf_planx_top = '28';
-DEF edb360_conf_sqlmon_top = '14';
+DEF edb360_conf_top_sql = '48';
+DEF edb360_conf_planx_top = '48';
+DEF edb360_conf_sqlmon_top = '0';
 DEF edb360_conf_sqlash_top = '0';
 DEF edb360_conf_sqlhc_top = '0';
-DEF edb360_conf_sqld360_top = '14';
+DEF edb360_conf_sqld360_top = '16';
 
 /**************************** enter your modifications here *****************************/
 
