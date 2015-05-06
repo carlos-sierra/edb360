@@ -1,4 +1,4 @@
-EDB360 v1513 (2015-04-16) by Carlos Sierra
+EDB360 v1515 (2015-05-06) by Carlos Sierra
 
 EDB360 is a "free to use" tool to perform an initial assessment of a remote system. 
 It gives a glance of a database state. It also helps to document any findings.

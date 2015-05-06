@@ -1477,6 +1477,23 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+DEF title = 'Libraries doing ALTER SESSION';
+DEF main_table = 'DBA_SOURCE';
+BEGIN
+  :sql_text := '
+SELECT *
+  FROM dba_source
+ WHERE UPPER(text) LIKE ''%ALTER%SESSION%''
+   AND UPPER(text) NOT LIKE ''%--%ALTER%SESSION%''
+   AND owner NOT IN &&exclusion_list.
+   AND owner NOT IN &&exclusion_list2.
+ ORDER BY
+       owner, name, type, line
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
 DEF title = 'Libraries calling ANALYZE';
 DEF main_table = 'DBA_SOURCE';
 BEGIN

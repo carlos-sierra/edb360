@@ -6,8 +6,8 @@ SET FEED OFF;
 SET ECHO OFF;
 SET TIM OFF;
 SET TIMI OFF;
-DEF edb360_vYYNN = 'v1514';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2015-04-27)';
+DEF edb360_vYYNN = 'v1515';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2015-05-06)';
 
 -- parameters
 PRO
@@ -27,6 +27,14 @@ END;
 /
 PRO
 SET TERM OFF;
+-- watchdog
+VAR edb360_time0 NUMBER;
+VAR edb360_max_seconds NUMBER;
+EXEC :edb360_time0 := DBMS_UTILITY.GET_TIME;
+EXEC :edb360_max_seconds := &&edb360_conf_max_hours. * 3600;
+COL edb360_bypass NEW_V edb360_bypass;
+SELECT '' edb360_bypass FROM DUAL;
+--
 COL diagnostics_pack NEW_V diagnostics_pack FOR A1;
 SELECT CASE WHEN '&&license_pack.' IN ('T', 'D') THEN 'Y' ELSE 'N' END diagnostics_pack FROM DUAL;
 COL skip_diagnostics NEW_V skip_diagnostics FOR A1;
@@ -498,8 +506,6 @@ VAR file_seq NUMBER;
 EXEC :file_seq := 8;
 VAR get_time_t0 NUMBER;
 VAR get_time_t1 NUMBER;
-COL edb360_prev_sql_id NEW_V edb360_prev_sql_id NOPRI;
-COL edb360_prev_child_number NEW_V edb360_prev_child_number NOPRI;
 DEF current_time = '';
 COL edb360_tuning_pack_for_sqlmon NEW_V edb360_tuning_pack_for_sqlmon;
 COL skip_sqlmon_exec NEW_V skip_sqlmon_exec;

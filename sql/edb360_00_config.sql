@@ -17,6 +17,9 @@ DEF edb360_conf_work_time_to = '1930';
 DEF edb360_conf_work_day_from = '2';
 DEF edb360_conf_work_day_to = '6';
 
+-- maximum time in hours to allow edb360 to execute
+DEF edb360_conf_max_hours = '8';
+
 /**************************** not recommended to modify *********************************/
 
 -- excluding report types reduce usability while providing marginal performance gain

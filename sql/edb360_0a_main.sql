@@ -152,6 +152,8 @@ PRO
 DEF;
 SHOW PARAMETERS;
 PRO
+SELECT (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100 elapsed_seconds FROM DUAL;
+PRO
 PRO end log
 SPO OFF;
 

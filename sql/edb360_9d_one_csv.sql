@@ -33,6 +33,8 @@ SET COLSEP ' ';
 
 -- get sql_id
 --SPO &&edb360_log..txt APP;
+COL edb360_prev_sql_id NEW_V edb360_prev_sql_id NOPRI;
+COL edb360_prev_child_number NEW_V edb360_prev_child_number NOPRI;
 SELECT prev_sql_id edb360_prev_sql_id, TO_CHAR(prev_child_number) edb360_prev_child_number FROM v$session WHERE sid = SYS_CONTEXT('USERENV', 'SID')
 /
 --SPO &&one_spool_filename..csv;

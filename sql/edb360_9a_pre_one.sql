@@ -11,8 +11,14 @@ SELECT '&&common_edb360_prefix._&&section_id._&&title_no_spaces.' spool_filename
 SET HEA OFF;
 SET TERM ON;
 
+-- watchdog
+COL edb360_bypass NEW_V edb360_bypass;
+SELECT '--bypass--' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds
+/
+
 -- log
 SPO &&edb360_log..txt APP;
+SELECT 'Elapsed Seconds so far: '||((DBMS_UTILITY.GET_TIME - :edb360_time0) / 100) FROM DUAL;
 PRO
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 PRO
@@ -30,12 +36,17 @@ BEGIN
   --:sql_text_display := TRIM(CHR(10) FROM :sql_text)||';';
   BEGIN
     --EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM ('||CHR(10)||TRIM(CHR(10) FROM :sql_text)||CHR(10)||')' INTO :row_count;
-    EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM ('||CHR(10)||TRIM(CHR(10) FROM DBMS_LOB.SUBSTR(:sql_text, 32700, 1))||CHR(10)||')' INTO :row_count;
+    IF '&&edb360_bypass.' IS NULL THEN
+      EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM ('||CHR(10)||TRIM(CHR(10) FROM DBMS_LOB.SUBSTR(:sql_text, 32700, 1))||CHR(10)||')' INTO :row_count;
+    ELSE
+      :row_count := -2;
+    END IF;
   EXCEPTION
     WHEN OTHERS THEN
       DBMS_OUTPUT.PUT_LINE(DBMS_LOB.SUBSTR(SQLERRM));
   END;
   DBMS_OUTPUT.PUT_LINE(TRIM(TO_CHAR(:row_count))||' rows selected.'||CHR(10));
+  DBMS_OUTPUT.PUT_LINE('Elapsed Seconds so far: '||((DBMS_UTILITY.GET_TIME - :edb360_time0) / 100)||CHR(10));
 END;
 /
 SET TIMI OFF;
@@ -60,12 +71,18 @@ PRO <li title="&&main_table.">&&title. <small><em>(&&row_count.)</em></small>
 SPO OFF;
 HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html >> &&edb360_log3..txt
 
+-- dummy call
+COL edb360_prev_sql_id NEW_V edb360_prev_sql_id NOPRI;
+COL edb360_prev_child_number NEW_V edb360_prev_child_number NOPRI;
+SELECT prev_sql_id edb360_prev_sql_id, TO_CHAR(prev_child_number) edb360_prev_child_number FROM v$session WHERE sid = SYS_CONTEXT('USERENV', 'SID')
+/
+
 -- execute one sql
-@@&&skip_html.&&edb360_skip_html.edb360_9b_one_html.sql
-@@&&skip_text.&&edb360_skip_text.edb360_9c_one_text.sql
-@@&&skip_csv.&&edb360_skip_csv.edb360_9d_one_csv.sql
-@@&&skip_lch.&&edb360_skip_line.edb360_9e_one_line_chart.sql
-@@&&skip_pch.&&edb360_skip_pie.edb360_9f_one_pie_chart.sql
+@@&&edb360_bypass.&&skip_html.&&edb360_skip_html.edb360_9b_one_html.sql
+@@&&edb360_bypass.&&skip_text.&&edb360_skip_text.edb360_9c_one_text.sql
+@@&&edb360_bypass.&&skip_csv.&&edb360_skip_csv.edb360_9d_one_csv.sql
+@@&&edb360_bypass.&&skip_lch.&&edb360_skip_line.edb360_9e_one_line_chart.sql
+@@&&edb360_bypass.&&skip_pch.&&edb360_skip_pie.edb360_9f_one_pie_chart.sql
 HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_log2..txt >> &&edb360_log3..txt
 HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_log3..txt
 
