@@ -6,7 +6,7 @@ SET FEED OFF;
 SET ECHO OFF;
 SET TIM OFF;
 SET TIMI OFF;
-DEF edb360_vYYNN = 'v1516';
+DEF edb360_vYYNN = 'v1518';
 DEF edb360_vrsn = '&&edb360_vYYNN. (2015-05-28)';
 
 -- parameters
@@ -281,6 +281,16 @@ ALTER SESSION SET "_and_pruning_enabled" = TRUE;
 ALTER SESSION SET "_subquery_pruning_enabled" = TRUE;
 -- workaround 19567916
 ALTER SESSION SET "_optimizer_aggr_groupby_elim" = FALSE;
+-- workaround nigeria
+ALTER SESSION SET "_gby_hash_aggregation_enabled" = TRUE;
+ALTER SESSION SET "_hash_join_enabled" = TRUE;
+ALTER SESSION SET "_optim_peek_user_binds" = TRUE;
+ALTER SESSION SET "_optimizer_skip_scan_enabled" = TRUE;
+ALTER SESSION SET "_optimizer_sortmerge_join_enabled" = TRUE;
+ALTER SESSION SET cursor_sharing = EXACT;
+ALTER SESSION SET db_file_multiblock_read_count = 128;
+ALTER SESSION SET optimizer_index_caching = 0;
+ALTER SESSION SET optimizer_index_cost_adj = 100;
 
 -- tracing script in case it takes long to execute so we can diagnose it
 ALTER SESSION SET MAX_DUMP_FILE_SIZE = '1G';
@@ -293,12 +303,6 @@ HOS cat /proc/cpuinfo | grep -i name | sort | uniq >> cpuinfo_model_name.txt
 SET TERM ON;
 PRO Getting esp_collect_requirements and resources_requirements
 PRO Please wait ...
---@@&&skip_diagnostics.resources_requirements_awr.sql
---@@resources_requirements_statspack.sql
---PRO Getting esp_collect_requirements
---PRO Please wait ...
---@@&&skip_diagnostics.esp_collect_requirements_awr.sql
---@@esp_collect_requirements_statspack.sql
 @sql/esp_master.sql
 SET TERM OFF; 
 
@@ -556,6 +560,23 @@ PRO begin log
 PRO
 DEF;
 PRO Parameters
+COL sid FOR A40;
+COL name FOR A40;
+COL value FOR A50;
+COL display_value FOR A50;
+COL update_comment NOPRI;
+SELECT *
+  FROM v$spparameter
+ WHERE isspecified = 'TRUE'
+ ORDER BY
+       name,
+       sid,
+       ordinal;
+COL sid FOR A80;
+COL name FOR A80;
+COL value FOR A255;
+COL display_value FOR A255;
+COL update_comment PRI;
 SHOW PARAMETERS;
 SET TI ON;
 SET TIMI ON;
