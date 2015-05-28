@@ -1,4 +1,4 @@
-EDB360 v1515 (2015-05-06) by Carlos Sierra
+EDB360 v1516 (2015-05-28) by Carlos Sierra
 
 EDB360 is a "free to use" tool to perform an initial assessment of a remote system. 
 It gives a glance of a database state. It also helps to document any findings.
@@ -69,7 +69,7 @@ Steps:
    
 2. If number of rows on WRH$_ACTIVE_SESSION_HISTORY as per 00002_edb360_dbname_log.txt is
    several millions, then you may not be purging data periodically. 
-   There are some known bugs and some blog posts on this regard. 
+   There are some known bugs and some blog posts on this regard. Review MOS 387914.1.
    Execute query below to validate ASH age:
 
        SELECT TRUNC(sample_time, 'MM'), COUNT(*)

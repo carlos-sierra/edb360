@@ -6,8 +6,8 @@ SET FEED OFF;
 SET ECHO OFF;
 SET TIM OFF;
 SET TIMI OFF;
-DEF edb360_vYYNN = 'v1515';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2015-05-06)';
+DEF edb360_vYYNN = 'v1516';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2015-05-28)';
 
 -- parameters
 PRO
@@ -291,18 +291,26 @@ ALTER SESSION SET EVENTS '10046 TRACE NAME CONTEXT FOREVER, LEVEL &&sql_trace_le
 -- esp collection
 HOS cat /proc/cpuinfo | grep -i name | sort | uniq >> cpuinfo_model_name.txt
 SET TERM ON;
-PRO Getting resources_requirements
+PRO Getting esp_collect_requirements and resources_requirements
 PRO Please wait ...
-@@&&skip_diagnostics.resources_requirements_awr.sql
-@@resources_requirements_statspack.sql
-PRO Getting esp_collect_requirements
-PRO Please wait ...
-@@&&skip_diagnostics.esp_collect_requirements_awr.sql
-@@esp_collect_requirements_statspack.sql
+--@@&&skip_diagnostics.resources_requirements_awr.sql
+--@@resources_requirements_statspack.sql
+--PRO Getting esp_collect_requirements
+--PRO Please wait ...
+--@@&&skip_diagnostics.esp_collect_requirements_awr.sql
+--@@esp_collect_requirements_statspack.sql
+@sql/esp_master.sql
 SET TERM OFF; 
+
 -- zip esp files but preserve original files on file system until edb360 completes (one database or multiple)
 HOS zip esp_requirements_&&esp_host_name_short..zip res_requirements_&&rr_host_name_short..txt esp_requirements_&&esp_host_name_short..csv cpuinfo_model_name.txt
 HOS zip esp_requirements_&&esp_host_name_short..zip res_requirements_stp_&&rr_host_name_short._&&ecr_collection_key..txt esp_requirements_stp_&&esp_host_name_short._&&ecr_collection_key..csv 
+
+-- nls (2nd time as esp may change them)
+ALTER SESSION SET NLS_NUMERIC_CHARACTERS = ".,";
+ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD/HH24:MI:SS';
+ALTER SESSION SET NLS_TIMESTAMP_FORMAT = 'YYYY-MM-DD/HH24:MI:SS.FF';
+ALTER SESSION SET NLS_TIMESTAMP_TZ_FORMAT = 'YYYY-MM-DD/HH24:MI:SS.FF TZH:TZM';
 
 -- initialization
 COL row_num FOR 9999999 HEA '#' PRI;
