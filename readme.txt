@@ -1,4 +1,4 @@
-EDB360 v1518 (2015-05-28) by Carlos Sierra
+EDB360 v1519 (2015-06-08) by Carlos Sierra
 
 EDB360 is a "free to use" tool to perform an initial assessment of a remote system. 
 It gives a glance of a database state. It also helps to document any findings.
@@ -44,6 +44,9 @@ Notes
    SQL> DEF _o_release = '3b';
    SQL> @edb360.sql T
    
+   SQL> DEF _o_release = '3b-7z';
+   SQL> @edb360.sql T
+
    note: valid column range for hidden parameter _o_release is 1 to 7. 
 
 3. If you need to generate edb360 for a range of dates other than last 31 days; or change

@@ -6,8 +6,8 @@ SET FEED OFF;
 SET ECHO OFF;
 SET TIM OFF;
 SET TIMI OFF;
-DEF edb360_vYYNN = 'v1518';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2015-05-28)';
+DEF edb360_vYYNN = 'v1519';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2015-06-08)';
 
 -- parameters
 PRO
@@ -401,7 +401,7 @@ DEF ds_hint = 'DYNAMIC_SAMPLING(4)';
 DEF def_max_rows = '10000';
 DEF max_rows = '1e4';
 DEF exclusion_list = "(''ANONYMOUS'',''APEX_030200'',''APEX_040000'',''APEX_SSO'',''APPQOSSYS'',''CTXSYS'',''DBSNMP'',''DIP'',''EXFSYS'',''FLOWS_FILES'',''MDSYS'',''OLAPSYS'',''ORACLE_OCM'',''ORDDATA'',''ORDPLUGINS'',''ORDSYS'',''OUTLN'',''OWBSYS'')";
-DEF exclusion_list2 = "(''SI_INFORMTN_SCHEMA'',''SQLTXADMIN'',''SQLTXPLAIN'',''SYS'',''SYSMAN'',''SYSTEM'',''TRCANLZR'',''WMSYS'',''XDB'',''XS$NULL'')";
+DEF exclusion_list2 = "(''SI_INFORMTN_SCHEMA'',''SQLTXADMIN'',''SQLTXPLAIN'',''SYS'',''SYSMAN'',''SYSTEM'',''TRCANLZR'',''WMSYS'',''XDB'',''XS$NULL'',''PERFSTAT'',''STDBYPERF'')";
 COL exclusion_list_single_quote NEW_V exclusion_list_single_quote;
 COL exclusion_list2_single_quote NEW_V exclusion_list2_single_quote;
 SELECT REPLACE('&&exclusion_list.', '''''', '''') exclusion_list_single_quote FROM DUAL;
