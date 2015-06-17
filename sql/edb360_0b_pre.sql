@@ -6,8 +6,8 @@ SET FEED OFF;
 SET ECHO OFF;
 SET TIM OFF;
 SET TIMI OFF;
-DEF edb360_vYYNN = 'v1519';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2015-06-08)';
+DEF edb360_vYYNN = 'v1520';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2015-06-17)';
 
 -- parameters
 PRO
@@ -52,6 +52,17 @@ BEGIN
 END;
 /
 SET TERM OFF;
+
+-- snaps
+SELECT startup_time, dbid, instance_number, COUNT(*) snaps,
+       MIN(begin_interval_time) min_time, MAX(end_interval_time) max_time,
+       MIN(snap_id) min_snap_id, MAX(snap_id) max_snap_id
+  FROM dba_hist_snapshot
+ GROUP BY
+       startup_time, dbid, instance_number
+ ORDER BY
+       startup_time, dbid, instance_number
+/
 
 --PRO
 --PRO Parameter 2: Days of History? (default 31)
@@ -551,8 +562,11 @@ SET NUM 20;
 SET SQLBL ON; 
 SET BLO .; 
 SET RECSEP OFF;
-
+PRO
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+PRO
+DEF
+SPO OFF;
 
 -- log header
 SPO &&edb360_log..txt;
@@ -572,11 +586,11 @@ SELECT *
        name,
        sid,
        ordinal;
-COL sid FOR A80;
-COL name FOR A80;
-COL value FOR A255;
-COL display_value FOR A255;
-COL update_comment PRI;
+COL sid CLE;
+COL name CLE;
+COL value CLE;
+COL display_value CLE;
+COL update_comment CLE;
 SHOW PARAMETERS;
 SET TI ON;
 SET TIMI ON;
@@ -645,6 +659,9 @@ SET TI OFF;
 SET TIMI OFF; 
 SPO OFF;
 
+-- processes
+HOS ps -ef >> &&edb360_log3..txt
+
 -- main header
 SPO &&edb360_main_report..html;
 @@edb360_0d_html_header.sql
@@ -661,6 +678,7 @@ SPO OFF;
 -- zip into main the esp zip so far, then remove zip but preserve source esp files. let edb360.sql and run_edb360.sh do the clean up
 HOS zip -mT &&edb360_main_filename._&&edb360_file_time. esp_requirements_&&esp_host_name_short..zip >> &&edb360_log3..txt
 -- zip other files
+HOS zip &&edb360_main_filename._&&edb360_file_time. 00000_readme_first.txt >> &&edb360_log3..txt
 HOS zip -j &&edb360_main_filename._&&edb360_file_time. js/sorttable.js >> &&edb360_log3..txt
 HOS zip -j &&edb360_main_filename._&&edb360_file_time. js/edb360_img.jpg >> &&edb360_log3..txt
 --HOS zip -r osw_&&esp_host_name_short..zip `ps -ef | grep OSW | grep FM | awk -F 'OSW' '{print $2}' | cut -f 3 -d ' '`

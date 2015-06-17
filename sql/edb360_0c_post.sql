@@ -10,10 +10,13 @@ ALTER SESSION SET SQL_TRACE = FALSE;
 
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
--- readme
-SPO 00000_readme_first.txt
-PRO 1. Unzip &&edb360_main_filename._&&edb360_file_time..zip into a directory
-PRO 2. Review &&edb360_main_report..html
+-- touch file to update timestamp
+SPO 00000_readme_first.txt APP
+PRO
+PRO end of setup
+PRO
+PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+PRO
 SPO OFF;
 
 -- cleanup

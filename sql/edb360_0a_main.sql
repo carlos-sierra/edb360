@@ -1,4 +1,25 @@
+-- readme
+SPO 00000_readme_first.txt
+PRO
+PRO Open and read 00001_edb360_<dbname>_index.html
+PRO
+PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+PRO
+PRO initial log:
+PRO
+DEF
 @@edb360_00_config.sql
+PRO
+PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+PRO
+PRO config log:
+PRO
+DEF
+PRO
+PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+PRO
+PRO setup log:
+PRO
 @@edb360_0b_pre.sql
 DEF section_id = '0a';
 EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
@@ -163,11 +184,11 @@ SELECT *
        name,
        sid,
        ordinal;
-COL sid FOR A80;
-COL name FOR A80;
-COL value FOR A255;
-COL display_value FOR A255;
-COL update_comment PRI;
+COL sid CLE;
+COL name CLE;
+COL value CLE;
+COL display_value CLE;
+COL update_comment CLE;
 SHOW PARAMETERS;
 PRO
 SELECT (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100 elapsed_seconds FROM DUAL;

@@ -70,6 +70,41 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+DEF title = 'Sessions Aggregate per Module and Action';
+DEF main_table = 'GV$SESSION';
+DEF foot = 'Content of &&main_table. is very dynamic. This report just tells state at the time when edb360 was executed.';
+BEGIN
+  :sql_text := '
+SELECT COUNT(*),
+       module,
+       action,
+       inst_id,
+       type,
+       server,
+       status,
+       state,
+       failover_type,
+       failover_method,
+       blocking_session_status
+  FROM gv$session
+ GROUP BY
+       module,
+       action,
+       inst_id,
+       type,
+       server,
+       status,
+       state,
+       failover_type,
+       failover_method,
+       blocking_session_status
+ ORDER BY
+       1 DESC, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
 DEF title = 'Sessions List';
 DEF main_table = 'GV$SESSION';
 DEF foot = 'Content of &&main_table. is very dynamic. This report just tells state at the time when edb360 was executed.';
@@ -724,13 +759,89 @@ END;
 /
 @@&&skip_10g.&&skip_11r1.edb360_9a_pre_one.sql
 
+DEF title = 'Tables set for Compression';
+DEF main_table = 'DBA_TABLES';
+BEGIN
+  :sql_text := '
+SELECT /*+ &&top_level_hints. */
+       owner,
+       table_name,
+       compress_for
+  FROM dba_tables
+ WHERE owner NOT IN &&exclusion_list.
+   AND owner NOT IN &&exclusion_list2.
+   AND compression = ''ENABLED''
+ ORDER BY
+       owner,
+       table_name
+';
+END;
+/
+@@&&skip_10g.&&skip_11r1.edb360_9a_pre_one.sql
+
+DEF title = 'Partitions set for Compression';
+DEF main_table = 'DBA_TAB_PARTITIONS';
+BEGIN
+  :sql_text := '
+SELECT /*+ &&top_level_hints. */
+       table_owner,
+       table_name,
+       compress_for,
+       COUNT(*),
+       MIN(partition_position) min_part_pos,
+       MAX(partition_position) max_part_pos
+  FROM dba_tab_partitions
+ WHERE table_owner NOT IN &&exclusion_list.
+   AND table_owner NOT IN &&exclusion_list2.
+   AND compression = ''ENABLED''
+ GROUP BY
+       table_owner,
+       table_name,
+       compress_for
+ ORDER BY
+       table_owner,
+       table_name,
+       compress_for
+';
+END;
+/
+@@&&skip_10g.&&skip_11r1.edb360_9a_pre_one.sql
+
+DEF title = 'Subpartitions set for Compression';
+DEF main_table = 'DBA_TAB_SUBPARTITIONS';
+BEGIN
+  :sql_text := '
+SELECT /*+ &&top_level_hints. */
+       table_owner,
+       table_name,
+       compress_for,
+       COUNT(*),
+       MIN(subpartition_position) min_part_pos,
+       MAX(subpartition_position) max_part_pos
+  FROM dba_tab_subpartitions
+ WHERE table_owner NOT IN &&exclusion_list.
+   AND table_owner NOT IN &&exclusion_list2.
+   AND compression = ''ENABLED''
+ GROUP BY
+       table_owner,
+       table_name,
+       compress_for
+ ORDER BY
+       table_owner,
+       table_name,
+       compress_for
+';
+END;
+/
+@@&&skip_10g.&&skip_11r1.edb360_9a_pre_one.sql
+
 DEF title = 'Segments with non-default Buffer Pool';
 DEF main_table = 'DBA_SEGMENTS';
 BEGIN
   :sql_text := '
 -- requested by Milton Quinteros
 SELECT /*+ &&top_level_hints. */
-       buffer_pool, owner, segment_name, segment_type, blocks
+       buffer_pool, owner, segment_name, partition_name, segment_type, blocks
   FROM dba_segments
  WHERE owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
@@ -738,7 +849,8 @@ SELECT /*+ &&top_level_hints. */
  ORDER BY
        buffer_pool,
        owner,
-       segment_name
+       segment_name,
+       partition_name
 ';
 END;
 /
@@ -750,7 +862,7 @@ BEGIN
   :sql_text := '
 -- requested by Milton Quinteros
 SELECT /*+ &&top_level_hints. */
-       flash_cache, owner, segment_name, segment_type, blocks
+       flash_cache, owner, segment_name, partition_name, segment_type, blocks
   FROM dba_segments
  WHERE owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
@@ -758,7 +870,8 @@ SELECT /*+ &&top_level_hints. */
  ORDER BY
        flash_cache,
        owner,
-       segment_name
+       segment_name,
+       partition_name
 ';
 END;
 /
@@ -770,7 +883,7 @@ BEGIN
   :sql_text := '
 -- requested by Milton Quinteros
 SELECT /*+ &&top_level_hints. */
-       cell_flash_cache, owner, segment_name, segment_type, blocks
+       cell_flash_cache, owner, segment_name, partition_name, segment_type, blocks
   FROM dba_segments
  WHERE owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
@@ -778,7 +891,8 @@ SELECT /*+ &&top_level_hints. */
  ORDER BY
        cell_flash_cache,
        owner,
-       segment_name
+       segment_name,
+       partition_name
 ';
 END;
 /

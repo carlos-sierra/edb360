@@ -114,8 +114,8 @@ BEGIN
     put_line('PRO rank:'||i.rank_num||' '||i.sql_id||' et:'||i.db_time_hrs||'h cpu:'||i.cpu_time_hrs||'h io:'||i.io_time_hrs||'h type:'||SUBSTR(i.command_type, 1, 6));
     put_line('SET HEAD OFF VER OFF FEED OFF ECHO OFF;');
     put_line('SELECT ''*** time limit exceeded ***'' FROM DUAL WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NOT NULL;');
-    put_line('HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html >> &&edb360_log3..txt');
     put_line('SPO OFF;');
+    put_line('HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html >> &&edb360_log3..txt');
     IF i.rank_num <= &&edb360_conf_planx_top. THEN
       put_line('COL edb360_bypass NEW_V edb360_bypass;');
       put_line('SELECT ''--bypass--'' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');

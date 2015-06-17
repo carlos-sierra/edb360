@@ -1,4 +1,4 @@
-EDB360 v1519 (2015-06-08) by Carlos Sierra
+EDB360 v1520 (2015-06-17) by Carlos Sierra
 
 EDB360 is a "free to use" tool to perform an initial assessment of a remote system. 
 It gives a glance of a database state. It also helps to document any findings.
@@ -52,6 +52,14 @@ Notes
 3. If you need to generate edb360 for a range of dates other than last 31 days; or change
    default "working hours" between 7:30AM and 7:30PM; or suppress an output format such as
    text or csv; modify then file edb360_00_config.sql (back it up first).
+   
+4. How to find the option that you have installed?
+
+   select value from v$parameter where name = 'control_management_pack_access’;
+
+5. How to find how many days are kept in the AWR repository?
+
+   select retention from DBA_HIST_WR_CONTROL;
 
 ****************************************************************************************
 
