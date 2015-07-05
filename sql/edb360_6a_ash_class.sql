@@ -39,63 +39,63 @@ END;
 DEF skip_pch = '';
 DEF title = 'ASH Top Timed Classes for Cluster from MEM';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', '1 = 1 /* all instances */');
-@@edb360_9a_pre_one.sql
+@@&&edb360_skip_ash_mem.edb360_9a_pre_one.sql
 
 DEF skip_pch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE inst_id = 1;
 DEF title = 'ASH Top Timed Classes for Instance 1 from MEM';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'inst_id = 1');
-@@&&skip_all.edb360_9a_pre_one.sql
+@@&&skip_all.&&edb360_skip_ash_mem.edb360_9a_pre_one.sql
 
 DEF skip_pch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE inst_id = 2;
 DEF title = 'ASH Top Timed Classes for Instance 2 from MEM';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'inst_id = 2');
-@@&&skip_all.edb360_9a_pre_one.sql
+@@&&skip_all.&&edb360_skip_ash_mem.edb360_9a_pre_one.sql
 
 DEF skip_pch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE inst_id = 3;
 DEF title = 'ASH Top Timed Classes for Instance 3 from MEM';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'inst_id = 3');
-@@&&skip_all.edb360_9a_pre_one.sql
+@@&&skip_all.&&edb360_skip_ash_mem.edb360_9a_pre_one.sql
 
 DEF skip_pch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE inst_id = 4;
 DEF title = 'ASH Top Timed Classes for Instance 4 from MEM';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'inst_id = 4');
-@@&&skip_all.edb360_9a_pre_one.sql
+@@&&skip_all.&&edb360_skip_ash_mem.edb360_9a_pre_one.sql
 
 DEF skip_pch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE inst_id = 5;
 DEF title = 'ASH Top Timed Classes for Instance 5 from MEM';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'inst_id = 5');
-@@&&skip_all.edb360_9a_pre_one.sql
+@@&&skip_all.&&edb360_skip_ash_mem.edb360_9a_pre_one.sql
 
 DEF skip_pch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE inst_id = 6;
 DEF title = 'ASH Top Timed Classes for Instance 6 from MEM';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'inst_id = 6');
-@@&&skip_all.edb360_9a_pre_one.sql
+@@&&skip_all.&&edb360_skip_ash_mem.edb360_9a_pre_one.sql
 
 DEF skip_pch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE inst_id = 7;
 DEF title = 'ASH Top Timed Classes for Instance 7 from MEM';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'inst_id = 7');
-@@&&skip_all.edb360_9a_pre_one.sql
+@@&&skip_all.&&edb360_skip_ash_mem.edb360_9a_pre_one.sql
 
 DEF skip_pch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE inst_id = 8;
 DEF title = 'ASH Top Timed Classes for Instance 8 from MEM';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'inst_id = 8');
-@@&&skip_all.edb360_9a_pre_one.sql
+@@&&skip_all.&&edb360_skip_ash_mem.edb360_9a_pre_one.sql
 
 /*****************************************************************************************/
 

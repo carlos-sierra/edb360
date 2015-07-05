@@ -407,6 +407,7 @@ SELECT 1 record_type,
        NULL subpartition
   FROM dba_tablespaces
  WHERE logging = ''NOLOGGING''
+   AND contents != ''TEMPORARY''
 UNION ALL       
 SELECT 2 record_type,
        ''TABLE'' object_type,
@@ -418,6 +419,7 @@ SELECT 2 record_type,
        NULL subpartition
   FROM dba_all_tables
  WHERE logging = ''NO''
+   AND temporary = ''N''
 UNION ALL       
 SELECT 3 record_type,
        ''INDEX'' object_type,
@@ -429,6 +431,7 @@ SELECT 3 record_type,
        NULL subpartition
   FROM dba_indexes
  WHERE logging = ''NO''
+   AND temporary = ''N''
 UNION ALL       
 SELECT 4 record_type,
        ''LOB'' object_type,

@@ -336,7 +336,7 @@ HAVING MAX(sql_text) IS NOT NULL
 ';
 END;
 /
-@@&&skip_tuning.&&skip_10g.edb360_9a_pre_one.sql
+@@&&skip_tuning.&&skip_10g.&&edb360_skip_sql_mon.edb360_9a_pre_one.sql
 
 DEF title = 'SQL Monitor Recent Executions Summary';
 DEF abstract = 'Aggregated by SQL_ID and sorted by Total Elapsed Time.';
@@ -455,7 +455,7 @@ SELECT /*+ &&top_level_hints. */
 ';
 END;
 /
-@@&&skip_tuning.&&skip_10g.edb360_9a_pre_one.sql
+@@&&skip_tuning.&&skip_10g.&&edb360_skip_sql_mon.edb360_9a_pre_one.sql
 
 DEF title = 'SQL Monitor Recent Executions DONE (ERROR)';
 DEF abstract = 'Aggregated by SQL_ID and Error.';
@@ -484,7 +484,7 @@ HAVING MAX(sql_text) IS NOT NULL
 ';
 END;
 /
-@@&&skip_tuning.&&skip_10g.edb360_9a_pre_one.sql
+@@&&skip_tuning.&&skip_10g.&&edb360_skip_sql_mon.edb360_9a_pre_one.sql
 
 DEF title = 'SQL Monitor (QUEUED)';
 DEF main_table = 'GV$SQL_MONITOR';
@@ -511,7 +511,7 @@ SELECT /*+ &&top_level_hints. */
 ';
 END;
 /
-@@&&skip_tuning.&&skip_10g.edb360_9a_pre_one.sql
+@@&&skip_tuning.&&skip_10g.&&edb360_skip_sql_mon.edb360_9a_pre_one.sql
 
 DEF title = 'SQL with changing Elapsed Time per Execution (list)';
 DEF abstract = 'SQL Statements with "Elapsed Time per Execution" changing over time.';

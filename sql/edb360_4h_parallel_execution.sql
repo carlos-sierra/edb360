@@ -31,7 +31,7 @@ SELECT /*+ &&top_level_hints. */
 ';
 END;				
 /
-@@edb360_9a_pre_one.sql
+@@&&edb360_skip_px_mem.edb360_9a_pre_one.sql
 
 DEF title = 'PQ System Stats';
 DEF main_table = 'GV$PQ_SYSSTAT';
@@ -44,7 +44,7 @@ SELECT /*+ &&top_level_hints. */
 ';
 END;				
 /
-@@edb360_9a_pre_one.sql
+@@&&edb360_skip_px_mem.edb360_9a_pre_one.sql
 
 DEF title = 'PX Process System Stats';
 DEF main_table = 'GV$PX_PROCESS_SYSSTAT';
@@ -57,7 +57,7 @@ SELECT /*+ &&top_level_hints. */
 ';
 END;				
 /
-@@edb360_9a_pre_one.sql
+@@&&edb360_skip_px_mem.edb360_9a_pre_one.sql
 
 gv$sysstat
 
@@ -72,7 +72,7 @@ SELECT /*+ &&top_level_hints. */
 ';
 END;				
 /
-@@edb360_9a_pre_one.sql
+@@&&edb360_skip_stat_mem.edb360_9a_pre_one.sql
 
 DEF title = 'PQ Slave';
 DEF main_table = 'GV$PQ_SLAVE';
@@ -82,7 +82,7 @@ SELECT * FROM gv$pq_slave ORDER BY 1, 2
 ';
 END;				
 /
-@@edb360_9a_pre_one.sql
+@@&&edb360_skip_px_mem.edb360_9a_pre_one.sql
 
 DEF title = 'PX Sessions';
 DEF main_table = 'GV$PX_SESSION';
@@ -131,7 +131,7 @@ SELECT /*+ &&top_level_hints. */
 ';
 END;				
 /
-@@edb360_9a_pre_one.sql
+@@&&edb360_skip_px_mem.edb360_9a_pre_one.sql
 
 DEF title = 'PX Sessions Stats';
 DEF main_table = 'GV$PX_SESSTAT';
@@ -149,7 +149,7 @@ SELECT /*+ &&top_level_hints. */
 ';
 END;				
 /
-@@edb360_9a_pre_one.sql
+@@&&edb360_skip_px_mem.edb360_9a_pre_one.sql
 
 DEF title = 'PX Processes';
 DEF main_table = 'GV$PX_PROCESS';
@@ -162,7 +162,7 @@ SELECT /*+ &&top_level_hints. */
 ';
 END;				
 /
-@@edb360_9a_pre_one.sql
+@@&&edb360_skip_px_mem.edb360_9a_pre_one.sql
 
 DEF title = 'Services';
 DEF main_table = 'GV$SERVICES';

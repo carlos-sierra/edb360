@@ -35,15 +35,7 @@ PRO <td class="c">5/&&max_col_number.</td>
 PRO <td class="c">6/&&max_col_number.</td>
 PRO <td class="c">7/&&max_col_number.</td>
 PRO </tr><tr class="main"><td>
-PRO <img src="edb360_img.jpg" alt="eDB360" height="123" width="195"
-PRO title="eDB360 is a free tool that provides a 360-degree view of an Oracle database. 
-PRO Its output can be used as a foundation for a database health-check, 
-PRO a performance evaluation or to collect OS resource utilization needed for a sizing and provisioning plan.
-PRO
-PRO With eDB360, a user with limited access can acquire a good understanding of an Oracle database 
-PRO without having to log into the server directly. 
-PRO This capability is of great value to developers, system administrators, 3rd party consultants, 
-PRO or any remote user with restricted access.">
+PRO &&edb360_conf_tool_page.<img src="edb360_img.jpg" alt="eDB360" height="123" width="195"></a>
 PRO <br>
 SPO OFF;
 

@@ -63,13 +63,18 @@ BEGIN
   :sql_text := '
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
 SELECT /*+ &&top_level_hints. */
-       * from dba_users
+       * from dba_users u
 where (default_tablespace in (''SYSAUX'',''SYSTEM'') or
 temporary_tablespace not in
    (select tablespace_name
    from dba_tablespaces
    where contents = ''TEMPORARY''
    and status = ''ONLINE''))
+and NVL((SELECT COUNT(*) 
+         FROM dba_tablespace_groups g, dba_tablespaces t 
+         WHERE g.group_name = u.temporary_tablespace 
+         AND t.tablespace_name = g.tablespace_name 
+         AND t.contents != ''TEMPORARY''), 0) = 0
 and username not in &&exclusion_list.
 and username not in &&exclusion_list2.
 order by username

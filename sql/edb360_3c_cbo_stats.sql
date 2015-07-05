@@ -43,6 +43,16 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+DEF title = 'Default Values for DBMS_STATS';
+DEF main_table = 'SYS.OPTSTAT_HIST_CONTROL$';
+BEGIN
+  :sql_text := '
+SELECT * FROM sys.optstat_hist_control$
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
 DEF title = 'Tables Summary';
 DEF main_table = 'DBA_TABLES';
 BEGIN

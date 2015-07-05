@@ -333,7 +333,7 @@ BEGIN
           l_one_spool_filename := LPAD(:file_seq, 5, '0')||'_'||l_spool_filename;
           update_log(l_one_spool_filename||'.html');
           put_line('SPO '||l_one_spool_filename||'.html;');
-          put_line('SELECT output FROM TABLE(DBMS_WORKLOAD_REPOSITORY.awr_global_report_html('||j.dbid||',:inst_num,'||j.bid||','||j.eid||',8)) WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NULL;');
+          put_line('SELECT output FROM TABLE(DBMS_WORKLOAD_REPOSITORY.awr_global_report_html('||j.dbid||',:inst_num,'||j.bid||','||j.eid||',9)) WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NULL;');
           put_line('SELECT ''*** time limit exceeded ***'' FROM DUAL WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NOT NULL;');
           put_line('SPO OFF;');
           put_line('-- update main report');
@@ -349,7 +349,7 @@ BEGIN
           l_one_spool_filename := LPAD(:file_seq, 5, '0')||'_'||l_spool_filename;
           update_log(l_one_spool_filename||'.txt');
           put_line('SPO '||l_one_spool_filename||'.txt;');
-          put_line('SELECT output FROM TABLE(DBMS_WORKLOAD_REPOSITORY.awr_global_report_text('||j.dbid||',:inst_num,'||j.bid||','||j.eid||',8)) WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NULL;');
+          put_line('SELECT output FROM TABLE(DBMS_WORKLOAD_REPOSITORY.awr_global_report_text('||j.dbid||',:inst_num,'||j.bid||','||j.eid||',9)) WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NULL;');
           put_line('SELECT ''*** time limit exceeded ***'' FROM DUAL WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NOT NULL;');
           put_line('SPO OFF;');
           put_line('-- update main report');
@@ -763,7 +763,7 @@ BEGIN
           l_one_spool_filename := LPAD(:file_seq, 5, '0')||'_'||l_spool_filename;
           update_log(l_one_spool_filename||'.html');
           put_line('SPO '||l_one_spool_filename||'.html;');
-          put_line('SELECT output FROM TABLE(DBMS_WORKLOAD_REPOSITORY.awr_report_html('||j.dbid||','||i.instance_number||','||j.bid||','||j.eid||',8)) WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NULL;');
+          put_line('SELECT output FROM TABLE(DBMS_WORKLOAD_REPOSITORY.awr_report_html('||j.dbid||','||i.instance_number||','||j.bid||','||j.eid||',9)) WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NULL;');
           put_line('SELECT ''*** time limit exceeded ***'' FROM DUAL WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NOT NULL;');
           put_line('SPO OFF;');
           put_line('-- update main report');
@@ -779,7 +779,7 @@ BEGIN
           l_one_spool_filename := LPAD(:file_seq, 5, '0')||'_'||l_spool_filename;
           update_log(l_one_spool_filename||'.txt');
           put_line('SPO '||l_one_spool_filename||'.txt;');
-          put_line('SELECT output FROM TABLE(DBMS_WORKLOAD_REPOSITORY.awr_report_text('||j.dbid||','||i.instance_number||','||j.bid||','||j.eid||',8)) WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NULL;');
+          put_line('SELECT output FROM TABLE(DBMS_WORKLOAD_REPOSITORY.awr_report_text('||j.dbid||','||i.instance_number||','||j.bid||','||j.eid||',9)) WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NULL;');
           put_line('SELECT ''*** time limit exceeded ***'' FROM DUAL WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NOT NULL;');
           put_line('SPO OFF;');
           put_line('-- update main report');

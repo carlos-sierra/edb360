@@ -24,7 +24,7 @@ SPO &&one_spool_filename._line_chart.html;
 PRO <!-- &&one_spool_filename._line_chart.html $ -->
 
 -- chart header
-PRO    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+PRO    &&edb360_conf_google_charts.
 PRO    <script type="text/javascript">
 PRO      google.load("visualization", "1", {packages:["corechart"]});
 PRO      google.setOnLoadCallback(drawChart);
@@ -193,7 +193,7 @@ PRO      }
 PRO    </script>
 PRO  </head>
 PRO  <body>
-PRO<h1>&&title. <em>(&&main_table.)</em></h1>
+PRO<h1> &&edb360_conf_all_pages_icon. &&title. <em>(&&main_table.)</em> &&edb360_conf_all_pages_logo. </h1>
 PRO
 PRO <br>
 PRO &&abstract.

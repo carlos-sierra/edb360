@@ -29,7 +29,7 @@ PRO
 PRO <!-- &&one_spool_filename..html $ -->
 PRO </head>
 PRO <body>
-PRO <h1>&&title.&&title_suffix. <em>(&&main_table.)</em></h1>
+PRO <h1> &&edb360_conf_all_pages_icon. &&title.&&title_suffix. <em>(&&main_table.)</em> &&edb360_conf_all_pages_logo. </h1>
 PRO
 PRO <br>
 PRO &&abstract.

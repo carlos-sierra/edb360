@@ -214,101 +214,102 @@ DEF main_table = 'DBA_CONSTRAINTS';
 COL constraint_columns FOR A200;
 BEGIN
   :sql_text := '
--- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
-WITH 
+-- based on "Oracle Database Transactions and Locking Revealed" book by Thomas Kyte  
+WITH
 ref_int_constraints AS (
 SELECT /*+ &&sq_fact_hints. */
+       col.owner,
+       col.table_name,
+       col.constraint_name,
+       con.status,
+       con.r_owner,
+       con.r_constraint_name,
+       COUNT(*) col_cnt,
+       MAX(CASE col.position WHEN 01 THEN col.column_name END) col_01,
+       MAX(CASE col.position WHEN 02 THEN col.column_name END) col_02,
+       MAX(CASE col.position WHEN 03 THEN col.column_name END) col_03,
+       MAX(CASE col.position WHEN 04 THEN col.column_name END) col_04,
+       MAX(CASE col.position WHEN 05 THEN col.column_name END) col_05,
+       MAX(CASE col.position WHEN 06 THEN col.column_name END) col_06,
+       MAX(CASE col.position WHEN 07 THEN col.column_name END) col_07,
+       MAX(CASE col.position WHEN 08 THEN col.column_name END) col_08,
+       MAX(CASE col.position WHEN 09 THEN col.column_name END) col_09,
+       MAX(CASE col.position WHEN 10 THEN col.column_name END) col_10,
+       MAX(CASE col.position WHEN 11 THEN col.column_name END) col_11,
+       MAX(CASE col.position WHEN 12 THEN col.column_name END) col_12,
+       MAX(CASE col.position WHEN 13 THEN col.column_name END) col_13,
+       MAX(CASE col.position WHEN 14 THEN col.column_name END) col_14,
+       MAX(CASE col.position WHEN 15 THEN col.column_name END) col_15,
+       MAX(CASE col.position WHEN 16 THEN col.column_name END) col_16,
+       par.owner parent_owner,
+       par.table_name parent_table_name,
+       par.constraint_name parent_constraint_name
+  FROM dba_constraints  con,
+       dba_cons_columns col,
+       dba_constraints par
+ WHERE con.constraint_type = ''R''
+   AND con.owner NOT IN &&exclusion_list.
+   AND con.owner NOT IN &&exclusion_list2.
+   AND col.owner = con.owner
+   AND col.constraint_name = con.constraint_name
+   AND col.table_name = con.table_name
+   AND par.owner(+) = con.r_owner
+   AND par.constraint_name(+) = con.r_constraint_name
+ GROUP BY
        col.owner,
        col.constraint_name,
        col.table_name,
        con.status,
        con.r_owner,
        con.r_constraint_name,
-       MAX(CASE col.position WHEN 01 THEN      col.column_name END)||
-       MAX(CASE col.position WHEN 02 THEN '':''||col.column_name END)||
-       MAX(CASE col.position WHEN 03 THEN '':''||col.column_name END)||
-       MAX(CASE col.position WHEN 04 THEN '':''||col.column_name END)||
-       MAX(CASE col.position WHEN 05 THEN '':''||col.column_name END)||
-       MAX(CASE col.position WHEN 06 THEN '':''||col.column_name END)||
-       MAX(CASE col.position WHEN 07 THEN '':''||col.column_name END)||
-       MAX(CASE col.position WHEN 08 THEN '':''||col.column_name END)||
-       MAX(CASE col.position WHEN 09 THEN '':''||col.column_name END)||
-       MAX(CASE col.position WHEN 10 THEN '':''||col.column_name END)||
-       MAX(CASE col.position WHEN 11 THEN '':''||col.column_name END)||
-       MAX(CASE col.position WHEN 12 THEN '':''||col.column_name END)||
-       MAX(CASE col.position WHEN 13 THEN '':''||col.column_name END)||
-       MAX(CASE col.position WHEN 14 THEN '':''||col.column_name END)||
-       MAX(CASE col.position WHEN 15 THEN '':''||col.column_name END)||
-       MAX(CASE col.position WHEN 16 THEN '':''||col.column_name END)
-       constraint_columns
-  FROM dba_constraints  con,
-       dba_cons_columns col
- WHERE con.constraint_type = ''R''
-   --AND con.status = ''ENABLED''
-   AND con.owner NOT IN &&exclusion_list.
-   AND con.owner NOT IN &&exclusion_list2.
-   AND col.owner = con.owner
-   AND col.constraint_name = con.constraint_name
-   AND col.table_name = con.table_name
- GROUP BY
-       col.owner,
-       col.constraint_name,
-       col.table_name,
-       con.status,
-       con.r_owner,
-       con.r_constraint_name
+       par.owner,
+       par.constraint_name,
+       par.table_name
 ),
-indexed_columns AS (
+ref_int_indexes AS (
 SELECT /*+ &&sq_fact_hints. */
-       col.index_owner,
-       col.index_name,
-       col.table_owner,
-       col.table_name,
-       MAX(CASE col.column_position WHEN 01 THEN      col.column_name END)||
-       MAX(CASE col.column_position WHEN 02 THEN '':''||col.column_name END)||
-       MAX(CASE col.column_position WHEN 03 THEN '':''||col.column_name END)||
-       MAX(CASE col.column_position WHEN 04 THEN '':''||col.column_name END)||
-       MAX(CASE col.column_position WHEN 05 THEN '':''||col.column_name END)||
-       MAX(CASE col.column_position WHEN 06 THEN '':''||col.column_name END)||
-       MAX(CASE col.column_position WHEN 07 THEN '':''||col.column_name END)||
-       MAX(CASE col.column_position WHEN 08 THEN '':''||col.column_name END)||
-       MAX(CASE col.column_position WHEN 09 THEN '':''||col.column_name END)||
-       MAX(CASE col.column_position WHEN 10 THEN '':''||col.column_name END)||
-       MAX(CASE col.column_position WHEN 11 THEN '':''||col.column_name END)||
-       MAX(CASE col.column_position WHEN 12 THEN '':''||col.column_name END)||
-       MAX(CASE col.column_position WHEN 13 THEN '':''||col.column_name END)||
-       MAX(CASE col.column_position WHEN 14 THEN '':''||col.column_name END)||
-       MAX(CASE col.column_position WHEN 15 THEN '':''||col.column_name END)||
-       MAX(CASE col.column_position WHEN 16 THEN '':''||col.column_name END)
-       indexed_columns
-  FROM dba_ind_columns col
- WHERE col.table_owner NOT IN &&exclusion_list.
-   AND col.table_owner NOT IN &&exclusion_list2.
+       r.owner,
+       r.constraint_name,
+       c.table_owner,
+       c.table_name,
+       c.index_owner,
+       c.index_name,
+       r.col_cnt
+  FROM ref_int_constraints r,
+       dba_ind_columns c,
+       dba_indexes i
+ WHERE c.table_owner = r.owner
+   AND c.table_name = r.table_name
+   AND c.column_position <= r.col_cnt
+   AND c.column_name IN (r.col_01, r.col_02, r.col_03, r.col_04, r.col_05, r.col_06, r.col_07, r.col_08,
+                         r.col_09, r.col_10, r.col_11, r.col_12, r.col_13, r.col_14, r.col_15, r.col_16)
+   AND i.owner = c.index_owner
+   AND i.index_name = c.index_name
+   AND i.table_owner = c.table_owner
+   AND i.table_name = c.table_name
+   AND i.index_type != ''BITMAP''
  GROUP BY
-       col.index_owner,
-       col.index_name,
-       col.table_owner,
-       col.table_name
+       r.owner,
+       r.constraint_name,
+       c.table_owner,
+       c.table_name,
+       c.index_owner,
+       c.index_name,
+       r.col_cnt
+HAVING COUNT(*) = r.col_cnt
 )
 SELECT /*+ &&top_level_hints. */
-       rc.status,
-       rc.owner,
-       rc.table_name,
-       rc.constraint_name,
-       rc.constraint_columns,
-       rc.r_owner,
-       rc.r_constraint_name
-  FROM ref_int_constraints rc,
-       indexed_columns     ic
- WHERE ic.table_owner(+) = rc.owner
-   AND ic.table_name(+) = rc.table_name
-   AND ic.indexed_columns(+) LIKE rc.constraint_columns||''%''
-   AND ic.table_name IS NULL
+       *
+  FROM ref_int_constraints c
+ WHERE NOT EXISTS (
+SELECT NULL
+  FROM ref_int_indexes i
+ WHERE i.owner = c.owner
+   AND i.constraint_name = c.constraint_name
+   AND i.col_cnt >= c.col_cnt
+)
  ORDER BY
-       rc.status DESC,
-       rc.owner,
-       rc.table_name,
-       rc.constraint_name
+       1, 2, 3
 ';
 END;
 /
@@ -1338,6 +1339,35 @@ HAVING COUNT(*) > 49
  ORDER BY
        child_cursors DESC,
        v1.sql_id
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+DEF title = 'SQL with over 100 unshared child cursors';
+DEF main_table = 'GV$SQL_SHARED_CURSOR';
+BEGIN
+  :sql_text := '
+WITH
+not_shared AS (
+SELECT /*+ &&sq_fact_hints. */
+       sql_id, COUNT(*) child_cursors,
+       RANK() OVER (ORDER BY COUNT(*) DESC NULLS LAST) AS sql_rank
+  FROM gv$sql_shared_cursor
+ GROUP BY
+       sql_id
+HAVING COUNT(*) > 100
+)
+SELECT /*+ &&top_level_hints. */ 
+       ns.sql_rank,
+       ns.child_cursors,
+       ns.sql_id,
+       (SELECT s.sql_text FROM gv$sql s WHERE s.sql_id = ns.sql_id AND ROWNUM = 1) sql_text
+  FROM not_shared ns
+ ORDER BY
+       ns.sql_rank,
+       ns.child_cursors DESC,
+       ns.sql_id
 ';
 END;
 /

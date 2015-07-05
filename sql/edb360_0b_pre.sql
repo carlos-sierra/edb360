@@ -6,8 +6,8 @@ SET FEED OFF;
 SET ECHO OFF;
 SET TIM OFF;
 SET TIMI OFF;
-DEF edb360_vYYNN = 'v1521';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2015-06-18)';
+DEF edb360_vYYNN = 'v1522';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2015-07-04)';
 
 -- parameters
 PRO
@@ -405,7 +405,17 @@ SELECT CASE '&&edb360_conf_incl_csv.'  WHEN 'N' THEN '--' END edb360_skip_csv  F
 SELECT CASE '&&edb360_conf_incl_line.' WHEN 'N' THEN '--' END edb360_skip_line FROM DUAL;
 SELECT CASE '&&edb360_conf_incl_pie.'  WHEN 'N' THEN '--' END edb360_skip_pie  FROM DUAL;
 
-DEF edb360_copyright = ' (c) 2014';
+-- inclusion of some diagnostics from memory (not from history)
+COL edb360_skip_ash_mem NEW_V edb360_skip_ash_mem;
+COL edb360_skip_sql_mon NEW_V edb360_skip_sql_mon;
+COL edb360_skip_stat_mem NEW_V edb360_skip_stat_mem;
+COL edb360_skip_px_mem NEW_V edb360_skip_px_mem;
+SELECT CASE '&&edb360_conf_incl_ash_mem.' WHEN 'N' THEN '--' END edb360_skip_ash_mem FROM DUAL;
+SELECT CASE '&&edb360_conf_incl_sql_mon.' WHEN 'N' THEN '--' END edb360_skip_sql_mon FROM DUAL;
+SELECT CASE '&&edb360_conf_incl_stat_mem.' WHEN 'N' THEN '--' END edb360_skip_stat_mem FROM DUAL;
+SELECT CASE '&&edb360_conf_incl_px_mem.' WHEN 'N' THEN '--' END edb360_skip_px_mem FROM DUAL;
+
+DEF edb360_copyright = ' (c) 2015';
 DEF top_level_hints = 'NO_MERGE';
 DEF sq_fact_hints = 'MATERIALIZE NO_MERGE';
 DEF ds_hint = 'DYNAMIC_SAMPLING(4)';
@@ -667,7 +677,8 @@ SPO &&edb360_main_report..html;
 @@edb360_0d_html_header.sql
 PRO </head>
 PRO <body>
-PRO <h1><a href="http://www.enkitec.com" target="_blank">Enkitec</a>: DataBase 360-degree view <em>(<a href="http://www.enkitec.com/products/edb360" target="_blank">edb360</a>)</em> &&edb360_vYYNN.</h1>
+
+PRO <h1><em>&&edb360_conf_tool_page.edb360</a></em> &&edb360_vYYNN.: an Oracle database 360-degree view &&edb360_conf_all_pages_logo.</h1>
 PRO
 PRO <pre>
 PRO dbname:&&database_name_short. version:&&db_version. host:&&host_name_short. license:&&license_pack. days:&&history_days. from:&&edb360_date_from. to:&&edb360_date_to. today:&&edb360_time_stamp.
@@ -681,6 +692,8 @@ HOS zip -mT &&edb360_main_filename._&&edb360_file_time. esp_requirements_&&esp_h
 HOS zip &&edb360_main_filename._&&edb360_file_time. 00000_readme_first.txt >> &&edb360_log3..txt
 HOS zip -j &&edb360_main_filename._&&edb360_file_time. js/sorttable.js >> &&edb360_log3..txt
 HOS zip -j &&edb360_main_filename._&&edb360_file_time. js/edb360_img.jpg >> &&edb360_log3..txt
+HOS zip -j &&edb360_main_filename._&&edb360_file_time. js/edb360_all_pages_logo.jpg >> &&edb360_log3..txt
+HOS zip -j &&edb360_main_filename._&&edb360_file_time. js/edb360_favicon.ico >> &&edb360_log3..txt
 --HOS zip -r osw_&&esp_host_name_short..zip `ps -ef | grep OSW | grep FM | awk -F 'OSW' '{print $2}' | cut -f 3 -d ' '`
 --HOS zip -mT &&edb360_main_filename._&&edb360_file_time. osw_&&esp_host_name_short..zip
 

@@ -148,7 +148,7 @@ SELECT order_by,
 ';
 END;
 /
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@&&skip_diagnostics.&&edb360_skip_ash_mem.edb360_9a_pre_one.sql
 
 DEF title = 'CPU Demand Percentiles (AWR)';
 DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
