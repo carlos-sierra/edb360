@@ -1029,6 +1029,46 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+DEF title = 'Columns with multiple Data Types';
+DEF main_table = 'DBA_TAB_COLUMNS';
+BEGIN
+  :sql_text := '
+WITH 
+columns AS (
+SELECT /*+ &&sq_fact_hints. */
+       column_name, COUNT(*) typ_cnt, data_type,  
+       MIN(owner||''.''||table_name) min_table_name, 
+       MAX(owner||''.''||table_name) max_table_name
+  FROM dba_tab_columns
+ WHERE owner NOT IN &&exclusion_list.
+   AND owner NOT IN &&exclusion_list2.
+   AND data_type != ''UNDEFINED''
+ GROUP BY
+       column_name, data_type
+),
+more_than_one_type AS (
+SELECT /*+ &&sq_fact_hints. */
+       column_name, SUM(typ_cnt) col_cnt
+  FROM columns
+ GROUP BY
+       column_name
+HAVING COUNT(*) > 1
+)
+SELECT /*+ &&top_level_hints. */
+       m.col_cnt, c.*
+  FROM columns c,
+       more_than_one_type m
+ WHERE m.column_name = c.column_name
+ ORDER BY
+       m.col_cnt DESC,
+       c.column_name,
+       c.typ_cnt DESC,
+       c.data_type
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
 DEF title = 'Jobs';
 DEF main_table = 'DBA_JOBS';
 BEGIN

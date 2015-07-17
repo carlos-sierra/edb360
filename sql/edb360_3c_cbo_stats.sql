@@ -89,8 +89,14 @@ SELECT /*+ &&top_level_hints. */
        PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_90_percentile,
        PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_95_percentile,
        PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_99_percentile
-  FROM dba_tables
+  FROM dba_tables t
  WHERE table_name NOT LIKE ''BIN$%'' -- bug 9930151 reported by brad peek
+   AND NOT EXISTS (
+SELECT NULL
+  FROM dba_external_tables e
+ WHERE e.owner = t.owner
+   AND e.table_name = t.table_name 
+)
  GROUP BY
        owner
  ORDER BY
@@ -122,8 +128,14 @@ SELECT /*+ &&top_level_hints. */
        PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_90_percentile,
        PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_95_percentile,
        PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_99_percentile
-  FROM dba_tab_statistics
+  FROM dba_tab_statistics s
  WHERE table_name NOT LIKE ''BIN$%'' -- bug 9930151 reported by brad peek
+   AND NOT EXISTS (
+SELECT NULL
+  FROM dba_external_tables e
+ WHERE e.owner = s.owner
+   AND e.table_name = s.table_name 
+)
  GROUP BY
        owner, object_type
  ORDER BY
@@ -152,10 +164,16 @@ SELECT /*+ &&top_level_hints. */
        PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_90_percentile,
        PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_95_percentile,
        PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_99_percentile
-  FROM dba_tab_cols
+  FROM dba_tab_cols c
  WHERE table_name NOT LIKE ''BIN$%'' -- bug 9930151 reported by brad peek
    AND owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
+   AND NOT EXISTS (
+SELECT NULL
+  FROM dba_external_tables e
+ WHERE e.owner = c.owner
+   AND e.table_name = c.table_name 
+)
  GROUP BY
        owner
  ORDER BY
@@ -336,6 +354,12 @@ SELECT /*+ &&top_level_hints. */
    AND t.owner = s.owner
    AND t.table_name = s.table_name
    AND t.temporary = ''N''
+   AND NOT EXISTS (
+SELECT NULL
+  FROM dba_external_tables e
+ WHERE e.owner = s.owner
+   AND e.table_name = s.table_name 
+)
  ORDER BY
        s.owner, s.table_name
 ';
@@ -360,6 +384,12 @@ SELECT /*+ &&top_level_hints. */
    AND t.owner = s.owner
    AND t.table_name = s.table_name
    AND t.temporary = ''N''
+   AND NOT EXISTS (
+SELECT NULL
+  FROM dba_external_tables e
+ WHERE e.owner = s.owner
+   AND e.table_name = s.table_name 
+)
  ORDER BY
        s.owner, s.table_name
 ';
@@ -384,6 +414,12 @@ SELECT /*+ &&top_level_hints. */
    AND t.owner = s.owner
    AND t.table_name = s.table_name
    AND t.temporary = ''N''
+   AND NOT EXISTS (
+SELECT NULL
+  FROM dba_external_tables e
+ WHERE e.owner = s.owner
+   AND e.table_name = s.table_name 
+)
  ORDER BY
        s.owner, s.table_name
 ';
@@ -396,9 +432,10 @@ DEF main_table = 'DBA_TAB_STATISTICS';
 BEGIN
   :sql_text := '
 SELECT /*+ &&top_level_hints. */
-       s.owner, s.table_name, t.temporary, s.num_rows, s.last_analyzed, s.stale_stats, s.stattype_locked
+       s.owner, s.table_name, t.temporary, s.num_rows, s.last_analyzed, s.stale_stats, s.stattype_locked, e.type_name external_table_type
   FROM dba_tab_statistics s,
-       dba_tables t
+       dba_tables t,
+       dba_external_tables e
  WHERE s.object_type = ''TABLE''
    AND s.owner NOT IN &&exclusion_list.
    AND s.owner NOT IN &&exclusion_list2.
@@ -406,6 +443,8 @@ SELECT /*+ &&top_level_hints. */
    AND s.table_name NOT LIKE ''BIN%''
    AND t.owner = s.owner
    AND t.table_name = s.table_name
+   AND e.owner(+) = s.owner
+   AND e.table_name(+) = s.table_name 
  ORDER BY
        s.owner, s.table_name
 ';
@@ -453,6 +492,12 @@ SELECT /*+ &&top_level_hints. */
    AND s.table_name NOT LIKE ''BIN%''
    AND t.owner = s.owner
    AND t.table_name = s.table_name
+   AND NOT EXISTS (
+SELECT NULL
+  FROM dba_external_tables e
+ WHERE e.owner = s.owner
+   AND e.table_name = s.table_name 
+)
  ORDER BY
        s.owner, s.table_name
 ';

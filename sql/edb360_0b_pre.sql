@@ -6,8 +6,8 @@ SET FEED OFF;
 SET ECHO OFF;
 SET TIM OFF;
 SET TIMI OFF;
-DEF edb360_vYYNN = 'v1522';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2015-07-04)';
+DEF edb360_vYYNN = 'v1523';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2015-07-17)';
 
 -- parameters
 PRO
@@ -219,6 +219,7 @@ SELECT CASE WHEN :edb360_sec_from = '1a' AND :edb360_sec_to = '9z' THEN 'edb360'
 -- esp init
 DEF rr_host_name_short = '';
 DEF esp_host_name_short = '';
+DEF ecr_collection_key = '';
 
 -- get dbid
 COL edb360_dbid NEW_V edb360_dbid;
@@ -314,7 +315,7 @@ HOS cat /proc/cpuinfo | grep -i name | sort | uniq >> cpuinfo_model_name.txt
 SET TERM ON;
 PRO Getting esp_collect_requirements and resources_requirements
 PRO Please wait ...
-@sql/esp_master.sql
+@&&skip_diagnostics.sql/esp_master.sql
 SET TERM OFF; 
 
 -- zip esp files but preserve original files on file system until edb360 completes (one database or multiple)
@@ -678,7 +679,7 @@ SPO &&edb360_main_report..html;
 PRO </head>
 PRO <body>
 
-PRO <h1><em>&&edb360_conf_tool_page.edb360</a></em> &&edb360_vYYNN.: an Oracle database 360-degree view &&edb360_conf_all_pages_logo.</h1>
+PRO <h1><em>&&edb360_conf_tool_page.eDB360</a></em> &&edb360_vYYNN.: an Oracle database 360-degree view &&edb360_conf_all_pages_logo.</h1>
 PRO
 PRO <pre>
 PRO dbname:&&database_name_short. version:&&db_version. host:&&host_name_short. license:&&license_pack. days:&&history_days. from:&&edb360_date_from. to:&&edb360_date_to. today:&&edb360_time_stamp.
