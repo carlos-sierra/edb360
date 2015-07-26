@@ -153,6 +153,179 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+DEF title = 'Session Blockers';
+DEF main_table = 'GV$SESSION_BLOCKERS';
+BEGIN
+  :sql_text := '
+SELECT /*+ &&top_level_hints. */
+       w.inst_id w_inst_id,
+       w.sql_id w_sql_id,
+       w.sql_child_number w_child,
+       w.sid w_sid,
+       w.serial# w_serial#,
+       w.process w_process,
+       w.machine w_machine,
+       w.program w_program,
+       w.module w_module,
+       w.client_info w_client_info,
+       w.client_identifier w_client_identifier,
+       w.event w_event,
+       TO_CHAR(w.logon_time, ''DD-MON-YY HH24:MI:SS'') w_logon_time,
+       TO_CHAR(w.sql_exec_start, ''DD-MON-YY HH24:MI:SS'') w_sql_exec_start, 
+       b.inst_id b_inst_id,
+       b.sql_id b_sql_id,
+       b.sql_child_number b_child,
+       b.sid b_sid,
+       b.serial# b_serial#,
+       b.process b_process,
+       b.machine b_machine,
+       b.program b_program,
+       b.module b_module,
+       b.client_info b_client_info,
+       b.client_identifier b_client_identifier,
+       TO_CHAR(b.logon_time, ''DD-MON-YY HH24:MI:SS'') b_logon_time,
+       TO_CHAR(b.sql_exec_start, ''DD-MON-YY HH24:MI:SS'') b_sql_exec_start, 
+       SUBSTR(ws.sql_text, 1, 500) w_sql_text,
+       SUBSTR(bs.sql_text, 1, 500) b_sql_text
+  FROM gv$session_blockers sb,
+       gv$session w,
+       gv$session b,
+       gv$sql ws,
+       gv$sql bs
+ WHERE w.inst_id = sb.inst_id
+   AND w.sid = sb.sid
+   AND w.serial# = sb.sess_serial#
+   AND b.inst_id = sb.blocker_instance_id
+   AND b.sid = sb.blocker_sid
+   AND b.serial# = sb.blocker_sess_serial#
+   AND ws.inst_id(+) = w.inst_id
+   AND ws.sql_id(+) = w.sql_id
+   AND ws.child_number(+) = w.sql_child_number
+   AND bs.inst_id(+) = b.inst_id
+   AND bs.sql_id(+) = b.sql_id
+   AND bs.child_number(+) = b.sql_child_number
+ ORDER BY
+       w.inst_id,
+       w.sql_id,
+       w.sql_child_number,
+       w.sid,
+       w.serial#,
+       b.inst_id,
+       b.sql_id,
+       b.sql_child_number,
+       b.sid,
+       b.serial#
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+DEF title = 'SQL blocking SQL';
+DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
+BEGIN
+  :sql_text := '
+WITH
+w AS (
+SELECT /*+ &&sq_fact_hints. */
+       dbid,
+       sql_id,
+       event,
+       blocking_session,
+       blocking_session_serial#,
+       TRUNC(sample_time, ''HH'') sample_hh,
+       MIN(sample_time) min_sample_time,
+       MAX(sample_time) max_sample_time,
+       COUNT(*) samples,
+       RANK() OVER (ORDER BY COUNT(*) DESC NULLS LAST) AS w_rank
+  FROM dba_hist_active_sess_history
+ WHERE sql_id IS NOT NULL
+   AND blocking_session IS NOT NULL
+   AND session_state = ''WAITING''
+   AND blocking_session_status IN (''VALID'', ''GLOBAL'')
+   AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND dbid = &&edb360_dbid.
+ GROUP BY
+       dbid,
+       sql_id,
+       event,
+       blocking_session,
+       blocking_session_serial#,
+       TRUNC(sample_time, ''HH'')
+),
+b AS (
+SELECT /*+ &&sq_fact_hints. */
+       w.dbid,
+       w.sql_id w_sql_id,
+       w.event w_event,
+       RANK() OVER (ORDER BY COUNT(*) DESC NULLS LAST) AS b_rank,
+       b.sql_id b_sql_id,
+       COUNT(*) b_samples
+       FROM w, 
+            dba_hist_active_sess_history b
+ WHERE w.w_rank < 101
+   AND b.dbid = w.dbid   
+   AND b.session_id = w.blocking_session
+   AND b.session_serial# = w.blocking_session_serial#
+   AND TRUNC(b.sample_time, ''HH'') = w.sample_hh
+   AND b.sample_time BETWEEN w.min_sample_time AND w.max_sample_time
+   AND b.sql_id IS NOT NULL
+   AND b.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND b.dbid = &&edb360_dbid.
+ GROUP BY
+       w.dbid,
+       w.sql_id,
+       w.event,
+       b.sql_id
+),
+w2 AS (
+SELECT /*+ &&sq_fact_hints. */
+       dbid,
+       sql_id w_sql_id,
+       event w_event,
+       SUM(samples) w_samples,
+       MIN(w_rank) w_rank
+  FROM w
+ GROUP BY
+       dbid,
+       sql_id,
+       event
+),
+w3 AS (
+SELECT /*+ &&sq_fact_hints. */
+       dbid,
+       w_sql_id,
+       SUM(w_samples) w_samples
+  FROM w2
+ GROUP BY
+       dbid,
+       w_sql_id
+)
+SELECT /*+ &&top_level_hints. */
+       (10 * w2.w_samples) w_seconds,
+       w2.w_sql_id,
+       w2.w_event,
+       (10 * b.b_samples) b_seconds,
+       b.b_sql_id,
+       (SELECT DBMS_LOB.SUBSTR(s.sql_text, 500) FROM dba_hist_sqltext s WHERE s.sql_id = w2.w_sql_id AND s.dbid = w2.dbid AND ROWNUM = 1) w_sql_text,
+       (SELECT DBMS_LOB.SUBSTR(s.sql_text, 500) FROM dba_hist_sqltext s WHERE s.sql_id = b.b_sql_id AND s.dbid = b.dbid AND ROWNUM = 1) b_sql_text        
+  FROM w2, b, w3
+ WHERE b.dbid = w2.dbid
+   AND b.w_sql_id = w2.w_sql_id
+   AND b.w_event = w2.w_event
+   AND w3.dbid = w2.dbid
+   AND w3.w_sql_id = w2.w_sql_id
+ ORDER BY
+       w3.w_samples DESC,
+       w2.w_samples DESC,
+       w2.w_sql_id,
+       w2.w_event,
+       b.b_samples DESC,
+       b.b_sql_id
+';
+END;
+/
+@@&&skip_diagnostics.edb360_9a_pre_one.sql
+
 DEF title = 'Invalid Objects';
 DEF main_table = 'DBA_OBJECTS';
 BEGIN
@@ -1550,7 +1723,7 @@ SELECT sql_id, sql_text
 ';
 END;
 /
-@@edb360_9a_pre_one.sql
+--@@edb360_9a_pre_one.sql (removed for performance)
 
 DEF title = 'Active SQL (full text)';
 DEF main_table = 'GV$SQL';
@@ -1571,7 +1744,7 @@ SELECT /* active_sql */
 ';
 END;
 /
-@@edb360_9a_pre_one.sql
+--@@edb360_9a_pre_one.sql (removed for performance)
 
 DEF title = 'Active SQL (detail)';
 DEF main_table = 'GV$SQL';
@@ -1591,7 +1764,7 @@ SELECT /* active_sql */
 ';
 END;
 /
-@@edb360_9a_pre_one.sql
+--@@edb360_9a_pre_one.sql (removed for performance)
 
 DEF title = 'Active Sessions (detail)';
 DEF main_table = 'GV$SESSION';

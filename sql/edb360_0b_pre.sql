@@ -6,8 +6,8 @@ SET FEED OFF;
 SET ECHO OFF;
 SET TIM OFF;
 SET TIMI OFF;
-DEF edb360_vYYNN = 'v1523';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2015-07-17)';
+DEF edb360_vYYNN = 'v1524';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2015-07-26)';
 
 -- parameters
 PRO

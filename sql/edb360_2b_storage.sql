@@ -650,7 +650,7 @@ order by owner, (blocks * block_size / 1048576) desc
 ';
 END;
 /
-@@edb360_9a_pre_one.sql
+--@@edb360_9a_pre_one.sql (redundant with "Largest 200 Objects")
 
 DEF title = 'Segments in Reserved Tablespaces';
 DEF main_table = 'DBA_SEGMENTS';

@@ -1,23 +1,24 @@
-EDB360 v1523 (2015-07-17) by Carlos Sierra
+EDB360 v1524 (2015-07-26) by Carlos Sierra
 
 EDB360 is a "free to use" tool to perform an initial assessment of a remote system. 
 It gives a glance of a database state. It also helps to document any findings.
 EDB360 installs nothing. For better results execute connected as SYS or DBA.
-It takes around one hour to execute. Output ZIP file can be large (several MBs), so
+It takes a few hours to execute. Output ZIP file can be large (over 100 MBs), so
 you may want to execute EDB360 from a system directory with at least 1 GB of free 
 space. Best time to execute EDB360 is close to the end of a working day.
 
 Steps
 ~~~~~
-1. Unzip edb360.zip, navigate to the root edb360 directory, and connect as SYS, 
-   DBA, or any User with Data Dictionary access:
+1. Unzip edb360.zip, navigate to the root edb360-master directory, and connect as SYS, 
+   DBA, or any user with Data Dictionary access:
 
-   $ unzip edb360.zip
-   $ cd edb360
+   $ unzip edb360-master.zip
+   $ cd edb360-master
    $ sqlplus / as sysdba
 
 2. Execute edb360.sql indicating if your database is licensed for the Oracle Tuning Pack, 
-   the Diagnostics Pack or None [ T | D | N ]. Example below specifies Tuning Pack.
+   the Diagnostics Pack or None [ T | D | N ]. Example below specifies Tuning Pack. If 
+   both Tuning and Diagnostics pass then T.
 
    SQL> @edb360.sql T
    
@@ -53,9 +54,9 @@ Notes
    default "working hours" between 7:30AM and 7:30PM; or suppress an output format such as
    text or csv; modify then file edb360_00_config.sql (back it up first).
    
-4. How to find the option that you have installed?
+4. How to find the license pack option that you have installed?
 
-   select value from v$parameter where name = 'control_management_pack_access’;
+   select value from v$parameter where name = 'control_management_pack_access';
 
 5. How to find how many days are kept in the AWR repository?
 
@@ -66,7 +67,7 @@ Notes
 Troubleshooting
 ~~~~~~~~~~~~~~~
 edb360 takes a few hours to execute on a large database. On smaller ones or on Exadata it
-takes less than 1hr. In rare cases it may take 12 hours or even more. 
+may take less than 1hr. In rare cases it may take up to 24 hours or even more. 
 If you think edb360 takes too long on your database, the first suspect is usually the 
 state of the CBO stats on Tables behind AWR. 
 Troubleshooting steps below are for improving performance of edb360 based on known issues.
