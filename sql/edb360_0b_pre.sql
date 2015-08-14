@@ -6,8 +6,8 @@ SET FEED OFF;
 SET ECHO OFF;
 SET TIM OFF;
 SET TIMI OFF;
-DEF edb360_vYYNN = 'v1524';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2015-07-26)';
+DEF edb360_vYYNN = 'v1525';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2015-08-13)';
 
 -- parameters
 PRO
@@ -160,6 +160,7 @@ COL edb360_6f NEW_V edb360_6f;
 COL edb360_6g NEW_V edb360_6g;
 COL edb360_6h NEW_V edb360_6h;
 COL edb360_6i NEW_V edb360_6i;
+COL edb360_6j NEW_V edb360_6j;
 COL edb360_7a NEW_V edb360_7a;
 COL edb360_7b NEW_V edb360_7b;
 COL edb360_7c NEW_V edb360_7c;
@@ -208,6 +209,7 @@ SELECT CASE WHEN '6f' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6
 SELECT CASE WHEN '6g' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6g_' ELSE '--' END edb360_6g FROM DUAL;
 SELECT CASE WHEN '6h' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6h_' ELSE '--' END edb360_6h FROM DUAL;
 SELECT CASE WHEN '6i' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6i_' ELSE '--' END edb360_6i FROM DUAL;
+SELECT CASE WHEN '6j' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6j_' ELSE '--' END edb360_6j FROM DUAL;
 SELECT CASE WHEN '7a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_7a_' ELSE '--' END edb360_7a FROM DUAL;
 SELECT CASE WHEN '7b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_7b_' ELSE '--' END edb360_7b FROM DUAL;
 SELECT CASE WHEN '7c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_7c_' ELSE '--' END edb360_7c FROM DUAL;
@@ -283,6 +285,10 @@ ALTER SESSION SET NLS_TIMESTAMP_TZ_FORMAT = 'YYYY-MM-DD/HH24:MI:SS.FF TZH:TZM';
 -- adding to prevent slow access to ASH with non default NLS settings
 ALTER SESSION SET NLS_SORT = 'BINARY';
 ALTER SESSION SET NLS_COMP = 'BINARY';
+-- workaround fairpoint
+COL db_vers_ofe NEW_V db_vers_ofe;
+SELECT TRIM('.' FROM TRIM('0' FROM version)) db_vers_ofe FROM v$instance;
+ALTER SESSION SET optimizer_features_enable = '&&db_vers_ofe.';
 -- to work around bug 12672969
 ALTER SESSION SET "_optimizer_order_by_elimination_enabled"=false; 
 -- workaround Siebel

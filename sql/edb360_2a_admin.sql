@@ -153,6 +153,33 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+DEF title = 'Sessions Waiting';
+DEF main_table = 'GV$SESSION';
+BEGIN
+  :sql_text := '
+-- borrowed from orachk
+SELECT /*+ &&top_level_hints. */
+       inst_id, sid, event,
+       ROUND(seconds_in_wait,2)  waiting_seconds,
+       ROUND(wait_time/100,2)    waited_seconds, 
+       p1,p2,p3, BLOCKING_SESSION 
+from gv$session
+where event not in
+(
+  ''SQL*Net message from client'',
+  ''SQL*Net message to client'',
+  ''rdbms ipc message''
+)
+and state = ''WAITING''
+and username not in &&exclusion_list.
+and username not in &&exclusion_list2.
+and (seconds_in_wait > 1 OR wait_time > 100)
+order by 1, 2
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
 DEF title = 'Session Blockers';
 DEF main_table = 'GV$SESSION_BLOCKERS';
 BEGIN
@@ -371,6 +398,7 @@ SELECT /*+ &&top_level_hints. */
        *
   FROM dba_constraints
  WHERE validated = ''NOT VALIDATED''
+   AND constraint_type != ''O''
    AND NOT (owner = ''SYSTEM'' AND constraint_name LIKE ''LOGMNR%'')
    AND owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
@@ -1413,9 +1441,9 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
-DEF title = 'Tables with more than 254 Columns';
+DEF title = 'Tables with more than 255 Columns';
 DEF main_table = 'DBA_TAB_COLUMNS';
-DEF abstract = 'Tables with more than 254 Columns are subject to intra-block chained rows';
+DEF abstract = 'Tables with more than 255 Columns are subject to intra-block chained rows';
 BEGIN
   :sql_text := '
 SELECT /*+ &&top_level_hints. */ 
@@ -1427,7 +1455,7 @@ SELECT /*+ &&top_level_hints. */
    AND owner NOT IN &&exclusion_list2.
  GROUP BY
        owner, table_name
-HAVING COUNT(*) > 254
+HAVING COUNT(*) > 255
  ORDER BY
        1 DESC, 
        owner,

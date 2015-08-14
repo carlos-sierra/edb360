@@ -108,6 +108,32 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+DEF title = 'Temp Tablespace Usage';
+DEF main_table = 'GV$TEMP_EXTENT_POOL';
+BEGIN
+  :sql_text := '
+-- requested by Rodrigo Righetti
+SELECT /*+ &&top_level_hints. */
+a.tablespace_name, round(A.AVAIL_SIZE_GB,1) AVAIL_SIZE_GB, 
+round(B.TOT_GBBYTES_CACHED,1) TOT_GBBYTES_CACHED , 
+round(B.TOT_GBBYTES_USED,1) TOT_GBBYTES_USED,
+ROUND(100*(B.TOT_GBBYTES_CACHED/A.AVAIL_SIZE_GB),1) PERC_CACHED,
+ROUND(100*(B.TOT_GBBYTES_USED/A.AVAIL_SIZE_GB),1) PERC_USED
+FROM
+(select  tablespace_name,sum(bytes)/POWER(2,30) AVAIL_SIZE_GB
+from dba_temp_files
+group by tablespace_name) A,
+(SELECT tablespace_name, 
+SUM(BYTES_CACHED)/POWER(2,30) TOT_GBBYTES_CACHED, 
+SUM(BYTES_USED)/POWER(2,30) TOT_GBBYTES_USED
+FROM GV$TEMP_EXTENT_POOL
+GROUP BY  TABLESPACE_NAME) B
+where a.tablespace_name=b.tablespace_name
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
 DEF title = 'Datafile';
 DEF main_table = 'V$DATAFILE';
 BEGIN

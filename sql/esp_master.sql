@@ -73,4 +73,7 @@ SELECT :vskip_awr skip_awr FROM dual;
 @@&&skip_statspack.sql/esp_collect_requirements_statspack.sql
 @@&&skip_statspack.sql/resources_requirements_statspack.sql
 
+PRO
+PRO Please ignore error: "SP2-0310: unable to open file"
+
 SET TERM ON ECHO OFF FEED ON VER ON HEA ON PAGES 14 COLSEP ' ' LIN 80 TRIMS OFF TRIM ON TI OFF TIMI OFF ARRAY 15 NUM 10 SQLBL OFF BLO ON RECSEP WR;
