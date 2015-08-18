@@ -1,4 +1,4 @@
-EDB360 v1525 (2015-08-13) by Carlos Sierra
+EDB360 v1526 (2015-08-18) by Carlos Sierra
 
 EDB360 is a "free to use" tool to perform an initial assessment of a remote system. 
 It gives a glance of a database state. It also helps to document any findings.
@@ -93,15 +93,7 @@ Steps:
 3. If edb360 version (first line on this readme) is older than 1 month, download and use
    latest version: https://github.com/carlos-sierra/edb360/archive/master.zip
 
-4. Consider suppressing text and or csv reports. Each for an estimated gain of about 20%.
-   Keep in mind that when suppressing reports, you start loosing some functionality. 
-   To suppress lets say text and csv reports, place the following two commands at the end 
-   of script edb360/sql/edb360_00_config.sql
-
-       DEF edb360_conf_incl_text = 'N';
-       DEF edb360_conf_incl_csv = 'N';
-
-5. If after going through steps 1-4 above, edb360 still takes longer than a few hours, 
+4. If after going through steps 1-3 above, edb360 still takes longer than a few hours, 
    feel free to email author carlos.sierra.usa@gmail.com and provide 4 files from step 1.
 
 ****************************************************************************************

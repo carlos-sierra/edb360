@@ -180,11 +180,27 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
-DEF title = 'Session Blockers';
+DEF title = 'Session Blockers and Waiters';
+DEF abstract = 'Blockers (B) and Waiters (W)';
 DEF main_table = 'GV$SESSION_BLOCKERS';
 BEGIN
   :sql_text := '
 SELECT /*+ &&top_level_hints. */
+       b.inst_id b_inst_id,
+       b.sql_id b_sql_id,
+       b.sql_child_number b_child,
+       b.sid b_sid,
+       b.serial# b_serial#,
+       b.process b_process,
+       b.machine b_machine,
+       b.program b_program,
+       b.module b_module,
+       b.client_info b_client_info,
+       b.client_identifier b_client_identifier,
+       b.event b_event,
+       TO_CHAR(b.logon_time, ''DD-MON-YY HH24:MI:SS'') b_logon_time,
+       TO_CHAR(b.sql_exec_start, ''DD-MON-YY HH24:MI:SS'') b_sql_exec_start, 
+       SUBSTR(bs.sql_text, 1, 500) b_sql_text,
        w.inst_id w_inst_id,
        w.sql_id w_sql_id,
        w.sql_child_number w_child,
@@ -199,21 +215,7 @@ SELECT /*+ &&top_level_hints. */
        w.event w_event,
        TO_CHAR(w.logon_time, ''DD-MON-YY HH24:MI:SS'') w_logon_time,
        TO_CHAR(w.sql_exec_start, ''DD-MON-YY HH24:MI:SS'') w_sql_exec_start, 
-       b.inst_id b_inst_id,
-       b.sql_id b_sql_id,
-       b.sql_child_number b_child,
-       b.sid b_sid,
-       b.serial# b_serial#,
-       b.process b_process,
-       b.machine b_machine,
-       b.program b_program,
-       b.module b_module,
-       b.client_info b_client_info,
-       b.client_identifier b_client_identifier,
-       TO_CHAR(b.logon_time, ''DD-MON-YY HH24:MI:SS'') b_logon_time,
-       TO_CHAR(b.sql_exec_start, ''DD-MON-YY HH24:MI:SS'') b_sql_exec_start, 
        SUBSTR(ws.sql_text, 1, 500) w_sql_text,
-       SUBSTR(bs.sql_text, 1, 500) b_sql_text
   FROM gv$session_blockers sb,
        gv$session w,
        gv$session b,
@@ -232,16 +234,16 @@ SELECT /*+ &&top_level_hints. */
    AND bs.sql_id(+) = b.sql_id
    AND bs.child_number(+) = b.sql_child_number
  ORDER BY
-       w.inst_id,
-       w.sql_id,
-       w.sql_child_number,
-       w.sid,
-       w.serial#,
        b.inst_id,
        b.sql_id,
        b.sql_child_number,
        b.sid,
-       b.serial#
+       b.serial#,
+       w.inst_id,
+       w.sql_id,
+       w.sql_child_number,
+       w.sid,
+       w.serial#
 ';
 END;
 /
@@ -1547,12 +1549,13 @@ DEF abstract = 'SQL statements with more than 50 Open Cursors';
 BEGIN
   :sql_text := '
 SELECT /*+ &&top_level_hints. */ 
-       COUNT(*) open_cursors, COUNT(DISTINCT inst_id||''.''||sid) sessions, sql_id, hash_value, address, sql_text, cursor_type,
+       COUNT(*) open_cursors, COUNT(DISTINCT inst_id||''.''||sid) sessions, sql_id, hash_value, sql_text, cursor_type,
        MIN(user_name) min_user_name, MAX(user_name) max_user_name, MAX(last_sql_active_time) last_sql_active_time
   FROM gv$open_cursor
  GROUP BY
-       sql_id, hash_value, address, sql_text, cursor_type
-HAVING COUNT(*) >= 50 
+       sql_id, hash_value, sql_text, cursor_type
+HAVING COUNT(*) >= 50
+   AND COUNT(*) > COUNT(DISTINCT inst_id||''.''||sid)
  ORDER BY 
        1 DESC
 ';

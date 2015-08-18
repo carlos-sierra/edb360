@@ -36,8 +36,8 @@ DEF edb360_conf_incl_px_mem = 'Y';
 
 -- excluding report types reduce usability while providing marginal performance gain
 DEF edb360_conf_incl_html = 'Y';
-DEF edb360_conf_incl_text = 'Y';
-DEF edb360_conf_incl_csv = 'Y';
+DEF edb360_conf_incl_text = 'N';
+DEF edb360_conf_incl_csv = 'N';
 DEF edb360_conf_incl_line = 'Y';
 DEF edb360_conf_incl_pie = 'Y';
 

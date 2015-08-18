@@ -27,15 +27,16 @@ PRO &&hh_mm_ss. &&title.&&title_suffix.
 
 -- count
 PRINT sql_text;
-PRO &&hh_mm_ss. &&section_id.. Computing COUNT(*)...
-EXEC :row_count := -1;
+--PRO &&hh_mm_ss. &&section_id.. Computing COUNT(*)...
+SELECT '0' row_num FROM DUAL;
+PRO &&hh_mm_ss. &&section_id..
+--EXEC :row_count := -1;
 EXEC :sql_text_display := TRIM(CHR(10) FROM :sql_text)||';';
 SET TIMI ON;
 SET SERVEROUT ON;
 BEGIN
-  --:sql_text_display := TRIM(CHR(10) FROM :sql_text)||';';
+  /*
   BEGIN
-    --EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM ('||CHR(10)||TRIM(CHR(10) FROM :sql_text)||CHR(10)||')' INTO :row_count;
     IF '&&edb360_bypass.' IS NULL THEN
       EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM ('||CHR(10)||TRIM(CHR(10) FROM DBMS_LOB.SUBSTR(:sql_text, 32700, 1))||CHR(10)||')' INTO :row_count;
     ELSE
@@ -46,28 +47,30 @@ BEGIN
       DBMS_OUTPUT.PUT_LINE(DBMS_LOB.SUBSTR(SQLERRM));
   END;
   DBMS_OUTPUT.PUT_LINE(TRIM(TO_CHAR(:row_count))||' rows selected.'||CHR(10));
+  */
   DBMS_OUTPUT.PUT_LINE('Elapsed Seconds so far: '||((DBMS_UTILITY.GET_TIME - :edb360_time0) / 100)||CHR(10));
 END;
 /
 SET TIMI OFF;
 SET SERVEROUT OFF;
 PRO
-SET TERM OFF;
-COL row_count NEW_V row_count NOPRI;
-SELECT TRIM(TO_CHAR(:row_count)) row_count FROM DUAL;
+--SET TERM OFF;
+--COL row_count NEW_V row_count NOPRI;
+--SELECT TRIM(TO_CHAR(:row_count)) row_count FROM DUAL;
 SPO OFF;
 HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_log..txt >> &&edb360_log3..txt
 
 -- spools query
 SPO &&common_edb360_prefix._query.sql;
-SELECT 'SELECT ROWNUM row_num, v0.* FROM ('||CHR(10)||TRIM(CHR(10) FROM :sql_text)||CHR(10)||') v0 WHERE ROWNUM <= &&max_rows.' FROM DUAL;
+SELECT 'SELECT TO_CHAR(ROWNUM) row_num, v0.* FROM ('||CHR(10)||TRIM(CHR(10) FROM :sql_text)||CHR(10)||') v0 WHERE ROWNUM <= &&max_rows.' FROM DUAL;
 SPO OFF;
 SET HEA ON;
 GET &&common_edb360_prefix._query.sql
 
 -- update main report
 SPO &&edb360_main_report..html APP;
-PRO <li title="&&main_table.">&&title. <small><em>(&&row_count.)</em></small>
+--PRO <li title="&&main_table.">&&title. <small><em>(&&row_count.)</em></small>
+PRO <li title="&&main_table.">&&title.
 SPO OFF;
 HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html >> &&edb360_log3..txt
 
@@ -116,7 +119,7 @@ SET RECSEP OFF;
 
 -- cleanup
 EXEC :sql_text := NULL;
-COL row_num FOR 9999999 HEA '#' PRI;
+--COL row_num NEW_V row_num HEA '#' PRI;
 DEF abstract = '';
 DEF abstract2 = '';
 DEF foot = '';
@@ -131,6 +134,7 @@ DEF haxis = '&&db_version. dbname:&&database_name_short. host:&&host_name_short.
 
 -- update main report
 SPO &&edb360_main_report..html APP;
+PRO <small><em> (&&row_num.) </em></small>
 PRO </li>
 SPO OFF;
 HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html >> &&edb360_log3..txt

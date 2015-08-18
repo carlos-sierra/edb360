@@ -6,8 +6,8 @@ SET FEED OFF;
 SET ECHO OFF;
 SET TIM OFF;
 SET TIMI OFF;
-DEF edb360_vYYNN = 'v1525';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2015-08-13)';
+DEF edb360_vYYNN = 'v1526';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2015-08-18)';
 
 -- parameters
 PRO
@@ -335,7 +335,10 @@ ALTER SESSION SET NLS_TIMESTAMP_FORMAT = 'YYYY-MM-DD/HH24:MI:SS.FF';
 ALTER SESSION SET NLS_TIMESTAMP_TZ_FORMAT = 'YYYY-MM-DD/HH24:MI:SS.FF TZH:TZM';
 
 -- initialization
-COL row_num FOR 9999999 HEA '#' PRI;
+--COL row_num NEW_V row_num FOR 9999999 HEA '#' PRI;
+COL row_num NEW_V row_num HEA '#' PRI;
+--COL nbsp NEW_V nbsp;
+--SELECT CHR(38)||'nbsp;' nbsp FROM DUAL;
 
 -- get rdbms version
 COL db_version NEW_V db_version;
@@ -537,7 +540,7 @@ COL hh_mm_ss NEW_V hh_mm_ss FOR A8;
 COL title_no_spaces NEW_V title_no_spaces;
 COL spool_filename NEW_V spool_filename;
 COL one_spool_filename NEW_V one_spool_filename;
-VAR row_count NUMBER;
+--VAR row_count NUMBER;
 VAR sql_text CLOB;
 VAR sql_text_backup CLOB;
 VAR sql_text_backup2 CLOB;

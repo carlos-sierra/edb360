@@ -332,6 +332,6 @@ SET TERM OFF;
 SET SERVEROUT OFF HEAD ON PAGES &&def_max_rows.;
 HOS zip -m &&edb360_main_filename._&&edb360_file_time. 99930_&&common_edb360_prefix._top_sql_driver.sql 99950_&&common_edb360_prefix._top_sql_driver.sql sqld360_driver.sql >> &&edb360_log3..txt
 SET HEA ON LIN 32767 NEWP NONE PAGES &&def_max_rows. LONG 32000 LONGC 2000 WRA ON TRIMS ON TRIM ON TI OFF TIMI OFF ARRAY 1000 NUM 20 SQLBL ON BLO . RECSEP OFF;
-COL row_num FOR 9999999 HEA '#' PRI;
+--COL row_num NEW_V row_num HEA '#' PRI;
 
 
