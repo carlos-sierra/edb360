@@ -256,7 +256,7 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
-DEF title = 'Table Partititions Summary';
+DEF title = 'Table Partitions Summary';
 DEF main_table = 'DBA_TAB_PARTITIONS';
 BEGIN
   :sql_text := '

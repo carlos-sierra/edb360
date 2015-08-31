@@ -15,9 +15,17 @@ SELECT SUBSTR(
 CASE '&&diagnostics_pack.' WHEN 'Y' THEN '1' ELSE '0' END||
 CASE '&&tuning_pack.' WHEN 'Y' THEN '1' ELSE '0' END||
 '0'|| -- TCB
---LPAD(TRIM('&&history_days.'), 3, '0')
 LPAD(TRIM('&&edb360_conf_days.'), 3, '0')
 , 1, 6) call_sqld360_bitmask
+FROM DUAL;
+
+COL call_sqld360_bitmask_tc NEW_V call_sqld360_bitmask_tc FOR A6;
+SELECT SUBSTR(
+CASE '&&diagnostics_pack.' WHEN 'Y' THEN '1' ELSE '0' END||
+CASE '&&tuning_pack.' WHEN 'Y' THEN '1' ELSE '0' END||
+'1'|| -- TCB
+LPAD(TRIM('&&edb360_conf_days.'), 3, '0')
+, 1, 6) call_sqld360_bitmask_tc
 FROM DUAL;
 
 DEF files_prefix = '';
@@ -70,7 +78,7 @@ BEGIN
              GROUP BY
                    dbid,
                    sql_id
-            HAVING COUNT(*) > 6 -- >1min
+            HAVING COUNT(*) > 60 -- >10min
             ),
             top_sql AS (
             SELECT /*+ &&sq_fact_hints. */
@@ -109,32 +117,89 @@ BEGIN
                    ns.sql_id,
                    (SELECT s.sql_text FROM gv$sql s WHERE s.sql_id = ns.sql_id AND ROWNUM = 1) sql_text
               FROM not_shared ns
-             WHERE ns.sql_rank <= 3
+             WHERE ns.sql_rank <= &&edb360_conf_top_cur.
+            ),
+            by_signature AS (
+            SELECT /*+ &&sq_fact_hints. &&ds_hint. */
+                   force_matching_signature,
+                   dbid,
+                   ROW_NUMBER () OVER (ORDER BY COUNT(*) DESC) rn,
+                   COUNT(DISTINCT sql_id) distinct_sql_id,
+                   MIN(sql_id) sample_sql_id,
+                   COUNT(*) samples
+              FROM dba_hist_active_sess_history
+             WHERE sql_id IS NOT NULL
+               AND force_matching_signature IS NOT NULL
+               AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+               AND dbid = &&edb360_dbid.
+               AND '&&edb360_bypass.' IS NULL
+             GROUP BY
+                   force_matching_signature,
+                   dbid
+            HAVING COUNT(*) > 60 -- >10min
+            ),
+            top_signature AS (
+            SELECT /*+ &&sq_fact_hints. */
+                   r.rn,
+                   r.force_matching_signature,
+                   r.distinct_sql_id,
+                   r.sample_sql_id,
+                   r.samples,
+                   CASE 
+                   WHEN h.sql_text IS NULL THEN 'unknown'
+                   ELSE REPLACE(REPLACE(REPLACE(REPLACE(DBMS_LOB.SUBSTR(h.sql_text, 1000), CHR(10), ' '), '"', CHR(38)||'#34;'), '>', CHR(38)||'#62;'), '<', CHR(38)||'#60;')
+                   END sql_text_1000
+              FROM by_signature r,
+                   dba_hist_sqltext h
+             WHERE r.rn <= &&edb360_conf_top_sig.
+               AND h.dbid(+) = r.dbid
+               AND h.sql_id(+) = r.sample_sql_id
             )
             SELECT rank_num,
                    sql_id,
-                   db_time_hrs,
-                   cpu_time_hrs,
-                   io_time_hrs,
-                   command_type,
-                   username,
-                   module,
+                   db_time_hrs, -- not null means Top as per DB time
+                   cpu_time_hrs, -- not null means Top as per DB time
+                   io_time_hrs, -- not null means Top as per DB time
+                   command_type, -- not null means Top as per DB time
+                   username, -- not null means Top as per DB time
+                   module, -- not null means Top as per DB time
                    sql_text_1000,
-                   0 child_cursors
+                   1 top_type, -- as per DB time
+                   0 child_cursors, -- <> 0 means Top as per number of cursors
+                   0 signature, -- <> 0 means Top as per signature
+                   0 distinct_sql_id -- <> 0 means Top as per signature
               FROM top_sql
              UNION ALL
             SELECT sql_rank rank_num,
                    sql_id,
-                   NULL db_time_hrs,
-                   NULL cpu_time_hrs,
-                   NULL io_time_hrs,
-                   NULL command_type,
-                   NULL username,
-                   NULL module,
+                   NULL db_time_hrs, -- not null means Top as per DB time
+                   NULL cpu_time_hrs, -- not null means Top as per DB time
+                   NULL io_time_hrs, -- not null means Top as per DB time
+                   NULL command_type, -- not null means Top as per DB time
+                   NULL username, -- not null means Top as per DB time
+                   NULL module, -- not null means Top as per DB time
                    sql_text sql_text_1000,
-                   child_cursors
+                   2 top_type, -- as per not shared cursors
+                   child_cursors, -- <> 0 means Top as per number of cursors
+                   0 signature, -- <> 0 means Top as per signature
+                   0 distinct_sql_id -- <> 0 means Top as per signature
               FROM top_not_shared             
-              ORDER BY 1, 3 DESC, 2)
+             UNION ALL
+            SELECT rn rank_num,
+                   sample_sql_id sql_id,
+                   NULL db_time_hrs, -- not null means Top as per DB time
+                   NULL cpu_time_hrs, -- not null means Top as per DB time
+                   NULL io_time_hrs, -- not null means Top as per DB time
+                   NULL command_type, -- not null means Top as per DB time
+                   NULL username, -- not null means Top as per DB time
+                   NULL module, -- not null means Top as per DB time
+                   sql_text_1000,
+                   3 top_type, -- as per force matching signature
+                   0 child_cursors, -- <> 0 means Top as per number of cursors
+                   force_matching_signature signature, -- <> 0 means Top as per signature
+                   distinct_sql_id -- <> 0 means Top as per signature
+              FROM top_signature             
+              ORDER BY 1, 10, 3 DESC, 2)
   LOOP
     l_count := l_count + 1;
     put_line('COL hh_mm_ss NEW_V hh_mm_ss NOPRI FOR A8;');
@@ -152,10 +217,12 @@ BEGIN
     put_line('SPO &&edb360_main_report..html APP;');
     put_line('PRO <li title="user:'||i.username||' module:'||i.module);
     put_line('PRO '||i.sql_text_1000||'">');
-    IF i.child_cursors = 0 THEN
+    IF i.top_type = 1 THEN
       put_line('PRO rank:'||i.rank_num||' '||i.sql_id||' et:'||i.db_time_hrs||'h cpu:'||i.cpu_time_hrs||'h io:'||i.io_time_hrs||'h type:'||SUBSTR(i.command_type, 1, 6));
-    ELSE
+    ELSIF i.top_type = 2 THEN
       put_line('PRO rank:'||i.rank_num||' '||i.sql_id||' cursors:'||i.child_cursors);
+    ELSIF i.top_type = 3 THEN
+      put_line('PRO rank:'||i.rank_num||' '||i.sql_id||' signature:'||i.signature||'('||i.distinct_sql_id||')');
     END IF;
     put_line('SET HEAD OFF VER OFF FEED OFF ECHO OFF;');
     put_line('SELECT ''*** time limit exceeded ***'' FROM DUAL WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NOT NULL;');
@@ -218,7 +285,11 @@ BEGIN
       put_line('SELECT ''--bypass--'' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
       update_log('SQLD360');
       put_line('-- prepares execution of sqld360');
-      put_line('INSERT INTO plan_table (statement_id, operation, options) VALUES (''SQLD360_SQLID'', '''||i.sql_id||''', ''&&call_sqld360_bitmask.'');');
+      IF i.rank_num <= &&edb360_conf_sqld360_top_tc. THEN
+        put_line('INSERT INTO plan_table (statement_id, operation, options) VALUES (''SQLD360_SQLID'', '''||i.sql_id||''', ''&&call_sqld360_bitmask_tc.'');');
+      ELSE
+        put_line('INSERT INTO plan_table (statement_id, operation, options) VALUES (''SQLD360_SQLID'', '''||i.sql_id||''', ''&&call_sqld360_bitmask.'');');
+      END IF;
       put_line('DELETE plan_table WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NOT NULL AND statement_id = ''SQLD360_SQLID'' AND operation = '''||i.sql_id||''';');
       put_line('-- update main report6');
       put_line('SPO &&edb360_main_report..html APP;');

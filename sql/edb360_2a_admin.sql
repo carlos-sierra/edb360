@@ -215,7 +215,7 @@ SELECT /*+ &&top_level_hints. */
        w.event w_event,
        TO_CHAR(w.logon_time, ''DD-MON-YY HH24:MI:SS'') w_logon_time,
        TO_CHAR(w.sql_exec_start, ''DD-MON-YY HH24:MI:SS'') w_sql_exec_start, 
-       SUBSTR(ws.sql_text, 1, 500) w_sql_text,
+       SUBSTR(ws.sql_text, 1, 500) w_sql_text
   FROM gv$session_blockers sb,
        gv$session w,
        gv$session b,

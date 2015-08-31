@@ -6,8 +6,8 @@ SET FEED OFF;
 SET ECHO OFF;
 SET TIM OFF;
 SET TIMI OFF;
-DEF edb360_vYYNN = 'v1526';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2015-08-18)';
+DEF edb360_vYYNN = 'v1527';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2015-08-30)';
 
 -- parameters
 PRO
@@ -134,6 +134,7 @@ COL edb360_3d NEW_V edb360_3d;
 COL edb360_3e NEW_V edb360_3e;
 COL edb360_3f NEW_V edb360_3f;
 COL edb360_3g NEW_V edb360_3g;
+COL edb360_3h NEW_V edb360_3h;
 COL edb360_4a NEW_V edb360_4a;
 COL edb360_4b NEW_V edb360_4b;
 COL edb360_4c NEW_V edb360_4c;
@@ -161,6 +162,8 @@ COL edb360_6g NEW_V edb360_6g;
 COL edb360_6h NEW_V edb360_6h;
 COL edb360_6i NEW_V edb360_6i;
 COL edb360_6j NEW_V edb360_6j;
+COL edb360_6k NEW_V edb360_6k;
+COL edb360_6l NEW_V edb360_6l;
 COL edb360_7a NEW_V edb360_7a;
 COL edb360_7b NEW_V edb360_7b;
 COL edb360_7c NEW_V edb360_7c;
@@ -183,6 +186,7 @@ SELECT CASE WHEN '3d' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3
 SELECT CASE WHEN '3e' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3e_' ELSE '--' END edb360_3e FROM DUAL;
 SELECT CASE WHEN '3f' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3f_' ELSE '--' END edb360_3f FROM DUAL;
 SELECT CASE WHEN '3g' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3g_' ELSE '--' END edb360_3g FROM DUAL;
+SELECT CASE WHEN '3h' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3h_' ELSE '--' END edb360_3h FROM DUAL;
 SELECT CASE WHEN '4a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4a_' ELSE '--' END edb360_4a FROM DUAL;
 SELECT CASE WHEN '4b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4b_' ELSE '--' END edb360_4b FROM DUAL;
 SELECT CASE WHEN '4c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4c_' ELSE '--' END edb360_4c FROM DUAL;
@@ -210,6 +214,8 @@ SELECT CASE WHEN '6g' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6
 SELECT CASE WHEN '6h' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6h_' ELSE '--' END edb360_6h FROM DUAL;
 SELECT CASE WHEN '6i' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6i_' ELSE '--' END edb360_6i FROM DUAL;
 SELECT CASE WHEN '6j' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6j_' ELSE '--' END edb360_6j FROM DUAL;
+SELECT CASE WHEN '6k' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6k_' ELSE '--' END edb360_6k FROM DUAL;
+SELECT CASE WHEN '6l' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6l_' ELSE '--' END edb360_6l FROM DUAL;
 SELECT CASE WHEN '7a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_7a_' ELSE '--' END edb360_7a FROM DUAL;
 SELECT CASE WHEN '7b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_7b_' ELSE '--' END edb360_7b FROM DUAL;
 SELECT CASE WHEN '7c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_7c_' ELSE '--' END edb360_7c FROM DUAL;
@@ -405,11 +411,13 @@ SELECT toolsrel psft_tools_rel FROM &&psft_schema..psstatus WHERE ROWNUM = 1;
 
 -- inclusion config determine skip flags
 COL edb360_skip_html NEW_V edb360_skip_html;
+COL edb360_skip_xml NEW_V edb360_skip_xml;
 COL edb360_skip_text NEW_V edb360_skip_text;
 COL edb360_skip_csv  NEW_V edb360_skip_csv;
 COL edb360_skip_line NEW_V edb360_skip_line;
 COL edb360_skip_pie  NEW_V edb360_skip_pie;
 SELECT CASE '&&edb360_conf_incl_html.' WHEN 'N' THEN '--' END edb360_skip_html FROM DUAL;
+SELECT CASE '&&edb360_conf_incl_xml.'  WHEN 'N' THEN '--' END edb360_skip_xml  FROM DUAL;
 SELECT CASE '&&edb360_conf_incl_text.' WHEN 'N' THEN '--' END edb360_skip_text FROM DUAL;
 SELECT CASE '&&edb360_conf_incl_csv.'  WHEN 'N' THEN '--' END edb360_skip_csv  FROM DUAL;
 SELECT CASE '&&edb360_conf_incl_line.' WHEN 'N' THEN '--' END edb360_skip_line FROM DUAL;
@@ -667,7 +675,7 @@ SELECT index_name, partition_name, leaf_blocks, num_rows, last_analyzed
 SET TERM ON;
 PRO Getting SYS.WR_$% Segments
 PRO Please wait ...
-SET TERM OFF; 
+--SET TERM OFF; 
 COL seg_part_name FOR A61;
 SELECT segment_name||' '||partition_name seg_part_name, segment_type, blocks
   FROM dba_segments
@@ -680,7 +688,9 @@ SET TIMI OFF;
 SPO OFF;
 
 -- processes
+SET TERM ON;
 HOS ps -ef >> &&edb360_log3..txt
+--SET TERM OFF;
 
 -- main header
 SPO &&edb360_main_report..html;

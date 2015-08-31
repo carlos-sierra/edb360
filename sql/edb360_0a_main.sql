@@ -171,6 +171,7 @@ SPO OFF;
 @@&&skip_diagnostics.&&edb360_3e.os_stats.sql
 @@&&is_single_instance.&&skip_diagnostics.&&edb360_3f.ic_latency.sql
 @@&&is_single_instance.&&skip_diagnostics.&&edb360_3g.ic_performance.sql
+@@&&edb360_3h.jdbc_sessions.sql
 
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -231,6 +232,8 @@ SPO OFF;
 @@&&skip_diagnostics.&&edb360_6h.ash_plsql.sql
 @@&&skip_diagnostics.&&edb360_6i.ash_objects.sql
 @@&&skip_diagnostics.&&edb360_6j.ash_services.sql
+@@&&skip_diagnostics.&&edb360_6k.ash_phv.sql
+@@&&skip_diagnostics.&&skip_10g.&&edb360_6l.ash_signature.sql
 
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

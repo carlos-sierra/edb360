@@ -27,36 +27,18 @@ PRO &&hh_mm_ss. &&title.&&title_suffix.
 
 -- count
 PRINT sql_text;
---PRO &&hh_mm_ss. &&section_id.. Computing COUNT(*)...
 SELECT '0' row_num FROM DUAL;
 PRO &&hh_mm_ss. &&section_id..
---EXEC :row_count := -1;
 EXEC :sql_text_display := TRIM(CHR(10) FROM :sql_text)||';';
 SET TIMI ON;
 SET SERVEROUT ON;
 BEGIN
-  /*
-  BEGIN
-    IF '&&edb360_bypass.' IS NULL THEN
-      EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM ('||CHR(10)||TRIM(CHR(10) FROM DBMS_LOB.SUBSTR(:sql_text, 32700, 1))||CHR(10)||')' INTO :row_count;
-    ELSE
-      :row_count := -2;
-    END IF;
-  EXCEPTION
-    WHEN OTHERS THEN
-      DBMS_OUTPUT.PUT_LINE(DBMS_LOB.SUBSTR(SQLERRM));
-  END;
-  DBMS_OUTPUT.PUT_LINE(TRIM(TO_CHAR(:row_count))||' rows selected.'||CHR(10));
-  */
   DBMS_OUTPUT.PUT_LINE('Elapsed Seconds so far: '||((DBMS_UTILITY.GET_TIME - :edb360_time0) / 100)||CHR(10));
 END;
 /
 SET TIMI OFF;
 SET SERVEROUT OFF;
 PRO
---SET TERM OFF;
---COL row_count NEW_V row_count NOPRI;
---SELECT TRIM(TO_CHAR(:row_count)) row_count FROM DUAL;
 SPO OFF;
 HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_log..txt >> &&edb360_log3..txt
 
@@ -69,7 +51,6 @@ GET &&common_edb360_prefix._query.sql
 
 -- update main report
 SPO &&edb360_main_report..html APP;
---PRO <li title="&&main_table.">&&title. <small><em>(&&row_count.)</em></small>
 PRO <li title="&&main_table.">&&title.
 SPO OFF;
 HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html >> &&edb360_log3..txt
@@ -82,6 +63,7 @@ SELECT prev_sql_id edb360_prev_sql_id, TO_CHAR(prev_child_number) edb360_prev_ch
 
 -- execute one sql
 @@&&edb360_bypass.&&skip_html.&&edb360_skip_html.edb360_9b_one_html.sql
+@@&&edb360_bypass.&&skip_html.&&edb360_skip_xml.edb360_9g_one_xml.sql
 @@&&edb360_bypass.&&skip_text.&&edb360_skip_text.edb360_9c_one_text.sql
 @@&&edb360_bypass.&&skip_csv.&&edb360_skip_csv.edb360_9d_one_csv.sql
 @@&&edb360_bypass.&&skip_lch.&&edb360_skip_line.edb360_9e_one_line_chart.sql

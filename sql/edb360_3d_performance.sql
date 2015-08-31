@@ -892,6 +892,78 @@ END;
 /
 @@&&skip_diagnostics.edb360_9a_pre_one.sql
 
+DEF title = 'Top Plans';
+DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
+DEF abstract = 'Top Plans and their corresponding Top SQL in terms of ASH History';
+BEGIN
+  :sql_text := '
+-- provided by David Kurtz
+WITH
+hist AS (
+SELECT /*+ &&sq_fact_hints. */
+       h.sql_id,
+       h.sql_plan_hash_value,
+       h.dbid,
+       COUNT(*) samples
+  FROM dba_hist_active_sess_history h
+ WHERE h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND h.dbid = &&edb360_dbid.
+   AND h.sql_id IS NOT NULL
+GROUP BY
+       h.sql_id,
+       h.sql_plan_hash_value,
+       h.dbid
+), hist2 as (
+SELECT /*+ &&sq_fact_hints. */
+       h.sql_id
+     , h.sql_plan_hash_value
+     , h.dbid
+     , h.samples
+     , CASE WHEN s.rowid IS NOT NULL THEN samples ELSE 0 END sql_samples
+     , SUM(h.samples) over (partition by h.dbid, h.sql_plan_hash_value) plan_samples
+     , DBMS_LOB.SUBSTR(s.sql_text, 1000) sql_text
+  FROM hist h
+    LEFT OUTER JOIN dba_hist_sqltext s
+    ON s.sql_id = h.sql_id AND s.dbid = h.dbid
+), hist3 AS (
+SELECT /*+ &&sq_fact_hints. */
+       hist2.*
+     , ROW_NUMBER() over (partition by dbid, sql_plan_hash_value order by sql_samples DESC) sql_id_rank
+   FROM hist2
+), hist4 AS (
+SELECT /*+ &&sq_fact_hints. */
+       hist3.*
+     , ROW_NUMBER() over (order by sql_samples DESC) rn
+  FROM hist3
+WHERE sql_id_rank = 1
+), total AS (
+SELECT /*+ &&sq_fact_hints. */
+       SUM(samples) samples FROM hist
+)
+SELECT /*+ &&top_level_hints. */ 
+       h.sql_id plan_top_sql_id,
+       h.sql_plan_hash_value,
+       h.plan_samples,
+       ROUND(100 * h.plan_samples / t.samples, 1) percent,
+       h.sql_text
+  FROM hist4 h,
+       total t
+WHERE h.samples >= t.samples / 1000 AND h.rn <= 14
+UNION ALL
+SELECT ''Others'',
+       TO_NUMBER(NULL),
+       NVL(SUM(h.plan_samples), 0) samples,
+       NVL(ROUND(100 * SUM(h.plan_samples) / AVG(t.samples), 1), 0) percent,
+       NULL sql_text
+  FROM hist4 h,
+       total t
+WHERE h.plan_samples < t.samples / 1000 OR rn > 14
+ORDER BY 3 DESC NULLS LAST
+';
+END;
+/
+@@&&skip_diagnostics.edb360_9a_pre_one.sql
+
 DEF title = 'Result Cache related parameters';
 DEF main_table = 'GV$SYSTEM_PARAMETER2';
 BEGIN

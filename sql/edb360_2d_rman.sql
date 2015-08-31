@@ -531,3 +531,64 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+DEF title = 'Unrecoverable Datafile';
+DEF main_table = 'V$DATAFILE';
+BEGIN
+  :sql_text := '
+SELECT /*+ &&top_level_hints. */
+       *
+  FROM v$datafile
+ WHERE unrecoverable_change# > 0
+ ORDER BY
+       file#
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+DEF title = 'Unrecoverable Datafile after Backup';
+DEF main_table = 'V$DATAFILE';
+BEGIN
+  :sql_text := '
+-- from http://www.pythian.com/blog/oracle-what-is-an-unrecoverable-data-file/
+-- by Catherine Chow
+SELECT /*+ &&top_level_hints. */
+df.name data_file_name, df.unrecoverable_time
+FROM v$datafile df, v$backup bk
+WHERE df.file#=bk.file#
+and df.unrecoverable_change#!=0
+and df.unrecoverable_time >  
+(select max(end_time) from v$rman_backup_job_details
+where INPUT_TYPE in (''DB FULL'' ,''DB INCR''))
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+DEF title = 'Objects affected by Unrecoverable Operations';
+DEF main_table = 'V$DATAFILE';
+BEGIN
+  :sql_text := '
+-- from http://www.pythian.com/blog/oracle-what-is-an-unrecoverable-data-file/
+-- by Catherine Chow
+select /*+ &&top_level_hints. */
+distinct dbo.owner,dbo.object_name, dbo.object_type, dfs.tablespace_name,
+dbt.logging table_level_logging, ts.logging tablespace_level_logging
+from v$segstat ss, dba_tablespaces ts, dba_objects dbo, dba_tables dbt,
+v$datafile df, dba_data_files dfs, v$tablespace vts
+where ss.statistic_name =''physical writes direct''
+and dbo.object_id = ss.obj#
+and vts.ts# = ss.ts#
+and ts.tablespace_name = vts.name
+and ss.value != 0
+and df.unrecoverable_change# != 0
+and dfs.file_name = df.name
+and ts.tablespace_name = dfs.tablespace_name
+and dbt.owner = dbo.owner
+and dbt.table_name = dbo.object_name
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+

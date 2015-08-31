@@ -33,12 +33,10 @@ PRO
 /
 
 -- get sql_id
---SPO &&edb360_log..txt APP;
 COL edb360_prev_sql_id NEW_V edb360_prev_sql_id NOPRI;
 COL edb360_prev_child_number NEW_V edb360_prev_child_number NOPRI;
 SELECT prev_sql_id edb360_prev_sql_id, TO_CHAR(prev_child_number) edb360_prev_child_number FROM v$session WHERE sid = SYS_CONTEXT('USERENV', 'SID')
 /
---SPO &&one_spool_filename..txt;
 
 -- footer
 PRO &&foot.
@@ -48,7 +46,6 @@ SET HEA OFF;
 SET LIN 32767;
 PRINT sql_text_display;
 SET HEA ON;
---PRO &&row_count. rows selected.
 PRO &&row_num. rows selected.
 
 PRO 
@@ -63,7 +60,6 @@ SET HEA OFF;
 SPO &&edb360_log2..txt APP;
 SELECT TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS')||' , '||
        TO_CHAR((:get_time_t1 - :get_time_t0)/100, '999999990.00')||' , rows:'||
-       --:row_count||' , &&section_id., &&main_table., &&edb360_prev_sql_id., &&edb360_prev_child_number., &&title_no_spaces., html , &&one_spool_filename..txt'
        '&&row_num., &&section_id., &&main_table., &&edb360_prev_sql_id., &&edb360_prev_child_number., &&title_no_spaces., html , &&one_spool_filename..txt'
   FROM DUAL
 /
