@@ -89,3 +89,8 @@ SELECT /*+ &&top_level_hints. */
 END;
 /
 @@&&skip_10g.edb360_9a_pre_one.sql
+
+-- special addition from MOS 1551288.1
+@@ck_free_17.sql
+HOS zip -m &&edb360_main_filename._&&edb360_file_time. ck_free.txt >> &&edb360_log3..txt
+

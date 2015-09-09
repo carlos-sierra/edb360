@@ -1,10 +1,13 @@
-PRO <html>
+PRO <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+PRO <html xmlns="http://www.w3.org/1999/xhtml">
+PRO
 PRO <!-- $Header: &&edb360_main_report. &&edb360_vrsn. carlos.sierra $ -->
 PRO <!-- edb360_copyright&&edb360_copyright., All rights reserved. -->
 PRO <!-- Author: carlos.sierra.usa@gmail.com -->
 PRO
 PRO <head>
-PRO <link rel="icon" href="edb360_favicon.ico">
+PRO <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+PRO <link rel="icon" href="edb360_favicon.ico" />
 PRO <title>&&title.&&title_suffix.</title>
 PRO
 PRO <style type="text/css">

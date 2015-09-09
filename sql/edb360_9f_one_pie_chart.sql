@@ -76,7 +76,7 @@ PRO  </head>
 PRO  <body>
 PRO<h1> &&edb360_conf_all_pages_icon. &&title. <em>(&&main_table.)</em> &&edb360_conf_all_pages_logo. </h1>
 PRO
-PRO <br>
+PRO <br />
 PRO &&abstract.
 PRO &&abstract2.
 PRO
@@ -84,8 +84,8 @@ PRO    <div id="piechart_3d" style="width: 900px; height: 500px;"></div>
 PRO
 
 -- footer
-PRO<font class="n">Notes:<br>1) up to &&history_days. days of awr history were considered<br>2) ASH reports are based on number of samples</font>
-PRO<font class="n"><br>3) &&foot.</font>
+PRO<font class="n">Notes:<br />1) up to &&history_days. days of awr history were considered<br />2) ASH reports are based on number of samples</font>
+PRO<font class="n"><br />3) &&foot.</font>
 PRO <pre>
 SET LIN 80;
 DESC &&main_table.

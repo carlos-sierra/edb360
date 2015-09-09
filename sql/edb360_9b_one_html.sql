@@ -24,20 +24,20 @@ GET &&common_edb360_prefix._query.sql
 -- header
 SPO &&one_spool_filename..html;
 @@edb360_0d_html_header.sql
-PRO <script src="sorttable.js"></script>
+PRO <script type="text/javascript" src="sorttable.js"></script>
 PRO
 PRO <!-- &&one_spool_filename..html $ -->
 PRO </head>
 PRO <body>
 PRO <h1> &&edb360_conf_all_pages_icon. &&title.&&title_suffix. <em>(&&main_table.)</em> &&edb360_conf_all_pages_logo. </h1>
 PRO
-PRO <br>
+PRO <br />
 PRO &&abstract.
 PRO &&abstract2.
 PRO
 
 -- body
-SET MARK HTML ON TABLE "class=sortable" SPOOL OFF;
+SET MARK HTML ON TABLE 'class="sortable"' SPOOL OFF;
 /
 SET MARK HTML OFF;
 

@@ -29,7 +29,7 @@ PRO &&hh_mm_ss. &&title.&&title_suffix.
 PRINT sql_text;
 SELECT '0' row_num FROM DUAL;
 PRO &&hh_mm_ss. &&section_id..
-EXEC :sql_text_display := TRIM(CHR(10) FROM :sql_text)||';';
+EXEC :sql_text_display := REPLACE(REPLACE(TRIM(CHR(10) FROM :sql_text)||';', '<', CHR(38)||'lt;'), '>', CHR(38)||'gt;');
 SET TIMI ON;
 SET SERVEROUT ON;
 BEGIN
