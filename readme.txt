@@ -1,4 +1,4 @@
-EDB360 v1528 (2015-09-08) by Carlos Sierra
+EDB360 v1529 (2015-09-28) by Carlos Sierra
 
 EDB360 is a "free to use" tool to perform an initial assessment of a remote system. 
 It gives a glance of a database state. It also helps to document any findings.
@@ -34,6 +34,7 @@ Notes
 
    $ unzip edb360.zip
    $ cd edb360
+   $ rm sql/edb360_0h_ash_validation.sql
    $ sh run_db360.sh
 
    note: this method requires Oracle Tuning pack license in all databases in such host.

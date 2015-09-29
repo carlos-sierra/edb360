@@ -79,9 +79,13 @@ from gv$session s, gv$sql t, gv$sql t2
 where s.inst_id =t.inst_id(+)
 and s.sql_address =t.address(+)  
 and s.sql_hash_value =t.hash_value(+)
+and s.sql_id = t.sql_id(+)
+and s.sql_child_number = t.child_number(+)
 and s.inst_id =t2.inst_id(+)
 and s.prev_sql_addr =t2.address(+)  
 and s.prev_hash_value =t2.hash_value(+)
+and s.prev_sql_id = t2.sql_id(+)
+and s.prev_child_number = t2.child_number(+)
 and s.program like ''%JDBC%'' 
 and s.status = ''ACTIVE'' 
 order by last_call_et DESC
@@ -101,9 +105,13 @@ from gv$session s, gv$sql t, gv$sql t2
 where s.inst_id =t.inst_id(+)
 and s.sql_address =t.address(+)  
 and s.sql_hash_value =t.hash_value(+)
+and s.sql_id = t.sql_id(+)
+and s.sql_child_number = t.child_number(+)
 and s.inst_id =t2.inst_id(+)
 and s.prev_sql_addr =t2.address(+)  
 and s.prev_hash_value =t2.hash_value(+)
+and s.prev_sql_id = t2.sql_id(+)
+and s.prev_child_number = t2.child_number(+)
 and s.program like ''%JDBC%'' 
 and s.status = ''INACTIVE'' 
 order by last_call_et DESC

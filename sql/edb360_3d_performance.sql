@@ -277,7 +277,7 @@ SELECT /*+ &&top_level_hints. */
 ';
 END;
 /
---@@edb360_9a_pre_one.sql too slow! possibly 1532624.1
+--@@edb360_9a_pre_one.sql too slow! possibly bug 1532624.1
 
 DEF title = 'SQL Monitor Recent Executions Detail';
 DEF abstract = 'Aggregated by SQL_ID and SQL Execution. Sorted by SQL_ID and Execution Start Time.';

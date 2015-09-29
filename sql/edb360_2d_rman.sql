@@ -589,6 +589,6 @@ and dbt.table_name = dbo.object_name
 ';
 END;
 /
-@@edb360_9a_pre_one.sql
+--@@edb360_9a_pre_one.sql too slow! possibly bug 1532624.1
 
 
