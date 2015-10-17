@@ -1,5 +1,7 @@
 SPO 00000_readme_first.txt
 @@edb360_0h_ash_validation.sql
+@@edb360_0i_awr_info.sql
+SPO 00000_readme_first.txt APP
 PRO
 PRO Open and read 00001_edb360_<dbname>_index.html
 PRO

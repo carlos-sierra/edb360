@@ -6,8 +6,8 @@ SET FEED OFF;
 SET ECHO OFF;
 SET TIM OFF;
 SET TIMI OFF;
-DEF edb360_vYYNN = 'v1529';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2015-09-28)';
+DEF edb360_vYYNN = 'v1530';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2015-10-17)';
 
 -- parameters
 PRO
@@ -352,6 +352,9 @@ SELECT version db_version FROM v$instance;
 DEF skip_10g = '';
 COL skip_10g NEW_V skip_10g;
 SELECT '--' skip_10g FROM v$instance WHERE version LIKE '10%';
+DEF skip_11g = '';
+COL skip_11g NEW_V skip_11g;
+SELECT '--' skip_11g FROM v$instance WHERE version LIKE '11%';
 DEF skip_11r1 = '';
 COL skip_11r1 NEW_V skip_11r1;
 SELECT '--' skip_11r1 FROM v$instance WHERE version LIKE '11.1%';
@@ -709,7 +712,7 @@ SPO OFF;
 -- zip into main the esp zip so far, then remove zip but preserve source esp files. let edb360.sql and run_edb360.sh do the clean up
 HOS zip -mT &&edb360_main_filename._&&edb360_file_time. esp_requirements_&&esp_host_name_short..zip >> &&edb360_log3..txt
 -- zip other files
-HOS zip &&edb360_main_filename._&&edb360_file_time. 00000_readme_first.txt >> &&edb360_log3..txt
+HOS zip &&edb360_main_filename._&&edb360_file_time. 00000_readme_first.txt awrinfo.txt >> &&edb360_log3..txt
 HOS zip -j &&edb360_main_filename._&&edb360_file_time. js/sorttable.js >> &&edb360_log3..txt
 HOS zip -j &&edb360_main_filename._&&edb360_file_time. js/edb360_img.jpg >> &&edb360_log3..txt
 HOS zip -j &&edb360_main_filename._&&edb360_file_time. js/edb360_all_pages_logo.jpg >> &&edb360_log3..txt

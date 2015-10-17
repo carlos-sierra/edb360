@@ -74,7 +74,7 @@ and NVL((SELECT COUNT(*)
          FROM dba_tablespace_groups g, dba_tablespaces t 
          WHERE g.group_name = u.temporary_tablespace 
          AND t.tablespace_name = g.tablespace_name 
-         AND t.contents != ''TEMPORARY''), 0) = 0
+         AND t.contents IN (''PERMANENT'', ''UNDO'')), 0) != 0
 and username not in &&exclusion_list.
 and username not in &&exclusion_list2.
 order by username

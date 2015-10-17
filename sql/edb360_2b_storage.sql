@@ -278,6 +278,48 @@ END;
 /
 @@&&skip_10g.edb360_9a_pre_one.sql
 
+DEF title = 'Kernel I/O taking long';
+DEF main_table = 'V$KERNEL_IO_OUTLIER';
+BEGIN
+  :sql_text := '
+SELECT /*+ &&top_level_hints. */
+       *
+  FROM v$kernel_io_outlier
+ ORDER BY
+       1
+';
+END;
+/
+@@&&skip_10g.&&skip_11g.edb360_9a_pre_one.sql
+
+DEF title = 'Log Writer I/O taking long';
+DEF main_table = 'V$LGWRIO_OUTLIER';
+BEGIN
+  :sql_text := '
+SELECT /*+ &&top_level_hints. */
+       *
+  FROM v$lgwrio_outlier
+ ORDER BY
+       1
+';
+END;
+/
+@@&&skip_10g.&&skip_11g.edb360_9a_pre_one.sql
+
+DEF title = 'I/O taking long';
+DEF main_table = 'V$IO_OUTLIER';
+BEGIN
+  :sql_text := '
+SELECT /*+ &&top_level_hints. */
+       *
+  FROM v$io_outlier
+ ORDER BY
+       1
+';
+END;
+/
+@@&&skip_10g.&&skip_11g.edb360_9a_pre_one.sql
+
 DEF title = 'SYSAUX Occupants';
 DEF main_table = 'V$SYSAUX_OCCUPANTS';
 BEGIN

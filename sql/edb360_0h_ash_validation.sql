@@ -1,6 +1,6 @@
 -- ASH validation
 WHENEVER SQLERROR EXIT SQL.SQLCODE;
-SET FEED OFF VER OFF ECHO OFF TIMI OFF TIM OFF TERM ON;
+SET FEED OFF VER OFF ECHO OFF TIMI OFF TIM OFF TERM ON LIN 32767 TRIMS ON PAGES 100;
 PRO
 PRO Last analyzed CBO stats on ASH table and partitions
 PRO
@@ -77,6 +77,58 @@ SET TERM OFF;
 SELECT 0/0 FROM DUAL WHERE SUBSTR(TRIM(UPPER('&&kill_me.')), 1, 1) = 'X';
 SET TERM ON;
 WHENEVER SQLERROR CONTINUE;
+
+PRO
+PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+PRO
+
+-- WRH$_ACTIVE_SESSION_HISTORY Does Not Get Purged Based Upon the Retention Policy (Doc ID 387914.1) 
+SET FEED OFF VER OFF ECHO OFF TIMI OFF TIM OFF TERM ON LIN 32767 TRIMS ON PAGES 100;
+
+SELECT 
+  partition_name,
+  ROUND(bytes/POWER(2,30), 3) Size_GB
+FROM dba_segments
+WHERE segment_name='WRH$_ACTIVE_SESSION_HISTORY'
+ORDER BY partition_name;
+
+SELECT dbid, instance_number, snap_id, end_interval_time FROM dba_hist_snapshot ORDER BY dbid, instance_number, snap_id;
+
+set serveroutput on 
+declare 
+CURSOR cur_part IS 
+SELECT partition_name from dba_tab_partitions 
+WHERE table_name = 'WRH$_ACTIVE_SESSION_HISTORY'
+ORDER BY partition_name; 
+
+query1 varchar2(200); 
+
+TYPE partrec IS RECORD (min_snapid number, max_snapid number, dbid number, instance_number number); 
+TYPE partlist IS TABLE OF partrec; 
+
+Outlist partlist; 
+begin 
+dbms_output.put_line('PARTITION NAME              DBID    INSTANCE   MIN_SNAP_ID MAX_SNAP_ID'); 
+dbms_output.put_line('--------------------------- ------- ---------- ----------- -----------'); 
+
+for part in cur_part loop 
+query1 := 'select min(snap_id), max(snap_id), dbid, instance_number from sys.WRH$_ACTIVE_SESSION_HISTORY partition ('||part.partition_name||') group by dbid, instance_number ORDER BY dbid, instance_number'; 
+execute immediate query1 bulk collect into OutList; 
+
+if OutList.count > 0 then 
+for i in OutList.first..OutList.last loop 
+dbms_output.put_line(part.partition_name||' '||OutList(i).dbid||' '||OutList(i).instance_number||' Min '||OutList(i).min_snapid||' Max '||OutList(i).max_snapid); 
+end loop; 
+end if; 
+
+end loop; 
+end; 
+/
+
+PRO
+PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+PRO
+
 COL age_days CLE;
 COL table_or_partition CLE;
 COL locked CLE;
