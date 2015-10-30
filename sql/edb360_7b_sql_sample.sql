@@ -228,7 +228,7 @@ BEGIN
     put_line('SELECT ''*** time limit exceeded ***'' FROM DUAL WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NOT NULL;');
     put_line('SPO OFF;');
     put_line('HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html >> &&edb360_log3..txt');
-    IF i.rank_num <= &&edb360_conf_planx_top. THEN
+    IF i.rank_num <= &&edb360_conf_planx_top. AND i.sql_id != '0ckwjf2su2rpx' /* Beckman */ THEN
       put_line('COL edb360_bypass NEW_V edb360_bypass;');
       put_line('SELECT ''--bypass--'' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
       update_log('PLANX');

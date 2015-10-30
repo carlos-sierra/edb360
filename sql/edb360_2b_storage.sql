@@ -48,6 +48,38 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+DEF title = 'Default Tablespace Use';
+DEF main_table = 'DBA_USERS';
+BEGIN
+  :sql_text := '
+SELECT /*+ &&top_level_hints. */
+       default_tablespace, COUNT(*)
+  FROM dba_users
+ GROUP BY
+       default_tablespace
+ ORDER BY
+       default_tablespace
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+DEF title = 'Temporary Tablespace Use';
+DEF main_table = 'DBA_USERS';
+BEGIN
+  :sql_text := '
+SELECT /*+ &&top_level_hints. */
+       temporary_tablespace, COUNT(*)
+  FROM dba_users
+ GROUP BY
+       temporary_tablespace
+ ORDER BY
+       temporary_tablespace
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
 DEF title = 'Tablespace Usage';
 DEF main_table = 'DBA_SEGMENTS';
 COL pct_used FOR 999990.0;
@@ -340,7 +372,7 @@ BEGIN
   :sql_text := '
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
 SELECT /*+ &&top_level_hints. */
-       TO_CHAR(creation_time, ''YYYY-MM''),
+       TO_CHAR(creation_time, ''YYYY-MM'') creation_month,
        ROUND(SUM(bytes)/1024/1024) mb_growth,
        ROUND(SUM(bytes)/1024/1024/1024) gb_growth,
        ROUND(SUM(bytes)/1024/1024/1024/1024, 1) tb_growth
@@ -719,6 +751,24 @@ order by owner, (blocks * block_size / 1048576) desc
 END;
 /
 --@@edb360_9a_pre_one.sql (redundant with "Largest 200 Objects")
+
+DEF title = 'Temporary Segments in Permanent Tablespaces';
+DEF main_table = 'DBA_SEGMENTS';
+BEGIN
+  :sql_text := '
+-- http://askdba.org/weblog/2009/07/cleanup-temporary-segments-in-permanent-tablespace/
+select /*+ &&top_level_hints. */
+tablespace_name, owner, segment_name,
+round(sum(bytes/power(2, 20))) mega_bytes 
+from dba_segments
+where segment_type = ''TEMPORARY'' 
+group by tablespace_name, owner, segment_name
+having round(sum(bytes/power(2, 20))) > 0
+order by tablespace_name, owner, segment_name
+';
+END;
+/
+@@edb360_9a_pre_one.sql
 
 DEF title = 'Segments in Reserved Tablespaces';
 DEF main_table = 'DBA_SEGMENTS';

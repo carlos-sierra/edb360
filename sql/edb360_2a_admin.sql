@@ -1142,7 +1142,9 @@ BEGIN
 SELECT /*+ &&top_level_hints. */
        degree,
        owner,
-       table_name
+       table_name,
+       blocks,
+       partitioned
   FROM dba_tables
  WHERE owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
@@ -1199,7 +1201,9 @@ BEGIN
 SELECT /*+ &&top_level_hints. */
        degree,
        owner,
-       index_name
+       index_name,
+       leaf_blocks,
+       partitioned
   FROM dba_indexes
  WHERE owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
@@ -1627,6 +1631,7 @@ BEGIN
 SELECT /*+ &&top_level_hints. */ 
    FORCE_MATCHING_SIGNATURE,
    duplicate_count cnt,
+   distinct_phv phv_cnt,
    executions,
    buffer_gets,
    buffer_gets_per_exec,
@@ -1643,6 +1648,7 @@ from
   (select
       FORCE_MATCHING_SIGNATURE,
       count(*) duplicate_count,
+      count(distinct plan_hash_value) distinct_phv,
       sum(executions) executions,
       sum(buffer_gets) buffer_gets,
       ROUND(sum(buffer_gets)/greatest(sum(executions),1)) buffer_gets_per_exec,

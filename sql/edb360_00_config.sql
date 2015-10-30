@@ -2,6 +2,9 @@
 
 /*************************** ok to modify (if really needed) ****************************/
 
+-- edb360 trace
+DEF sql_trace_level = '1';
+
 -- history days (default 31)
 DEF edb360_conf_days = '31';
 

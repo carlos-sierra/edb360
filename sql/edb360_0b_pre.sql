@@ -6,8 +6,8 @@ SET FEED OFF;
 SET ECHO OFF;
 SET TIM OFF;
 SET TIMI OFF;
-DEF edb360_vYYNN = 'v1530';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2015-10-17)';
+DEF edb360_vYYNN = 'v1531';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2015-10-29)';
 
 -- parameters
 PRO
@@ -74,13 +74,30 @@ SELECT TO_CHAR(LEAST(CEIL(SYSDATE - CAST(MIN(begin_interval_time) AS DATE)), GRE
 SELECT TO_CHAR(TO_DATE('&&edb360_conf_date_to.', 'YYYY-MM-DD') - TO_DATE('&&edb360_conf_date_from.', 'YYYY-MM-DD') + 1) history_days FROM DUAL WHERE '&&edb360_conf_date_from.' != 'YYYY-MM-DD' AND '&&edb360_conf_date_to.' != 'YYYY-MM-DD';
 SELECT '0' history_days FROM DUAL WHERE NVL(TRIM('&&diagnostics_pack.'), 'N') = 'N';
 SET TERM OFF;
-COL hist_work_days NEW_V hist_work_days;
-SELECT TRIM(TO_CHAR(ROUND(TO_NUMBER('&&history_days.')*5/7))) hist_work_days FROM DUAL;
 
 COL edb360_date_from NEW_V edb360_date_from;
 COL edb360_date_to NEW_V edb360_date_to;
 SELECT CASE '&&edb360_conf_date_from.' WHEN 'YYYY-MM-DD' THEN TO_CHAR(SYSDATE - &&history_days., 'YYYY-MM-DD') ELSE '&&edb360_conf_date_from.' END edb360_date_from FROM DUAL;
 SELECT CASE '&&edb360_conf_date_to.' WHEN 'YYYY-MM-DD' THEN TO_CHAR(SYSDATE + 1, 'YYYY-MM-DD') ELSE '&&edb360_conf_date_to.' END edb360_date_to FROM DUAL;
+
+VAR hist_work_days NUMBER;
+VAR hist_days NUMBER;
+BEGIN
+  :hist_days := TO_DATE('&&edb360_date_to.', 'YYYY-MM-DD') - TO_DATE('&&edb360_date_from.', 'YYYY-MM-DD') + 1;
+  :hist_work_days := 0;
+  FOR i IN 0 .. :hist_days - 1
+  LOOP
+    IF TO_CHAR(TO_DATE('&&edb360_date_from.', 'YYYY-MM-DD') + i, 'D') BETWEEN TO_NUMBER('&&edb360_conf_work_day_from.') AND TO_NUMBER('&&edb360_conf_work_day_to.') THEN
+      :hist_work_days := :hist_work_days + 1;
+      dbms_output.put_line((TO_DATE('&&edb360_date_from.', 'YYYY-MM-DD') + i)||' '||:hist_work_days);
+    END IF;
+  END LOOP;
+END;
+/
+PRINT :hist_work_days;
+PRINT :hist_days;
+COL hist_work_days NEW_V hist_work_days;
+SELECT TO_CHAR(:hist_work_days) hist_work_days FROM DUAL;
 
 -- hidden parameter _o_release: report column, or section, or range of columns or range of sections i.e. 3, 3-4, 3a, 3a-4c, 3-4c, 3c-4
 VAR edb360_sec_from VARCHAR2(2);
@@ -262,7 +279,6 @@ SELECT TRANSLATE('&&esp_host_name_short.',
 'abcdefghijklmnopqrstuvwxyz0123456789-_') esp_host_name_short FROM DUAL;
 
 -- setup
-DEF sql_trace_level = '1';
 DEF main_table = '';
 DEF title = '';
 DEF title_no_spaces = '';
@@ -603,6 +619,7 @@ SPO OFF;
 SPO &&edb360_log..txt;
 PRO begin log
 PRO
+HOS ps -ef 
 DEF;
 PRO Parameters
 COL sid FOR A40;
@@ -693,7 +710,6 @@ SPO OFF;
 -- processes
 SET TERM ON;
 HOS ps -ef >> &&edb360_log3..txt
---SET TERM OFF;
 
 -- main header
 SPO &&edb360_main_report..html;

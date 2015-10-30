@@ -49,6 +49,20 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'ASM Disk Group';
+DEF main_table = 'V$ASM_DISKGROUP';
+BEGIN
+  :sql_text := '
+SELECT /*+ &&top_level_hints. */
+       *
+  FROM v$asm_diskgroup
+ ORDER BY
+       1, 2
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+DEF title = 'ASM Disk Group Stat';
 DEF main_table = 'V$ASM_DISKGROUP_STAT';
 BEGIN
   :sql_text := '
@@ -63,6 +77,20 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'ASM Disk';
+DEF main_table = 'V$ASM_DISK';
+BEGIN
+  :sql_text := '
+SELECT /*+ &&top_level_hints. */
+       *
+  FROM v$asm_disk
+ ORDER BY
+       1, 2
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+DEF title = 'ASM Disk Stat';
 DEF main_table = 'V$ASM_DISK_STAT';
 BEGIN
   :sql_text := '

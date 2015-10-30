@@ -42,7 +42,7 @@ SELECT NVL(TO_CHAR(TRUNC(SYSDATE - last_ddl_time)), 'UNKNOWN') age_days,
 PRO
 PRO Last DDL on ASH objects is &&age_days. days old.
 PRO If older than a month then edb360 may take long to execute.
-PRO Ref: MOS 387914.1
+PRO Ref: MOS 387914.1 and 1965061.1
 PRO
 ACC kill_me PROMPT 'hit the "return" key to continue, or enter X to exit this session: '
 SET TERM OFF;
