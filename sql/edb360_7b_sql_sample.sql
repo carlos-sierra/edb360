@@ -40,27 +40,8 @@ SET VER OFF FEED OFF SERVEROUT ON HEAD OFF PAGES 50000 LIN 32767 TRIMS ON TRIM O
 SPO 99930_&&common_edb360_prefix._top_sql_driver.sql;
 DECLARE
   l_count NUMBER := 0;
-  PROCEDURE put_line(p_line IN VARCHAR2) IS
-  BEGIN
-    DBMS_OUTPUT.PUT_LINE(p_line);
-  END put_line;
-  PROCEDURE update_log(p_module IN VARCHAR2) IS
-  BEGIN
-        put_line('COL hh_mm_ss NEW_V hh_mm_ss NOPRI FOR A8;');
-		put_line('SELECT TO_CHAR(SYSDATE, ''HH24:MI:SS'') hh_mm_ss FROM DUAL;');
-		put_line('-- update log');
-		put_line('SPO &&edb360_log..txt APP;');
-        put_line('SET HEAD OFF TERM ON;');
-		put_line('PRO '||CHR(38)||chr(38)||'hh_mm_ss. '||p_module);
-		put_line('SELECT ''Elapsed Seconds so far: ''||((DBMS_UTILITY.GET_TIME - :edb360_time0) / 100) FROM DUAL;');
-        put_line('SET HEAD ON TERM OFF;');
-		put_line('SPO OFF;');
-  END update_log;
-BEGIN
-  put_line('-- deleting content of global temporary table "plan_table" as preparation to execute sqld360');
-  put_line('-- this delete affects nothing');
-  put_line('DELETE plan_table;');
-  FOR i IN (WITH ranked_sql AS (
+  CURSOR sql_cur IS
+              WITH ranked_sql AS (
             SELECT /*+ &&sq_fact_hints. &&ds_hint. */
                    dbid,
                    sql_id,
@@ -199,9 +180,31 @@ BEGIN
                    force_matching_signature signature, -- <> 0 means Top as per signature
                    distinct_sql_id -- <> 0 means Top as per signature
               FROM top_signature             
-              ORDER BY 1, 10, 3 DESC, 2)
+              ORDER BY 1, 10, 3 DESC, 2;
+  sql_rec sql_cur%ROWTYPE;
+  PROCEDURE put_line(p_line IN VARCHAR2) IS
+  BEGIN
+    DBMS_OUTPUT.PUT_LINE(p_line);
+  END put_line;
+  PROCEDURE update_log(p_module IN VARCHAR2) IS
+  BEGIN
+        put_line('COL hh_mm_ss NEW_V hh_mm_ss NOPRI FOR A8;');
+		put_line('SELECT TO_CHAR(SYSDATE, ''HH24:MI:SS'') hh_mm_ss FROM DUAL;');
+		put_line('-- update log');
+		put_line('SPO &&edb360_log..txt APP;');
+        put_line('SET HEAD OFF TERM ON;');
+		put_line('PRO '||CHR(38)||chr(38)||'hh_mm_ss. '||p_module);
+		put_line('SELECT ''Elapsed Seconds so far: ''||((DBMS_UTILITY.GET_TIME - :edb360_time0) / 100) FROM DUAL;');
+        put_line('SET HEAD ON TERM OFF;');
+		put_line('SPO OFF;');
+  END update_log;
+BEGIN
+  put_line('-- deleting content of global temporary table "plan_table" as preparation to execute planx and others');
+  put_line('DELETE plan_table;');
+  OPEN sql_cur;
   LOOP
-    l_count := l_count + 1;
+    FETCH sql_cur INTO sql_rec;
+    EXIT WHEN sql_cur%NOTFOUND;
     put_line('COL hh_mm_ss NEW_V hh_mm_ss NOPRI FOR A8;');
     put_line('SELECT TO_CHAR(SYSDATE, ''HH24:MI:SS'') hh_mm_ss FROM DUAL;');
     put_line('-- update log');
@@ -209,69 +212,69 @@ BEGIN
     put_line('PRO');
     put_line('PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
     put_line('PRO');
-    put_line('PRO rank:'||i.rank_num||' sql_id:'||i.sql_id);
+    put_line('PRO rank:'||sql_rec.rank_num||' sql_id:'||sql_rec.sql_id);
     put_line('SPO OFF;');
     put_line('HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_log..txt >> &&edb360_log3..txt');
     put_line('HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_log3..txt');
     put_line('-- update main report1');
     put_line('SPO &&edb360_main_report..html APP;');
-    put_line('PRO <li title="user:'||i.username||' module:'||i.module);
-    put_line('PRO '||i.sql_text_1000||'">');
-    IF i.top_type = 1 THEN
-      put_line('PRO rank:'||i.rank_num||' '||i.sql_id||' et:'||i.db_time_hrs||'h cpu:'||i.cpu_time_hrs||'h io:'||i.io_time_hrs||'h type:'||SUBSTR(i.command_type, 1, 6));
-    ELSIF i.top_type = 2 THEN
-      put_line('PRO rank:'||i.rank_num||' '||i.sql_id||' cursors:'||i.child_cursors);
-    ELSIF i.top_type = 3 THEN
-      put_line('PRO rank:'||i.rank_num||' '||i.sql_id||' signature:'||i.signature||'('||i.distinct_sql_id||')');
+    put_line('PRO <li title="user:'||sql_rec.username||' module:'||sql_rec.module);
+    put_line('PRO '||sql_rec.sql_text_1000||'">');
+    IF sql_rec.top_type = 1 THEN
+      put_line('PRO rank:'||sql_rec.rank_num||' '||sql_rec.sql_id||' et:'||sql_rec.db_time_hrs||'h cpu:'||sql_rec.cpu_time_hrs||'h io:'||sql_rec.io_time_hrs||'h type:'||SUBSTR(sql_rec.command_type, 1, 6));
+    ELSIF sql_rec.top_type = 2 THEN
+      put_line('PRO rank:'||sql_rec.rank_num||' '||sql_rec.sql_id||' cursors:'||sql_rec.child_cursors);
+    ELSIF sql_rec.top_type = 3 THEN
+      put_line('PRO rank:'||sql_rec.rank_num||' '||sql_rec.sql_id||' signature:'||sql_rec.signature||'('||sql_rec.distinct_sql_id||')');
     END IF;
     put_line('SET HEAD OFF VER OFF FEED OFF ECHO OFF;');
     put_line('SELECT ''*** time limit exceeded ***'' FROM DUAL WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NOT NULL;');
     put_line('SPO OFF;');
     put_line('HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html >> &&edb360_log3..txt');
-    IF i.rank_num <= &&edb360_conf_planx_top. AND i.sql_id != '0ckwjf2su2rpx' /* Beckman */ THEN
+    IF sql_rec.rank_num <= &&edb360_conf_planx_top. AND sql_rec.sql_id != '0ckwjf2su2rpx' /* Beckman */ THEN
       put_line('COL edb360_bypass NEW_V edb360_bypass;');
       put_line('SELECT ''--bypass--'' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
-      update_log('PLANX');
-      put_line('@@'||CHR(38)||CHR(38)||'edb360_bypass.sql/planx.sql &&diagnostics_pack. '||i.sql_id);
+      update_log('PLANX rank:'||sql_rec.rank_num||' SQL_ID:'||sql_rec.sql_id||' TOP_type:'||sql_rec.top_type);
+      put_line('@@'||CHR(38)||CHR(38)||'edb360_bypass.sql/planx.sql &&diagnostics_pack. '||sql_rec.sql_id);
       put_line('-- update main report2');
       put_line('SPO &&edb360_main_report..html APP;');
-      put_line('PRO <a href="planx_'||i.sql_id||'_'||CHR(38)||chr(38)||'current_time..txt">planx(text)</a>');
+      put_line('PRO <a href="planx_'||sql_rec.sql_id||'_'||CHR(38)||chr(38)||'current_time..txt">planx(text)</a>');
       put_line('SPO OFF;');
       put_line('-- zip');
-      put_line('HOS zip -m &&edb360_main_filename._&&edb360_file_time. planx_'||i.sql_id||'_'||CHR(38)||chr(38)||'current_time..txt >> &&edb360_log3..txt');
+      put_line('HOS zip -m &&edb360_main_filename._&&edb360_file_time. planx_'||sql_rec.sql_id||'_'||CHR(38)||chr(38)||'current_time..txt >> &&edb360_log3..txt');
       put_line('HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html >> &&edb360_log3..txt');
     END IF;
-    IF i.rank_num <= &&edb360_conf_sqlmon_top. AND '&&skip_10g.' IS NULL AND '&&skip_diagnostics.' IS NULL AND '&&skip_tuning.' IS NULL THEN
+    IF sql_rec.rank_num <= &&edb360_conf_sqlmon_top. AND '&&skip_10g.' IS NULL AND '&&skip_diagnostics.' IS NULL AND '&&skip_tuning.' IS NULL THEN
       put_line('COL edb360_bypass NEW_V edb360_bypass;');
       put_line('SELECT ''--bypass--'' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
-      update_log('SQLMON');
-      put_line('@@'||CHR(38)||CHR(38)||'edb360_bypass.sql/sqlmon.sql &&tuning_pack. '||i.sql_id);
+      update_log('SQLMON rank:'||sql_rec.rank_num||' SQL_ID:'||sql_rec.sql_id||' TOP_type:'||sql_rec.top_type);
+      put_line('@@'||CHR(38)||CHR(38)||'edb360_bypass.sql/sqlmon.sql &&tuning_pack. '||sql_rec.sql_id);
       put_line('-- update main report3');
       put_line('SPO &&edb360_main_report..html APP;');
-      put_line('PRO <a href="sqlmon_'||i.sql_id||'_'||CHR(38)||chr(38)||'current_time..zip">sqlmon(zip)</a>');
+      put_line('PRO <a href="sqlmon_'||sql_rec.sql_id||'_'||CHR(38)||chr(38)||'current_time..zip">sqlmon(zip)</a>');
       put_line('SPO OFF;');
       put_line('-- zip');
-      put_line('HOS zip -m &&edb360_main_filename._&&edb360_file_time. sqlmon_'||i.sql_id||'_'||CHR(38)||chr(38)||'current_time..zip >> &&edb360_log3..txt');
+      put_line('HOS zip -m &&edb360_main_filename._&&edb360_file_time. sqlmon_'||sql_rec.sql_id||'_'||CHR(38)||chr(38)||'current_time..zip >> &&edb360_log3..txt');
       put_line('HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html >> &&edb360_log3..txt');
     END IF;
-    IF i.rank_num <= &&edb360_conf_sqlash_top. AND '&&skip_diagnostics.' IS NULL THEN
+    IF sql_rec.rank_num <= &&edb360_conf_sqlash_top. AND '&&skip_diagnostics.' IS NULL THEN
       put_line('COL edb360_bypass NEW_V edb360_bypass;');
       put_line('SELECT ''--bypass--'' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
-      update_log('SQLASH');
-      put_line('@@'||CHR(38)||CHR(38)||'edb360_bypass.sql/sqlash.sql &&diagnostics_pack. '||i.sql_id);
+      update_log('SQLASH rank:'||sql_rec.rank_num||' SQL_ID:'||sql_rec.sql_id||' TOP_type:'||sql_rec.top_type);
+      put_line('@@'||CHR(38)||CHR(38)||'edb360_bypass.sql/sqlash.sql &&diagnostics_pack. '||sql_rec.sql_id);
       put_line('-- update main report4');
       put_line('SPO &&edb360_main_report..html APP;');
-      put_line('PRO <a href="sqlash_'||i.sql_id||'.zip">sqlash(zip)</a>');
+      put_line('PRO <a href="sqlash_'||sql_rec.sql_id||'.zip">sqlash(zip)</a>');
       put_line('SPO OFF;');
       put_line('-- zip');
-      put_line('HOS zip -m &&edb360_main_filename._&&edb360_file_time. sqlash_'||i.sql_id||'.zip >> &&edb360_log3..txt');
+      put_line('HOS zip -m &&edb360_main_filename._&&edb360_file_time. sqlash_'||sql_rec.sql_id||'.zip >> &&edb360_log3..txt');
       put_line('HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html >> &&edb360_log3..txt');
     END IF;
-    IF i.rank_num <= &&edb360_conf_sqlhc_top. THEN
+    IF sql_rec.rank_num <= &&edb360_conf_sqlhc_top. THEN
       put_line('COL edb360_bypass NEW_V edb360_bypass;');
       put_line('SELECT ''--bypass--'' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
-      update_log('SQLHC');
-      put_line('@@'||CHR(38)||CHR(38)||'edb360_bypass.sql/sqlhc.sql &&license_pack. '||i.sql_id);
+      update_log('SQLHC rank:'||sql_rec.rank_num||' SQL_ID:'||sql_rec.sql_id||' TOP_type:'||sql_rec.top_type);
+      put_line('@@'||CHR(38)||CHR(38)||'edb360_bypass.sql/sqlhc.sql &&license_pack. '||sql_rec.sql_id);
       put_line('-- update main report5');
       put_line('SPO &&edb360_main_report..html APP;');
       put_line('PRO <a href="'||CHR(38)||chr(38)||'files_prefix..zip">sqlhc(zip)</a>');
@@ -280,20 +283,22 @@ BEGIN
       put_line('HOS zip -m &&edb360_main_filename._&&edb360_file_time. '||CHR(38)||chr(38)||'files_prefix..zip >> &&edb360_log3..txt');
       put_line('HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html >> &&edb360_log3..txt');
     END IF;
-    IF i.rank_num <= &&edb360_conf_sqld360_top. THEN
+    IF sql_rec.rank_num <= &&edb360_conf_sqld360_top. THEN
+      /* moved down into its own cursor loop (to avoid planx hanging 
       put_line('COL edb360_bypass NEW_V edb360_bypass;');
       put_line('SELECT ''--bypass--'' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
       update_log('SQLD360');
       put_line('-- prepares execution of sqld360');
-      IF i.rank_num <= &&edb360_conf_sqld360_top_tc. THEN
-        put_line('INSERT INTO plan_table (statement_id, operation, options) VALUES (''SQLD360_SQLID'', '''||i.sql_id||''', ''&&call_sqld360_bitmask_tc.'');');
+      IF sql_rec.rank_num <= &&edb360_conf_sqld360_top_tc. THEN
+        put_line('INSERT INTO plan_table (statement_id, operation, options) VALUES (''SQLD360_SQLID'', '''||sql_rec.sql_id||''', ''&&call_sqld360_bitmask_tc.'');');
       ELSE
-        put_line('INSERT INTO plan_table (statement_id, operation, options) VALUES (''SQLD360_SQLID'', '''||i.sql_id||''', ''&&call_sqld360_bitmask.'');');
+        put_line('INSERT INTO plan_table (statement_id, operation, options) VALUES (''SQLD360_SQLID'', '''||sql_rec.sql_id||''', ''&&call_sqld360_bitmask.'');');
       END IF;
-      put_line('DELETE plan_table WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NOT NULL AND statement_id = ''SQLD360_SQLID'' AND operation = '''||i.sql_id||''';');
+      put_line('DELETE plan_table WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NOT NULL AND statement_id = ''SQLD360_SQLID'' AND operation = '''||sql_rec.sql_id||''';');
+      */
       put_line('-- update main report6');
       put_line('SPO &&edb360_main_report..html APP;');
-      put_line('PRO <a href="sqld360_&&database_name_short._'||i.sql_id||'_&&host_name_short._&&edb360_file_time..zip">sqld360(zip)</a>');
+      put_line('PRO <a href="sqld360_&&database_name_short._'||sql_rec.sql_id||'_&&host_name_short._&&edb360_file_time..zip">sqld360(zip)</a>');
       put_line('SPO OFF;');
       put_line('-- zip');
       put_line('HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html >> &&edb360_log3..txt');
@@ -304,7 +309,44 @@ BEGIN
     put_line('SPO OFF;');
     put_line('HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html >> &&edb360_log3..txt');
   END LOOP;
+  CLOSE sql_cur;
+  -- SQLd360
+  put_line('PRO');
+  put_line('PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
+  put_line('PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
+  put_line('PRO');
   put_line('PRO prepares to execute sqld360');
+  put_line('-- deleting content of global temporary table "plan_table" as preparation to execute sqld360');
+  put_line('DELETE plan_table;');
+  OPEN sql_cur;
+  LOOP
+    FETCH sql_cur INTO sql_rec;
+    EXIT WHEN sql_cur%NOTFOUND;
+    l_count := l_count + 1;
+    IF sql_rec.rank_num <= &&edb360_conf_sqld360_top. THEN
+      --put_line('COL edb360_bypass NEW_V edb360_bypass;');
+      --put_line('SELECT ''--bypass--'' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
+      update_log('SQLD360 rank:'||sql_rec.rank_num||' SQL_ID:'||sql_rec.sql_id||' TOP_type:'||sql_rec.top_type);
+      put_line('-- prepares execution of sqld360');
+      IF sql_rec.rank_num <= &&edb360_conf_sqld360_top_tc. THEN
+        --put_line('INSERT INTO plan_table (statement_id, operation, options) VALUES (''SQLD360_SQLID'', '''||sql_rec.sql_id||''', ''&&call_sqld360_bitmask_tc.'');');
+        put_line('INSERT INTO plan_table (statement_id, operation, options) SELECT ''SQLD360_SQLID'', '''||sql_rec.sql_id||''', ''&&call_sqld360_bitmask_tc.'' FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  <  :edb360_max_seconds;');
+      ELSE
+        --put_line('INSERT INTO plan_table (statement_id, operation, options) VALUES (''SQLD360_SQLID'', '''||sql_rec.sql_id||''', ''&&call_sqld360_bitmask.'');');
+        put_line('INSERT INTO plan_table (statement_id, operation, options) SELECT ''SQLD360_SQLID'', '''||sql_rec.sql_id||''', ''&&call_sqld360_bitmask.'' FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  <  :edb360_max_seconds;');
+      END IF;
+      --put_line('DELETE plan_table WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NOT NULL AND statement_id = ''SQLD360_SQLID'' AND operation = '''||sql_rec.sql_id||''';');
+      /* remains on original cursor loop above
+      put_line('-- update main report6');
+      put_line('SPO &&edb360_main_report..html APP;');
+      put_line('PRO <a href="sqld360_&&database_name_short._'||sql_rec.sql_id||'_&&host_name_short._&&edb360_file_time..zip">sqld360(zip)</a>');
+      put_line('SPO OFF;');
+      put_line('-- zip');
+      put_line('HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html >> &&edb360_log3..txt');
+      */
+    END IF;
+  END LOOP;
+  CLOSE sql_cur;
   IF l_count > 0 THEN
     put_line('UNDEF 1');
     put_line('HOS zip &&edb360_main_filename._&&edb360_file_time. 99930_&&common_edb360_prefix._top_sql_driver.sql >> &&edb360_log3..txt');
@@ -382,6 +424,8 @@ BEGIN
     --put_line('-- this delete affects nothing');
     --put_line('DELETE plan_table;');
   END IF;
+  put_line('-- deleting content of global temporary table "plan_table" as cleanup after sqld360');
+  put_line('DELETE plan_table;');
 END;
 /
 SPO OFF;

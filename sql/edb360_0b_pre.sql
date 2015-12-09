@@ -1,13 +1,7 @@
 --WHENEVER SQLERROR EXIT SQL.SQLCODE;
 
-SET TERM ON; 
-SET VER OFF; 
-SET FEED OFF; 
-SET ECHO OFF;
-SET TIM OFF;
-SET TIMI OFF;
-DEF edb360_vYYNN = 'v1531';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2015-10-29)';
+DEF edb360_vYYNN = 'v1532';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2015-12-08)';
 
 -- parameters
 PRO

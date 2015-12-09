@@ -827,6 +827,27 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+DEF title = 'Consumers of Recycle Bin';
+DEF main_table = 'DBA_RECYCLEBIN';
+BEGIN
+  :sql_text := '
+-- requested by Dimas Chbane
+SELECT /*+ &&top_level_hints. */
+       ROUND(SUM(r.space * t.block_size) / POWER(2, 20)) gb_space,
+       r.owner
+  FROM dba_recyclebin r,
+       dba_tablespaces t
+ WHERE r.ts_name = t.tablespace_name
+ GROUP BY
+       r.owner
+HAVING ROUND(SUM(r.space * t.block_size) / POWER(2, 20)) > 0
+ ORDER BY
+       1 DESC, 2
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+   
 DEF title = 'Tables with excessive wasted space';
 DEF main_table = 'DBA_TABLES';
 BEGIN

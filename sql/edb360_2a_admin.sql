@@ -1493,6 +1493,7 @@ SELECT /*+ &&top_level_hints. */
   FROM lit, gv$sql s, dba_objects o
  WHERE s.force_matching_signature = lit.force_matching_signature
    AND s.sql_id = lit.min_sql_id
+   AND UPPER(s.sql_text) NOT LIKE ''%EDB360%''
    AND o.object_id(+) = s.program_id
  ORDER BY 
        1 DESC, 2
@@ -1523,6 +1524,7 @@ SELECT /*+ &&top_level_hints. */
   FROM lit, gv$sql s, dba_objects o
  WHERE s.force_matching_signature = lit.force_matching_signature
    AND s.sql_id = lit.min_sql_id
+   AND UPPER(s.sql_text) NOT LIKE ''%EDB360%''
    AND o.object_id(+) = s.program_id
  ORDER BY 
        1, 2 DESC, 3
@@ -2053,7 +2055,7 @@ BEGIN
 SELECT /*+ &&top_level_hints. */
        *
   FROM dba_source
- WHERE line < 4
+ WHERE line < 21
    AND text LIKE ''%$Header%''
  ORDER BY
        1, 2, 3, 4
