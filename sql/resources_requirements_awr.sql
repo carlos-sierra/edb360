@@ -23,6 +23,7 @@
 --             
 ---------------------------------------------------------------------------------------
 --
+DEF MAX_DAYS = '365';
 SET TERM OFF ECHO OFF FEED OFF VER OFF HEA ON PAGES 100 COLSEP ' ' LIN 32767 TRIMS ON TRIM ON TI OFF TIMI OFF ARRAY 100 NUM 10 SQLBL ON BLO . RECSEP OFF;
 
 -- get host name (up to 30, stop before first '.', no special characters)
@@ -51,23 +52,24 @@ COL short_host_name FOR A30;
 
 PRO Database/Instance
 PRO ~~~~~~~~~~~~~~~~~
-SELECT dbid,				
-       instance_number,	
-       startup_time,		
-       version,			
-       db_name,			
-       instance_name,
-       TRANSLATE(LOWER(SUBSTR(SUBSTR(host_name, 1, INSTR(host_name, '.') - 1), 1, 30)),
+SELECT h.dbid,				
+       h.instance_number,	
+       h.startup_time,		
+       h.version,			
+       h.db_name,			
+       h.instance_name,
+       TRANSLATE(LOWER(SUBSTR(SUBSTR(h.host_name, 1, INSTR(host_name, '.') - 1), 1, 30)),
 'abcdefghijklmnopqrstuvwxyz0123456789-_ ''`~!@#$%&*()=+[]{}\|;:",.<>/?'||CHR(0)||CHR(9)||CHR(10)||CHR(13)||CHR(38),
 'abcdefghijklmnopqrstuvwxyz0123456789-_')
        short_host_name,			
        platform_name	
-  FROM dba_hist_database_instance
-  	  &&use_on_10g. , (select platform_name from v$database) pname
+  FROM dba_hist_database_instance h
+  	   &&use_on_10g. , (select platform_name from v$database) pname
+ WHERE CAST(h.startup_time AS DATE) > SYSDATE - &&MAX_DAYS.
  ORDER BY
-       dbid,				
-       instance_number,	
-       startup_time
+       h.dbid,				
+       h.instance_number,	
+       h.startup_time
 /
 
 /*****************************************************************************************/
@@ -101,6 +103,7 @@ SELECT inst_id,
        MAX(sample_time) max_sample_time           
   FROM gv$active_session_history
  WHERE (session_state = 'ON CPU' OR event = 'resmgr:cpu quantum')
+   AND CAST(sample_time AS DATE) > SYSDATE - &&MAX_DAYS.
  GROUP BY
        inst_id,
        sample_id
@@ -228,6 +231,7 @@ SELECT h.snap_id,
    AND s.snap_id = h.snap_id
    AND s.dbid = h.dbid
    AND s.instance_number = h.instance_number
+   AND CAST(s.begin_interval_time AS DATE) > SYSDATE - &&MAX_DAYS.
  GROUP BY
        h.snap_id,
        h.dbid,
@@ -366,7 +370,8 @@ SELECT s.snap_id,
   FROM dba_hist_snapshot s,
        dba_hist_sga g,
        dba_hist_pgastat p
- WHERE g.snap_id = s.snap_id
+ WHERE CAST(s.begin_interval_time AS DATE) > SYSDATE - &&MAX_DAYS.
+   AND g.snap_id = s.snap_id
    AND g.dbid = s.dbid
    AND g.instance_number = s.instance_number
    AND p.snap_id = s.snap_id
@@ -548,8 +553,13 @@ SELECT h.snap_id,
        SUM(CASE WHEN h.stat_name IN ('physical write total IO requests', 'redo writes') THEN value ELSE 0 END) w_reqs,
        SUM(CASE WHEN h.stat_name = 'physical read total bytes' THEN value ELSE 0 END) r_bytes,
        SUM(CASE WHEN h.stat_name IN ('physical write total bytes', 'redo size') THEN value ELSE 0 END) w_bytes
-  FROM dba_hist_sysstat h
+  FROM dba_hist_sysstat h,
+       dba_hist_snapshot s
  WHERE h.stat_name IN ('physical read total IO requests', 'physical write total IO requests', 'redo writes', 'physical read total bytes', 'physical write total bytes', 'redo size')
+   AND s.snap_id = h.snap_id
+   AND s.dbid = h.dbid
+   AND s.instance_number = h.instance_number
+   AND CAST(s.begin_interval_time AS DATE) > SYSDATE - &&MAX_DAYS.
  GROUP BY
        h.snap_id,
        h.dbid,
@@ -570,12 +580,14 @@ SELECT h1.dbid,
        dba_hist_snapshot s0,
        sysstat_io h1,
        dba_hist_snapshot s1
- WHERE s0.snap_id = h0.snap_id
+ WHERE CAST(s0.begin_interval_time AS DATE) > SYSDATE - &&MAX_DAYS.
+   AND s0.snap_id = h0.snap_id
    AND s0.dbid = h0.dbid
    AND s0.instance_number = h0.instance_number
    AND h1.snap_id = h0.snap_id + 1
    AND h1.dbid = h0.dbid
    AND h1.instance_number = h0.instance_number
+   AND CAST(s1.begin_interval_time AS DATE) > SYSDATE - &&MAX_DAYS.
    AND s1.snap_id = h1.snap_id
    AND s1.dbid = h1.dbid
    AND s1.instance_number = h1.instance_number
@@ -794,6 +806,325 @@ SELECT dbid,
        dbid,
        order_by,
        instance_number NULLS LAST
+/
+
+/*****************************************************************************************/
+
+COL db_time_secs HEA "DB Time|Secs";
+COL u_io_secs HEA "User I/O|Secs";
+COL dbfsr_secs HEA "db file|scattered read|Secs";
+COL dpr_secs HEA "direct path read|Secs";
+COL s_io_secs HEA "System I/O|Secs";
+COL commt_secs HEA "Commit|Secs";
+COL lfpw_secs HEA "log file|parallel write|Secs";
+COL u_io_perc HEA "User I/O|Perc";
+COL dbfsr_perc HEA "db file|scattered read|Perc";
+COL dpr_perc HEA "direct path read|Perc";
+COL s_io_perc HEA "System I/O|Perc";
+COL commt_perc HEA "Commit|Perc";
+COL lfpw_perc HEA "log file|parallel write|Perc";
+
+PRO
+PRO
+PRO Relevant Time Composition
+PRO ~~~~~~~~~~~~~~~~~~~~~~~~~
+WITH 
+db_time AS (
+SELECT snap_id,
+       dbid,
+       instance_number,
+       stat_name,
+       value - LAG(value) OVER (PARTITION BY dbid, instance_number, stat_name ORDER BY snap_id) value
+  FROM dba_hist_sys_time_model
+ WHERE stat_name = 'DB time'
+),
+system_event_detail AS (
+SELECT snap_id,
+       dbid,
+       instance_number,
+       wait_class,
+       SUM(time_waited_micro) time_waited_micro
+  FROM dba_hist_system_event
+ WHERE wait_class IN ('User I/O', 'System I/O', 'Commit')
+ GROUP BY
+       dbid,
+       instance_number,
+       wait_class,
+       snap_id
+),
+system_event AS (
+SELECT snap_id,
+       dbid,
+       instance_number,
+       wait_class,
+       time_waited_micro - LAG(time_waited_micro) OVER (PARTITION BY dbid, instance_number, wait_class ORDER BY snap_id) time_waited_micro
+  FROM system_event_detail
+),
+system_wait AS (
+SELECT snap_id,
+       dbid,
+       instance_number,
+       event_name,
+       time_waited_micro - LAG(time_waited_micro) OVER (PARTITION BY dbid, instance_number, event_name ORDER BY snap_id) time_waited_micro
+  FROM dba_hist_system_event
+ WHERE event_name IN ('db file scattered read', 'direct path read', 'log file parallel write')
+),
+time_components AS (
+SELECT d.snap_id,
+       d.dbid,
+       d.instance_number,
+       d.value db_time,
+       e1.time_waited_micro u_io_time,
+       e2.time_waited_micro s_io_time,
+       e3.time_waited_micro commt_time,
+       w1.time_waited_micro dbfsr_time,
+       w2.time_waited_micro dpr_time,
+       w3.time_waited_micro lfpw_time
+  FROM db_time d,
+       system_event e1,
+       system_event e2,
+       system_event e3,
+       system_wait w1,
+       system_wait w2,
+       system_wait w3
+ WHERE d.value >= 0
+   AND e1.snap_id = d.snap_id
+   AND e1.dbid = d.dbid
+   AND e1.instance_number = d.instance_number
+   AND e1.wait_class = 'User I/O'
+   AND e1.time_waited_micro >= 0
+   AND e2.snap_id = d.snap_id
+   AND e2.dbid = d.dbid
+   AND e2.instance_number = d.instance_number
+   AND e2.wait_class = 'System I/O'
+   AND e2.time_waited_micro >= 0
+   AND e3.snap_id = d.snap_id
+   AND e3.dbid = d.dbid
+   AND e3.instance_number = d.instance_number
+   AND e3.wait_class = 'Commit'
+   AND e3.time_waited_micro >= 0
+   AND w1.snap_id = d.snap_id
+   AND w1.dbid = d.dbid
+   AND w1.instance_number = d.instance_number
+   AND w1.event_name = 'db file scattered read'
+   AND w1.time_waited_micro >= 0
+   AND w2.snap_id = d.snap_id
+   AND w2.dbid = d.dbid
+   AND w2.instance_number = d.instance_number
+   AND w2.event_name = 'direct path read'
+   AND w2.time_waited_micro >= 0
+   AND w3.snap_id = d.snap_id
+   AND w3.dbid = d.dbid
+   AND w3.instance_number = d.instance_number
+   AND w3.event_name = 'log file parallel write'
+   AND w3.time_waited_micro >= 0
+),
+by_inst_and_hh AS (
+SELECT MIN(t.snap_id) snap_id,
+       t.dbid,
+       t.instance_number,
+       TRUNC(CAST(s.end_interval_time AS DATE), 'HH') end_time,
+       SUM(db_time) db_time,
+       SUM(u_io_time) u_io_time,
+       SUM(dbfsr_time) dbfsr_time,
+       SUM(dpr_time) dpr_time,
+       SUM(s_io_time) s_io_time,
+       SUM(commt_time) commt_time,
+       SUM(lfpw_time) lfpw_time
+  FROM time_components t,
+       dba_hist_snapshot s
+ WHERE s.snap_id = t.snap_id
+   AND s.dbid = t.dbid
+   AND s.instance_number = t.instance_number
+   AND CAST(s.begin_interval_time AS DATE) > SYSDATE - &&MAX_DAYS.
+ GROUP BY
+       t.dbid,
+       t.instance_number,
+       TRUNC(CAST(s.end_interval_time AS DATE), 'HH')
+),
+by_hh AS (
+SELECT MIN(snap_id) snap_id,
+       dbid,
+       end_time,
+       SUM(db_time) db_time,
+       SUM(u_io_time) u_io_time,
+       SUM(dbfsr_time) dbfsr_time,
+       SUM(dpr_time) dpr_time,
+       SUM(s_io_time) s_io_time,
+       SUM(commt_time) commt_time,
+       SUM(lfpw_time) lfpw_time
+  FROM by_inst_and_hh
+ GROUP BY
+       dbid,
+       end_time
+)
+SELECT ROUND(SUM(db_time) / 1e6, 2) db_time_secs,
+       ROUND(SUM(u_io_time) / 1e6, 2) u_io_secs,
+       ROUND(SUM(dbfsr_time) / 1e6, 2) dbfsr_secs,
+       ROUND(SUM(dpr_time) / 1e6, 2) dpr_secs,
+       ROUND(SUM(s_io_time) / 1e6, 2) s_io_secs,
+       ROUND(SUM(commt_time) / 1e6, 2) commt_secs,
+       ROUND(SUM(lfpw_time) / 1e6, 2) lfpw_secs,
+       ROUND(100 * SUM(u_io_time) / SUM(db_time), 2) u_io_perc,
+       ROUND(100 * SUM(dbfsr_time) / SUM(db_time), 2) dbfsr_perc,
+       ROUND(100 * SUM(dpr_time) / SUM(db_time), 2) dpr_perc,
+       ROUND(100 * SUM(s_io_time) / SUM(db_time), 2) s_io_perc,
+       ROUND(100 * SUM(commt_time) / SUM(db_time), 2) commt_perc,
+       ROUND(100 * SUM(lfpw_time) / SUM(db_time), 2) lfpw_perc
+  FROM by_hh
+/
+WITH 
+db_time AS (
+SELECT snap_id,
+       dbid,
+       instance_number,
+       stat_name,
+       value - LAG(value) OVER (PARTITION BY dbid, instance_number, stat_name ORDER BY snap_id) value
+  FROM dba_hist_sys_time_model
+ WHERE stat_name = 'DB time'
+),
+system_event_detail AS (
+SELECT snap_id,
+       dbid,
+       instance_number,
+       wait_class,
+       SUM(time_waited_micro) time_waited_micro
+  FROM dba_hist_system_event
+ WHERE wait_class IN ('User I/O', 'System I/O', 'Commit')
+ GROUP BY
+       dbid,
+       instance_number,
+       wait_class,
+       snap_id
+),
+system_event AS (
+SELECT snap_id,
+       dbid,
+       instance_number,
+       wait_class,
+       time_waited_micro - LAG(time_waited_micro) OVER (PARTITION BY dbid, instance_number, wait_class ORDER BY snap_id) time_waited_micro
+  FROM system_event_detail
+),
+system_wait AS (
+SELECT snap_id,
+       dbid,
+       instance_number,
+       event_name,
+       time_waited_micro - LAG(time_waited_micro) OVER (PARTITION BY dbid, instance_number, event_name ORDER BY snap_id) time_waited_micro
+  FROM dba_hist_system_event
+ WHERE event_name IN ('db file scattered read', 'direct path read', 'log file parallel write')
+),
+time_components AS (
+SELECT d.snap_id,
+       d.dbid,
+       d.instance_number,
+       d.value db_time,
+       e1.time_waited_micro u_io_time,
+       e2.time_waited_micro s_io_time,
+       e3.time_waited_micro commt_time,
+       w1.time_waited_micro dbfsr_time,
+       w2.time_waited_micro dpr_time,
+       w3.time_waited_micro lfpw_time
+  FROM db_time d,
+       system_event e1,
+       system_event e2,
+       system_event e3,
+       system_wait w1,
+       system_wait w2,
+       system_wait w3
+ WHERE d.value >= 0
+   AND e1.snap_id = d.snap_id
+   AND e1.dbid = d.dbid
+   AND e1.instance_number = d.instance_number
+   AND e1.wait_class = 'User I/O'
+   AND e1.time_waited_micro >= 0
+   AND e2.snap_id = d.snap_id
+   AND e2.dbid = d.dbid
+   AND e2.instance_number = d.instance_number
+   AND e2.wait_class = 'System I/O'
+   AND e2.time_waited_micro >= 0
+   AND e3.snap_id = d.snap_id
+   AND e3.dbid = d.dbid
+   AND e3.instance_number = d.instance_number
+   AND e3.wait_class = 'Commit'
+   AND e3.time_waited_micro >= 0
+   AND w1.snap_id = d.snap_id
+   AND w1.dbid = d.dbid
+   AND w1.instance_number = d.instance_number
+   AND w1.event_name = 'db file scattered read'
+   AND w1.time_waited_micro >= 0
+   AND w2.snap_id = d.snap_id
+   AND w2.dbid = d.dbid
+   AND w2.instance_number = d.instance_number
+   AND w2.event_name = 'direct path read'
+   AND w2.time_waited_micro >= 0
+   AND w3.snap_id = d.snap_id
+   AND w3.dbid = d.dbid
+   AND w3.instance_number = d.instance_number
+   AND w3.event_name = 'log file parallel write'
+   AND w3.time_waited_micro >= 0
+),
+by_inst_and_hh AS (
+SELECT MIN(t.snap_id) snap_id,
+       t.dbid,
+       t.instance_number,
+       TRUNC(CAST(s.end_interval_time AS DATE), 'HH') end_time,
+       SUM(db_time) db_time,
+       SUM(u_io_time) u_io_time,
+       SUM(dbfsr_time) dbfsr_time,
+       SUM(dpr_time) dpr_time,
+       SUM(s_io_time) s_io_time,
+       SUM(commt_time) commt_time,
+       SUM(lfpw_time) lfpw_time
+  FROM time_components t,
+       dba_hist_snapshot s
+ WHERE s.snap_id = t.snap_id
+   AND s.dbid = t.dbid
+   AND s.instance_number = t.instance_number
+   AND CAST(s.begin_interval_time AS DATE) > SYSDATE - &&MAX_DAYS.
+ GROUP BY
+       t.dbid,
+       t.instance_number,
+       TRUNC(CAST(s.end_interval_time AS DATE), 'HH')
+),
+by_hh AS (
+SELECT MIN(snap_id) snap_id,
+       dbid,
+       end_time,
+       SUM(db_time) db_time,
+       SUM(u_io_time) u_io_time,
+       SUM(dbfsr_time) dbfsr_time,
+       SUM(dpr_time) dpr_time,
+       SUM(s_io_time) s_io_time,
+       SUM(commt_time) commt_time,
+       SUM(lfpw_time) lfpw_time
+  FROM by_inst_and_hh
+ GROUP BY
+       dbid,
+       end_time
+)
+SELECT snap_id,
+       dbid,
+       TO_CHAR(end_time - (1/24), 'YYYY-MM-DD HH24:MI') begin_time,
+       TO_CHAR(end_time, 'YYYY-MM-DD HH24:MI') end_time,
+       ROUND(db_time / 1e6, 2) db_time_secs,
+       ROUND(u_io_time / 1e6, 2) u_io_secs,
+       ROUND(dbfsr_time / 1e6, 2) dbfsr_secs,
+       ROUND(dpr_time / 1e6, 2) dpr_secs,
+       ROUND(s_io_time / 1e6, 2) s_io_secs,
+       ROUND(commt_time / 1e6, 2) commt_secs,
+       ROUND(lfpw_time / 1e6, 2) lfpw_secs,
+       ROUND(100 * u_io_time / db_time, 2) u_io_perc,
+       ROUND(100 * dbfsr_time / db_time, 2) dbfsr_perc,
+       ROUND(100 * dpr_time / db_time, 2) dpr_perc,
+       ROUND(100 * s_io_time / db_time, 2) s_io_perc,
+       ROUND(100 * commt_time / db_time, 2) commt_perc,
+       ROUND(100 * lfpw_time / db_time, 2) lfpw_perc
+  FROM by_hh
+ ORDER BY
+       snap_id,
+       dbid,
+       end_time
 /
 
 /*****************************************************************************************/

@@ -60,8 +60,9 @@ DEF main_table = 'GV$SGASTAT';
 BEGIN
   :sql_text := '
 SELECT /*+ &&top_level_hints. */
-       inst_id,
+       pool,
        name,
+       inst_id,
        bytes,
        CASE 
        WHEN bytes > POWER(2,50) THEN ROUND(bytes/POWER(2,50),1)||'' P''
@@ -106,3 +107,137 @@ SELECT /*+ &&top_level_hints. */
 END;
 /
 @@edb360_9a_pre_one.sql
+
+DEF title = 'Memory Dynamic Components';
+DEF main_table = 'GV$MEMORY_DYNAMIC_COMPONENTS';
+BEGIN
+  :sql_text := '
+-- requested by Rodrigo Righetti
+SELECT /*+ &&top_level_hints. */
+       *
+  FROM gv$memory_dynamic_components
+
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+DEF title = 'Memory Target Advice';
+DEF main_table = 'GV$MEMORY_TARGET_ADVICE';
+BEGIN
+  :sql_text := '
+-- requested by Rodrigo Righetti
+SELECT /*+ &&top_level_hints. */
+       *
+  FROM gv$memory_target_advice
+
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+DEF title = 'SGA Target Advice';
+DEF main_table = 'GV$SGA_TARGET_ADVICE';
+BEGIN
+  :sql_text := '
+-- requested by Rodrigo Righetti
+SELECT /*+ &&top_level_hints. */
+       *
+  FROM gv$sga_target_advice
+
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+DEF title = 'PGA Target Advice';
+DEF main_table = 'GV$PGA_TARGET_ADVICE';
+BEGIN
+  :sql_text := '
+-- requested by Rodrigo Righetti
+SELECT /*+ &&top_level_hints. */
+       *
+  FROM gv$pga_target_advice
+
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+DEF title = 'Memory Resize Operations';
+DEF main_table = 'GV$MEMORY_RESIZE_OPS';
+BEGIN
+  :sql_text := '
+-- requested by Rodrigo Righetti
+SELECT /*+ &&top_level_hints. */
+       *
+  FROM gv$memory_resize_ops
+ ORDER BY
+       inst_id,
+       start_time DESC,
+       component
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+DEF title = 'Memory Current Resize Operations';
+DEF main_table = 'GV$MEMORY_CURRENT_RESIZE_OPS';
+BEGIN
+  :sql_text := '
+-- requested by Rodrigo Righetti
+SELECT /*+ &&top_level_hints. */
+       *
+  FROM gv$memory_current_resize_ops
+ ORDER BY
+       inst_id,
+       start_time DESC,
+       component
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+DEF title = 'Memory Resize Operations Hist';
+DEF main_table = 'DBA_HIST_MEMORY_RESIZE_OPS';
+BEGIN
+  :sql_text := '
+-- requested by Rodrigo Righetti
+SELECT /*+ &&top_level_hints. */
+       *
+  FROM dba_hist_memory_resize_ops
+ WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND dbid = &&edb360_dbid.
+ ORDER BY
+       instance_number,
+       start_time DESC,
+       component
+';
+END;
+/
+@@&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF title = 'Memory Target Advice Hist';
+DEF main_table = 'DBA_HIST_MEMORY_TARGET_ADVICE';
+BEGIN
+  :sql_text := '
+-- requested by Rodrigo Righetti
+SELECT /*+ &&top_level_hints. */
+       *
+  FROM dba_hist_memory_target_advice
+ WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND dbid = &&edb360_dbid.
+ ORDER BY
+       instance_number,
+       snap_id DESC,
+       memory_size,
+       memory_size_factor
+';
+END;
+/
+@@&&skip_diagnostics.edb360_9a_pre_one.sql
+
+
+
+
+

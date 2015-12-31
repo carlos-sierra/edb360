@@ -214,6 +214,136 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+BEGIN
+ :sql_text_backup := '
+WITH
+by_instance_and_hh AS (
+SELECT /*+ &&sq_fact_hints. */
+       r.instance_number,	
+       TRUNC(CAST(s.begin_interval_time AS DATE), ''HH'') begin_time,
+       MAX(r.snap_id) snap_id,
+       MAX(r.current_utilization) current_utilization,
+       MAX(r.max_utilization) max_utilization
+       --NVL(MAX(TO_NUMBER(TRANSLATE(r.initial_allocation, ''0123456789.'', ''0123456789.''))), 0) initial_allocation,
+       --NVL(MAX(TO_NUMBER(TRANSLATE(r.limit_value, ''0123456789.'', ''0123456789.''))), 0) limit_value
+  FROM dba_hist_resource_limit r,
+       dba_hist_snapshot s
+ WHERE s.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND s.dbid = &&edb360_dbid.
+   AND r.snap_id = s.snap_id
+   AND r.dbid = s.dbid
+   AND r.instance_number = s.instance_number
+   AND r.resource_name = ''@resource_name@''
+ GROUP BY
+       r.instance_number,
+       TRUNC(CAST(s.begin_interval_time AS DATE), ''HH'')
+)
+SELECT /*+ &&top_level_hints. */
+       MAX(snap_id) snap_id,
+       TO_CHAR(begin_time, ''YYYY-MM-DD HH24:MI'') begin_time,
+       TO_CHAR(begin_time + (1/24), ''YYYY-MM-DD HH24:MI'') end_time,
+       SUM(current_utilization) current_utilization,
+       SUM(max_utilization) max_utilization,
+       0 dummy_03,
+       0 dummy_04,
+       0 dummy_05,
+       0 dummy_06,
+       0 dummy_07,
+       0 dummy_08,
+       0 dummy_09,
+       0 dummy_10,
+       0 dummy_11,
+       0 dummy_12,
+       0 dummy_13,
+       0 dummy_14,
+       0 dummy_15
+  FROM by_instance_and_hh
+ GROUP BY
+       begin_time
+ ORDER BY
+       begin_time
+';
+END;				
+/
+
+DEF chartype = 'LineChart';
+DEF vbaseline = ''; 
+DEF stacked = '';
+DEF skip_lch = '';
+DEF title = 'Processes Time Series';
+DEF main_table = 'DBA_HIST_RESOURCE_LIMIT';
+DEF vaxis = 'Processes';
+DEF tit_01 = 'Current Utilization';
+DEF tit_02 = 'Max Utilization';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
+
+EXEC :sql_text := REPLACE(:sql_text_backup, '@resource_name@', 'processes');
+@@&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF chartype = 'LineChart';
+DEF vbaseline = ''; 
+DEF stacked = '';
+DEF skip_lch = '';
+DEF title = 'Sessions Time Series';
+DEF main_table = 'DBA_HIST_RESOURCE_LIMIT';
+DEF vaxis = 'Sessions';
+DEF tit_01 = 'Current Utilization';
+DEF tit_02 = 'Max Utilization';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
+
+EXEC :sql_text := REPLACE(:sql_text_backup, '@resource_name@', 'sessions');
+@@&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF chartype = 'LineChart';
+DEF vbaseline = ''; 
+DEF stacked = '';
+DEF skip_lch = '';
+DEF title = 'Parallel Max Servers Time Series';
+DEF main_table = 'DBA_HIST_RESOURCE_LIMIT';
+DEF vaxis = 'Parallel max servers';
+DEF tit_01 = 'Current Utilization';
+DEF tit_02 = 'Max Utilization';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
+
+EXEC :sql_text := REPLACE(:sql_text_backup, '@resource_name@', 'parallel_max_servers');
+@@&&skip_diagnostics.edb360_9a_pre_one.sql
+
 DEF title = 'HWM Statistics';
 DEF main_table = 'DBA_HIGH_WATER_MARK_STATISTICS';
 BEGIN

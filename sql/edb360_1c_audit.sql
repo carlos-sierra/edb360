@@ -113,7 +113,8 @@ BEGIN
 SELECT /*+ &&top_level_hints. */ 
        SUBSTR(owner||''.''||table_name,1,30) audit_trail, tablespace_name
   FROM dba_tables
- WHERE table_name IN (''AUD$'',''AUDIT$'',''FGA$'',''FGA_LOG$'')
+ --WHERE table_name IN (''AUD$'',''AUDIT$'',''FGA$'',''FGA_LOG$'')
+ WHERE table_name IN (''AUD$'',''FGA_LOG$'')
     OR table_name IN (''UNIFIED_AUDIT_TRAIL'',''CDB_UNIFIED_AUDIT_TRAIL'',''V_$UNIFIED_AUDIT_TRAIL'',''GV_$UNIFIED_AUDIT_TRAIL'') -- 12c UAT
  ORDER BY 1,2
 ';

@@ -14,8 +14,8 @@ DEF vbaseline = '';
 DEF tit_01 = 'PGA memory freed back to OS';
 DEF tit_02 = 'aggregate PGA auto target';
 DEF tit_03 = 'aggregate PGA target parameter';
-DEF tit_04 = 'bytes processed';
-DEF tit_05 = 'extra bytes read/written';
+DEF tit_04 = 'bytes processed (in TB)';
+DEF tit_05 = 'extra bytes read/written (in TB)';
 DEF tit_06 = 'global memory bound';
 DEF tit_07 = 'maximum PGA allocated';
 DEF tit_08 = 'maximum PGA used for auto workareas';
@@ -144,8 +144,8 @@ SELECT snap_id,
        ROUND(SUM(pga_mem_freed_to_os) / POWER(2, 30), 3) pga_mem_freed_to_os,
        ROUND(SUM(aggr_pga_auto_target) / POWER(2, 30), 3) aggr_pga_auto_target,
        ROUND(SUM(aggr_pga_target_param) / POWER(2, 30), 3) aggr_pga_target_param,
-       ROUND(SUM(bytes_processed) / POWER(2, 30), 3) bytes_processed,
-       ROUND(SUM(extra_bytes_rw) / POWER(2, 30), 3) extra_bytes_rw,
+       ROUND(SUM(bytes_processed) / POWER(2, 40), 3) bytes_processed,
+       ROUND(SUM(extra_bytes_rw) / POWER(2, 40), 3) extra_bytes_rw,
        ROUND(SUM(global_memory_bound) / POWER(2, 30), 3) global_memory_bound,
        ROUND(SUM(max_pga_allocated) / POWER(2, 30), 3) max_pga_allocated,
        ROUND(SUM(max_pga_used_aut_wa) / POWER(2, 30), 3) max_pga_used_aut_wa,

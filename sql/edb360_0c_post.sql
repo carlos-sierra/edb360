@@ -51,6 +51,12 @@ HOS cp &&background_dump_dest./alert_&&db_name_lower.*.log . >> &&edb360_log3..t
 HOS cp &&background_dump_dest./alert_&&_connect_identifier..log . >> &&edb360_log3..txt
 HOS rename alert_ 00006_&&common_edb360_prefix._alert_ alert_*.log >> &&edb360_log3..txt
 
+-- listener log (last 100K + counts per hour)
+HOS lsnrctl show trc_directory | grep trc_directory | awk '{print "HOS cat "$6"/listener.log | fgrep \"establish\" | awk '\''{ print $1\",\"$2 }'\'' | awk -F: '\''{ print \",\"$1 }'\'' | uniq -c > listener_logons.csv"} END {print "HOS sed -i '\''1s/^/COUNT ,DATE,HOUR\\n/'\'' listener_logons.csv"}' > listener_log_driver.sql
+HOS lsnrctl show trc_directory | grep trc_directory | awk 'BEGIN {b = "HOS tail -100000000c "; e = " > listener_tail.log"} {print b, $6"/listener.log", e } END {print "HOS zip -m listener_log.zip listener_logons.csv listener_tail.log listener_log_driver.sql"}' >> listener_log_driver.sql
+@listener_log_driver.sql
+HOS zip -m &&edb360_main_filename._&&edb360_file_time. listener_log.zip >> &&edb360_log3..txt
+
 -- zip 
 HOS zip -m &&edb360_main_filename._&&edb360_file_time. &&common_edb360_prefix._query.sql >> &&edb360_log3..txt
 HOS zip -d &&edb360_main_filename._&&edb360_file_time. &&common_edb360_prefix._query.sql >> &&edb360_log3..txt

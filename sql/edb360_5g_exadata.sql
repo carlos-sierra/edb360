@@ -6,6 +6,384 @@ SPO &&edb360_main_report..html APP;
 PRO <h2>&&section_name.</h2>
 SPO OFF;
 
+COL db_time_secs HEA "DB Time|Secs";
+COL u_io_secs HEA "User I/O|Secs";
+COL dbfsr_secs HEA "db file|scattered read|Secs";
+COL dpr_secs HEA "direct path read|Secs";
+COL s_io_secs HEA "System I/O|Secs";
+COL commt_secs HEA "Commit|Secs";
+COL lfpw_secs HEA "log file|parallel write|Secs";
+COL u_io_perc HEA "User I/O|Perc";
+COL dbfsr_perc HEA "db file|scattered read|Perc";
+COL dpr_perc HEA "direct path read|Perc";
+COL s_io_perc HEA "System I/O|Perc";
+COL commt_perc HEA "Commit|Perc";
+COL lfpw_perc HEA "log file|parallel write|Perc";
+
+DEF title = 'Relevant Time Composition';
+DEF main_table = 'DBA_HIST_SYSTEM_EVENT';
+BEGIN
+  :sql_text := '
+-- requested by Frits Hoogland
+WITH 
+db_time AS (
+SELECT /*+ &&sq_fact_hints. */
+       snap_id,
+       dbid,
+       instance_number,
+       stat_name,
+       value - LAG(value) OVER (PARTITION BY dbid, instance_number, stat_name ORDER BY snap_id) value
+  FROM dba_hist_sys_time_model
+ WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND dbid = &&edb360_dbid.
+   AND stat_name = ''DB time''
+),
+system_event_detail AS (
+SELECT /*+ &&sq_fact_hints. */
+       snap_id,
+       dbid,
+       instance_number,
+       wait_class,
+       SUM(time_waited_micro) time_waited_micro
+  FROM dba_hist_system_event
+ WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND dbid = &&edb360_dbid.
+   AND wait_class IN (''User I/O'', ''System I/O'', ''Commit'')
+ GROUP BY
+       dbid,
+       instance_number,
+       wait_class,
+       snap_id
+),
+system_event AS (
+SELECT /*+ &&sq_fact_hints. */
+       snap_id,
+       dbid,
+       instance_number,
+       wait_class,
+       time_waited_micro - LAG(time_waited_micro) OVER (PARTITION BY dbid, instance_number, wait_class ORDER BY snap_id) time_waited_micro
+  FROM system_event_detail
+),
+system_wait AS (
+SELECT /*+ &&sq_fact_hints. */
+       snap_id,
+       dbid,
+       instance_number,
+       event_name,
+       time_waited_micro - LAG(time_waited_micro) OVER (PARTITION BY dbid, instance_number, event_name ORDER BY snap_id) time_waited_micro
+  FROM dba_hist_system_event
+ WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND dbid = &&edb360_dbid.
+   AND event_name IN (''db file scattered read'', ''direct path read'', ''log file parallel write'')
+),
+time_components AS (
+SELECT /*+ &&sq_fact_hints. */
+       d.snap_id,
+       d.dbid,
+       d.instance_number,
+       d.value db_time,
+       e1.time_waited_micro u_io_time,
+       e2.time_waited_micro s_io_time,
+       e3.time_waited_micro commt_time,
+       w1.time_waited_micro dbfsr_time,
+       w2.time_waited_micro dpr_time,
+       w3.time_waited_micro lfpw_time
+  FROM db_time d,
+       system_event e1,
+       system_event e2,
+       system_event e3,
+       system_wait w1,
+       system_wait w2,
+       system_wait w3
+ WHERE d.value >= 0
+   AND e1.snap_id = d.snap_id
+   AND e1.dbid = d.dbid
+   AND e1.instance_number = d.instance_number
+   AND e1.wait_class = ''User I/O''
+   AND e1.time_waited_micro >= 0
+   AND e2.snap_id = d.snap_id
+   AND e2.dbid = d.dbid
+   AND e2.instance_number = d.instance_number
+   AND e2.wait_class = ''System I/O''
+   AND e2.time_waited_micro >= 0
+   AND e3.snap_id = d.snap_id
+   AND e3.dbid = d.dbid
+   AND e3.instance_number = d.instance_number
+   AND e3.wait_class = ''Commit''
+   AND e3.time_waited_micro >= 0
+   AND w1.snap_id = d.snap_id
+   AND w1.dbid = d.dbid
+   AND w1.instance_number = d.instance_number
+   AND w1.event_name = ''db file scattered read''
+   AND w1.time_waited_micro >= 0
+   AND w2.snap_id = d.snap_id
+   AND w2.dbid = d.dbid
+   AND w2.instance_number = d.instance_number
+   AND w2.event_name = ''direct path read''
+   AND w2.time_waited_micro >= 0
+   AND w3.snap_id = d.snap_id
+   AND w3.dbid = d.dbid
+   AND w3.instance_number = d.instance_number
+   AND w3.event_name = ''log file parallel write''
+   AND w3.time_waited_micro >= 0
+),
+by_inst_and_hh AS (
+SELECT /*+ &&sq_fact_hints. */
+       MIN(t.snap_id) snap_id,
+       t.dbid,
+       t.instance_number,
+       TRUNC(CAST(s.end_interval_time AS DATE), ''HH'') end_time,
+       SUM(db_time) db_time,
+       SUM(u_io_time) u_io_time,
+       SUM(dbfsr_time) dbfsr_time,
+       SUM(dpr_time) dpr_time,
+       SUM(s_io_time) s_io_time,
+       SUM(commt_time) commt_time,
+       SUM(lfpw_time) lfpw_time
+  FROM time_components t,
+       dba_hist_snapshot s
+ WHERE s.snap_id = t.snap_id
+   AND s.dbid = t.dbid
+   AND s.instance_number = t.instance_number
+   AND s.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND s.dbid = &&edb360_dbid.
+ GROUP BY
+       t.dbid,
+       t.instance_number,
+       TRUNC(CAST(s.end_interval_time AS DATE), ''HH'')
+),
+by_hh AS (
+SELECT /*+ &&sq_fact_hints. */
+       MIN(snap_id) snap_id,
+       dbid,
+       end_time,
+       SUM(db_time) db_time,
+       SUM(u_io_time) u_io_time,
+       SUM(dbfsr_time) dbfsr_time,
+       SUM(dpr_time) dpr_time,
+       SUM(s_io_time) s_io_time,
+       SUM(commt_time) commt_time,
+       SUM(lfpw_time) lfpw_time
+  FROM by_inst_and_hh
+ GROUP BY
+       dbid,
+       end_time
+)
+SELECT ROUND(SUM(db_time) / 1e6, 2) db_time_secs,
+       ROUND(SUM(u_io_time) / 1e6, 2) u_io_secs,
+       ROUND(SUM(dbfsr_time) / 1e6, 2) dbfsr_secs,
+       ROUND(SUM(dpr_time) / 1e6, 2) dpr_secs,
+       ROUND(SUM(s_io_time) / 1e6, 2) s_io_secs,
+       ROUND(SUM(commt_time) / 1e6, 2) commt_secs,
+       ROUND(SUM(lfpw_time) / 1e6, 2) lfpw_secs,
+       ROUND(100 * SUM(u_io_time) / SUM(db_time), 2) u_io_perc,
+       ROUND(100 * SUM(dbfsr_time) / SUM(db_time), 2) dbfsr_perc,
+       ROUND(100 * SUM(dpr_time) / SUM(db_time), 2) dpr_perc,
+       ROUND(100 * SUM(s_io_time) / SUM(db_time), 2) s_io_perc,
+       ROUND(100 * SUM(commt_time) / SUM(db_time), 2) commt_perc,
+       ROUND(100 * SUM(lfpw_time) / SUM(db_time), 2) lfpw_perc
+  FROM by_hh
+';
+END;
+/
+@@&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF title = 'Relevant Time Composition';
+DEF main_table = 'DBA_HIST_SYSTEM_EVENT';
+DEF chartype = 'LineChart';
+DEF skip_lch = '';
+DEF stacked = '';
+DEF vaxis = 'Time Component in Seconds';
+DEF vbaseline = '';
+DEF tit_01 = 'DB Time';
+DEF tit_02 = 'User I/O';
+DEF tit_03 = 'db file scattered read';
+DEF tit_04 = 'direct path read';
+DEF tit_05 = 'System I/O';
+DEF tit_06 = 'Commit';
+DEF tit_07 = 'log file parallel write';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
+BEGIN
+  :sql_text := '
+-- requested by Frits Hoogland
+WITH 
+db_time AS (
+SELECT /*+ &&sq_fact_hints. */
+       snap_id,
+       dbid,
+       instance_number,
+       stat_name,
+       value - LAG(value) OVER (PARTITION BY dbid, instance_number, stat_name ORDER BY snap_id) value
+  FROM dba_hist_sys_time_model
+ WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND dbid = &&edb360_dbid.
+   AND stat_name = ''DB time''
+),
+system_event_detail AS (
+SELECT /*+ &&sq_fact_hints. */
+       snap_id,
+       dbid,
+       instance_number,
+       wait_class,
+       SUM(time_waited_micro) time_waited_micro
+  FROM dba_hist_system_event
+ WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND dbid = &&edb360_dbid.
+   AND wait_class IN (''User I/O'', ''System I/O'', ''Commit'')
+ GROUP BY
+       dbid,
+       instance_number,
+       wait_class,
+       snap_id
+),
+system_event AS (
+SELECT /*+ &&sq_fact_hints. */
+       snap_id,
+       dbid,
+       instance_number,
+       wait_class,
+       time_waited_micro - LAG(time_waited_micro) OVER (PARTITION BY dbid, instance_number, wait_class ORDER BY snap_id) time_waited_micro
+  FROM system_event_detail
+),
+system_wait AS (
+SELECT /*+ &&sq_fact_hints. */
+       snap_id,
+       dbid,
+       instance_number,
+       event_name,
+       time_waited_micro - LAG(time_waited_micro) OVER (PARTITION BY dbid, instance_number, event_name ORDER BY snap_id) time_waited_micro
+  FROM dba_hist_system_event
+ WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND dbid = &&edb360_dbid.
+   AND event_name IN (''db file scattered read'', ''direct path read'', ''log file parallel write'')
+),
+time_components AS (
+SELECT /*+ &&sq_fact_hints. */
+       d.snap_id,
+       d.dbid,
+       d.instance_number,
+       d.value db_time,
+       e1.time_waited_micro u_io_time,
+       e2.time_waited_micro s_io_time,
+       e3.time_waited_micro commt_time,
+       w1.time_waited_micro dbfsr_time,
+       w2.time_waited_micro dpr_time,
+       w3.time_waited_micro lfpw_time
+  FROM db_time d,
+       system_event e1,
+       system_event e2,
+       system_event e3,
+       system_wait w1,
+       system_wait w2,
+       system_wait w3
+ WHERE d.value >= 0
+   AND e1.snap_id = d.snap_id
+   AND e1.dbid = d.dbid
+   AND e1.instance_number = d.instance_number
+   AND e1.wait_class = ''User I/O''
+   AND e1.time_waited_micro >= 0
+   AND e2.snap_id = d.snap_id
+   AND e2.dbid = d.dbid
+   AND e2.instance_number = d.instance_number
+   AND e2.wait_class = ''System I/O''
+   AND e2.time_waited_micro >= 0
+   AND e3.snap_id = d.snap_id
+   AND e3.dbid = d.dbid
+   AND e3.instance_number = d.instance_number
+   AND e3.wait_class = ''Commit''
+   AND e3.time_waited_micro >= 0
+   AND w1.snap_id = d.snap_id
+   AND w1.dbid = d.dbid
+   AND w1.instance_number = d.instance_number
+   AND w1.event_name = ''db file scattered read''
+   AND w1.time_waited_micro >= 0
+   AND w2.snap_id = d.snap_id
+   AND w2.dbid = d.dbid
+   AND w2.instance_number = d.instance_number
+   AND w2.event_name = ''direct path read''
+   AND w2.time_waited_micro >= 0
+   AND w3.snap_id = d.snap_id
+   AND w3.dbid = d.dbid
+   AND w3.instance_number = d.instance_number
+   AND w3.event_name = ''log file parallel write''
+   AND w3.time_waited_micro >= 0
+),
+by_inst_and_hh AS (
+SELECT /*+ &&sq_fact_hints. */
+       MIN(t.snap_id) snap_id,
+       t.dbid,
+       t.instance_number,
+       TRUNC(CAST(s.end_interval_time AS DATE), ''HH'') end_time,
+       SUM(db_time) db_time,
+       SUM(u_io_time) u_io_time,
+       SUM(dbfsr_time) dbfsr_time,
+       SUM(dpr_time) dpr_time,
+       SUM(s_io_time) s_io_time,
+       SUM(commt_time) commt_time,
+       SUM(lfpw_time) lfpw_time
+  FROM time_components t,
+       dba_hist_snapshot s
+ WHERE s.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND s.dbid = &&edb360_dbid.
+   AND s.snap_id = t.snap_id
+   AND s.dbid = t.dbid
+   AND s.instance_number = t.instance_number
+ GROUP BY
+       t.dbid,
+       t.instance_number,
+       TRUNC(CAST(s.end_interval_time AS DATE), ''HH'')
+),
+by_hh AS (
+SELECT /*+ &&sq_fact_hints. */
+       MIN(snap_id) snap_id,
+       dbid,
+       end_time,
+       SUM(db_time) db_time,
+       SUM(u_io_time) u_io_time,
+       SUM(dbfsr_time) dbfsr_time,
+       SUM(dpr_time) dpr_time,
+       SUM(s_io_time) s_io_time,
+       SUM(commt_time) commt_time,
+       SUM(lfpw_time) lfpw_time
+  FROM by_inst_and_hh
+ GROUP BY
+       dbid,
+       end_time
+)
+SELECT snap_id,
+       TO_CHAR(end_time - (1/24), ''YYYY-MM-DD HH24:MI'') begin_time,
+       TO_CHAR(end_time, ''YYYY-MM-DD HH24:MI'') end_time,
+       ROUND(db_time / 1e6, 2) db_time_secs,
+       ROUND(u_io_time / 1e6, 2) u_io_secs,
+       ROUND(dbfsr_time / 1e6, 2) dbfsr_secs,
+       ROUND(dpr_time / 1e6, 2) dpr_secs,
+       ROUND(s_io_time / 1e6, 2) s_io_secs,
+       ROUND(commt_time / 1e6, 2) commt_secs,
+       ROUND(lfpw_time / 1e6, 2) lfpw_secs,
+       ROUND(100 * u_io_time / db_time, 2) u_io_perc,
+       ROUND(100 * dbfsr_time / db_time, 2) dbfsr_perc,
+       ROUND(100 * dpr_time / db_time, 2) dpr_perc,
+       ROUND(100 * s_io_time / db_time, 2) s_io_perc,
+       ROUND(100 * commt_time / db_time, 2) commt_perc,
+       ROUND(100 * lfpw_time / db_time, 2) lfpw_perc,
+       0 dummy_14,
+       0 dummy_15
+  FROM by_hh
+ ORDER BY
+       snap_id,
+       end_time
+';
+END;
+/
+@@&&skip_diagnostics.edb360_9a_pre_one.sql
+
 COL cv_cellname       HEAD CELLNAME         FOR A20
 COL cv_cellversion    HEAD CELLSRV_VERSION  FOR A20
 COL cv_flashcachemode HEAD FLASH_CACHE_MODE FOR A20
