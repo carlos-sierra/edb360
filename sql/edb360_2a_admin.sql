@@ -713,8 +713,125 @@ END;
 /
 @@edb360_9a_pre_one.sql
        
+DEF title = 'Tables not recently used';
+DEF main_table = 'DBA_TABLES';
+DEF abstract = 'Be aware of false positives. List of tables not referenced in &&history_days. days.';
+BEGIN
+  :sql_text := '
+WITH 
+obj AS (
+SELECT /*+ &&sq_fact_hints. */
+       owner,
+       object_name,
+       object_id,
+       last_ddl_time
+  FROM dba_objects
+ WHERE object_type LIKE ''TABLE%''
+   AND last_ddl_time IS NOT NULL
+   AND owner NOT IN &&exclusion_list.
+   AND owner NOT IN &&exclusion_list2.
+),
+ash AS (
+SELECT /*+ &&sq_fact_hints. */
+       current_obj#,
+       MAX(CAST(sample_time AS DATE)) sample_date
+  FROM dba_hist_active_sess_history
+ WHERE current_obj# > 0
+   AND sql_plan_operation LIKE ''%TABLE%''
+   AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND dbid = &&edb360_dbid.
+ GROUP BY
+       current_obj#
+),
+sta1 AS (
+SELECT /*+ &&sq_fact_hints. */
+       owner,
+       table_name,
+       MAX(last_analyzed) last_analyzed
+  FROM dba_tab_statistics
+ WHERE last_analyzed IS NOT NULL
+   AND owner NOT IN &&exclusion_list.
+   AND owner NOT IN &&exclusion_list2.
+ GROUP BY
+       owner,
+       table_name
+),
+sta2 AS (
+SELECT /*+ &&sq_fact_hints. */
+       owner,
+       table_name,
+       last_analyzed
+  FROM dba_tables
+ WHERE last_analyzed IS NOT NULL
+   AND owner NOT IN &&exclusion_list.
+   AND owner NOT IN &&exclusion_list2.
+),
+sta3 AS (
+SELECT /*+ &&sq_fact_hints. */
+       table_owner owner,
+       table_name,
+       MAX(timestamp) last_date
+  FROM dba_tab_modifications
+ WHERE timestamp IS NOT NULL
+   AND table_owner NOT IN &&exclusion_list.
+   AND table_owner NOT IN &&exclusion_list2.
+ GROUP BY
+       table_owner,
+       table_name
+),
+grp AS (
+SELECT /*+ &&sq_fact_hints. */
+       owner,
+       object_name table_name,
+       MAX(last_ddl_time) last_date
+  FROM obj
+ GROUP BY
+       owner,
+       object_name
+ UNION 
+SELECT obj.owner,
+       obj.object_name table_name,
+       MAX(sample_date) last_date
+  FROM ash, obj
+ WHERE obj.object_id = ash.current_obj#
+ GROUP BY
+       obj.owner,
+       obj.object_name
+ UNION 
+SELECT owner,
+       table_name,
+       last_analyzed last_date
+  FROM sta1
+ UNION 
+SELECT owner,
+       table_name,
+       last_analyzed last_date
+  FROM sta2
+ UNION 
+SELECT owner,
+       table_name,
+       last_date
+  FROM sta3
+)
+SELECT /*+ &&top_level_hints. */
+       MAX(last_date) last_date,
+       owner,
+       table_name
+  FROM grp
+ GROUP BY
+       owner,
+       table_name
+HAVING MAX(last_date) < SYSDATE - &&history_days.
+ ORDER BY
+       1, 2, 3
+';
+END;
+/
+@@&&skip_diagnostics.&&skip_10g.edb360_9a_pre_one.sql
+
 DEF title = 'Indexes not recently used';
 DEF main_table = 'DBA_INDEXES';
+DEF abstract = 'Be aware of false positives. Turn index monitoring on for further analysis.';
 BEGIN
   :sql_text := '
 WITH
@@ -728,13 +845,15 @@ SELECT /*+ &&sq_fact_hints. */
    AND owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
 ),
+/*
 ash_mem AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. * /
        DISTINCT current_obj# 
   FROM gv$active_session_history
  WHERE sql_plan_operation = ''INDEX''
    AND current_obj# > 0
 ),
+*/
 ash_awr AS (
 SELECT /*+ &&sq_fact_hints. &&ds_hint. */
        DISTINCT current_obj# 
@@ -744,12 +863,14 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */
    AND dbid = &&edb360_dbid.
    AND current_obj# > 0
 ),
+/*
 sql_mem AS (
-SELECT /*+ &&sq_fact_hints. &&ds_hint. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. * /
        DISTINCT object_owner, object_name
   FROM gv$sql_plan 
 WHERE operation = ''INDEX''
 ),
+*/
 sql_awr AS (
 SELECT /*+ &&sq_fact_hints. &&ds_hint. */
        DISTINCT object_owner, object_name
@@ -764,9 +885,9 @@ SELECT /*+ &&top_level_hints. */
  WHERE (index_type LIKE ''NORMAL%'' OR index_type = ''BITMAP''  OR index_type LIKE ''FUNCTION%'')
    AND i.table_owner NOT IN &&exclusion_list.
    AND i.table_owner NOT IN &&exclusion_list2.
-   AND (i.owner, i.index_name) NOT IN ( SELECT o.owner, o.object_name FROM ash_mem a, objects o WHERE o.object_id = a.current_obj# )
+   --AND (i.owner, i.index_name) NOT IN ( SELECT o.owner, o.object_name FROM ash_mem a, objects o WHERE o.object_id = a.current_obj# )
    AND (i.owner, i.index_name) NOT IN ( SELECT o.owner, o.object_name FROM ash_awr a, objects o WHERE o.object_id = a.current_obj# )
-   AND (i.owner, i.index_name) NOT IN ( SELECT object_owner, object_name FROM sql_mem)
+   --AND (i.owner, i.index_name) NOT IN ( SELECT object_owner, object_name FROM sql_mem)
    AND (i.owner, i.index_name) NOT IN ( SELECT object_owner, object_name FROM sql_awr)
  ORDER BY
        i.table_owner,
@@ -1243,15 +1364,19 @@ BEGIN
 WITH 
 columns AS (
 SELECT /*+ &&sq_fact_hints. */
-       column_name, COUNT(*) typ_cnt, data_type,  
-       MIN(owner||''.''||table_name) min_table_name, 
-       MAX(owner||''.''||table_name) max_table_name
-  FROM dba_tab_columns
- WHERE owner NOT IN &&exclusion_list.
-   AND owner NOT IN &&exclusion_list2.
-   AND data_type != ''UNDEFINED''
+       c.column_name, COUNT(*) typ_cnt, data_type,  
+       MIN(c.owner||''.''||c.table_name) min_table_name, 
+       MAX(c.owner||''.''||c.table_name) max_table_name
+  FROM dba_tab_columns c,
+       dba_tables t
+ WHERE c.owner NOT IN &&exclusion_list.
+   AND c.owner NOT IN &&exclusion_list2.
+   AND c.data_type != ''UNDEFINED''
+   AND c.table_name NOT LIKE ''BIN%''
+   AND t.owner = c.owner -- this to filter out views
+   AND t.table_name = c.table_name -- this to filter out views
  GROUP BY
-       column_name, data_type
+       c.column_name, c.data_type
 ),
 more_than_one_type AS (
 SELECT /*+ &&sq_fact_hints. */
@@ -1459,6 +1584,7 @@ SELECT /*+ &&top_level_hints. */
   FROM dba_tab_columns
  WHERE owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
+   AND table_name NOT LIKE ''BIN%''
  GROUP BY
        owner, table_name
 HAVING COUNT(*) > 255

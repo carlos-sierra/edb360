@@ -6,7 +6,7 @@
 --
 -- Author:      Carlos Sierra, Rodrigo Righetti
 --
--- Version:     v1505 (2015/12/28)
+-- Version:     v1601 (2016/01/05)
 --
 -- Usage:       Collects Requirements from AWR and ASH views on databases with the 
 --				Oracle Diagnostics Pack license, it also collect from Statspack starting
@@ -33,6 +33,11 @@ SELECT TRANSLATE('&&esp_host_name_short.',
 'abcdefghijklmnopqrstuvwxyz0123456789-_ ''`~!@#$%&*()=+[]{}\|;:",.<>/?'||CHR(0)||CHR(9)||CHR(10)||CHR(13)||CHR(38),
 'abcdefghijklmnopqrstuvwxyz0123456789-_') esp_host_name_short FROM DUAL;
 
+-- get collection days
+DEF collection_days = '&&MAX_DAYS.';
+COL collection_days NEW_V collection_days;
+SELECT NVL(TO_CHAR(LEAST(EXTRACT(DAY FROM retention), TO_NUMBER('&&MAX_DAYS.'))), '&&MAX_DAYS.') collection_days FROM dba_hist_wr_control;
+
 DEF skip_on_10g = '';
 COL skip_on_10g NEW_V skip_on_10g;
 SELECT '--' skip_on_10g FROM v$instance WHERE version LIKE '10%';
@@ -57,7 +62,7 @@ COL ecr_instance_number NEW_V ecr_instance_number;
 SELECT 'get_instance_number', TO_CHAR(instance_number) ecr_instance_number FROM v$instance
 /
 COL ecr_min_snap_id NEW_V ecr_min_snap_id;
-SELECT 'get_min_snap_id', TO_CHAR(MIN(snap_id)) ecr_min_snap_id FROM dba_hist_snapshot WHERE dbid = &&ecr_dbid. AND CAST(begin_interval_time AS DATE) > SYSDATE - &&MAX_DAYS.
+SELECT 'get_min_snap_id', TO_CHAR(MIN(snap_id)) ecr_min_snap_id FROM dba_hist_snapshot WHERE dbid = &&ecr_dbid. AND CAST(begin_interval_time AS DATE) > SYSDATE - &&collection_days.
 /
 COL ecr_collection_host NEW_V ecr_collection_host;
 SELECT 'get_collection_host', LOWER(SUBSTR(SYS_CONTEXT('USERENV', 'SERVER_HOST')||'.', 1, INSTR(SYS_CONTEXT('USERENV', 'SERVER_HOST')||'.', '.') - 1)) ecr_collection_host FROM DUAL
@@ -74,13 +79,15 @@ SELECT 'collection_host,collection_key,category,data_element,source,instance_num
 /
 
 -- id
-SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'id', 'collector_version', 'v1505', 0, 0, '2015-12-28' FROM DUAL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'id', 'collector_version', 'v1601', 0, 0, '2016-01-05' FROM DUAL
 /
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'id', 'collection_date', 'sysdate', 0, 0, TO_CHAR(SYSDATE, '&&ecr_date_format.') FROM DUAL
 /
-SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'id', 'awr_retention_days', 'dba_hist_snapshot', 0, 0,  ROUND(CAST(MAX(end_interval_time) AS DATE) - CAST(MIN(begin_interval_time) AS DATE), 1) FROM dba_hist_snapshot WHERE dbid = &&ecr_dbid. AND CAST(begin_interval_time AS DATE) > SYSDATE - &&MAX_DAYS.
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'id', 'awr_retention_days', 'dba_hist_snapshot', 0, 0,  ROUND(CAST(MAX(end_interval_time) AS DATE) - CAST(MIN(begin_interval_time) AS DATE), 1) FROM dba_hist_snapshot WHERE dbid = &&ecr_dbid. AND CAST(begin_interval_time AS DATE) > SYSDATE - &&collection_days.
 /
-SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'id', 'awr_retention_days', 'dba_hist_snapshot', instance_number, 0, ROUND(CAST(MAX(end_interval_time) AS DATE) - CAST(MIN(begin_interval_time) AS DATE), 1) FROM dba_hist_snapshot WHERE dbid = &&ecr_dbid. AND CAST(begin_interval_time AS DATE) > SYSDATE - &&MAX_DAYS. GROUP BY instance_number ORDER BY instance_number
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'id', 'awr_retention_days', 'dba_hist_snapshot', instance_number, 0, ROUND(CAST(MAX(end_interval_time) AS DATE) - CAST(MIN(begin_interval_time) AS DATE), 1) FROM dba_hist_snapshot WHERE dbid = &&ecr_dbid. AND CAST(begin_interval_time AS DATE) > SYSDATE - &&collection_days. GROUP BY instance_number ORDER BY instance_number
+/
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'id', 'collection_days', 'dba_hist_wr_control', 0, 0, '&&collection_days.' FROM DUAL
 /
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'id', 'user', 'user', 0, 0, USER FROM DUAL
 /
@@ -102,7 +109,7 @@ SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'id', 'version', 'gv$in
 /
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'id', 'instance_name', 'gv$instance', instance_number, inst_id, instance_name FROM gv$instance ORDER BY inst_id
 /
-SELECT DISTINCT '&&ecr_collection_host.', '&&ecr_collection_key', 'id', 'instance_name', 'dba_hist_database_instance', instance_number, 0, instance_name FROM dba_hist_database_instance WHERE dbid = &&ecr_dbid. AND CAST(startup_time AS DATE) > SYSDATE - &&MAX_DAYS. ORDER BY instance_number
+SELECT DISTINCT '&&ecr_collection_host.', '&&ecr_collection_key', 'id', 'instance_name', 'dba_hist_database_instance', instance_number, 0, instance_name FROM dba_hist_database_instance WHERE dbid = &&ecr_dbid. AND CAST(startup_time AS DATE) > SYSDATE - &&collection_days. ORDER BY instance_number
 /
 
 -- cpu 
@@ -123,7 +130,7 @@ SELECT /*+ &&ecr_sq_fact_hints. */
    AND s.snap_id = h.snap_id
    AND s.dbid = h.dbid
    AND s.instance_number = h.instance_number
-   AND CAST(s.begin_interval_time AS DATE) > SYSDATE - &&MAX_DAYS.
+   AND CAST(s.begin_interval_time AS DATE) > SYSDATE - &&collection_days.
  GROUP BY
        h.instance_number,
        h.snap_id,
@@ -296,7 +303,7 @@ SELECT /*+ &&ecr_sq_fact_hints. */
        SUM(CASE event WHEN 'resmgr:cpu quantum' THEN 1 ELSE 0 END) aas_resmgr_cpu_quantum       
   FROM gv$active_session_history
  WHERE (session_state = 'ON CPU' OR event = 'resmgr:cpu quantum')
-   AND CAST(sample_time AS DATE) > SYSDATE - &&MAX_DAYS.
+   AND CAST(sample_time AS DATE) > SYSDATE - &&collection_days.
  GROUP BY
        inst_id,
        sample_id
@@ -473,7 +480,7 @@ SELECT /*+ &&ecr_sq_fact_hints. */
    AND s.snap_id = h.snap_id
    AND s.dbid = h.dbid
    AND s.instance_number = h.instance_number
-   AND CAST(s.begin_interval_time AS DATE) > SYSDATE - &&MAX_DAYS.
+   AND CAST(s.begin_interval_time AS DATE) > SYSDATE - &&collection_days.
  GROUP BY
        h.instance_number,
        h.snap_id
@@ -507,7 +514,7 @@ SELECT /*+ &&ecr_sq_fact_hints. */
    AND s.snap_id = h.snap_id
    AND s.dbid = h.dbid
    AND s.instance_number = h.instance_number
-   AND CAST(s.begin_interval_time AS DATE) > SYSDATE - &&MAX_DAYS.
+   AND CAST(s.begin_interval_time AS DATE) > SYSDATE - &&collection_days.
  GROUP BY
        h.instance_number
 )
@@ -533,7 +540,7 @@ SELECT /*+ &&ecr_sq_fact_hints. */
    AND s.snap_id = h.snap_id
    AND s.dbid = h.dbid
    AND s.instance_number = h.instance_number
-   AND CAST(s.begin_interval_time AS DATE) > SYSDATE - &&MAX_DAYS.
+   AND CAST(s.begin_interval_time AS DATE) > SYSDATE - &&collection_days.
  GROUP BY
        h.instance_number,
        h.parameter_name
@@ -608,7 +615,7 @@ SELECT /*+ &&ecr_sq_fact_hints. */
    AND s.snap_id = h.snap_id
    AND s.dbid = h.dbid
    AND s.instance_number = h.instance_number
-   AND CAST(s.begin_interval_time AS DATE) > SYSDATE - &&MAX_DAYS.
+   AND CAST(s.begin_interval_time AS DATE) > SYSDATE - &&collection_days.
  GROUP BY
        h.instance_number,
        h.snap_id
@@ -1155,7 +1162,7 @@ SELECT /*+ &&ecr_sq_fact_hints. */
    AND s.snap_id = h.snap_id
    AND s.dbid = h.dbid
    AND s.instance_number = h.instance_number
-   AND CAST(s.begin_interval_time AS DATE) > SYSDATE - &&MAX_DAYS.
+   AND CAST(s.begin_interval_time AS DATE) > SYSDATE - &&collection_days.
  GROUP BY
        h.instance_number,
        h.snap_id,
@@ -1216,7 +1223,7 @@ SELECT /*+ &&ecr_sq_fact_hints. */
    AND s.snap_id = h.snap_id
    AND s.dbid = h.dbid
    AND s.instance_number = h.instance_number
-   AND CAST(s.begin_interval_time AS DATE) > SYSDATE - &&MAX_DAYS.
+   AND CAST(s.begin_interval_time AS DATE) > SYSDATE - &&collection_days.
  GROUP BY
        h.instance_number,
        h.snap_id,
@@ -1246,7 +1253,7 @@ SELECT /*+ &&ecr_sq_fact_hints. */
    AND s.snap_id = h.snap_id
    AND s.dbid = h.dbid
    AND s.instance_number = h.instance_number
-   AND CAST(s.begin_interval_time AS DATE) > SYSDATE - &&MAX_DAYS.
+   AND CAST(s.begin_interval_time AS DATE) > SYSDATE - &&collection_days.
  GROUP BY
        h.instance_number,
        h.snap_id,
@@ -1279,7 +1286,7 @@ SELECT /*+ &&ecr_sq_fact_hints. */
    AND s.snap_id = h.snap_id
    AND s.dbid = h.dbid
    AND s.instance_number = h.instance_number
-   AND CAST(s.begin_interval_time AS DATE) > SYSDATE - &&MAX_DAYS.
+   AND CAST(s.begin_interval_time AS DATE) > SYSDATE - &&collection_days.
  GROUP BY
        h.instance_number,
        h.snap_id
@@ -1357,7 +1364,7 @@ SELECT /*+ &&ecr_sq_fact_hints. */
    AND sn.snap_id = us.snap_id
    AND sn.dbid = us.dbid
    AND sn.instance_number = &&ecr_instance_number.
-   AND CAST(sn.begin_interval_time AS DATE) > SYSDATE - &&MAX_DAYS.
+   AND CAST(sn.begin_interval_time AS DATE) > SYSDATE - &&collection_days.
    AND vt.ts# = us.tablespace_id
    AND ts.tablespace_name = vt.name
  GROUP BY
@@ -1401,7 +1408,7 @@ SELECT /*+ &&ecr_sq_fact_hints. */
    AND s.snap_id = h.snap_id
    AND s.dbid = h.dbid
    AND s.instance_number = h.instance_number
-   AND CAST(s.begin_interval_time AS DATE) > SYSDATE - &&MAX_DAYS.
+   AND CAST(s.begin_interval_time AS DATE) > SYSDATE - &&collection_days.
  GROUP BY
        h.snap_id,
        h.instance_number
@@ -1420,7 +1427,7 @@ SELECT /*+ &&ecr_sq_fact_hints. */
  WHERE s.dbid = &&ecr_dbid.
    AND s.snap_id = h.snap_id
    AND s.instance_number = h.instance_number
-   AND CAST(s.begin_interval_time AS DATE) > SYSDATE - &&MAX_DAYS.
+   AND CAST(s.begin_interval_time AS DATE) > SYSDATE - &&collection_days.
    AND (CAST(s.end_interval_time AS DATE) - CAST(s.begin_interval_time AS DATE)) * 86400 > 60 -- ignore snaps too close
  GROUP BY
        h.instance_number,
