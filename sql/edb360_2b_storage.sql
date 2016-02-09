@@ -80,6 +80,19 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+DEF title = 'UNDO Stat';
+DEF main_table = 'GV$UNDOSTAT';
+BEGIN
+  :sql_text := '
+SELECT /*+ &&top_level_hints. */
+       *
+  FROM gv$undostat
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+
 DEF title = 'Tablespace Usage';
 DEF main_table = 'DBA_SEGMENTS';
 COL pct_used FOR 999990.0;

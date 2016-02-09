@@ -74,6 +74,19 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+DEF title = 'Pluggable Databases';
+DEF main_table = 'DBA_PDBS';
+BEGIN
+  :sql_text := '
+SELECT pdb1.*, pdb2.open_mode, pdb2.restricted, pdb2.open_time, pdb2.total_size, pdb2.block_size, pdb2.recovery_status
+FROM  DBA_PDBS pdb1 join v$pdbs pdb2
+  on pdb1.con_id=pdb2.con_id
+ORDER BY pdb1.con_id
+';
+END;
+/
+@@&&skip_10g.&&skip_11g.edb360_9a_pre_one.sql
+
 DEF title = 'Database and Instance History';
 DEF main_table = 'DBA_HIST_DATABASE_INSTANCE';
 BEGIN
