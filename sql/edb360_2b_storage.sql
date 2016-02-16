@@ -113,6 +113,7 @@ SELECT /*+ &&sq_fact_hints. */
        tablespace_name,
        SUM(bytes) / 1024 / 1024 / 1024 used_gb
   FROM dba_segments
+ WHERE ''&&edb360_conf_incl_segments.'' = ''Y''
  GROUP BY
        tablespace_name
 ),
@@ -415,6 +416,7 @@ SELECT /*+ &&sq_fact_hints. */
        SUM(blocks) blocks,
        SUM(bytes) bytes
   FROM dba_segments
+ WHERE ''&&edb360_conf_incl_segments.'' = ''Y''
  GROUP BY
        segment_type,
        owner,
@@ -611,7 +613,8 @@ SELECT /*+ &&sq_fact_hints. */
        segment_name,
        SUM(bytes) bytes
   FROM dba_segments
-WHERE segment_type LIKE ''TABLE%''
+ WHERE ''&&edb360_conf_incl_segments.'' = ''Y''
+   AND segment_type LIKE ''TABLE%''
 GROUP BY
        owner,
        segment_name
@@ -622,7 +625,8 @@ SELECT /*+ &&sq_fact_hints. */
        segment_name,
        SUM(bytes) bytes
   FROM dba_segments
-WHERE segment_type LIKE ''INDEX%''
+ WHERE ''&&edb360_conf_incl_segments.'' = ''Y''
+   AND segment_type LIKE ''INDEX%''
 GROUP BY
        owner,
        segment_name
@@ -674,7 +678,8 @@ SELECT /*+ &&sq_fact_hints. */
        segment_name,
        SUM(bytes) bytes
   FROM dba_segments
-WHERE segment_type LIKE ''TABLE%''
+ WHERE ''&&edb360_conf_incl_segments.'' = ''Y''
+   AND segment_type LIKE ''TABLE%''
 GROUP BY
        owner,
        segment_name
@@ -685,7 +690,8 @@ SELECT /*+ &&sq_fact_hints. */
        segment_name,
        SUM(bytes) bytes
   FROM dba_segments
-WHERE segment_type LIKE ''INDEX%''
+ WHERE ''&&edb360_conf_incl_segments.'' = ''Y''
+   AND segment_type LIKE ''INDEX%''
 GROUP BY
        owner,
        segment_name
@@ -774,7 +780,8 @@ select /*+ &&top_level_hints. */
 tablespace_name, owner, segment_name,
 round(sum(bytes/power(2, 20))) mega_bytes 
 from dba_segments
-where segment_type = ''TEMPORARY'' 
+where ''&&edb360_conf_incl_segments.'' = ''Y''
+and segment_type = ''TEMPORARY'' 
 group by tablespace_name, owner, segment_name
 having round(sum(bytes/power(2, 20))) > 0
 order by tablespace_name, owner, segment_name
@@ -790,8 +797,9 @@ BEGIN
 -- provided by Simon Pane
 SELECT /*+ &&top_level_hints. */ 
        s.owner, s.segment_type, s.tablespace_name, COUNT(1)
-  FROM sys.dba_segments s
- WHERE s.owner NOT IN (''SYS'',''SYSTEM'',''OUTLN'',''AURORA$JIS$UTILITY$'',''OSE$HTTP$ADMIN'',''ORACACHE'',''ORDSYS'',
+  FROM dba_segments s
+ WHERE ''&&edb360_conf_incl_segments.'' = ''Y''
+   AND s.owner NOT IN (''SYS'',''SYSTEM'',''OUTLN'',''AURORA$JIS$UTILITY$'',''OSE$HTTP$ADMIN'',''ORACACHE'',''ORDSYS'',
                        ''CTXSYS'',''DBSNMP'',''DMSYS'',''EXFSYS'',''MDSYS'',''OLAPSYS'',''SYSMAN'',''TSMSYS'',''WMSYS'',''XDB'')
    AND s.tablespace_name IN (''SYSTEM'',''SYSAUX'',''TEMP'',''TEMPORARY'',''RBS'',''ROLLBACK'',''ROLLBACKS'',''RBSEGS'')
    AND s.tablespace_name NOT IN (SELECT tablespace_name
@@ -915,7 +923,7 @@ PRO
 DECLARE
   sql_text CLOB;
 BEGIN
-  IF '&&db_version.' < '11.2.0.3' AND '&&db_version.' >= '11.2.0.4' THEN -- avoids DBMS_METADATA.GET_DDL: Query Against SYS.KU$_INDEX_VIEW Is Slow In 11.2.0.3 as per 1459841.1
+  IF '&&edb360_conf_incl_metadata.' = 'Y' AND '&&db_version.' < '11.2.0.3' AND '&&db_version.' >= '11.2.0.4' THEN -- avoids DBMS_METADATA.GET_DDL: Query Against SYS.KU$_INDEX_VIEW Is Slow In 11.2.0.3 as per 1459841.1
     FOR i IN (SELECT idx.owner, idx.index_name
                 FROM dba_indexes idx,
                      dba_tables tbl
@@ -976,7 +984,8 @@ segments AS (
 SELECT /*+ &&sq_fact_hints. */
        owner, segment_name, SUM(bytes) actual_bytes
   FROM dba_segments
- WHERE owner NOT IN &&exclusion_list. -- exclude non-application schemas
+ WHERE ''&&edb360_conf_incl_segments.'' = ''Y''
+   AND owner NOT IN &&exclusion_list. -- exclude non-application schemas
    AND owner NOT IN &&exclusion_list2. -- exclude more non-application schemas
    AND segment_type LIKE ''INDEX%''
 HAVING SUM(bytes) > POWER(2, 20) -- only indexes with actual size > 1 MB
@@ -994,8 +1003,8 @@ SELECT /*+ &&sq_fact_hints. */
   FROM indexes i,
        segments s
  WHERE i.estimated_bytes > POWER(2, 20) -- only indexes with estimated size > 1 MB
-   AND s.owner = i.object_owner
-   AND s.segment_name = i.object_name
+   AND s.owner(+) = i.object_owner
+   AND s.segment_name(+) = i.object_name
 )
 SELECT /*+ &&top_level_hints. */
        ROUND(actual_minus_estimated / POWER(2, 20)) actual_minus_estimated,

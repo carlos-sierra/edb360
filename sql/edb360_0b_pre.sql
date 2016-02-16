@@ -1,7 +1,7 @@
 --WHENEVER SQLERROR EXIT SQL.SQLCODE;
 
-DEF edb360_vYYNN = 'v1602';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2016-02-09)';
+DEF edb360_vYYNN = 'v1603';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2016-02-15)';
 
 -- parameters
 PRO

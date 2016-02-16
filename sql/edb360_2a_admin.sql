@@ -1167,7 +1167,8 @@ BEGIN
 SELECT /*+ &&top_level_hints. */
        buffer_pool, owner, segment_name, partition_name, segment_type, blocks
   FROM dba_segments
- WHERE owner NOT IN &&exclusion_list.
+ WHERE ''&&edb360_conf_incl_segments.'' = ''Y''
+   AND owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
    AND TRIM(buffer_pool) != ''DEFAULT''
  ORDER BY
@@ -1188,7 +1189,8 @@ BEGIN
 SELECT /*+ &&top_level_hints. */
        flash_cache, owner, segment_name, partition_name, segment_type, blocks
   FROM dba_segments
- WHERE owner NOT IN &&exclusion_list.
+ WHERE ''&&edb360_conf_incl_segments.'' = ''Y''
+   AND owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
    AND TRIM(flash_cache) != ''DEFAULT''
  ORDER BY
@@ -1209,7 +1211,8 @@ BEGIN
 SELECT /*+ &&top_level_hints. */
        cell_flash_cache, owner, segment_name, partition_name, segment_type, blocks
   FROM dba_segments
- WHERE owner NOT IN &&exclusion_list.
+ WHERE ''&&edb360_conf_incl_segments.'' = ''Y''
+   AND owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
    AND TRIM(cell_flash_cache) != ''DEFAULT''
  ORDER BY
@@ -2164,7 +2167,8 @@ group by tablespace_name )
 select /*+ &&top_level_hints. */
 s.owner, s.segment_name, s.tablespace_name, s.next_extent, max_free.bytes max_free_bytes 
 from dba_segments s, max_free
-where s.owner NOT IN &&exclusion_list.
+where ''&&edb360_conf_incl_segments.'' = ''Y''
+and s.owner NOT IN &&exclusion_list.
 and s.owner NOT IN &&exclusion_list2.
 and s.next_extent > max_free.bytes 
 and s.tablespace_name=max_free.tablespace_name

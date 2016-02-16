@@ -35,6 +35,12 @@ DEF edb360_conf_incl_stat_mem = 'Y';
 -- include GV$PX and GV$PQ (default Y)
 DEF edb360_conf_incl_px_mem = 'Y';
 
+-- include DBA_SEGMENTS on queries with no filter on segment_name (default Y)
+DEF edb360_conf_incl_segments = 'Y';
+
+-- include DBMS_METADATA calls (default Y)
+DEF edb360_conf_incl_metadata = 'Y';
+
 /**************************** not recommended to modify *********************************/
 
 -- excluding report types reduce usability while providing marginal performance gain
