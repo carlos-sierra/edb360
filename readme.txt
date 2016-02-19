@@ -1,4 +1,4 @@
-EDB360 v1603 (2016-02-15) by Carlos Sierra
+EDB360 v1604 (2016-02-18) by Carlos Sierra
 
 EDB360 is a "free to use" tool to perform an initial assessment of a remote system. 
 It gives a glance of a database state. It also helps to document any findings.
@@ -100,7 +100,7 @@ Steps:
 ****************************************************************************************
    
     EDB360 - Enkitec's Oracle Database 360-degree View
-    Copyright (C) 2014  Carlos Sierra
+    Copyright (C) 2016  Carlos Sierra
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

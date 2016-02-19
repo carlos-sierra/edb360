@@ -27,12 +27,14 @@ for INST in $(ps axo cmd | $AWK '$0~/^ora_pmon_/ {gsub(/^ora_pmon_/,"",$0); prin
 sqlplus -s /nolog <<EOF
 connect / as sysdba
 
+DEF ash_validation = '--skip--';
 @sql/edb360_0a_main.sql T
 EOF
 
 done
-zip -qmT esp_requirements_host.zip res_requirements_*.txt esp_requirements_*.csv cpuinfo_model_name.txt 
-zip -qmT edb360_output.zip edb360_*.zip esp_requirements_host.zip
-zip -r osw_output.zip $(ps -ef | $AWK -F 'OSW' '$0~/OSW/ && $0~/FM/ {split($2,x," "); print x[3]}')
 
-echo "End edb360 collector. Output: edb360_output.zip and osw_output.zip"
+zip -m edb360_output.zip edb360_*.zip
+zip -r osw_output.zip $(ps -ef | $AWK -F 'OSW' '$0~/OSW/ && $0~/FM/ {split($2,x," "); print x[3]}')
+zip -m edb360_output.zip osw_output.zip
+
+echo "End edb360 collector. Output: edb360_output.zip"

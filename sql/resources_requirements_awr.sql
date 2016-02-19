@@ -6,8 +6,6 @@
 --
 -- Author:      Carlos Sierra, Rodrigo Righetti
 --
--- Version:     v1601 (2016/01/05)
---
 -- Usage:       Collects Requirements from AWR and ASH views on databases with the 
 --				Oracle Diagnostics Pack license, it also collect from Statspack starting
 --				9i databases up to 12c. 				 
@@ -27,12 +25,18 @@ DEF MAX_DAYS = '365';
 SET TERM OFF ECHO OFF FEED OFF VER OFF HEA ON PAGES 100 COLSEP ' ' LIN 32767 TRIMS ON TRIM ON TI OFF TIMI OFF ARRAY 100 NUM 10 SQLBL ON BLO . RECSEP OFF;
 
 -- get host name (up to 30, stop before first '.', no special characters)
-COL rr_host_name_short NEW_V rr_host_name_short FOR A30;
-SELECT LOWER(SUBSTR(SYS_CONTEXT('USERENV', 'SERVER_HOST'), 1, 30)) rr_host_name_short FROM DUAL;
-SELECT SUBSTR('&&rr_host_name_short.', 1, INSTR('&&rr_host_name_short..', '.') - 1) rr_host_name_short FROM DUAL;
-SELECT TRANSLATE('&&rr_host_name_short.',
+DEF esp_host_name_short = '';
+COL esp_host_name_short NEW_V esp_host_name_short FOR A30;
+SELECT LOWER(SUBSTR(SYS_CONTEXT('USERENV', 'SERVER_HOST'), 1, 30)) esp_host_name_short FROM DUAL;
+SELECT SUBSTR('&&esp_host_name_short.', 1, INSTR('&&esp_host_name_short..', '.') - 1) esp_host_name_short FROM DUAL;
+SELECT TRANSLATE('&&esp_host_name_short.',
 'abcdefghijklmnopqrstuvwxyz0123456789-_ ''`~!@#$%&*()=+[]{}\|;:",.<>/?'||CHR(0)||CHR(9)||CHR(10)||CHR(13)||CHR(38),
-'abcdefghijklmnopqrstuvwxyz0123456789-_') rr_host_name_short FROM DUAL;
+'abcdefghijklmnopqrstuvwxyz0123456789-_') esp_host_name_short FROM DUAL;
+
+-- get collection date
+DEF esp_collection_yyyymmdd = '';
+COL esp_collection_yyyymmdd NEW_V esp_collection_yyyymmdd FOR A8;
+SELECT TO_CHAR(SYSDATE, 'YYYYMMDD') esp_collection_yyyymmdd FROM DUAL;
 
 -- get collection days
 DEF collection_days = '&&MAX_DAYS.';
@@ -48,12 +52,16 @@ COL use_on_10g NEW_V use_on_10g;
 SELECT '' use_on_10g FROM v$instance WHERE version LIKE '10%';
 
 CL COL;
-SPO res_requirements_&&rr_host_name_short..txt APP;
+
+SPO res_requirements_awr_&&esp_host_name_short._&&esp_collection_yyyymmdd..txt APP;
 
 /*****************************************************************************************/
 
-COL collection_days FOR A15;
+COL collection_days FOR A15 HEA "Collection Days";
 SELECT '&&collection_days.' collection_days FROM DUAL
+/
+
+SELECT dbid, name FROM v$database
 /
 
 /*****************************************************************************************/
@@ -77,7 +85,7 @@ SELECT h.dbid,
        platform_name	
   FROM dba_hist_database_instance h
   	   &&use_on_10g. , (select platform_name from v$database) pname
- WHERE CAST(h.startup_time AS DATE) > SYSDATE - &&collection_days.
+ WHERE CAST(h.startup_time AS DATE) > SYSDATE - &&MAX_DAYS.
  ORDER BY
        h.dbid,				
        h.instance_number,	

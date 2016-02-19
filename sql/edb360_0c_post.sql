@@ -64,7 +64,7 @@ HOS zip -m &&edb360_main_filename._&&edb360_file_time. 00006_&&common_edb360_pre
 HOS zip -j 00007_&&common_edb360_prefix._opatch $ORACLE_HOME/cfgtoollogs/opatch/opatch* >> &&edb360_log3..txt
 HOS zip -m &&edb360_main_filename._&&edb360_file_time. 00007_&&common_edb360_prefix._opatch.zip >> &&edb360_log3..txt
 HOS zip -m &&edb360_main_filename._&&edb360_file_time. &&edb360_log2..txt >> &&edb360_log3..txt
-HOS zip -m &&edb360_main_filename._&&edb360_file_time. awrinfo.txt >> &&edb360_log3..txt
+--HOS zip -m &&edb360_main_filename._&&edb360_file_time. awrinfo.txt >> &&edb360_log3..txt
 HOS zip -m &&edb360_main_filename._&&edb360_file_time. &&edb360_tkprof._sort.txt >> &&edb360_log3..txt
 HOS zip -m &&edb360_main_filename._&&edb360_file_time. &&edb360_log..txt >> &&edb360_log3..txt
 HOS zip -m &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html >> &&edb360_log3..txt

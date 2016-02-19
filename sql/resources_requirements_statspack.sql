@@ -6,8 +6,6 @@
 --
 -- Author:      Carlos Sierra, Rodrigo Righetti
 --
--- Version:     v1504 (2015/04/02)
---
 -- Usage:       Collects Requirements from AWR and ASH views on databases with the 
 --				Oracle Diagnostics Pack license, it also collect from Statspack starting
 --				9i databases up to 12c. 				 
@@ -27,12 +25,18 @@
 SET TERM OFF ECHO OFF FEED OFF VER OFF HEA ON PAGES 100 COLSEP ' ' LIN 32767 TRIMS ON TRIM ON TI OFF TIMI OFF ARRAY 100 NUM 10 SQLBL ON BLO . RECSEP OFF;
 
 -- get host name (up to 30, stop before first '.', no special characters)
-COL rr_host_name_short NEW_V rr_host_name_short FOR A30;
-SELECT LOWER(SUBSTR(host_name, 1, decode(instr(host_name,'.'),0,31,instr(host_name,'.'))-1)) rr_host_name_short FROM v$instance;
-SELECT SUBSTR('&&rr_host_name_short.', 1, INSTR('&&rr_host_name_short..', '.') - 1) rr_host_name_short FROM DUAL;
-SELECT TRANSLATE('&&rr_host_name_short.',
+DEF esp_host_name_short = '';
+COL esp_host_name_short NEW_V esp_host_name_short FOR A30;
+SELECT LOWER(SUBSTR(host_name, 1, decode(instr(host_name,'.'),0,31,instr(host_name,'.'))-1)) esp_host_name_short FROM v$instance;
+SELECT SUBSTR('&&esp_host_name_short.', 1, INSTR('&&esp_host_name_short..', '.') - 1) esp_host_name_short FROM DUAL;
+SELECT TRANSLATE('&&esp_host_name_short.',
 'abcdefghijklmnopqrstuvwxyz0123456789-_ ''`~!@#$%&*()=+[]{}\|;:",.<>/?'||CHR(0)||CHR(9)||CHR(10)||CHR(13)||CHR(38),
-'abcdefghijklmnopqrstuvwxyz0123456789-_') rr_host_name_short FROM DUAL;
+'abcdefghijklmnopqrstuvwxyz0123456789-_') esp_host_name_short FROM DUAL;
+
+-- get collection date
+DEF esp_collection_yyyymmdd = '';
+COL esp_collection_yyyymmdd NEW_V esp_collection_yyyymmdd FOR A8;
+SELECT TO_CHAR(SYSDATE, 'YYYYMMDD') esp_collection_yyyymmdd FROM DUAL;
 
 COL ecr_collection_key NEW_V ecr_collection_key;
 -- STATSPACK
@@ -49,8 +53,13 @@ COL useappend NEW_V useappend;
 SELECT '' useappend FROM v$instance WHERE version LIKE '9%';
 
 CL COL;
-SPO res_requirements_stp_&&rr_host_name_short._&&ecr_collection_key..txt &&useappend.;
 
+SPO res_requirements_stp_&&esp_host_name_short._&&esp_collection_yyyymmdd._&&ecr_collection_key..txt &&useappend.;
+
+/*****************************************************************************************/
+
+SELECT dbid, name FROM v$database
+/
 
 /*****************************************************************************************/
 

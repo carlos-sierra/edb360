@@ -601,6 +601,87 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+DEF title = 'Tables with one extent and no rows';
+DEF main_table = 'DBA_SEGMENTS';
+BEGIN
+  :sql_text := '
+-- requested by David Kurtz
+SELECT  t.owner, t.table_name, t.tablespace_name, t.num_rows, t.blocks hwm_blocks, t.last_analyzed, s.blocks seg_blocks
+FROM    dba_tables t
+,       dba_segments s
+WHERE   ''&&edb360_conf_incl_segments.'' = ''Y''
+and     t.owner not in &&exclusion_list.
+and     t.owner not in &&exclusion_list2.
+and     s.segment_type = ''TABLE''
+and     t.owner = s.owner
+and     t.table_name = s.segment_name
+and     t.tablespace_name = s.tablespace_name
+and     s.partition_name IS NULL
+and     t.segment_created = ''YES''
+AND     (       t.num_rows = 0
+        OR       t.num_rows IS NULL     
+        )
+and     s.extents =  1
+ORDER BY 1,2
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+DEF title = 'Partitions with one extent and no rows';
+DEF main_table = 'DBA_SEGMENTS';
+BEGIN
+  :sql_text := '
+-- requested by David Kurtz
+SELECT  t.table_owner, t.table_name, t.partition_name, t.tablespace_name, t.num_rows, t.blocks hwm_blocks, t.last_analyzed, s.blocks seg_blocks
+FROM    dba_tab_partitions t
+,       dba_segments s
+WHERE   ''&&edb360_conf_incl_segments.'' = ''Y''
+and     t.table_owner not in &&exclusion_list.
+and     t.table_owner not in &&exclusion_list2.
+and     s.segment_type = ''TABLE PARTITION''
+and     t.table_owner = s.owner
+and     t.table_name = s.segment_name
+and     t.tablespace_name = s.tablespace_name
+and     t.partition_name = s.partition_name
+and     t.segment_created = ''YES''
+AND     (       t.num_rows = 0
+        OR       t.num_rows IS NULL     
+        )
+and     s.extents =  1
+ORDER BY 1,2,3
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+DEF title = 'Subpartitions with one extent and no rows';
+DEF main_table = 'DBA_SEGMENTS';
+BEGIN
+  :sql_text := '
+-- requested by David Kurtz
+SELECT  t.table_owner, t.table_name, t.partition_name, t.subpartition_name, t.tablespace_name, t.num_rows, t.blocks hwm_blocks, t.last_analyzed, s.blocks seg_blocks
+FROM    dba_tab_subpartitions t
+,       dba_segments s
+WHERE   ''&&edb360_conf_incl_segments.'' = ''Y''
+and     t.table_owner not in &&exclusion_list.
+and     t.table_owner not in &&exclusion_list2.
+and     s.segment_type = ''TABLE SUBPARTITION''
+and     t.table_owner = s.owner
+and     t.table_name = s.segment_name
+and     t.subpartition_name = s.partition_name
+and     t.tablespace_name = s.tablespace_name
+and     t.segment_created = ''YES''
+AND     (       t.num_rows = 0
+        OR       t.num_rows IS NULL     
+        )
+and     s.extents =  1
+ORDER BY 1,2,3,4
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
 DEF title = 'Tables and their indexes larger than 1 GB';
 DEF main_table = 'DBA_SEGMENTS';
 COL gb FOR 999990.000;

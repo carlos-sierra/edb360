@@ -6,8 +6,6 @@
 --
 -- Author:      Carlos Sierra, Rodrigo Righetti
 --
--- Version:     v1601 (2016/01/05)
---
 -- Usage:       Collects Requirements from AWR and ASH views on databases with the 
 --				Oracle Diagnostics Pack license, it also collect from Statspack starting
 --				9i databases up to 12c. 				 
@@ -25,13 +23,20 @@
 --
 DEF MAX_DAYS = '365';
 SET TERM OFF ECHO OFF FEED OFF VER OFF HEA OFF PAGES 0 COLSEP ', ' LIN 32767 TRIMS ON TRIM ON TI OFF TIMI OFF ARRAY 100 NUM 20 SQLBL ON BLO . RECSEP OFF;
+
 -- get host name (up to 30, stop before first '.', no special characters)
+DEF esp_host_name_short = '';
 COL esp_host_name_short NEW_V esp_host_name_short FOR A30;
 SELECT LOWER(SUBSTR(SYS_CONTEXT('USERENV', 'SERVER_HOST'), 1, 30)) esp_host_name_short FROM DUAL;
 SELECT SUBSTR('&&esp_host_name_short.', 1, INSTR('&&esp_host_name_short..', '.') - 1) esp_host_name_short FROM DUAL;
 SELECT TRANSLATE('&&esp_host_name_short.',
 'abcdefghijklmnopqrstuvwxyz0123456789-_ ''`~!@#$%&*()=+[]{}\|;:",.<>/?'||CHR(0)||CHR(9)||CHR(10)||CHR(13)||CHR(38),
 'abcdefghijklmnopqrstuvwxyz0123456789-_') esp_host_name_short FROM DUAL;
+
+-- get collection date
+DEF esp_collection_yyyymmdd = '';
+COL esp_collection_yyyymmdd NEW_V esp_collection_yyyymmdd FOR A8;
+SELECT TO_CHAR(SYSDATE, 'YYYYMMDD') esp_collection_yyyymmdd FROM DUAL;
 
 -- get collection days
 DEF collection_days = '&&MAX_DAYS.';
@@ -41,8 +46,6 @@ SELECT NVL(TO_CHAR(LEAST(EXTRACT(DAY FROM retention), TO_NUMBER('&&MAX_DAYS.')))
 DEF skip_on_10g = '';
 COL skip_on_10g NEW_V skip_on_10g;
 SELECT '--' skip_on_10g FROM v$instance WHERE version LIKE '10%';
-
---SPO  esp_requirements_&&esp_host_name_short..log APP;
 
 ALTER SESSION SET NLS_NUMERIC_CHARACTERS = ".,";
 ALTER SESSION SET NLS_SORT = 'BINARY';
@@ -71,8 +74,8 @@ SELECT 'get_collection_host', LOWER(SUBSTR(SYS_CONTEXT('USERENV', 'SERVER_HOST')
 DEF;
 SELECT 'get_current_time', TO_CHAR(SYSDATE, '&&ecr_date_format.') current_time FROM DUAL
 /
---SPO OFF;
-SPO esp_requirements_&&esp_host_name_short..csv APP;
+
+SPO esp_requirements_awr_&&esp_host_name_short._&&esp_collection_yyyymmdd..csv APP;
 
 -- header
 SELECT 'collection_host,collection_key,category,data_element,source,instance_number,inst_id,value' FROM DUAL
@@ -1456,6 +1459,4 @@ SELECT 'collection_host,collection_key,category,data_element,source,instance_num
 /
 
 SPO OFF;
---HOS cat /proc/cpuinfo | grep -i name | sort | uniq >> cpuinfo_model_name.txt
---HOS zip -qT esp_requirements_&&esp_host_name_short..zip esp_requirements_&&esp_host_name_short..csv esp_requirements_&&esp_host_name_short..log cpuinfo_model_name.txt res_requirements_&&esp_host_name_short..txt
 SET TERM ON ECHO OFF FEED ON VER ON HEA ON PAGES 14 COLSEP ' ' LIN 80 TRIMS OFF TRIM ON TI OFF TIMI OFF ARRAY 15 NUM 10 SQLBL OFF BLO ON RECSEP WR;
