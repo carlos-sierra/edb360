@@ -11,7 +11,10 @@ PRO
 
 PRO <table><tr class="main">
 
+
 SET SERVEROUT ON ECHO OFF FEEDBACK OFF TIMING OFF 
+
+EXEC :repo_seq := 1;
 
 BEGIN
   FOR i IN (SELECT plan_hash_value
@@ -29,6 +32,7 @@ BEGIN
                     WHERE statement_id LIKE 'SQLD360_ASH_DATA%'
                       AND '&&diagnostics_pack.' = 'Y'
                       AND remarks = '&&sqld360_sqlid.') 
+               WHERE ('&&sqld360_is_insert.' IS NULL AND plan_hash_value <> 0) OR ('&&sqld360_is_insert.' = 'Y')
              ORDER BY 1)
   LOOP
     DBMS_OUTPUT.PUT_LINE('<td class="c">PHV '||i.plan_hash_value||'</td>');
@@ -45,6 +49,10 @@ DEF sqld360_main_report = &&one_spool_filename.
 
 SPO sqld360_plans_analysis_&&sqld360_sqlid._driver.sql
 SET SERVEROUT ON
+
+-- reset the sequence since this is a different page
+EXEC :repo_seq := 1;
+SELECT TO_CHAR(:repo_seq) report_sequence FROM DUAL;
 
 DECLARE
   PROCEDURE put (p_line IN VARCHAR2)
@@ -71,6 +79,7 @@ BEGIN
                      WHERE statement_id LIKE 'SQLD360_ASH_DATA%'
                        AND '&&diagnostics_pack.' = 'Y'
                        AND remarks = '&&sqld360_sqlid.') 
+             WHERE ('&&sqld360_is_insert.' IS NULL AND plan_hash_value <> 0) OR ('&&sqld360_is_insert.' = 'Y')
              ORDER BY 1) 
   LOOP
     put('SET PAGES 50000');
@@ -80,6 +89,9 @@ BEGIN
 
     put('SPO &&one_spool_filename..html APP;');
     put('PRO <h2>Execution Plan</h2> ');
+    put('SET DEF @');
+    put('PRO <ol start="@report_sequence."> ');
+    put('SET DEF &');
     put('SPO OFF');
 
     put('DEF bubbleMaxValue = ''''');
@@ -110,14 +122,55 @@ BEGIN
 
     -- there is a slim risk of counting a sample twice (one more memory and one from history), ok for now
     put('COL treeColor NEW_V treeColor');
-    put('SELECT LISTAGG(treeColor,chr(10)) WITHIN GROUP (ORDER BY id) treeColor');
-    put('  FROM (SELECT id,''data.setRowProperty(''||id||'', ''''style'''', ''''background:#FF''||LPAD(LTRIM(TO_CHAR(255-(255*RATIO_TO_REPORT(num_samples) OVER ()),''XXXX'')),2,''0'')||''00'''');'' treeColor');
+    --put('SELECT LISTAGG(treeColor,chr(10)) WITHIN GROUP (ORDER BY id) treeColor');
+    
+    
+    -- not the most elegant soluton but SQL*Plus variable cannot store long string (aka long exec plans)
+    put('DELETE plan_table WHERE statement_id = ''SQLD360_TREECOLOR'' AND operation = ''&&sqld360_sqlid.''; ');
+    put('INSERT INTO plan_table (statement_id, operation, options) SELECT ''SQLD360_TREECOLOR'', ''&&sqld360_sqlid.'', treeColor ');
+    put('  FROM (SELECT plandata.adapt_id id,''data.setRowProperty(''||plandata.adapt_id||'', ''''style'''', ''''background:#FF''||LPAD(LTRIM(TO_CHAR(255-(255*RATIO_TO_REPORT(num_samples) OVER ()),''XXXX'')),2,''0'')||''00'''');'' treeColor');
     put('          FROM (SELECT NVL(id,0) id, COUNT(*) num_samples');
     put('                  FROM plan_table ');
     put('                 WHERE statement_id LIKE ''SQLD360_ASH_DATA%''');
     put('                   AND cost = '||i.plan_hash_value);
     put('                   AND remarks = ''&&sqld360_sqlid.''');
-    put('                 GROUP BY NVL(id,0))');
+    put('                 GROUP BY NVL(id,0))  ashdata, ');
+    put('                (SELECT sql_id, plan_hash_value, id, parent_id, dep, adapt_id, operation, options, object_name, skp ');
+    put('                   FROM (SELECT sql_id, plan_hash_value, id, parent_id, dep, (ROW_NUMBER() OVER (ORDER BY id))-1 adapt_id, operation, options, object_name, skp ');
+    -- the DISTINCT here is to handle multiple child cursors with the same PHV (otherise the ROW_NUMBER makes them all distinct)          
+    put('                           FROM (SELECT DISTINCT a.sql_id, a.plan_hash_value, a.id, a.parent_id, NVL(b.dep,0) dep, a.operation, a.options, a.object_name, b.skp ');
+    put('                                  FROM gv$sql_plan_statistics_all a, ');
+    put('                                       (SELECT sql_id, plan_hash_value, extractvalue(value(b),''/row/@op'') stepid, extractvalue(value(b),''/row/@skp'') skp, extractvalue(value(b),''/row/@dep'') dep ');
+    put('                                          FROM gv$sql_plan_statistics_all a, ');
+    put('                                               table(xmlsequence(extract(xmltype(a.other_xml),''/*/display_map/row''))) b ');
+    put('                                         WHERE sql_id = ''&&sqld360_sqlid.''');
+    put('                                           AND other_xml IS NOT NULL ');
+    put('                                           AND plan_hash_value = '||i.plan_hash_value||') b ');
+    put('                                 WHERE a.sql_id = ''&&sqld360_sqlid.''');
+    put('                                   AND a.plan_hash_value = '||i.plan_hash_value||' ');
+    put('                                   AND a.id = b.stepid(+) ');
+    put('                                   AND (b.skp = 0 OR b.skp IS NULL)) ');
+    put('                         UNION ');
+    put('                         SELECT a.sql_id, a.plan_hash_value, a.id, a.parent_id, NVL(b.dep,0) dep, (ROW_NUMBER() OVER (ORDER BY a.id))-1 adapt_id, a.operation,a.options,a.object_name, b.skp ');
+    put('                           FROM dba_hist_sql_plan a, ');
+    put('                                (SELECT sql_id, plan_hash_value, extractvalue(value(b),''/row/@op'') stepid, extractvalue(value(b),''/row/@skp'') skp, extractvalue(value(b),''/row/@dep'') dep ');
+    put('                                   FROM dba_hist_sql_plan a, ');
+    put('                                        table(xmlsequence(extract(xmltype(a.other_xml),''/*/display_map/row''))) b ');
+    put('                                  WHERE sql_id = ''&&sqld360_sqlid.''');
+    put('                                    AND other_xml IS NOT NULL ');
+    put('                                    AND plan_hash_value = '||i.plan_hash_value||' ) b ');
+    put('                           WHERE a.sql_id = ''&&sqld360_sqlid.''');
+    put('                             AND a.plan_hash_value = '||i.plan_hash_value||' ');
+    put('                             AND a.id = b.stepid(+) ');
+    put('                             AND NOT EXISTS (SELECT 1 ');
+    put('                                               FROM gv$sql_plan_statistics_all c');
+    put('                                              WHERE c.plan_hash_value =  '||i.plan_hash_value||' ');
+    put('                                                AND c.sql_id = ''&&sqld360_sqlid.'' ');
+    put('                                                AND a.sql_id = c.sql_id ');
+    put('                                                AND a.plan_hash_value = c.plan_hash_value) '); 
+    put('                             AND (b.skp = 0 OR b.skp IS NULL)) ');
+    put('                   ORDER BY id) plandata ');
+    put(' WHERE plandata.id = ashdata.id ');
     put(');');
 
     put('BEGIN');
@@ -128,25 +181,64 @@ BEGIN
     put('                    AND cost = '||i.plan_hash_value);
     put('                    AND remarks = ''''&&sqld360_sqlid.''''');
     put('                  GROUP BY NVL(id,0))');
-    put('SELECT ''''{v: ''''''''''''||plandata.id||'''''''''''',f: ''''''''''''||plandata.id||'''' - ''''||operation||'''' ''''||options||NVL2(object_name,''''<br>'''','''' '''')||object_name||''''''''''''}'''' id, ');
-    put('       parent_id, ''''Step ID:''''||plandata.id||'''' ASH Samples:''''||NVL(ashdata.num_samples,0), plandata.id id3');
-    put('  FROM (SELECT id, parent_id, operation, options, object_name');
-    put('          FROM gv$sql_plan_statistics_all');
-    put('         WHERE plan_hash_value =  '||i.plan_hash_value||'');
-    put('           AND sql_id = ''''&&sqld360_sqlid.'''''); 
+    put('SELECT ''''{v: ''''''''''''||plandata.adapt_id||'''''''''''',f: ''''''''''''||plandata.adapt_id||'''' - ''''||operation||'''' ''''||options||NVL2(object_name,''''<br>'''','''' '''')||object_name||''''''''''''}'''' id, ');
+    put('       parent_id, ''''Step ID:''''||plandata.adapt_id||'''' (ASH Step ID:''''||plandata.id||'''') ASH Samples:''''||NVL(ashdata.num_samples,0), plandata.adapt_id id3');
+     put('  FROM (SELECT id, adapt_id, NVL(adapt_parent_id, parent_id) parent_id, operation, options, object_name '); 
+    put('          FROM (WITH skp_steps AS (SELECT sql_id, plan_hash_value, extractvalue(value(b),''''/row/@op'''') stepid, extractvalue(value(b),''''/row/@skp'''') skp,');
+    put('                                          extractvalue(value(b),''''/row/@dep'''') dep');
+    put('                                     FROM gv$sql_plan_statistics_all a, ');
+    put('                                          table(xmlsequence(extract(xmltype(a.other_xml),''''/*/display_map/row''''))) b');  
+    put('                                    WHERE sql_id = ''''&&sqld360_sqlid.''''');
+    put('                                      AND other_xml IS NOT NULL ');
+    put('                                      AND plan_hash_value = '||i.plan_hash_value||'),'); 
+    put('                 plan_all AS (SELECT sql_id, plan_hash_value, id, parent_id, dep, (ROW_NUMBER() OVER (ORDER BY id))-1 adapt_id, operation, options, object_name, skp ');
+    -- the DISTINCT here is to handle multiple child cursors with the same PHV (otherise the ROW_NUMBER makes them all distinct)    
+    put('                                FROM (SELECT DISTINCT a.sql_id, a.plan_hash_value, a.id, a.parent_id, NVL(b.dep,0) dep, a.operation,a.options,a.object_name, b.skp ');
+    put('                                             FROM gv$sql_plan_statistics_all a, skp_steps b ');
+    put('                                       WHERE a.sql_id = ''''&&sqld360_sqlid.''''');
+    put('                                         AND a.plan_hash_value = '||i.plan_hash_value||'');
+    put('                                         AND a.id = b.stepid(+) ');
+    put('                                         AND (b.skp = 0 OR b.skp IS NULL) ');
+    put('                                       ORDER BY a.id)) ');
+    put('                SELECT dep, adapt_id, id, '); 
+    put('                       (SELECT MAX(adapt_id) ');
+    put('                          FROM plan_all b ');
+    put('                         WHERE a.dep-1 = b.dep'); 
+    put('                           AND b.adapt_id < a.adapt_id ) adapt_parent_id, parent_id,'); 
+    put('                       a.operation operation, a.options, a.object_name');
+    put('                  FROM plan_all a)');
     put('        UNION ');
-    put('        SELECT id, parent_id, operation, options, object_name');
-    put('          FROM dba_hist_sql_plan');
-    put('         WHERE plan_hash_value =  '||i.plan_hash_value||'');
-    put('           AND sql_id = ''''&&sqld360_sqlid.'''''); 
-    put('           AND NOT EXISTS (SELECT 1 ');
+    put('        SELECT id, adapt_id, NVL(adapt_parent_id, parent_id) parent_id, operation, options, object_name ');  
+    put('          FROM (WITH skp_steps AS (SELECT sql_id, plan_hash_value, extractvalue(value(b),''''/row/@op'''') stepid, extractvalue(value(b),''''/row/@skp'''') skp,');
+    put('                                          extractvalue(value(b),''''/row/@dep'''') dep');
+    put('                                     FROM dba_hist_sql_plan a, ');
+    put('                                          table(xmlsequence(extract(xmltype(a.other_xml),''''/*/display_map/row''''))) b');  
+    put('                                    WHERE sql_id = ''''&&sqld360_sqlid.''''');
+    put('                                      AND other_xml IS NOT NULL ');
+    put('                                      AND plan_hash_value = '||i.plan_hash_value||'),'); 
+    put('                 plan_all AS (SELECT a.sql_id, a.plan_hash_value, a.id, a.parent_id, NVL(b.dep,0) dep,'); 
+    put('                                     (ROW_NUMBER() OVER (ORDER BY a.id))-1 adapt_id, a.operation,a.options,a.object_name, b.skp');
+    put('                                FROM dba_hist_sql_plan a, skp_steps b ');
+    put('                               WHERE a.sql_id = ''''&&sqld360_sqlid.''''');
+    put('                                 AND a.plan_hash_value = '||i.plan_hash_value||'');
+    put('                                 AND a.id = b.stepid(+) ');
+    put('                                 AND (b.skp = 0 OR b.skp IS NULL) ');
+    put('                               ORDER BY a.id) ');
+    put('                SELECT dep, adapt_id, id, '); 
+    put('                       (SELECT MAX(adapt_id) ');
+    put('                          FROM plan_all b ');
+    put('                         WHERE a.dep-1 = b.dep'); 
+    put('                           AND b.adapt_id < a.adapt_id ) adapt_parent_id, parent_id,'); 
+    put('                       a.operation operation, a.options, a.object_name');
+    put('                  FROM plan_all a');
+    put('                 WHERE NOT EXISTS (SELECT 1 ');
     put('                             FROM gv$sql_plan_statistics_all ');
     put('                            WHERE plan_hash_value =  '||i.plan_hash_value||'');
     put('                              AND sql_id = ''''&&sqld360_sqlid.'''')');
-    put('           AND ''''&&diagnostics_pack.'''' = ''''Y'''') plandata,');
+    put('           AND ''''&&diagnostics_pack.'''' = ''''Y'''')) plandata,');
     put('       ashdata');
     put(' WHERE ashdata.id(+) = plandata.id');
-    put(' ORDER BY plandata.id');
+     put(' ORDER BY plandata.id');
     put(''';');
     put('END;');
     put('/ ');
@@ -155,7 +247,11 @@ BEGIN
     put('----------------------------');
 
     put('SPO &&one_spool_filename..html APP;');
+    put('PRO </ol>');
     put('PRO <h2>Elapsed Time</h2> ');
+    put('SET DEF @');
+    put('PRO <ol start="@report_sequence."> ');
+    put('SET DEF &');
     put('SPO OFF');
 
     put('DEF title=''Avg et/exec for recent execs for PHV '||i.plan_hash_value||'''');
@@ -315,7 +411,11 @@ BEGIN
     put('----------------------------');
 
     put('SPO &&one_spool_filename..html APP;');
+    put('PRO </ol>');
     put('PRO <h2>Resource Consumption</h2> ');
+    put('SET DEF @');
+    put('PRO <ol start="@report_sequence."> ');
+    put('SET DEF &');
     put('SPO OFF');
 
     put('DEF title=''Peak PGA and TEMP usage for recent execs for PHV '||i.plan_hash_value||'''');
@@ -725,7 +825,11 @@ BEGIN
     put('----------------------------');
 
     put('SPO &&one_spool_filename..html APP;');
+    put('PRO </ol>');
     put('PRO <h2>Top N</h2> ');
+    put('SET DEF @');
+    put('PRO <ol start="@report_sequence."> ');
+    put('SET DEF &');
     put('SPO OFF');
 
     put('DEF title=''Top 15 Wait events for PHV '||i.plan_hash_value||'''');
@@ -861,18 +965,23 @@ BEGIN
     put('DEF slices = ''15''');
     put('BEGIN');
     put(' :sql_text := ''');
-    put('SELECT step_event,');
-    put('       num_samples,');
-    put('       TRUNC(100*RATIO_TO_REPORT(num_samples) OVER (),2) percent,');
+    put('SELECT data.step||'''' ''''||NVL ( ');
+    put('              (SELECT TRIM(''''.'''' FROM '''' ''''||o.owner||''''.''''||o.object_name||''''.''''||o.subobject_name) FROM dba_objects o WHERE o.object_id = data.obj# AND ROWNUM = 1),'); 
+    put('              (SELECT TRIM(''''.'''' FROM '''' ''''||o.owner||''''.''''||o.object_name||''''.''''||o.subobject_name) FROM dba_objects o WHERE o.data_object_id = data.obj# AND ROWNUM = 1)'); 
+    put('           )||'''' / ''''||data.event  step_event,');
+    put('       data.num_samples,');
+    put('       TRUNC(100*RATIO_TO_REPORT(data.num_samples) OVER (),2) percent,');
     put('       NULL dummy_01');
-    put('  FROM (SELECT id||'''' - ''''||operation||'''' ''''||options||'''' / ''''||object_node step_event,');
+    --put('  FROM (SELECT id||'''' - ''''||operation||'''' ''''||options||'''' / ''''||object_node step_event,');
+    put('  FROM (SELECT id||'''' - ''''||operation||'''' ''''||options step, object_instance obj#, object_node event,');    
     put('               count(*) num_samples');
     put('          FROM plan_table');
     put('         WHERE cost =  '||i.plan_hash_value||'');
     put('           AND remarks = ''''&&sqld360_sqlid.'''''); 
     put('           AND ''''&&diagnostics_pack.'''' = ''''Y''''');
-    put('         GROUP BY id||'''' - ''''||operation||'''' ''''||options||'''' / ''''||object_node'); 
-    put('         ORDER BY 2 DESC)');
+    --put('         GROUP BY id||'''' - ''''||operation||'''' ''''||options||'''' / ''''||object_node'); 
+    put('         GROUP BY id||'''' - ''''||operation||'''' ''''||options, object_instance, object_node'); 
+    put('         ORDER BY 2 DESC) data');
     put(' WHERE rownum <= 15');
     put(''';');
     put('END;');
@@ -1290,7 +1399,11 @@ BEGIN
     -- v1601, top SQL_EXEC_ID
 
     put('SPO &&one_spool_filename..html APP;');
+    put('PRO </ol>');
     put('PRO <h2>Top Executions from memory</h2> ');
+    put('SET DEF @');
+    put('PRO <ol start="@report_sequence."> ');
+    put('SET DEF &');
     put('SPO OFF');
 
     FOR j IN (SELECT inst_id, session_id, session_serial#, sql_exec_id, sql_exec_start, TO_CHAR(min_sample_time, 'YYYYMMDDHH24MISS') min_sample_time, TO_CHAR(max_sample_time, 'YYYYMMDDHH24MISS') max_sample_time
@@ -1324,8 +1437,27 @@ BEGIN
        put('DEF skip_tch=''''');
 
        put('COL treeColor NEW_V treeColor');
-       put('SELECT LISTAGG(treeColor,chr(10)) WITHIN GROUP (ORDER BY id) treeColor');
-       put('  FROM (SELECT id,''data.setRowProperty(''||id||'', ''''style'''', ''''background:#FF''||LPAD(LTRIM(TO_CHAR(255-(255*RATIO_TO_REPORT(num_samples) OVER ()),''XXXX'')),2,''0'')||''00'''');'' treeColor');
+       --put('SELECT LISTAGG(treeColor,chr(10)) WITHIN GROUP (ORDER BY id) treeColor');
+       --put('  FROM (SELECT id,''data.setRowProperty(''||id||'', ''''style'''', ''''background:#FF''||LPAD(LTRIM(TO_CHAR(255-(255*RATIO_TO_REPORT(num_samples) OVER ()),''XXXX'')),2,''0'')||''00'''');'' treeColor');
+       --put('          FROM (SELECT NVL(id,0) id, COUNT(*) num_samples');
+       --put('                  FROM plan_table ');
+       --put('                 WHERE statement_id = ''SQLD360_ASH_DATA_MEM''');
+       --put('                   AND cost = '||i.plan_hash_value);
+       --put('                   AND NVL(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'','',1,3)+1,INSTR(partition_stop,'','',1,4)-INSTR(partition_stop,'','',1,3)-1)),position) = '||j.inst_id||'');
+       --put('                   AND NVL(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'','',1,4)+1,INSTR(partition_stop,'','',1,5)-INSTR(partition_stop,'','',1,4)-1)),cpu_cost) = '||j.session_id||'');
+       --put('                   AND NVL(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'','',1,5)+1,INSTR(partition_stop,'','',1,6)-INSTR(partition_stop,'','',1,5)-1)),io_cost) = '||j.session_serial#||'');
+       --put('                   AND timestamp BETWEEN TO_DATE('''||j.min_sample_time||''', ''YYYYMMDDHH24MISS'') AND TO_DATE('''||j.max_sample_time||''', ''YYYYMMDDHH24MISS'') ');
+       --put('                   AND remarks = ''&&sqld360_sqlid.''');
+       --put('                 GROUP BY NVL(id,0))');
+       --put(');');
+       
+       --put('SELECT LISTAGG(treeColor,chr(10)) WITHIN GROUP (ORDER BY id) treeColor');
+    
+    
+       -- not the most elegant soluton but SQL*Plus variable cannot store long string (aka long exec plans)
+       put('DELETE plan_table WHERE statement_id = ''SQLD360_TREECOLOR'' AND operation = ''&&sqld360_sqlid.''; ');
+       put('INSERT INTO plan_table (statement_id, operation, options) SELECT ''SQLD360_TREECOLOR'', ''&&sqld360_sqlid.'', treeColor ');
+       put('  FROM (SELECT plandata.adapt_id id,''data.setRowProperty(''||plandata.adapt_id||'', ''''style'''', ''''background:#FF''||LPAD(LTRIM(TO_CHAR(255-(255*RATIO_TO_REPORT(num_samples) OVER ()),''XXXX'')),2,''0'')||''00'''');'' treeColor');
        put('          FROM (SELECT NVL(id,0) id, COUNT(*) num_samples');
        put('                  FROM plan_table ');
        put('                 WHERE statement_id = ''SQLD360_ASH_DATA_MEM''');
@@ -1335,7 +1467,43 @@ BEGIN
        put('                   AND NVL(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'','',1,5)+1,INSTR(partition_stop,'','',1,6)-INSTR(partition_stop,'','',1,5)-1)),io_cost) = '||j.session_serial#||'');
        put('                   AND timestamp BETWEEN TO_DATE('''||j.min_sample_time||''', ''YYYYMMDDHH24MISS'') AND TO_DATE('''||j.max_sample_time||''', ''YYYYMMDDHH24MISS'') ');
        put('                   AND remarks = ''&&sqld360_sqlid.''');
-       put('                 GROUP BY NVL(id,0))');
+       put('                 GROUP BY NVL(id,0))  ashdata, ');
+       put('                (SELECT sql_id, plan_hash_value, id, parent_id, dep, adapt_id, operation, options, object_name, skp ');
+       put('                   FROM (SELECT sql_id, plan_hash_value, id, parent_id, dep, (ROW_NUMBER() OVER (ORDER BY id))-1 adapt_id, operation, options, object_name, skp ');
+       -- the DISTINCT here is to handle multiple child cursors with the same PHV (otherise the ROW_NUMBER makes them all distinct)          
+       put('                           FROM (SELECT DISTINCT a.sql_id, a.plan_hash_value, a.id, a.parent_id, NVL(b.dep,0) dep, a.operation, a.options, a.object_name, b.skp ');
+       put('                                  FROM gv$sql_plan_statistics_all a, ');
+       put('                                       (SELECT sql_id, plan_hash_value, extractvalue(value(b),''/row/@op'') stepid, extractvalue(value(b),''/row/@skp'') skp, extractvalue(value(b),''/row/@dep'') dep ');
+       put('                                          FROM gv$sql_plan_statistics_all a, ');
+       put('                                               table(xmlsequence(extract(xmltype(a.other_xml),''/*/display_map/row''))) b ');
+       put('                                         WHERE sql_id = ''&&sqld360_sqlid.''');
+       put('                                           AND other_xml IS NOT NULL ');
+       put('                                           AND plan_hash_value = '||i.plan_hash_value||') b ');
+       put('                                 WHERE a.sql_id = ''&&sqld360_sqlid.''');
+       put('                                   AND a.plan_hash_value = '||i.plan_hash_value||' ');
+       put('                                   AND a.id = b.stepid(+) ');
+       put('                                   AND (b.skp = 0 OR b.skp IS NULL)) ');
+       put('                         UNION ');
+       put('                         SELECT a.sql_id, a.plan_hash_value, a.id, a.parent_id, NVL(b.dep,0) dep, (ROW_NUMBER() OVER (ORDER BY a.id))-1 adapt_id, a.operation,a.options,a.object_name, b.skp ');
+       put('                           FROM dba_hist_sql_plan a, ');
+       put('                                (SELECT sql_id, plan_hash_value, extractvalue(value(b),''/row/@op'') stepid, extractvalue(value(b),''/row/@skp'') skp, extractvalue(value(b),''/row/@dep'') dep ');
+       put('                                   FROM dba_hist_sql_plan a, ');
+       put('                                        table(xmlsequence(extract(xmltype(a.other_xml),''/*/display_map/row''))) b ');
+       put('                                  WHERE sql_id = ''&&sqld360_sqlid.''');
+       put('                                    AND other_xml IS NOT NULL ');
+       put('                                    AND plan_hash_value = '||i.plan_hash_value||' ) b ');
+       put('                           WHERE a.sql_id = ''&&sqld360_sqlid.''');
+       put('                             AND a.plan_hash_value = '||i.plan_hash_value||' ');
+       put('                             AND a.id = b.stepid(+) ');
+       put('                             AND NOT EXISTS (SELECT 1 ');
+       put('                                               FROM gv$sql_plan_statistics_all c');
+       put('                                              WHERE c.plan_hash_value =  '||i.plan_hash_value||' ');
+       put('                                                AND c.sql_id = ''&&sqld360_sqlid.'' ');
+       put('                                                AND a.sql_id = c.sql_id ');
+       put('                                                AND a.plan_hash_value = c.plan_hash_value) '); 
+       put('                             AND (b.skp = 0 OR b.skp IS NULL)) ');
+       put('                   ORDER BY id) plandata ');
+       put(' WHERE plandata.id = ashdata.id ');
        put(');');
 
        put('BEGIN');
@@ -1350,22 +1518,61 @@ BEGIN
        put('                    AND timestamp BETWEEN TO_DATE('''''||j.min_sample_time||''''', ''''YYYYMMDDHH24MISS'''') AND TO_DATE('''''||j.max_sample_time||''''', ''''YYYYMMDDHH24MISS'''') ');
        put('                    AND remarks = ''''&&sqld360_sqlid.''''');
        put('                  GROUP BY NVL(id,0))');
-       put('SELECT ''''{v: ''''''''''''||plandata.id||'''''''''''',f: ''''''''''''||plandata.id||'''' - ''''||operation||'''' ''''||options||NVL2(object_name,''''<br>'''','''' '''')||object_name||''''''''''''}'''' id, ');
-       put('       parent_id, ''''Step ID:''''||plandata.id||'''' ASH Samples:''''||NVL(ashdata.num_samples,0), plandata.id id3');
-       put('  FROM (SELECT id, parent_id, operation, options, object_name');
-       put('          FROM gv$sql_plan_statistics_all');
-       put('         WHERE plan_hash_value =  '||i.plan_hash_value||'');
-       put('           AND sql_id = ''''&&sqld360_sqlid.'''''); 
+       put('SELECT ''''{v: ''''''''''''||plandata.adapt_id||'''''''''''',f: ''''''''''''||plandata.adapt_id||'''' - ''''||operation||'''' ''''||options||NVL2(object_name,''''<br>'''','''' '''')||object_name||''''''''''''}'''' id, ');
+       put('       parent_id, ''''Step ID:''''||plandata.adapt_id||'''' (ASH Step ID:''''||plandata.id||'''') ASH Samples:''''||NVL(ashdata.num_samples,0), plandata.adapt_id id3');
+       put('  FROM (SELECT id, adapt_id, NVL(adapt_parent_id, parent_id) parent_id, operation, options, object_name '); 
+       put('          FROM (WITH skp_steps AS (SELECT sql_id, plan_hash_value, extractvalue(value(b),''''/row/@op'''') stepid, extractvalue(value(b),''''/row/@skp'''') skp,');
+       put('                                          extractvalue(value(b),''''/row/@dep'''') dep');
+       put('                                     FROM gv$sql_plan_statistics_all a, ');
+       put('                                          table(xmlsequence(extract(xmltype(a.other_xml),''''/*/display_map/row''''))) b');  
+       put('                                    WHERE sql_id = ''''&&sqld360_sqlid.''''');
+       put('                                      AND other_xml IS NOT NULL ');
+       put('                                      AND plan_hash_value = '||i.plan_hash_value||'),'); 
+       put('                 plan_all AS (SELECT sql_id, plan_hash_value, id, parent_id, dep, (ROW_NUMBER() OVER (ORDER BY id))-1 adapt_id, operation, options, object_name, skp ');
+       -- the DISTINCT here is to handle multiple child cursors with the same PHV (otherise the ROW_NUMBER makes them all distinct)    
+       put('                                FROM (SELECT DISTINCT a.sql_id, a.plan_hash_value, a.id, a.parent_id, NVL(b.dep,0) dep, a.operation,a.options,a.object_name, b.skp ');
+       put('                                             FROM gv$sql_plan_statistics_all a, skp_steps b ');
+       put('                                       WHERE a.sql_id = ''''&&sqld360_sqlid.''''');
+       put('                                         AND a.plan_hash_value = '||i.plan_hash_value||'');
+       put('                                         AND a.id = b.stepid(+) ');
+       put('                                         AND (b.skp = 0 OR b.skp IS NULL) ');
+       put('                                       ORDER BY a.id)) ');
+       put('                SELECT dep, adapt_id, id, '); 
+       put('                       (SELECT MAX(adapt_id) ');
+       put('                          FROM plan_all b ');
+       put('                         WHERE a.dep-1 = b.dep'); 
+       put('                           AND b.adapt_id < a.adapt_id ) adapt_parent_id, parent_id,'); 
+       put('                       a.operation operation, a.options, a.object_name');
+       put('                  FROM plan_all a)');
        put('        UNION ');
-       put('        SELECT id, parent_id, operation, options, object_name');
-       put('          FROM dba_hist_sql_plan');
-       put('         WHERE plan_hash_value =  '||i.plan_hash_value||'');
-       put('           AND sql_id = ''''&&sqld360_sqlid.'''''); 
-       put('           AND NOT EXISTS (SELECT 1 ');
+       put('        SELECT id, adapt_id, NVL(adapt_parent_id, parent_id) parent_id, operation, options, object_name ');  
+       put('          FROM (WITH skp_steps AS (SELECT sql_id, plan_hash_value, extractvalue(value(b),''''/row/@op'''') stepid, extractvalue(value(b),''''/row/@skp'''') skp,');
+       put('                                          extractvalue(value(b),''''/row/@dep'''') dep');
+       put('                                     FROM dba_hist_sql_plan a, ');
+       put('                                          table(xmlsequence(extract(xmltype(a.other_xml),''''/*/display_map/row''''))) b');  
+       put('                                    WHERE sql_id = ''''&&sqld360_sqlid.''''');
+       put('                                      AND other_xml IS NOT NULL ');
+       put('                                      AND plan_hash_value = '||i.plan_hash_value||'),'); 
+       put('                 plan_all AS (SELECT a.sql_id, a.plan_hash_value, a.id, a.parent_id, NVL(b.dep,0) dep,'); 
+       put('                                     (ROW_NUMBER() OVER (ORDER BY a.id))-1 adapt_id, a.operation,a.options,a.object_name, b.skp');
+       put('                                FROM dba_hist_sql_plan a, skp_steps b ');
+       put('                               WHERE a.sql_id = ''''&&sqld360_sqlid.''''');
+       put('                                 AND a.plan_hash_value = '||i.plan_hash_value||'');
+       put('                                 AND a.id = b.stepid(+) ');
+       put('                                 AND (b.skp = 0 OR b.skp IS NULL) ');
+       put('                               ORDER BY a.id) ');
+       put('                SELECT dep, adapt_id, id, '); 
+       put('                       (SELECT MAX(adapt_id) ');
+       put('                          FROM plan_all b ');
+       put('                         WHERE a.dep-1 = b.dep'); 
+       put('                           AND b.adapt_id < a.adapt_id ) adapt_parent_id, parent_id,'); 
+       put('                       a.operation operation, a.options, a.object_name');
+       put('                  FROM plan_all a');
+       put('                 WHERE NOT EXISTS (SELECT 1 ');
        put('                             FROM gv$sql_plan_statistics_all ');
        put('                            WHERE plan_hash_value =  '||i.plan_hash_value||'');
        put('                              AND sql_id = ''''&&sqld360_sqlid.'''')');
-       put('           AND ''''&&diagnostics_pack.'''' = ''''Y'''') plandata,');
+       put('           AND ''''&&diagnostics_pack.'''' = ''''Y'''')) plandata,');
        put('       ashdata');
        put(' WHERE ashdata.id(+) = plandata.id');
        put(' ORDER BY plandata.id');
@@ -1438,11 +1645,15 @@ BEGIN
        put('DEF slices = ''15''');
        put('BEGIN');
        put(' :sql_text := ''');
-       put('SELECT step_event,');
-       put('       num_samples,');
-       put('       TRUNC(100*RATIO_TO_REPORT(num_samples) OVER (),2) percent,');
+       put('SELECT data.step||'''' ''''||NVL ( ');
+       put('              (SELECT TRIM(''''.'''' FROM '''' ''''||o.owner||''''.''''||o.object_name||''''.''''||o.subobject_name) FROM dba_objects o WHERE o.object_id = data.obj# AND ROWNUM = 1),'); 
+       put('              (SELECT TRIM(''''.'''' FROM '''' ''''||o.owner||''''.''''||o.object_name||''''.''''||o.subobject_name) FROM dba_objects o WHERE o.data_object_id = data.obj# AND ROWNUM = 1)'); 
+       put('           )||'''' / ''''||data.event  step_event,');
+       put('       data.num_samples,');
+       put('       TRUNC(100*RATIO_TO_REPORT(data.num_samples) OVER (),2) percent,');
        put('       NULL dummy_01');
-       put('  FROM (SELECT id||'''' - ''''||operation||'''' ''''||options||'''' / ''''||object_node step_event,');
+       --put('  FROM (SELECT id||'''' - ''''||operation||'''' ''''||options||'''' / ''''||object_node step_event,');
+       put('  FROM (SELECT id||'''' - ''''||operation||'''' ''''||options step, object_instance obj#, object_node event,'); 
        put('               count(*) num_samples');
        put('          FROM plan_table');
        put('         WHERE statement_id = ''''SQLD360_ASH_DATA_MEM''''');
@@ -1453,8 +1664,9 @@ BEGIN
        put('           AND timestamp BETWEEN TO_DATE('''''||j.min_sample_time||''''', ''''YYYYMMDDHH24MISS'''') AND TO_DATE('''''||j.max_sample_time||''''', ''''YYYYMMDDHH24MISS'''') ');
        put('           AND remarks = ''''&&sqld360_sqlid.'''''); 
        put('           AND ''''&&diagnostics_pack.'''' = ''''Y''''');
-       put('         GROUP BY id||'''' - ''''||operation||'''' ''''||options||'''' / ''''||object_node'); 
-       put('         ORDER BY 2 DESC)');
+       --put('         GROUP BY id||'''' - ''''||operation||'''' ''''||options||'''' / ''''||object_node');
+       put('         GROUP BY id||'''' - ''''||operation||'''' ''''||options, object_instance, object_node');  
+       put('         ORDER BY 2 DESC) data');
        put(' WHERE rownum <= 15');
        put(''';');
        put('END;');
@@ -1871,8 +2083,12 @@ BEGIN
     END LOOP;
 
     put('SPO &&one_spool_filename..html APP;');
+    put('PRO </ol>');
     put('PRO <h2>Top Executions from history</h2> ');
-    put('SPO OFF');    
+    put('SET DEF @');
+    put('PRO <ol start="@report_sequence."> ');
+    put('SET DEF &');
+    put('SPO OFF');  
 
     FOR j IN (SELECT inst_id, session_id, session_serial#, sql_exec_id, sql_exec_start, TO_CHAR(min_sample_time, 'YYYYMMDDHH24MISS') min_sample_time, TO_CHAR(max_sample_time, 'YYYYMMDDHH24MISS') max_sample_time
                 FROM (SELECT inst_id, session_id, session_serial#, sql_exec_id, sql_exec_start,  MIN(sample_time) min_sample_time, MAX(sample_time) max_sample_time, COUNT(*) num_samples
@@ -1905,8 +2121,26 @@ BEGIN
        put('DEF skip_tch=''''');
 
        put('COL treeColor NEW_V treeColor');
-       put('SELECT LISTAGG(treeColor,chr(10)) WITHIN GROUP (ORDER BY id) treeColor');
-       put('  FROM (SELECT id,''data.setRowProperty(''||id||'', ''''style'''', ''''background:#FF''||LPAD(LTRIM(TO_CHAR(255-(255*RATIO_TO_REPORT(num_samples) OVER ()),''XXXX'')),2,''0'')||''00'''');'' treeColor');
+       --put('SELECT LISTAGG(treeColor,chr(10)) WITHIN GROUP (ORDER BY id) treeColor');
+       --put('  FROM (SELECT id,''data.setRowProperty(''||id||'', ''''style'''', ''''background:#FF''||LPAD(LTRIM(TO_CHAR(255-(255*RATIO_TO_REPORT(num_samples) OVER ()),''XXXX'')),2,''0'')||''00'''');'' treeColor');
+       --put('          FROM (SELECT NVL(id,0) id, COUNT(*) num_samples');
+       --put('                  FROM plan_table ');
+       --put('                 WHERE statement_id = ''SQLD360_ASH_DATA_HIST''');
+       --put('                   AND cost = '||i.plan_hash_value);
+       --put('                   AND NVL(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'','',1,3)+1,INSTR(partition_stop,'','',1,4)-INSTR(partition_stop,'','',1,3)-1)),position) = '||j.inst_id||'');
+       --put('                   AND NVL(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'','',1,4)+1,INSTR(partition_stop,'','',1,5)-INSTR(partition_stop,'','',1,4)-1)),cpu_cost) = '||j.session_id||'');
+       --put('                   AND NVL(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'','',1,5)+1,INSTR(partition_stop,'','',1,6)-INSTR(partition_stop,'','',1,5)-1)),io_cost) = '||j.session_serial#||'');
+       --put('                   AND timestamp BETWEEN TO_DATE('''||j.min_sample_time||''', ''YYYYMMDDHH24MISS'') AND TO_DATE('''||j.max_sample_time||''', ''YYYYMMDDHH24MISS'') ');
+       --put('                   AND remarks = ''&&sqld360_sqlid.''');
+       --put('                 GROUP BY NVL(id,0))');
+       --put(');');
+       
+       --put('SELECT LISTAGG(treeColor,chr(10)) WITHIN GROUP (ORDER BY id) treeColor');
+    
+    
+       -- not the most elegant soluton but SQL*Plus variable cannot store long string (aka long exec plans)
+       put('DELETE plan_table WHERE statement_id = ''SQLD360_TREECOLOR'' AND operation = ''&&sqld360_sqlid.''; ');
+       put('INSERT INTO plan_table (statement_id, operation, options) SELECT ''SQLD360_TREECOLOR'', ''&&sqld360_sqlid.'', treeColor ');put('  FROM (SELECT plandata.adapt_id id,''data.setRowProperty(''||plandata.adapt_id||'', ''''style'''', ''''background:#FF''||LPAD(LTRIM(TO_CHAR(255-(255*RATIO_TO_REPORT(num_samples) OVER ()),''XXXX'')),2,''0'')||''00'''');'' treeColor');
        put('          FROM (SELECT NVL(id,0) id, COUNT(*) num_samples');
        put('                  FROM plan_table ');
        put('                 WHERE statement_id = ''SQLD360_ASH_DATA_HIST''');
@@ -1916,7 +2150,43 @@ BEGIN
        put('                   AND NVL(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'','',1,5)+1,INSTR(partition_stop,'','',1,6)-INSTR(partition_stop,'','',1,5)-1)),io_cost) = '||j.session_serial#||'');
        put('                   AND timestamp BETWEEN TO_DATE('''||j.min_sample_time||''', ''YYYYMMDDHH24MISS'') AND TO_DATE('''||j.max_sample_time||''', ''YYYYMMDDHH24MISS'') ');
        put('                   AND remarks = ''&&sqld360_sqlid.''');
-       put('                 GROUP BY NVL(id,0))');
+       put('                 GROUP BY NVL(id,0))  ashdata, ');
+       put('                (SELECT sql_id, plan_hash_value, id, parent_id, dep, adapt_id, operation, options, object_name, skp ');
+       put('                   FROM (SELECT sql_id, plan_hash_value, id, parent_id, dep, (ROW_NUMBER() OVER (ORDER BY id))-1 adapt_id, operation, options, object_name, skp ');
+       -- the DISTINCT here is to handle multiple child cursors with the same PHV (otherise the ROW_NUMBER makes them all distinct)          
+       put('                           FROM (SELECT DISTINCT a.sql_id, a.plan_hash_value, a.id, a.parent_id, NVL(b.dep,0) dep, a.operation, a.options, a.object_name, b.skp ');
+       put('                                  FROM gv$sql_plan_statistics_all a, ');
+       put('                                       (SELECT sql_id, plan_hash_value, extractvalue(value(b),''/row/@op'') stepid, extractvalue(value(b),''/row/@skp'') skp, extractvalue(value(b),''/row/@dep'') dep ');
+       put('                                          FROM gv$sql_plan_statistics_all a, ');
+       put('                                               table(xmlsequence(extract(xmltype(a.other_xml),''/*/display_map/row''))) b ');
+       put('                                         WHERE sql_id = ''&&sqld360_sqlid.''');
+       put('                                           AND other_xml IS NOT NULL ');
+       put('                                           AND plan_hash_value = '||i.plan_hash_value||') b ');
+       put('                                 WHERE a.sql_id = ''&&sqld360_sqlid.''');
+       put('                                   AND a.plan_hash_value = '||i.plan_hash_value||' ');
+       put('                                   AND a.id = b.stepid(+) ');
+       put('                                   AND (b.skp = 0 OR b.skp IS NULL)) ');
+       put('                         UNION ');
+       put('                         SELECT a.sql_id, a.plan_hash_value, a.id, a.parent_id, NVL(b.dep,0) dep, (ROW_NUMBER() OVER (ORDER BY a.id))-1 adapt_id, a.operation,a.options,a.object_name, b.skp ');
+       put('                           FROM dba_hist_sql_plan a, ');
+       put('                                (SELECT sql_id, plan_hash_value, extractvalue(value(b),''/row/@op'') stepid, extractvalue(value(b),''/row/@skp'') skp, extractvalue(value(b),''/row/@dep'') dep ');
+       put('                                   FROM dba_hist_sql_plan a, ');
+       put('                                        table(xmlsequence(extract(xmltype(a.other_xml),''/*/display_map/row''))) b ');
+       put('                                  WHERE sql_id = ''&&sqld360_sqlid.''');
+       put('                                    AND other_xml IS NOT NULL ');
+       put('                                    AND plan_hash_value = '||i.plan_hash_value||' ) b ');
+       put('                           WHERE a.sql_id = ''&&sqld360_sqlid.''');
+       put('                             AND a.plan_hash_value = '||i.plan_hash_value||' ');
+       put('                             AND a.id = b.stepid(+) ');
+       put('                             AND NOT EXISTS (SELECT 1 ');
+       put('                                               FROM gv$sql_plan_statistics_all c');
+       put('                                              WHERE c.plan_hash_value =  '||i.plan_hash_value||' ');
+       put('                                                AND c.sql_id = ''&&sqld360_sqlid.'' ');
+       put('                                                AND a.sql_id = c.sql_id ');
+       put('                                                AND a.plan_hash_value = c.plan_hash_value) '); 
+       put('                             AND (b.skp = 0 OR b.skp IS NULL)) ');
+       put('                   ORDER BY id) plandata ');
+       put(' WHERE plandata.id = ashdata.id ');
        put(');');
 
        put('BEGIN');
@@ -1931,22 +2201,61 @@ BEGIN
        put('                    AND timestamp BETWEEN TO_DATE('''''||j.min_sample_time||''''', ''''YYYYMMDDHH24MISS'''') AND TO_DATE('''''||j.max_sample_time||''''', ''''YYYYMMDDHH24MISS'''') ');
        put('                    AND remarks = ''''&&sqld360_sqlid.''''');
        put('                  GROUP BY NVL(id,0))');
-       put('SELECT ''''{v: ''''''''''''||plandata.id||'''''''''''',f: ''''''''''''||plandata.id||'''' - ''''||operation||'''' ''''||options||NVL2(object_name,''''<br>'''','''' '''')||object_name||''''''''''''}'''' id, ');
-       put('       parent_id, ''''Step ID:''''||plandata.id||'''' ASH Samples:''''||NVL(ashdata.num_samples,0), plandata.id id3');
-       put('  FROM (SELECT id, parent_id, operation, options, object_name');
-       put('          FROM gv$sql_plan_statistics_all');
-       put('         WHERE plan_hash_value =  '||i.plan_hash_value||'');
-       put('           AND sql_id = ''''&&sqld360_sqlid.'''''); 
+       put('SELECT ''''{v: ''''''''''''||plandata.adapt_id||'''''''''''',f: ''''''''''''||plandata.adapt_id||'''' - ''''||operation||'''' ''''||options||NVL2(object_name,''''<br>'''','''' '''')||object_name||''''''''''''}'''' id, ');
+       put('       parent_id, ''''Step ID:''''||plandata.adapt_id||'''' (ASH Step ID:''''||plandata.id||'''') ASH Samples:''''||NVL(ashdata.num_samples,0), plandata.adapt_id id3');
+       put('  FROM (SELECT id, adapt_id, NVL(adapt_parent_id, parent_id) parent_id, operation, options, object_name '); 
+       put('          FROM (WITH skp_steps AS (SELECT sql_id, plan_hash_value, extractvalue(value(b),''''/row/@op'''') stepid, extractvalue(value(b),''''/row/@skp'''') skp,');
+       put('                                          extractvalue(value(b),''''/row/@dep'''') dep');
+       put('                                     FROM gv$sql_plan_statistics_all a, ');
+       put('                                          table(xmlsequence(extract(xmltype(a.other_xml),''''/*/display_map/row''''))) b');  
+       put('                                    WHERE sql_id = ''''&&sqld360_sqlid.''''');
+       put('                                      AND other_xml IS NOT NULL ');
+       put('                                      AND plan_hash_value = '||i.plan_hash_value||'),'); 
+       put('                 plan_all AS (SELECT sql_id, plan_hash_value, id, parent_id, dep, (ROW_NUMBER() OVER (ORDER BY id))-1 adapt_id, operation, options, object_name, skp ');
+       -- the DISTINCT here is to handle multiple child cursors with the same PHV (otherise the ROW_NUMBER makes them all distinct)    
+       put('                                FROM (SELECT DISTINCT a.sql_id, a.plan_hash_value, a.id, a.parent_id, NVL(b.dep,0) dep, a.operation,a.options,a.object_name, b.skp ');
+       put('                                             FROM gv$sql_plan_statistics_all a, skp_steps b ');
+       put('                                       WHERE a.sql_id = ''''&&sqld360_sqlid.''''');
+       put('                                         AND a.plan_hash_value = '||i.plan_hash_value||'');
+       put('                                         AND a.id = b.stepid(+) ');
+       put('                                         AND (b.skp = 0 OR b.skp IS NULL) ');
+       put('                                       ORDER BY a.id)) ');
+       put('                SELECT dep, adapt_id, id, '); 
+       put('                       (SELECT MAX(adapt_id) ');
+       put('                          FROM plan_all b ');
+       put('                         WHERE a.dep-1 = b.dep'); 
+       put('                           AND b.adapt_id < a.adapt_id ) adapt_parent_id, parent_id,'); 
+       put('                       a.operation operation, a.options, a.object_name');
+       put('                  FROM plan_all a)');
        put('        UNION ');
-       put('        SELECT id, parent_id, operation, options, object_name');
-       put('          FROM dba_hist_sql_plan');
-       put('         WHERE plan_hash_value =  '||i.plan_hash_value||'');
-       put('           AND sql_id = ''''&&sqld360_sqlid.'''''); 
-       put('           AND NOT EXISTS (SELECT 1 ');
+       put('        SELECT id, adapt_id, NVL(adapt_parent_id, parent_id) parent_id, operation, options, object_name ');  
+       put('          FROM (WITH skp_steps AS (SELECT sql_id, plan_hash_value, extractvalue(value(b),''''/row/@op'''') stepid, extractvalue(value(b),''''/row/@skp'''') skp,');
+       put('                                          extractvalue(value(b),''''/row/@dep'''') dep');
+       put('                                     FROM dba_hist_sql_plan a, ');
+       put('                                          table(xmlsequence(extract(xmltype(a.other_xml),''''/*/display_map/row''''))) b');  
+       put('                                    WHERE sql_id = ''''&&sqld360_sqlid.''''');
+       put('                                      AND other_xml IS NOT NULL ');
+       put('                                      AND plan_hash_value = '||i.plan_hash_value||'),'); 
+       put('                 plan_all AS (SELECT a.sql_id, a.plan_hash_value, a.id, a.parent_id, NVL(b.dep,0) dep,'); 
+       put('                                     (ROW_NUMBER() OVER (ORDER BY a.id))-1 adapt_id, a.operation,a.options,a.object_name, b.skp');
+       put('                                FROM dba_hist_sql_plan a, skp_steps b ');
+       put('                               WHERE a.sql_id = ''''&&sqld360_sqlid.''''');
+       put('                                 AND a.plan_hash_value = '||i.plan_hash_value||'');
+       put('                                 AND a.id = b.stepid(+) ');
+       put('                                 AND (b.skp = 0 OR b.skp IS NULL) ');
+       put('                               ORDER BY a.id) ');
+       put('                SELECT dep, adapt_id, id, '); 
+       put('                       (SELECT MAX(adapt_id) ');
+       put('                          FROM plan_all b ');
+       put('                         WHERE a.dep-1 = b.dep'); 
+       put('                           AND b.adapt_id < a.adapt_id ) adapt_parent_id, parent_id,'); 
+       put('                       a.operation operation, a.options, a.object_name');
+       put('                  FROM plan_all a');
+       put('                 WHERE NOT EXISTS (SELECT 1 ');
        put('                             FROM gv$sql_plan_statistics_all ');
        put('                            WHERE plan_hash_value =  '||i.plan_hash_value||'');
        put('                              AND sql_id = ''''&&sqld360_sqlid.'''')');
-       put('           AND ''''&&diagnostics_pack.'''' = ''''Y'''') plandata,');
+       put('           AND ''''&&diagnostics_pack.'''' = ''''Y'''')) plandata,');
        put('       ashdata');
        put(' WHERE ashdata.id(+) = plandata.id');
        put(' ORDER BY plandata.id');
@@ -2019,11 +2328,15 @@ BEGIN
        put('DEF slices = ''15''');
        put('BEGIN');
        put(' :sql_text := ''');
-       put('SELECT step_event,');
-       put('       num_samples,');
-       put('       TRUNC(100*RATIO_TO_REPORT(num_samples) OVER (),2) percent,');
+       put('SELECT data.step||'''' ''''||NVL ( ');
+       put('              (SELECT TRIM(''''.'''' FROM '''' ''''||o.owner||''''.''''||o.object_name||''''.''''||o.subobject_name) FROM dba_objects o WHERE o.object_id = data.obj# AND ROWNUM = 1),'); 
+       put('              (SELECT TRIM(''''.'''' FROM '''' ''''||o.owner||''''.''''||o.object_name||''''.''''||o.subobject_name) FROM dba_objects o WHERE o.data_object_id = data.obj# AND ROWNUM = 1)'); 
+       put('           )||'''' / ''''||data.event  step_event,');
+       put('       data.num_samples,');
+       put('       TRUNC(100*RATIO_TO_REPORT(data.num_samples) OVER (),2) percent,');
        put('       NULL dummy_01');
-       put('  FROM (SELECT id||'''' - ''''||operation||'''' ''''||options||'''' / ''''||object_node step_event,');
+       --put('  FROM (SELECT id||'''' - ''''||operation||'''' ''''||options||'''' / ''''||object_node step_event,');
+       put('  FROM (SELECT id||'''' - ''''||operation||'''' ''''||options step, object_instance obj#, object_node event,'); 
        put('               count(*) num_samples');
        put('          FROM plan_table');
        put('         WHERE statement_id = ''''SQLD360_ASH_DATA_HIST''''');
@@ -2034,8 +2347,9 @@ BEGIN
        put('           AND timestamp BETWEEN TO_DATE('''''||j.min_sample_time||''''', ''''YYYYMMDDHH24MISS'''') AND TO_DATE('''''||j.max_sample_time||''''', ''''YYYYMMDDHH24MISS'''') ');
        put('           AND remarks = ''''&&sqld360_sqlid.'''''); 
        put('           AND ''''&&diagnostics_pack.'''' = ''''Y''''');
-       put('         GROUP BY id||'''' - ''''||operation||'''' ''''||options||'''' / ''''||object_node'); 
-       put('         ORDER BY 2 DESC)');
+       --put('         GROUP BY id||'''' - ''''||operation||'''' ''''||options||'''' / ''''||object_node'); 
+       put('         GROUP BY id||'''' - ''''||operation||'''' ''''||options, object_instance, object_node'); 
+       put('         ORDER BY 2 DESC) data');
        put(' WHERE rownum <= 15');
        put(''';');
        put('END;');
@@ -2445,6 +2759,7 @@ BEGIN
        put('----------------------------');       
 
        put('SPO &&one_spool_filename..html APP;');
+       put('PRO </ol>');
        put('PRO <br>');
        put('SPO OFF');
       

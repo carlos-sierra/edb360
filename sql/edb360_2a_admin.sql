@@ -3,7 +3,8 @@ DEF section_id = '2a';
 DEF section_name = 'Database Administration';
 EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
 SPO &&edb360_main_report..html APP;
-PRO <h2>&&section_name.</h2>
+PRO <h2>&&section_id.. &&section_name.</h2>
+PRO <ol start="&&report_sequence.">
 SPO OFF;
 
 DEF title = 'Sessions Aggregate per Type';
@@ -158,7 +159,7 @@ DEF main_table = 'GV$SESSION';
 BEGIN
   :sql_text := '
 -- borrowed from orachk
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        inst_id, sid, event,
        ROUND(seconds_in_wait,2)  waiting_seconds,
        ROUND(wait_time/100,2)    waited_seconds, 
@@ -185,7 +186,7 @@ DEF abstract = 'Blockers (B) and Waiters (W)';
 DEF main_table = 'GV$SESSION_BLOCKERS';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        b.inst_id b_inst_id,
        b.sql_id b_sql_id,
        b.sql_child_number b_child,
@@ -255,7 +256,7 @@ BEGIN
   :sql_text := '
 WITH
 w AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        dbid,
        sql_id,
        event,
@@ -282,7 +283,7 @@ SELECT /*+ &&sq_fact_hints. */
        TRUNC(sample_time, ''HH'')
 ),
 b AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        w.dbid,
        w.sql_id w_sql_id,
        w.event w_event,
@@ -307,7 +308,7 @@ SELECT /*+ &&sq_fact_hints. */
        b.sql_id
 ),
 w2 AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        dbid,
        sql_id w_sql_id,
        event w_event,
@@ -320,7 +321,7 @@ SELECT /*+ &&sq_fact_hints. */
        event
 ),
 w3 AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        dbid,
        w_sql_id,
        SUM(w_samples) w_samples
@@ -329,7 +330,7 @@ SELECT /*+ &&sq_fact_hints. */
        dbid,
        w_sql_id
 )
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        (10 * w2.w_samples) w_seconds,
        w2.w_sql_id,
        w2.w_event,
@@ -355,12 +356,161 @@ END;
 /
 @@&&skip_diagnostics.edb360_9a_pre_one.sql
 
+column hold_module heading 'Holding Module' 
+column hold_action heading 'Holding Action' 
+column hold_program heading 'Holding Program' 
+column hold_event heading 'Holding Event' 
+column wait_event  heading 'Waiting Event'  
+
+DEF title = 'Profile of Blocking Sessions';
+DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
+BEGIN
+  :sql_text := '
+-- developed by David Kurtz
+WITH w AS ( --waiting sessions
+	SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */ dbid, instance_number
+        ,       snap_id
+	,       sample_id, sample_time
+        ,       session_type wait_session_type
+        ,       session_id, session_serial#
+        ,       sql_id, sql_plan_hash_value, sql_plan_line_id
+--simplified program name removing anything after first @ or dot until open a bracket
+        ,       regexp_substr(program,''[^\.@]+'',1,1)||'' ''||
+                regexp_replace(regexp_substR(regexp_substr(program,''[\.@].+'',1,1),''[\(].+'',1,1),''[[:digit:]]'',''n'',1,0) wait_program 
+        ,       module wait_module
+        ,       CASE WHEN upper(program) LIKE ''ORACLE%'' 
+                     THEN REGEXP_REPLACE(action,''[[:digit:]]+'',''nnn'',1,1)
+                     ELSE action END wait_action
+        ,       NVL(event,''CPU+CPU wait'')  wait_event
+        ,       xid    wait_xid
+        ,       blocking_inst_id, blocking_session, blocking_session_serial#
+        FROM       dba_Hist_active_Sess_history
+        WHERE   blocking_session_status = ''VALID'' --holding a lock
+--add dbid/date/snap_id criteria here
+   AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND dbid = &&edb360_dbid.
+), x as (
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */       w.*
+,       h.sample_id hold_sample_id
+,       h.sample_time hold_Sample_time
+,       h.session_Type hold_session_type
+,       CASE WHEN h.sample_id IS NULL THEN ''Idle Blocker''
+             ELSE NVL(h.event,''CPU+CPU Wait'') 
+        END as   hold_event
+,       regexp_substr(h.program,''[^\.@]+'',1,1)||'' ''||
+        regexp_replace(regexp_substR(regexp_substr(h.program,''[\.@].+'',1,1),''[\(].+'',1,1),''[[:digit:]]'',''n'',1,0) hold_program
+,       h.module hold_module
+,       CASE WHEN upper(h.program) LIKE ''ORACLE%'' 
+             THEN REGEXP_REPLACE(h.action,''[[:digit:]]+'',''nnn'',1,1)
+             ELSE h.action END hold_action
+,       h.xid hold_xid
+,       CASE WHEN w.blocking_inst_id != w.instance_number THEN ''CI'' END AS ci --cross-instance
+FROM    w
+        LEFT OUTER JOIN dba_Hist_active_Sess_History h --holding session
+        ON  h.dbid = w.dbid
+        AND h.instance_number = w.blocking_inst_id
+        AND h.snap_id = w.snap_id
+        AND h.sample_time >= w.sample_time -2/86400
+        AND h.sample_time <  w.sample_time +2/86400 --rough match cross instance
+        AND (h.sample_id = w.sample_id OR h.instance_number != w.instance_number) --exact match local instance 
+        AND h.session_id = w.blocking_Session
+        AND h.session_serial# = w.blocking_Session_serial#
+--add same dbid/date/snap_id criteria here
+   AND h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND h.dbid = &&edb360_dbid.
+)
+select /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ hold_program, hold_module, hold_action, wait_event, hold_event
+, ci
+, sum(10) ash_Secs
+from x
+group by hold_program, hold_module, hold_action, wait_event, hold_event
+, ci
+order by ash_Secs desc
+';
+END;
+/
+--@@&&skip_diagnostics.edb360_9a_pre_one.sql
+
+column hold_sql_id heading 'Holding|SQL ID'
+column hold_sql_plan_hash_value heading 'Holding|SQL Plan|Hash Value'
+
+DEF title = 'Profile of Blocking Sessions with SQL_ID';
+DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
+BEGIN
+  :sql_text := '
+-- developed by David Kurtz
+WITH w AS ( --waiting sessions
+	SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */ dbid, instance_number
+        ,       snap_id
+	,       sample_id, sample_time
+        ,       session_type wait_session_type
+        ,       session_id, session_serial#
+        ,       sql_id, sql_plan_hash_value, sql_plan_line_id
+--simplified program name removing anything after first @ or dot until open a bracket
+        ,       regexp_substr(program,''[^\.@]+'',1,1) ||'' ''||
+                regexp_replace(regexp_substR(regexp_substr(program,''[\.@].+'',1,1),''[\(].+'',1,1),''[[:digit:]]'',''n'',1,0) wait_program 
+        ,       CASE WHEN module=program THEN ''[not set]'' ELSE module END as wait_module
+        ,       CASE WHEN upper(program) LIKE ''ORACLE%'' OR 1=1 
+                     THEN REGEXP_REPLACE(action,''[[:digit:]]+'',''nnn'',1,1)
+                     ELSE action END wait_action
+        ,       NVL(event,''CPU+CPU wait'')  wait_event
+        ,       xid    wait_xid
+        ,       blocking_inst_id, blocking_session, blocking_session_serial#
+        FROM       dba_Hist_active_Sess_history
+        WHERE   blocking_session_status = ''VALID'' --holding a lock
+--add dbid/date/snap_id criteria here
+   AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND dbid = &&edb360_dbid.
+), x as (
+SELECT        w.*
+,       h.sample_id hold_sample_id
+,       h.sample_time hold_Sample_time
+,       h.session_Type hold_session_type
+,       h.sql_id hold_sql_id
+,       h.sql_plan_hash_Value hold_sql_plan_hash_Value
+,       CASE WHEN h.sample_id IS NULL THEN ''Idle Blocker''
+             ELSE NVL(h.event,''CPU+CPU Wait'') 
+        END as   hold_event
+,       regexp_substr(h.program,''[^\.@]+'',1,1)||'' ''||
+        regexp_replace(regexp_substR(regexp_substr(h.program,''[\.@].+'',1,1),''[\(].+'',1,1),''[[:digit:]]'',''n'',1,0) hold_program
+,       CASE WHEN h.module=h.program THEN ''[not set]'' ELSE h.module END as hold_module
+,       CASE WHEN upper(h.program) LIKE ''ORACLE%'' OR 1=1
+             THEN REGEXP_REPLACE(h.action,''[[:digit:]]+'',''nnn'',1,1)
+             ELSE h.action END hold_action
+,       h.xid hold_xid
+,       CASE WHEN w.blocking_inst_id != w.instance_number THEN ''CI'' END AS ci --cross-instance
+FROM    w
+        LEFT OUTER JOIN dba_Hist_active_Sess_History h --holding session
+        ON  h.dbid = w.dbid
+        AND h.instance_number = w.blocking_inst_id
+        AND h.snap_id = w.snap_id
+        AND h.sample_time >= w.sample_time -2/86400
+        AND h.sample_time <  w.sample_time +2/86400 --rough match cross instance
+        AND (h.sample_id = w.sample_id OR h.instance_number != w.instance_number) --exact match local instance 
+        AND h.session_id = w.blocking_Session
+        AND h.session_serial# = w.blocking_Session_serial#
+--add same dbid/date/snap_id criteria here
+   AND h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND h.dbid = &&edb360_dbid.
+)
+select hold_program, hold_module, hold_action, wait_event, hold_event
+, hold_sql_id, hold_sql_plan_hash_value
+, sum(10) ash_Secs
+from x
+group by hold_program, hold_module, hold_action, wait_event, hold_event
+, hold_sql_id, hold_sql_plan_hash_value
+order by ash_Secs desc
+';
+END;
+/
+--@@&&skip_diagnostics.edb360_9a_pre_one.sql
+
 DEF title = 'Invalid Objects';
 DEF main_table = 'DBA_OBJECTS';
 BEGIN
   :sql_text := '
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_objects
  WHERE status = ''INVALID''
@@ -377,7 +527,7 @@ DEF main_table = 'DBA_CONSTRAINTS';
 BEGIN
   :sql_text := '
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_constraints
  WHERE status = ''DISABLED''
@@ -392,14 +542,15 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
-DEF title = 'Not Validated Constraints';
+DEF title = 'Enabled and not Validated Constraints';
 DEF main_table = 'DBA_CONSTRAINTS';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_constraints
- WHERE validated = ''NOT VALIDATED''
+ WHERE status = ''ENABLED''
+   AND validated = ''NOT VALIDATED''
    AND constraint_type != ''O''
    AND NOT (owner = ''SYSTEM'' AND constraint_name LIKE ''LOGMNR%'')
    AND owner NOT IN &&exclusion_list.
@@ -420,7 +571,7 @@ BEGIN
 -- based on "Oracle Database Transactions and Locking Revealed" book by Thomas Kyte  
 WITH
 ref_int_constraints AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        col.owner,
        col.table_name,
        col.constraint_name,
@@ -470,7 +621,7 @@ SELECT /*+ &&sq_fact_hints. */
        par.table_name
 ),
 ref_int_indexes AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.owner,
        r.constraint_name,
        c.table_owner,
@@ -501,7 +652,7 @@ SELECT /*+ &&sq_fact_hints. */
        r.col_cnt
 HAVING COUNT(*) = r.col_cnt
 )
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM ref_int_constraints c
  WHERE NOT EXISTS (
@@ -522,7 +673,7 @@ DEF main_table = 'DBA_INDEXES';
 BEGIN
   :sql_text := '
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_indexes
  WHERE status = ''UNUSABLE''
@@ -540,7 +691,7 @@ DEF title = 'Invisible Indexes';
 DEF main_table = 'DBA_INDEXES';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_indexes
  WHERE visibility = ''INVISIBLE''
@@ -558,7 +709,7 @@ DEF title = 'Function-based Indexes';
 DEF main_table = 'DBA_INDEXES';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_indexes
  WHERE index_type LIKE ''FUNCTION-BASED%''
@@ -576,7 +727,7 @@ DEF title = 'Bitmap Indexes';
 DEF main_table = 'DBA_INDEXES';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_indexes
  WHERE index_type LIKE ''%BITMAP''
@@ -594,7 +745,7 @@ DEF title = 'Reversed Indexes';
 DEF main_table = 'DBA_INDEXES';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_indexes
  WHERE index_type LIKE ''%REV''
@@ -614,7 +765,7 @@ BEGIN
   :sql_text := '
 WITH 
 indexes_list AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        index_owner owner, /*index_name,*/ COUNT(*) columns
   FROM dba_ind_columns
  WHERE index_owner NOT IN &&exclusion_list.
@@ -622,7 +773,7 @@ SELECT /*+ &&sq_fact_hints. */
  GROUP BY
        index_owner, index_name
 )
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        owner,
        SUM(CASE columns WHEN  1 THEN 1 ELSE 0 END) "1 Col",
        SUM(CASE columns WHEN  2 THEN 1 ELSE 0 END) "2 Cols",     
@@ -679,7 +830,7 @@ DEF title = 'Hidden Columns';
 DEF main_table = 'DBA_TAB_COLS';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_tab_cols
  WHERE hidden_column = ''YES''
@@ -698,7 +849,7 @@ DEF title = 'Virtual Columns';
 DEF main_table = 'DBA_TAB_COLS';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_tab_cols
  WHERE virtual_column = ''YES''
@@ -720,7 +871,7 @@ BEGIN
   :sql_text := '
 WITH 
 obj AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        owner,
        object_name,
        object_id,
@@ -732,7 +883,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND owner NOT IN &&exclusion_list2.
 ),
 ash AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        current_obj#,
        MAX(CAST(sample_time AS DATE)) sample_date
   FROM dba_hist_active_sess_history
@@ -744,7 +895,7 @@ SELECT /*+ &&sq_fact_hints. */
        current_obj#
 ),
 sta1 AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        owner,
        table_name,
        MAX(last_analyzed) last_analyzed
@@ -757,7 +908,7 @@ SELECT /*+ &&sq_fact_hints. */
        table_name
 ),
 sta2 AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        owner,
        table_name,
        last_analyzed
@@ -767,7 +918,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND owner NOT IN &&exclusion_list2.
 ),
 sta3 AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        table_owner owner,
        table_name,
        MAX(timestamp) last_date
@@ -780,7 +931,7 @@ SELECT /*+ &&sq_fact_hints. */
        table_name
 ),
 grp AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        owner,
        object_name table_name,
        MAX(last_ddl_time) last_date
@@ -813,7 +964,7 @@ SELECT owner,
        last_date
   FROM sta3
 )
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        MAX(last_date) last_date,
        owner,
        table_name
@@ -836,7 +987,7 @@ BEGIN
   :sql_text := '
 WITH
 objects AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        object_id,
        owner,
        object_name
@@ -855,7 +1006,7 @@ SELECT /*+ &&sq_fact_hints. * /
 ),
 */
 ash_awr AS (
-SELECT /*+ &&sq_fact_hints. &&ds_hint. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
        DISTINCT current_obj# 
   FROM dba_hist_active_sess_history
  WHERE sql_plan_operation = ''INDEX''
@@ -872,12 +1023,12 @@ WHERE operation = ''INDEX''
 ),
 */
 sql_awr AS (
-SELECT /*+ &&sq_fact_hints. &&ds_hint. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
        DISTINCT object_owner, object_name
   FROM dba_hist_sql_plan
  WHERE operation = ''INDEX'' AND dbid = &&edb360_dbid.
 )
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        i.table_owner,
        i.table_name,
        i.index_name
@@ -906,7 +1057,7 @@ BEGIN
   :sql_text := '
 WITH
 indexed_columns AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        col.index_owner,
        col.index_name,
        col.table_owner,
@@ -944,7 +1095,7 @@ SELECT /*+ &&sq_fact_hints. */
        idx.index_type,
        idx.uniqueness
 )
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        r.table_owner,
        r.table_name,
        r.index_type,
@@ -972,7 +1123,7 @@ DEF title = 'Tables with more than 5 Indexes';
 DEF main_table = 'DBA_INDEXES';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        COUNT(*) indexes,
        table_owner,
        table_name,
@@ -1010,7 +1161,7 @@ DEF title = 'Tables on KEEP Buffer Pool';
 DEF main_table = 'DBA_TABLES';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        owner,
        table_name
   FROM dba_tables
@@ -1030,7 +1181,7 @@ DEF main_table = 'DBA_TABLES';
 BEGIN
   :sql_text := '
 -- requested by Milton Quinteros
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        owner,
        table_name
   FROM dba_tables
@@ -1049,7 +1200,7 @@ DEF title = 'Tables on KEEP Flash Cache';
 DEF main_table = 'DBA_TABLES';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        owner,
        table_name
   FROM dba_tables
@@ -1068,7 +1219,7 @@ DEF title = 'Tables on KEEP Cell Flash Cache';
 DEF main_table = 'DBA_TABLES';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        owner,
        table_name
   FROM dba_tables
@@ -1087,7 +1238,7 @@ DEF title = 'Tables set for Compression';
 DEF main_table = 'DBA_TABLES';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        owner,
        table_name,
        compress_for
@@ -1107,7 +1258,7 @@ DEF title = 'Partitions set for Compression';
 DEF main_table = 'DBA_TAB_PARTITIONS';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        table_owner,
        table_name,
        compress_for,
@@ -1135,7 +1286,7 @@ DEF title = 'Subpartitions set for Compression';
 DEF main_table = 'DBA_TAB_SUBPARTITIONS';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        table_owner,
        table_name,
        compress_for,
@@ -1164,7 +1315,7 @@ DEF main_table = 'DBA_SEGMENTS';
 BEGIN
   :sql_text := '
 -- requested by Milton Quinteros
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        buffer_pool, owner, segment_name, partition_name, segment_type, blocks
   FROM dba_segments
  WHERE ''&&edb360_conf_incl_segments.'' = ''Y''
@@ -1186,7 +1337,7 @@ DEF main_table = 'DBA_SEGMENTS';
 BEGIN
   :sql_text := '
 -- requested by Milton Quinteros
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        flash_cache, owner, segment_name, partition_name, segment_type, blocks
   FROM dba_segments
  WHERE ''&&edb360_conf_incl_segments.'' = ''Y''
@@ -1208,7 +1359,7 @@ DEF main_table = 'DBA_SEGMENTS';
 BEGIN
   :sql_text := '
 -- requested by Milton Quinteros
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        cell_flash_cache, owner, segment_name, partition_name, segment_type, blocks
   FROM dba_segments
  WHERE ''&&edb360_conf_incl_segments.'' = ''Y''
@@ -1229,7 +1380,7 @@ DEF title = 'Degree of Parallelism DOP on Tables';
 DEF main_table = 'DBA_TABLES';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        owner,
        SUM(CASE WHEN TRIM(degree) = ''DEFAULT'' THEN 1 ELSE 0 END) "DEFAULT",
        SUM(CASE WHEN TRIM(degree) = ''0'' THEN 1 ELSE 0 END) "0",
@@ -1263,7 +1414,7 @@ DEF title = 'Tables with DOP Set';
 DEF main_table = 'DBA_TABLES';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        degree,
        owner,
        table_name,
@@ -1287,7 +1438,7 @@ DEF title = 'Degree of Parallelism DOP on Indexes';
 DEF main_table = 'DBA_INDEXES';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        owner,
        SUM(CASE WHEN TRIM(degree) = ''DEFAULT'' THEN 1 ELSE 0 END) "DEFAULT",
        SUM(CASE WHEN TRIM(degree) = ''0'' THEN 1 ELSE 0 END) "0",
@@ -1322,7 +1473,7 @@ DEF title = 'Indexes with DOP Set';
 DEF main_table = 'DBA_INDEXES';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        degree,
        owner,
        index_name,
@@ -1348,7 +1499,7 @@ DEF main_table = 'DBA_UNUSED_COL_TABS';
 BEGIN
   :sql_text := '
 -- requested by Mike Moehlman
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_unused_col_tabs
  WHERE owner NOT IN &&exclusion_list.
@@ -1365,33 +1516,51 @@ DEF main_table = 'DBA_TAB_COLUMNS';
 BEGIN
   :sql_text := '
 WITH 
+tables AS (
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
+       t.owner,
+       t.table_name
+  FROM dba_tables t
+ WHERE t.owner NOT IN &&exclusion_list.
+   AND t.owner NOT IN &&exclusion_list2.
+   AND t.table_name NOT LIKE ''BIN%''
+),
 columns AS (
-SELECT /*+ &&sq_fact_hints. */
-       c.column_name, COUNT(*) typ_cnt, data_type,  
-       MIN(c.owner||''.''||c.table_name) min_table_name, 
-       MAX(c.owner||''.''||c.table_name) max_table_name
-  FROM dba_tab_columns c,
-       dba_tables t
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
+       c.owner,
+       c.table_name,
+       c.column_name,
+       c.data_type
+  FROM dba_tab_columns c
  WHERE c.owner NOT IN &&exclusion_list.
    AND c.owner NOT IN &&exclusion_list2.
    AND c.data_type != ''UNDEFINED''
    AND c.table_name NOT LIKE ''BIN%''
-   AND t.owner = c.owner -- this to filter out views
+   AND c.data_type != ''UNDEFINED''
+),
+table_columns AS (
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
+       c.column_name, COUNT(*) typ_cnt, c.data_type,  
+       MIN(c.owner||''.''||c.table_name) min_table_name, 
+       MAX(c.owner||''.''||c.table_name) max_table_name
+  FROM columns c,
+       tables t
+ WHERE t.owner = c.owner -- this to filter out views
    AND t.table_name = c.table_name -- this to filter out views
  GROUP BY
        c.column_name, c.data_type
 ),
 more_than_one_type AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        column_name, SUM(typ_cnt) col_cnt
-  FROM columns
+  FROM table_columns
  GROUP BY
        column_name
 HAVING COUNT(*) > 1
 )
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        m.col_cnt, c.*
-  FROM columns c,
+  FROM table_columns c,
        more_than_one_type m
  WHERE m.column_name = c.column_name
  ORDER BY
@@ -1409,7 +1578,7 @@ DEF main_table = 'DBA_JOBS';
 BEGIN
   :sql_text := '
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_jobs
  ORDER BY
@@ -1424,7 +1593,7 @@ DEF main_table = 'DBA_JOBS_RUNNING';
 BEGIN
   :sql_text := '
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_jobs_running
  ORDER BY
@@ -1438,7 +1607,7 @@ DEF title = 'Scheduler Jobs';
 DEF main_table = 'DBA_SCHEDULER_JOBS';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_scheduler_jobs
  ORDER BY
@@ -1453,7 +1622,7 @@ DEF title = 'Scheduler Job Log for past 7 days';
 DEF main_table = 'DBA_SCHEDULER_JOB_LOG';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_scheduler_job_log
  WHERE log_date > SYSDATE - 7
@@ -1469,7 +1638,7 @@ DEF title = 'Scheduler Windows';
 DEF main_table = 'DBA_SCHEDULER_WINDOWS';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_scheduler_windows
  ORDER BY
@@ -1483,7 +1652,7 @@ DEF title = 'Scheduler Window Group Members';
 DEF main_table = 'DBA_SCHEDULER_WINGROUP_MEMBERS';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_scheduler_wingroup_members
  ORDER BY
@@ -1497,7 +1666,7 @@ DEF title = 'Automated Maintenance Tasks';
 DEF main_table = 'DBA_AUTOTASK_CLIENT';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_autotask_client
  ORDER BY
@@ -1511,7 +1680,7 @@ DEF title = 'Automated Maintenance Tasks History';
 DEF main_table = 'DBA_AUTOTASK_CLIENT_HISTORY';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_autotask_client_history
  ORDER BY
@@ -1526,7 +1695,7 @@ DEF main_table = 'GV$SESSION';
 BEGIN
   :sql_text := '
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
 a.sid, a.sql_id sql_id_a, a.state, a.blocking_session, b.sql_id sql_id_b, b.prev_sql_id, 
 a.blocking_session_status, a.seconds_in_wait
  from gv$session a, gv$session b
@@ -1542,7 +1711,7 @@ DEF main_table = 'DBA_SEQUENCES';
 BEGIN
   :sql_text := '
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        s.*,
        ROUND(100 * (s.last_number - s.min_value) / GREATEST((s.max_value - s.min_value), 1), 1) percent_used /* requested by Mike Moehlman */
 from dba_sequences s
@@ -1560,7 +1729,7 @@ DEF title = 'Sequences prone to contention';
 DEF main_table = 'DBA_SEQUENCES';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        (s.last_number - CASE WHEN s.increment_by > 0 THEN s.min_value ELSE s.max_value END) / s.increment_by times_used, s.*
   FROM dba_sequences s
  WHERE s.sequence_owner not in &&exclusion_list.
@@ -1580,7 +1749,7 @@ DEF main_table = 'DBA_TAB_COLUMNS';
 DEF abstract = 'Tables with more than 255 Columns are subject to intra-block chained rows';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */ 
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        COUNT(*) columns,
        owner,
        table_name
@@ -1607,7 +1776,7 @@ BEGIN
   :sql_text := '
 WITH
 lit AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        force_matching_signature, COUNT(*) cnt, MIN(sql_id) min_sql_id, MAX(SQL_ID) max_sql_id
   FROM gv$sql
  WHERE force_matching_signature > 0
@@ -1615,7 +1784,7 @@ SELECT /*+ &&sq_fact_hints. */
        force_matching_signature
 HAVING COUNT(*) > 49
 )
-SELECT /*+ &&top_level_hints. */ 
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        DISTINCT lit.cnt, s.force_matching_signature, s.parsing_schema_name owner,
        CASE WHEN o.object_name IS NOT NULL THEN o.object_name||''(''||s.program_line#||'')'' END source,
        s.sql_text
@@ -1638,7 +1807,7 @@ BEGIN
   :sql_text := '
 WITH
 lit AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        force_matching_signature, COUNT(*) cnt, MIN(sql_id) min_sql_id, MAX(SQL_ID) max_sql_id
   FROM gv$sql
  WHERE force_matching_signature > 0
@@ -1646,7 +1815,7 @@ SELECT /*+ &&sq_fact_hints. */
        force_matching_signature
 HAVING COUNT(*) > 49
 )
-SELECT /*+ &&top_level_hints. */ 
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        DISTINCT s.parsing_schema_name owner, lit.cnt, s.force_matching_signature,
        CASE WHEN o.object_name IS NOT NULL THEN o.object_name||''(''||s.program_line#||'')'' END source,
        s.sql_text
@@ -1666,7 +1835,7 @@ DEF title = 'Open Cursors Count per Session';
 DEF main_table = 'GV$OPEN_CURSOR';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */ 
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        COUNT(*) open_cursors, inst_id, sid, user_name
   FROM gv$open_cursor
  GROUP BY
@@ -1683,7 +1852,7 @@ DEF main_table = 'GV$OPEN_CURSOR';
 DEF abstract = 'SQL statements with more than 50 Open Cursors';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */ 
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        COUNT(*) open_cursors, COUNT(DISTINCT inst_id||''.''||sid) sessions, sql_id, hash_value, sql_text, cursor_type,
        MIN(user_name) min_user_name, MAX(user_name) max_user_name, MAX(last_sql_active_time) last_sql_active_time
   FROM gv$open_cursor
@@ -1702,7 +1871,7 @@ DEF title = 'High Cursor Count';
 DEF main_table = 'GV$SQL';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */ 
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        v1.sql_id,
        COUNT(*) child_cursors,
        MIN(inst_id) min_inst_id,
@@ -1728,7 +1897,7 @@ BEGIN
   :sql_text := '
 WITH
 not_shared AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        sql_id, COUNT(*) child_cursors,
        RANK() OVER (ORDER BY COUNT(*) DESC NULLS LAST) AS sql_rank
   FROM gv$sql_shared_cursor
@@ -1736,7 +1905,7 @@ SELECT /*+ &&sq_fact_hints. */
        sql_id
 HAVING COUNT(*) > 100
 )
-SELECT /*+ &&top_level_hints. */ 
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        ns.sql_rank,
        ns.child_cursors,
        ns.sql_id,
@@ -1759,7 +1928,7 @@ SELECT SUM(buffer_gets) total_buffer_gets, SUM(disk_reads) total_disk_reads FROM
 BEGIN
   :sql_text := '
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
-SELECT /*+ &&top_level_hints. */ 
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
    FORCE_MATCHING_SIGNATURE,
    duplicate_count cnt,
    distinct_phv phv_cnt,
@@ -1819,7 +1988,7 @@ SELECT SUM(buffer_gets) total_buffer_gets, SUM(disk_reads) total_disk_reads FROM
 BEGIN
   :sql_text := '
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
-SELECT /*+ &&top_level_hints. */ 
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
    FORCE_MATCHING_SIGNATURE,
    duplicate_count,
    executions,
@@ -1873,7 +2042,7 @@ BEGIN
   :sql_text := '
 WITH /* active_sql */ 
 unique_sql AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        DISTINCT sq.sql_id,
        sq.sql_text
   FROM gv$session se,
@@ -2041,7 +2210,7 @@ DEF title = 'Workload Repository Control';
 DEF main_table = 'DBA_HIST_WR_CONTROL';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */ 
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        *
   FROM dba_hist_wr_control
 ';
@@ -2053,7 +2222,7 @@ DEF title = 'ASH Info';
 DEF main_table = 'V$ASH_INFO';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */ 
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        *
   FROM v$ash_info
 ';
@@ -2065,7 +2234,7 @@ DEF title = 'SYSAUX Occupants';
 DEF main_table = 'V$SYSAUX_OCCUPANTS';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */ 
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        v.*, ROUND(v.space_usage_kbytes / POWER(2, 20), 3) space_usage_gbs
   FROM v$sysaux_occupants v
  ORDER BY 1
@@ -2079,7 +2248,7 @@ DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
 BEGIN
   :sql_text := '
 -- from http://jhdba.wordpress.com/tag/purge-wrh-tables/
-SELECT /*+ &&top_level_hints. */ 
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
  sysdate - a.sample_time ash,
 sysdate - s.begin_interval_time snap,
 c.RETENTION
@@ -2127,7 +2296,7 @@ DEF main_table = 'DBA_2PC_PENDING';
 BEGIN
   :sql_text := '
 -- requested by Milton Quinteros
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_2pc_pending
  ORDER BY
@@ -2142,7 +2311,7 @@ DEF main_table = 'DBA_2PC_NEIGHBORS';
 BEGIN
   :sql_text := '
 -- requested by Milton Quinteros
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_2pc_neighbors
  ORDER BY
@@ -2160,11 +2329,11 @@ BEGIN
 -- requested by Milton Quinteros
 with 
 max_free AS (
-select /*+ &&sq_fact_hints. */
+select /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
 tablespace_name, max(bytes) bytes
 from dba_free_space
 group by tablespace_name )
-select /*+ &&top_level_hints. */
+select /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
 s.owner, s.segment_name, s.tablespace_name, s.next_extent, max_free.bytes max_free_bytes 
 from dba_segments s, max_free
 where ''&&edb360_conf_incl_segments.'' = ''Y''
@@ -2182,7 +2351,7 @@ DEF title = 'Libraries Version';
 DEF main_table = 'DBA_SOURCE';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_source
  WHERE line < 21
@@ -2199,7 +2368,7 @@ DEF main_table = 'DBA_SYNONYMS';
 BEGIN
   :sql_text := '
 -- provided by Simon Pane
-SELECT /*+ &&top_level_hints. */ 
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        s.owner, s.table_owner, COUNT(1)
   FROM sys.dba_synonyms s
  WHERE s.table_owner||''.''||s.table_name NOT IN
@@ -2218,3 +2387,6 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+SPO &&edb360_main_report..html APP;
+PRO </ol>
+SPO OFF;

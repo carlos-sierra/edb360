@@ -3,14 +3,15 @@ DEF section_id = '4h';
 DEF section_name = 'Parallel Execution';
 EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
 SPO &&edb360_main_report..html APP;
-PRO <h2>&&section_name.</h2>
+PRO <h2>&&section_id.. &&section_name.</h2>
+PRO <ol start="&&report_sequence.">
 SPO OFF;
 
 DEF title = 'DOP Limit Method';
 DEF main_table = 'V$PARALLEL_DEGREE_LIMIT_MTH';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        * 
     FROM v$parallel_degree_limit_mth
 ';
@@ -24,7 +25,7 @@ DEF title = 'PX Buffer Advice';
 DEF main_table = 'GV$PX_BUFFER_ADVICE';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        * 
   FROM gv$px_buffer_advice 
  ORDER BY 1, 2
@@ -37,7 +38,7 @@ DEF title = 'PQ System Stats';
 DEF main_table = 'GV$PQ_SYSSTAT';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        * 
   FROM gv$pq_sysstat 
  ORDER BY 1, 2
@@ -50,7 +51,7 @@ DEF title = 'PX Process System Stats';
 DEF main_table = 'GV$PX_PROCESS_SYSSTAT';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        * 
   FROM gv$px_process_sysstat 
  ORDER BY 1, 2
@@ -65,7 +66,7 @@ DEF title = 'System Stats';
 DEF main_table = 'GV$SYSSTAT';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        * 
   FROM gv$sysstat 
  ORDER BY 1, UPPER(name)
@@ -88,7 +89,7 @@ DEF title = 'PX Sessions';
 DEF main_table = 'GV$PX_SESSION';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        pxs.inst_id,
        pxs.qcsid,
        NVL(pxp.server_name, ''QC'') server_name,
@@ -137,7 +138,7 @@ DEF title = 'PX Sessions Stats';
 DEF main_table = 'GV$PX_SESSTAT';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        s.*,
        n.name
   FROM gv$px_sesstat s,
@@ -155,7 +156,7 @@ DEF title = 'PX Processes';
 DEF main_table = 'GV$PX_PROCESS';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        * 
   FROM gv$px_process 
  ORDER BY 1, 2
@@ -168,7 +169,7 @@ DEF title = 'Services';
 DEF main_table = 'GV$SERVICES';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        * 
   FROM gv$services 
  ORDER BY 1, 2
@@ -180,7 +181,7 @@ DEF title = 'IO Last Calibration Results';
 DEF main_table = 'DBA_RSRC_IO_CALIBRATE';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_rsrc_io_calibrate
  ORDER BY
@@ -224,7 +225,6 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
-
-
-
-
+SPO &&edb360_main_report..html APP;
+PRO </ol>
+SPO OFF;

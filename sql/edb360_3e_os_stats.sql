@@ -3,14 +3,15 @@ DEF section_id = '3e';
 DEF section_name = 'Operating System (OS) Statistics History';
 EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
 SPO &&edb360_main_report..html APP;
-PRO <h2>&&section_name.</h2>
+PRO <h2>&&section_id.. &&section_name.</h2>
+PRO <ol start="&&report_sequence.">
 SPO OFF;
 
 DEF title = 'Operating System (OS) Statistics';
 DEF main_table = 'GV$OSSTAT';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM gv$osstat
 ';
@@ -43,7 +44,7 @@ BEGIN
   :sql_text_backup := '
 WITH 
 osstat_denorm AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        s.snap_id,
        s.instance_number,
        SUM(CASE s.stat_name WHEN ''LOAD''          THEN value ELSE 0 END) load,
@@ -59,7 +60,7 @@ SELECT /*+ &&sq_fact_hints. */
        s.instance_number
 ),
 osstat_denorm_2 AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        MIN(h.snap_id) snap_id,
        h.instance_number,
        TRUNC(CAST(s.end_interval_time AS DATE), ''HH'') begin_time,
@@ -200,7 +201,7 @@ BEGIN
   :sql_text_backup := '
 WITH 
 osstat_denorm_2 AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
        dbid,
        instance_number,
@@ -227,7 +228,7 @@ SELECT /*+ &&sq_fact_hints. */
        instance_number
 ),
 osstat_delta AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        h1.snap_id,
        h1.dbid,
        h1.instance_number,
@@ -412,7 +413,7 @@ BEGIN
   :sql_text_backup := '
 WITH 
 osstat_denorm_2 AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
        dbid,
        instance_number,
@@ -439,7 +440,7 @@ SELECT /*+ &&sq_fact_hints. */
        instance_number
 ),
 osstat_delta AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        h1.snap_id,
        h1.dbid,
        h1.instance_number,
@@ -478,7 +479,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND s1.begin_interval_time > (s0.begin_interval_time + (1 / (24 * 60))) /* filter out snaps apart < 1 min */
 ),
 osstat_inst AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        instance_number,
        snap_id,
        TO_CHAR(begin_interval_time, ''YYYY-MM-DD HH24:MI'') begin_time,
@@ -498,7 +499,7 @@ SELECT /*+ &&sq_fact_hints. */
   FROM osstat_delta
 ),
 osstat_denorm_3 AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
        begin_time,
        end_time,
@@ -615,3 +616,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@stat_name@', 'vm_out_bytes');
 
 DEF skip_lch = 'Y';
 DEF skip_pch = 'Y';
+
+SPO &&edb360_main_report..html APP;
+PRO </ol>
+SPO OFF;

@@ -3,7 +3,8 @@ DEF section_id = '5c';
 DEF section_name = 'Active Session History (ASH) on CPU and Top 24 Wait Events';
 EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
 SPO &&edb360_main_report..html APP;
-PRO <h2>&&section_name.</h2>
+PRO <h2>&&section_id.. &&section_name.</h2>
+PRO <ol start="&&report_sequence.">
 SPO OFF;
 
 -- from 5a
@@ -144,7 +145,7 @@ COL event_name_24 NEW_V event_name_24;
 
 WITH
 ranked AS (
-SELECT /*+ &&sq_fact_hints. &&ds_hint. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
        h.wait_class,
        event event_name,
        COUNT(*) samples,
@@ -217,7 +218,7 @@ BEGIN
   :sql_text_backup2 := '
 WITH
 hist AS (
-SELECT /*+ &&sq_fact_hints. &&ds_hint. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
        sql_id,
        dbid,
        program,
@@ -563,3 +564,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@filter_predicate@', 'wait_class =
 
 DEF skip_lch = 'Y';
 DEF skip_pch = 'Y';
+
+SPO &&edb360_main_report..html APP;
+PRO </ol>
+SPO OFF;

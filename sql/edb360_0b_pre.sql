@@ -1,7 +1,6 @@
---WHENEVER SQLERROR EXIT SQL.SQLCODE;
-
-DEF edb360_vYYNN = 'v1604';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2016-02-18)';
+DEF edb360_vYYNN = 'v1605';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2016-03-13)';
+DEF edb360_copyright = ' (c) 2016';
 
 -- parameters
 PRO
@@ -13,12 +12,14 @@ PRO
 PRO Oracle Pack License? (Tuning, Diagnostics or None) [ T | D | N ] (required)
 COL license_pack NEW_V license_pack FOR A1;
 SELECT NVL(UPPER(SUBSTR(TRIM('&1.'), 1, 1)), '?') license_pack FROM DUAL;
+WHENEVER SQLERROR EXIT SQL.SQLCODE;
 BEGIN
   IF NOT '&&license_pack.' IN ('T', 'D', 'N') THEN
     RAISE_APPLICATION_ERROR(-20000, 'Invalid Oracle Pack License "&&license_pack.". Valid values are T, D and N.');
   END IF;
 END;
 /
+WHENEVER SQLERROR CONTINUE;
 PRO
 SET TERM OFF;
 -- watchdog
@@ -238,10 +239,16 @@ SELECT CASE WHEN :edb360_sec_from = '1a' AND :edb360_sec_to = '9z' THEN 'edb360'
 -- esp init
 DEF ecr_collection_key = '';
 
+-- dummy
+DEF skip_script = 'sql/edb360_0f_skip_script.sql ';
+
 -- get dbid
 COL edb360_dbid NEW_V edb360_dbid;
 SELECT TRIM(TO_CHAR(dbid)) edb360_dbid FROM v$database;
-DEF skip_script = 'sql/edb360_0f_skip_script.sql ';
+
+-- get dbmod
+COL edb360_dbmod NEW_V edb360_dbmod;
+SELECT LPAD(MOD(dbid,1e6),6,'6') edb360_dbmod FROM v$database;
 
 -- get instance number
 COL connect_instance_number NEW_V connect_instance_number;
@@ -272,6 +279,10 @@ SELECT TRANSLATE('&&esp_host_name_short.',
 'abcdefghijklmnopqrstuvwxyz0123456789-_ ''`~!@#$%&*()=+[]{}\|;:",.<>/?'||CHR(0)||CHR(9)||CHR(10)||CHR(13)||CHR(38),
 'abcdefghijklmnopqrstuvwxyz0123456789-_') esp_host_name_short FROM DUAL;
 
+-- get host hash
+COL host_hash NEW_V host_hash;
+SELECT LPAD(ORA_HASH(SYS_CONTEXT('USERENV', 'SERVER_HOST'),999999),6,'6') host_hash FROM DUAL;
+
 -- get collection date
 DEF esp_collection_yyyymmdd = '';
 COL esp_collection_yyyymmdd NEW_V esp_collection_yyyymmdd FOR A8;
@@ -288,13 +299,13 @@ DEF title_suffix = '';
 -- timestamp on filename
 COL edb360_file_time NEW_V edb360_file_time FOR A20;
 SELECT TO_CHAR(SYSDATE, 'YYYYMMDD_HH24MI') edb360_file_time FROM DUAL;
-DEF common_edb360_prefix = '&&edb360_prefix._&&database_name_short.';
+DEF common_edb360_prefix = '&&edb360_prefix._&&edb360_dbmod.';
 DEF edb360_main_report = '00001_&&common_edb360_prefix._index';
 DEF edb360_log = '00002_&&common_edb360_prefix._log';
 DEF edb360_log2 = '00003_&&common_edb360_prefix._log2';
 DEF edb360_log3 = '00004_&&common_edb360_prefix._log3';
 DEF edb360_tkprof = '00005_&&common_edb360_prefix._tkprof';
-DEF edb360_main_filename = '&&common_edb360_prefix._&&host_name_short.';
+DEF edb360_main_filename = '&&common_edb360_prefix._&&host_hash.';
 DEF edb360_tracefile_identifier = '&&common_edb360_prefix.';
 DEF edb360_tar_filename = '00008_&&edb360_main_filename._&&edb360_file_time.';
 
@@ -317,7 +328,7 @@ ALTER SESSION SET optimizer_features_enable = '&&db_vers_ofe.';
 ALTER SESSION SET "_optimizer_order_by_elimination_enabled"=false; 
 -- workaround Siebel
 ALTER SESSION SET optimizer_index_cost_adj = 100;
-ALTER SESSION SET optimizer_dynamic_sampling = 2;
+--ALTER SESSION SET optimizer_dynamic_sampling = 2;
 ALTER SESSION SET "_always_semi_join" = CHOOSE;
 ALTER SESSION SET "_and_pruning_enabled" = TRUE;
 ALTER SESSION SET "_subquery_pruning_enabled" = TRUE;
@@ -333,6 +344,10 @@ ALTER SESSION SET cursor_sharing = EXACT;
 ALTER SESSION SET db_file_multiblock_read_count = 128;
 ALTER SESSION SET optimizer_index_caching = 0;
 ALTER SESSION SET optimizer_index_cost_adj = 100;
+-- workaround 21150273 and 20465582
+ALTER SESSION SET optimizer_dynamic_sampling = 0;
+ALTER SESSION SET "_optimizer_dsdir_usage_control"=0;
+ALTER SESSION SET "_sql_plan_directive_mgmt_control" = 0;
 
 -- tracing script in case it takes long to execute so we can diagnose it
 ALTER SESSION SET MAX_DUMP_FILE_SIZE = '1G';
@@ -446,7 +461,6 @@ SELECT CASE '&&edb360_conf_incl_sql_mon.' WHEN 'N' THEN '--' END edb360_skip_sql
 SELECT CASE '&&edb360_conf_incl_stat_mem.' WHEN 'N' THEN '--' END edb360_skip_stat_mem FROM DUAL;
 SELECT CASE '&&edb360_conf_incl_px_mem.' WHEN 'N' THEN '--' END edb360_skip_px_mem FROM DUAL;
 
-DEF edb360_copyright = ' (c) 2015';
 DEF top_level_hints = 'NO_MERGE';
 DEF sq_fact_hints = 'MATERIALIZE NO_MERGE';
 DEF ds_hint = 'DYNAMIC_SAMPLING(4)';
@@ -471,7 +485,7 @@ DEF foot = '';
 COL sql_text FOR A100;
 DEF chartype = '';
 DEF stacked = '';
-DEF haxis = '&&db_version. dbname:&&database_name_short. host:&&host_name_short. (avg cpu_count: &&avg_cpu_count.)';
+DEF haxis = '&&db_version. dbmod:&&edb360_dbmod. host:&&host_hash. (avg cpu_count: &&avg_cpu_count.)';
 DEF vaxis = '';
 DEF vbaseline = '';
 COL tit_01 NEW_V tit_01;
@@ -561,6 +575,7 @@ COL hh_mm_ss NEW_V hh_mm_ss FOR A8;
 COL title_no_spaces NEW_V title_no_spaces;
 COL spool_filename NEW_V spool_filename;
 COL one_spool_filename NEW_V one_spool_filename;
+COL report_sequence NEW_V report_sequence;
 --VAR row_count NUMBER;
 VAR sql_text CLOB;
 VAR sql_text_backup CLOB;
@@ -568,6 +583,9 @@ VAR sql_text_backup2 CLOB;
 VAR sql_text_display CLOB;
 VAR file_seq NUMBER;
 EXEC :file_seq := 8;
+VAR repo_seq NUMBER;
+EXEC :repo_seq := 1;
+SELECT TO_CHAR(:repo_seq) report_sequence FROM DUAL;
 VAR get_time_t0 NUMBER;
 VAR get_time_t1 NUMBER;
 DEF current_time = '';
@@ -714,7 +732,7 @@ PRO <body>
 PRO <h1><em>&&edb360_conf_tool_page.eDB360</a></em> &&edb360_vYYNN.: an Oracle database 360-degree view &&edb360_conf_all_pages_logo.</h1>
 PRO
 PRO <pre>
-PRO dbname:&&database_name_short. version:&&db_version. host:&&host_name_short. license:&&license_pack. days:&&history_days. from:&&edb360_date_from. to:&&edb360_date_to. today:&&edb360_time_stamp.
+PRO dbmod:&&edb360_dbmod. version:&&db_version. host:&&host_hash. license:&&license_pack. days:&&history_days. from:&&edb360_date_from. to:&&edb360_date_to. today:&&edb360_time_stamp.
 PRO </pre>
 PRO
 SPO OFF;
@@ -743,5 +761,3 @@ HOS zip -j &&edb360_main_filename._&&edb360_file_time. js/edb360_all_pages_logo.
 HOS zip -j &&edb360_main_filename._&&edb360_file_time. js/edb360_favicon.ico >> &&edb360_log3..txt
 --HOS zip -r osw_&&esp_host_name_short..zip `ps -ef | grep OSW | grep FM | awk -F 'OSW' '{print $2}' | cut -f 3 -d ' '`
 --HOS zip -mT &&edb360_main_filename._&&edb360_file_time. osw_&&esp_host_name_short..zip
-
---WHENEVER SQLERROR CONTINUE;

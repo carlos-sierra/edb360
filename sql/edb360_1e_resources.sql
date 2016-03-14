@@ -3,7 +3,8 @@ DEF section_id = '1e';
 DEF section_name = 'Resources (as per AWR and MEM)';
 EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
 SPO &&edb360_main_report..html APP;
-PRO <h2>&&section_name.</h2>
+PRO <h2>&&section_id.. &&section_name.</h2>
+PRO <ol start="&&report_sequence.">
 SPO OFF;
 
 COL order_by NOPRI;
@@ -29,7 +30,7 @@ BEGIN
   :sql_text := '
 WITH 
 cpu_per_inst_and_sample AS (
-SELECT /*+ &&sq_fact_hints. &&ds_hint. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
        inst_id,
        sample_id,
        COUNT(*) aas_on_cpu_and_resmgr,
@@ -44,7 +45,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */
        sample_id
 ),
 cpu_per_inst AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        inst_id,
        MIN(min_sample_time)                                                   min_sample_time,
        MAX(max_sample_time)                                                   max_sample_time,
@@ -157,7 +158,7 @@ BEGIN
   :sql_text := '
 WITH 
 cpu_per_inst_and_sample AS (
-SELECT /*+ &&sq_fact_hints. &&ds_hint. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
        h.snap_id,
        h.dbid,
        h.instance_number,
@@ -182,7 +183,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */
        h.sample_id
 ),
 cpu_per_db_and_inst AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        dbid,
        instance_number,
        MIN(begin_interval_time)                                               begin_interval_time,
@@ -321,7 +322,7 @@ BEGIN
   :sql_text_backup := '
 WITH 
 cpu_per_inst_and_sample AS (
-SELECT /*+ &&sq_fact_hints. &&ds_hint. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
        instance_number,
        snap_id,
        sample_id,
@@ -340,7 +341,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */
        sample_id
 ),
 cpu_per_inst_and_hour AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        MIN(snap_id) snap_id,
        instance_number, 
        TRUNC(CAST(sample_time AS DATE), ''HH'') begin_time, 
@@ -494,7 +495,7 @@ BEGIN
   :sql_text_backup := '
 WITH 
 cpu_per_inst_and_sample AS (
-SELECT /*+ &&sq_fact_hints. &&ds_hint. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
        instance_number,
        snap_id,
        sample_id,
@@ -511,7 +512,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */
        sample_id
 ),
 cpu_per_inst_and_hour AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        MIN(snap_id) snap_id,
        instance_number, 
        TRUNC(CAST(sample_time AS DATE), ''HH'')             begin_time, 
@@ -659,7 +660,7 @@ DEF main_table = 'DBA_HIST_SGA';
 BEGIN
   :sql_text := '
 WITH mem_per_inst_and_snap AS (
-SELECT /*+ &&sq_fact_hints. &&ds_hint. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
        s.snap_id,
        s.dbid,
        s.instance_number,
@@ -684,7 +685,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */
        s.instance_number
 ),
 mem_per_db_and_inst AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        dbid,
        instance_number,
        MIN(begin_interval_time)                                begin_interval_time,
@@ -798,11 +799,12 @@ BEGIN
   :sql_text := '
 WITH
 par AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        d.dbid,
        d.name db_name,
        i.inst_id,
-       LOWER(SUBSTR(i.host_name||''.'', 1, INSTR(i.host_name||''.'', ''.'') - 1)) host_name,
+       /* LOWER(SUBSTR(i.host_name||''.'', 1, INSTR(i.host_name||''.'', ''.'') - 1)) */
+       LPAD(ORA_HASH(SYS_CONTEXT(''USERENV'', ''SERVER_HOST''),999999),6,''6'') host_name,
        i.instance_number,
        i.instance_name,
        SUM(CASE p.name WHEN ''memory_target'' THEN TO_NUMBER(value) END) memory_target,
@@ -825,21 +827,21 @@ SELECT /*+ &&sq_fact_hints. */
        i.instance_name
 ),
 sga_max AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        inst_id,
        bytes
   FROM gv$sgainfo
  WHERE name = ''Maximum SGA Size''
 ),
 pga_max AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        inst_id,
        value bytes
   FROM gv$pgastat
  WHERE name = ''maximum PGA allocated''
 ),
 pga AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        par.dbid,
        par.db_name,
        par.inst_id,
@@ -854,7 +856,7 @@ SELECT /*+ &&sq_fact_hints. */
  WHERE par.inst_id = pga_max.inst_id
 ),
 amm AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        par.dbid,
        par.db_name,
        par.inst_id,
@@ -867,7 +869,7 @@ SELECT /*+ &&sq_fact_hints. */
   FROM par
 ),
 asmm AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        par.dbid,
        par.db_name,
        par.inst_id,
@@ -883,7 +885,7 @@ SELECT /*+ &&sq_fact_hints. */
  WHERE par.inst_id = pga.inst_id
 ),
 no_mm AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        pga.dbid,
        pga.db_name,
        pga.inst_id,
@@ -899,7 +901,7 @@ SELECT /*+ &&sq_fact_hints. */
  WHERE sga_max.inst_id = pga.inst_id
 ),
 them_all AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        amm.dbid,
        amm.db_name,
        amm.inst_id,
@@ -981,7 +983,7 @@ BEGIN
   :sql_text := '
 WITH
 max_snap AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        MAX(snap_id) snap_id,
        dbid,
        instance_number,
@@ -997,7 +999,7 @@ SELECT /*+ &&sq_fact_hints. */
        parameter_name
 ),
 last_value AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        s.snap_id,
        s.dbid,
        s.instance_number,
@@ -1013,7 +1015,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND p.dbid = &&edb360_dbid.
 ),
 last_snap AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        p.snap_id,
        p.dbid,
        p.instance_number,
@@ -1029,10 +1031,11 @@ SELECT /*+ &&sq_fact_hints. */
    AND s.dbid = &&edb360_dbid.
 ),
 par AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        p.dbid,
        di.db_name,
-       LOWER(SUBSTR(di.host_name||''.'', 1, INSTR(di.host_name||''.'', ''.'') - 1)) host_name,
+       /* LOWER(SUBSTR(di.host_name||''.'', 1, INSTR(di.host_name||''.'', ''.'') - 1)) */
+       LPAD(ORA_HASH(SYS_CONTEXT(''USERENV'', ''SERVER_HOST''),999999),6,''6'') host_name,
        p.instance_number,
        di.instance_name,
        SUM(CASE p.parameter_name WHEN ''memory_target'' THEN TO_NUMBER(p.value) ELSE 0 END) memory_target,
@@ -1054,7 +1057,7 @@ SELECT /*+ &&sq_fact_hints. */
        di.instance_name
 ),
 sgainfo AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
        dbid,
        instance_number,
@@ -1068,7 +1071,7 @@ SELECT /*+ &&sq_fact_hints. */
        instance_number
 ),
 sga_max AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        dbid,
        instance_number,
        MAX(sga_size) bytes
@@ -1078,7 +1081,7 @@ SELECT /*+ &&sq_fact_hints. */
        instance_number
 ),
 pga_max AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        dbid,
        instance_number,
        MAX(value) bytes
@@ -1091,7 +1094,7 @@ SELECT /*+ &&sq_fact_hints. */
        instance_number
 ),
 pga AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        par.dbid,
        par.db_name,
        par.host_name,
@@ -1106,7 +1109,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND par.instance_number = pga_max.instance_number
 ),
 amm AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        par.dbid,
        par.db_name,
        par.host_name,
@@ -1118,7 +1121,7 @@ SELECT /*+ &&sq_fact_hints. */
   FROM par
 ),
 asmm AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        par.dbid,
        par.db_name,
        par.host_name,
@@ -1134,10 +1137,11 @@ SELECT /*+ &&sq_fact_hints. */
    AND par.instance_number = pga.instance_number
 ),
 no_mm AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        pga.dbid,
        pga.db_name,
-       LOWER(SUBSTR(pga.host_name||''.'', 1, INSTR(pga.host_name||''.'', ''.'') - 1)) host_name,
+       /* LOWER(SUBSTR(pga.host_name||''.'', 1, INSTR(pga.host_name||''.'', ''.'') - 1)) */
+       LPAD(ORA_HASH(SYS_CONTEXT(''USERENV'', ''SERVER_HOST''),999999),6,''6'') host_name,
        pga.instance_number,
        pga.instance_name,
        sga_max.bytes max_sga,
@@ -1150,7 +1154,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND sga_max.instance_number = pga.instance_number
 ),
 them_all AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        amm.dbid,
        amm.db_name,
        amm.host_name,
@@ -1250,7 +1254,7 @@ BEGIN
   :sql_text_backup := '
 WITH
 sga AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
        dbid,
        instance_number,
@@ -1265,7 +1269,7 @@ SELECT /*+ &&sq_fact_hints. */
        instance_number
 ),
 pga AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
        dbid,
        instance_number,
@@ -1277,7 +1281,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND name = ''total PGA allocated''
 ),
 mem AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snp.snap_id,
        snp.dbid,
        snp.instance_number,
@@ -1299,7 +1303,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND snp.dbid = &&edb360_dbid.
 ),
 hourly_inst AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        MIN(snap_id) snap_id,
        dbid,
        instance_number,
@@ -1318,7 +1322,7 @@ SELECT /*+ &&sq_fact_hints. */
        end_time
 ),
 hourly AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        MIN(snap_id) snap_id,
        begin_time,
        end_time,
@@ -1438,7 +1442,7 @@ BEGIN
   :sql_text := '
 WITH 
 sizes AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        ''Data'' file_type,
        SUM(bytes) bytes
   FROM v$datafile
@@ -1456,7 +1460,7 @@ SELECT ''Control'' file_type,
   FROM v$controlfile
 ),
 dbsize AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        ''Total'' file_type,
        SUM(bytes) bytes
   FROM sizes
@@ -1522,7 +1526,7 @@ BEGIN
   :sql_text := '
 WITH
 ts_per_snap_id AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        us.snap_id,
        TRUNC(CAST(sn.end_interval_time AS DATE), ''HH'') + (1/24) end_time,
        SUM(us.tablespace_size * ts.block_size) all_tablespaces_bytes,
@@ -1591,7 +1595,7 @@ BEGIN
   :sql_text := '
 WITH
 sysstat_io AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        h.snap_id,
        h.dbid,
        h.instance_number,
@@ -1607,7 +1611,7 @@ SELECT /*+ &&sq_fact_hints. */
        h.instance_number
 ),
 io_per_inst_and_snap_id AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        h1.dbid,
        h1.instance_number,
        h1.snap_id,
@@ -1872,7 +1876,7 @@ BEGIN
   :sql_text_backup := '
 WITH
 sysstat_io AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        instance_number,
        snap_id,
        SUM(CASE WHEN stat_name = ''physical read total IO requests'' THEN value ELSE 0 END) r_reqs,
@@ -1889,7 +1893,7 @@ SELECT /*+ &&sq_fact_hints. */
        snap_id
 ),
 io_per_inst_and_snap_id AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        s1.snap_id,
        h1.instance_number,
        TRUNC(CAST(s1.end_interval_time AS DATE), ''HH'') begin_time,
@@ -1915,7 +1919,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND (CAST(s1.end_interval_time AS DATE) - CAST(s1.begin_interval_time AS DATE)) * 86400 > 60 -- ignore snaps too close
 ),
 io_per_inst_and_hr AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        MIN(snap_id) snap_id,
        instance_number,
        TO_CHAR(begin_time, ''YYYY-MM-DD HH24:MI'') begin_time,
@@ -2176,7 +2180,7 @@ BEGIN
   :sql_text_backup := '
 WITH
 sysstat_io AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        instance_number,
        snap_id,
        SUM(CASE WHEN stat_name = ''physical read bytes'' THEN value ELSE 0 END) r_appl_bytes,
@@ -2249,7 +2253,7 @@ SELECT /*+ &&sq_fact_hints. */
        snap_id
 ),
 io_per_inst_and_snap_id AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        s1.snap_id,
        h1.instance_number,
        TRUNC(CAST(s1.end_interval_time AS DATE), ''HH'') begin_time,
@@ -2308,7 +2312,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND (CAST(s1.end_interval_time AS DATE) - CAST(s1.begin_interval_time AS DATE)) * 86400 > 60 -- ignore snaps too close
 ),
 io_per_inst_and_hr AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        MIN(snap_id) snap_id,
        instance_number,
        TO_CHAR(begin_time, ''YYYY-MM-DD HH24:MI'') begin_time,
@@ -2818,7 +2822,7 @@ DEF tit_12 = '';
 DEF tit_13 = '';
 DEF tit_14 = '';
 DEF tit_15 = '';
-DEF vaxis = 'Reads per Second';
+DEF vaxis = 'Writes per Second';
 
 EXEC :sql_text_backup2 := REPLACE(:sql_text_backup,  '#column01#', 'SUM(writes_ps) writes,');
 EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column02#', 'SUM(w_direct_ps) direct,');
@@ -3017,3 +3021,7 @@ DEF skip_lch = 'Y';
 DEF skip_pch = 'Y';
 
 /*****************************************************************************************/
+
+SPO &&edb360_main_report..html APP;
+PRO </ol>
+SPO OFF;

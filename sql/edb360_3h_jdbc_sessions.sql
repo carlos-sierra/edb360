@@ -3,8 +3,37 @@ DEF section_id = '3h';
 DEF section_name = 'JDBC Sessions';
 EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
 SPO &&edb360_main_report..html APP;
-PRO <h2>&&section_name.</h2>
+PRO <h2>&&section_id.. &&section_name.</h2>
+PRO <ol start="&&report_sequence.">
 SPO OFF;
+
+DEF title = 'JDBC Connection usage per Module';
+DEF main_table = 'GV$SESSION';
+BEGIN
+  :sql_text := '
+-- from monitor_jdbc_conn.sql 
+select count(*), module from gv$session 
+where program like ''%JDBC%'' 
+group by module 
+order by 1 DESC, 2
+';
+END;
+/
+@@edb360_9a_pre_one.sql       
+
+DEF title = 'JDBC Connection usage per Process and Module';
+DEF main_table = 'GV$SESSION';
+BEGIN
+  :sql_text := '
+-- from monitor_jdbc_conn.sql 
+select count(*), process, module from gv$session 
+where program like ''%JDBC%'' 
+group by process, module 
+order by 1 DESC, 2, 3
+';
+END;
+/
+@@edb360_9a_pre_one.sql       
 
 DEF title = 'JDBC Connection usage per JVM';
 DEF main_table = 'GV$SESSION';
@@ -120,5 +149,7 @@ END;
 /
 @@edb360_9a_pre_one.sql       
 
-
+SPO &&edb360_main_report..html APP;
+PRO </ol>
+SPO OFF;
 

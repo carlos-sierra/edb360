@@ -8,7 +8,7 @@ DEF title_suffix = '&&between_times.';
 
 WITH
 hist AS (
-SELECT /*+ &&sq_fact_hints. &&ds_hint. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
        sql_id,
        ROW_NUMBER () OVER (ORDER BY COUNT(*) DESC NULLS LAST) rn,
        COUNT(*) samples

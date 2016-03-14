@@ -61,7 +61,7 @@ PRO
 PRO        var options = {
 PRO          is3D: true,
 PRO          backgroundColor: {fill: '#fcfcf0', stroke: '#336699', strokeWidth: 1},
-PRO          title: '&&title.&&title_suffix.',
+PRO          title: '&&section_id..&&report_sequence.. &&title.&&title_suffix.',
 PRO          titleTextStyle: {fontSize: 16, bold: false},
 PRO          legend: {position: 'right', textStyle: {fontSize: 12}},
 PRO          tooltip: {textStyle: {fontSize: 14}},
@@ -74,7 +74,7 @@ PRO      }
 PRO    </script>
 PRO  </head>
 PRO  <body>
-PRO<h1> &&edb360_conf_all_pages_icon. &&title. <em>(&&main_table.)</em> &&edb360_conf_all_pages_logo. </h1>
+PRO<h1> &&edb360_conf_all_pages_icon. &&section_id..&&report_sequence.. &&title. <em>(&&main_table.)</em> &&edb360_conf_all_pages_logo. </h1>
 PRO
 PRO <br />
 PRO &&abstract.

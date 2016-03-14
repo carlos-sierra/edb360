@@ -3,7 +3,8 @@ DEF section_id = '4f';
 DEF section_name = 'I/O Waits';
 EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
 SPO &&edb360_main_report..html APP;
-PRO <h2>&&section_name.</h2>
+PRO <h2>&&section_id.. &&section_name.</h2>
+PRO <ol start="&&report_sequence.">
 SPO OFF;
 
 DEF title = 'I/O Average Latency per Class';
@@ -11,7 +12,7 @@ DEF main_table = 'GV$WAITCLASSMETRIC';
 BEGIN
   :sql_text := '
 -- inspired on http://www.oraclerealworld.com/wait-event-and-wait-class-metrics-vs-vsystem_event/
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        m.inst_id,
        c.wait_class,
        ROUND(10 * m.time_waited / m.wait_count, 3) avg_ms,
@@ -35,7 +36,7 @@ DEF main_table = 'GV$EVENTMETRIC';
 BEGIN
   :sql_text := '
 -- inspired on http://www.oraclerealworld.com/wait-event-and-wait-class-metrics-vs-vsystem_event/
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        m.inst_id,
        e.wait_class,
        e.name event,
@@ -90,7 +91,7 @@ BEGIN
   :sql_text := '
 WITH 
 event_histogram_denorm_1 AS ( -- event_histogram_inst_v1 begin
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
        dbid,
        instance_number,
@@ -114,7 +115,7 @@ SELECT /*+ &&sq_fact_hints. */
        wait_class
 ),
 event_histogram_denorm_2 AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        h1.snap_id,
        h1.instance_number,
        TO_CHAR(s1.begin_interval_time, ''YYYY-MM-DD HH24:MI'') begin_time,
@@ -144,7 +145,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND s1.begin_interval_time > (s0.begin_interval_time + (1 / (24 * 60))) /* filter out snaps apart < 1 min */
    AND (h1.total - h0.total) > 0
 )
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
        MIN(begin_time) begin_time,
        MIN(end_time) end_time,
@@ -210,7 +211,7 @@ BEGIN
   :sql_text_backup := '
 WITH 
 event_histogram_denorm_1 AS ( 
-SELECT /*+ &&sq_fact_hints. &&ds_hint. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
        snap_id,
        dbid,
        instance_number,
@@ -250,7 +251,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */
        wait_class
 ),
 event_histogram_denorm_2 AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        h1.snap_id,
        TO_CHAR(s1.begin_interval_time, ''YYYY-MM-DD HH24:MI'') begin_time,
        TO_CHAR(s1.end_interval_time, ''YYYY-MM-DD HH24:MI'') end_time,
@@ -295,7 +296,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND (h1.total - h0.total) > 0
 ),
 event_histogram_denorm_3 AS ( 
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
        MIN(begin_time) begin_time,
        MIN(end_time) end_time,
@@ -351,7 +352,6 @@ DEF vaxis = 'User + System I/O Waits Histogram as Percent of Waits (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', '1 = 1');
 @@&&skip_diagnostics.edb360_9a_pre_one.sql
 
-   
-
-
-
+SPO &&edb360_main_report..html APP;
+PRO </ol>
+SPO OFF;

@@ -3,7 +3,8 @@ DEF section_id = '6k';
 DEF section_name = 'Active Session History (ASH) - Top PHV';
 EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
 SPO &&edb360_main_report..html APP;
-PRO <h2>&&section_name.</h2>
+PRO <h2>&&section_id.. &&section_name.</h2>
+PRO <ol start="&&report_sequence.">
 SPO OFF;
 
 DEF main_table = 'GV$ACTIVE_SESSION_HISTORY';
@@ -11,7 +12,7 @@ BEGIN
   :sql_text_backup := '
 WITH
 hist AS (
-SELECT /*+ &&sq_fact_hints. &&ds_hint. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
        sql_plan_hash_value,
        ROW_NUMBER () OVER (ORDER BY COUNT(*) DESC) rn,
        COUNT(DISTINCT sql_id) distinct_sql_id,
@@ -25,7 +26,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */
        sql_plan_hash_value
 ),
 total AS (
-SELECT /*+ &&sq_fact_hints. */ SUM(samples) samples FROM hist
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */ SUM(samples) samples FROM hist
 )
 SELECT h.sql_plan_hash_value||''(''||h.distinct_sql_id||'')'' plan_hash_value,
        h.samples,
@@ -117,7 +118,7 @@ BEGIN
   :sql_text_backup := '
 WITH
 hist AS (
-SELECT /*+ &&sq_fact_hints. &&ds_hint. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
        sql_plan_hash_value,
        dbid,
        ROW_NUMBER () OVER (ORDER BY COUNT(*) DESC) rn,
@@ -135,7 +136,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */
        dbid
 ),
 total AS (
-SELECT /*+ &&sq_fact_hints. */ SUM(samples) samples FROM hist
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */ SUM(samples) samples FROM hist
 )
 SELECT h.sql_plan_hash_value||''(''||h.distinct_sql_id||'')'' plan_hash_value,
        h.samples,
@@ -536,3 +537,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_numb
 
 DEF skip_lch = 'Y';
 DEF skip_pch = 'Y';
+
+SPO &&edb360_main_report..html APP;
+PRO </ol>
+SPO OFF;

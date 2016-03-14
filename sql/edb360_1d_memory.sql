@@ -3,7 +3,8 @@ DEF section_id = '1d';
 DEF section_name = 'Memory';
 EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
 SPO &&edb360_main_report..html APP;
-PRO <h2>&&section_name.</h2>
+PRO <h2>&&section_id.. &&section_name.</h2>
+PRO <ol start="&&report_sequence.">
 SPO OFF;
 
 DEF title = 'SGA';
@@ -34,7 +35,7 @@ DEF title = 'SGA Info';
 DEF main_table = 'GV$SGAINFO';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        inst_id,
        name,
        bytes,
@@ -59,7 +60,7 @@ DEF title = 'SGA Stat';
 DEF main_table = 'GV$SGASTAT';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        pool,
        name,
        inst_id,
@@ -85,7 +86,7 @@ DEF title = 'PGA Stat';
 DEF main_table = 'GV$PGASTAT';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        inst_id,
        name,
        value,
@@ -113,7 +114,7 @@ DEF main_table = 'GV$MEMORY_DYNAMIC_COMPONENTS';
 BEGIN
   :sql_text := '
 -- requested by Rodrigo Righetti
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM gv$memory_dynamic_components
 
@@ -127,7 +128,7 @@ DEF main_table = 'GV$MEMORY_TARGET_ADVICE';
 BEGIN
   :sql_text := '
 -- requested by Rodrigo Righetti
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM gv$memory_target_advice
 
@@ -141,7 +142,7 @@ DEF main_table = 'GV$SGA_TARGET_ADVICE';
 BEGIN
   :sql_text := '
 -- requested by Rodrigo Righetti
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM gv$sga_target_advice
 
@@ -155,7 +156,7 @@ DEF main_table = 'GV$PGA_TARGET_ADVICE';
 BEGIN
   :sql_text := '
 -- requested by Rodrigo Righetti
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM gv$pga_target_advice
 
@@ -169,7 +170,7 @@ DEF main_table = 'GV$MEMORY_RESIZE_OPS';
 BEGIN
   :sql_text := '
 -- requested by Rodrigo Righetti
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM gv$memory_resize_ops
  ORDER BY
@@ -186,7 +187,7 @@ DEF main_table = 'GV$MEMORY_CURRENT_RESIZE_OPS';
 BEGIN
   :sql_text := '
 -- requested by Rodrigo Righetti
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM gv$memory_current_resize_ops
  ORDER BY
@@ -203,7 +204,7 @@ DEF main_table = 'DBA_HIST_MEMORY_RESIZE_OPS';
 BEGIN
   :sql_text := '
 -- requested by Rodrigo Righetti
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_hist_memory_resize_ops
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
@@ -222,7 +223,7 @@ DEF main_table = 'DBA_HIST_MEMORY_TARGET_ADVICE';
 BEGIN
   :sql_text := '
 -- requested by Rodrigo Righetti
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_hist_memory_target_advice
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
@@ -237,7 +238,6 @@ END;
 /
 @@&&skip_diagnostics.edb360_9a_pre_one.sql
 
-
-
-
-
+SPO &&edb360_main_report..html APP;
+PRO </ol>
+SPO OFF;

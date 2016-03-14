@@ -3,7 +3,8 @@ DEF section_id = '5b';
 DEF section_name = 'Active Session History (ASH) on Wait Class';
 EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
 SPO &&edb360_main_report..html APP;
-PRO <h2>&&section_name.</h2>
+PRO <h2>&&section_id.. &&section_name.</h2>
+PRO <ol start="&&report_sequence.">
 SPO OFF;
 
 -- from 5a
@@ -135,3 +136,7 @@ DEF skip_lch = '';
 DEF title = 'AAS Waiting on Other per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''Other''');
 @@edb360_9a_pre_one.sql
+
+SPO &&edb360_main_report..html APP;
+PRO </ol>
+SPO OFF;

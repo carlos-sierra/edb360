@@ -66,7 +66,7 @@ DEF edb360_conf_sqlmon_top = '0';
 DEF edb360_conf_sqlash_top = '0';
 DEF edb360_conf_sqlhc_top = '0';
 DEF edb360_conf_sqld360_top = '16';
-DEF edb360_conf_sqld360_top_tc = '4';
+DEF edb360_conf_sqld360_top_tc = '0';
 
 /**************************** enter your modifications here *****************************/
 

@@ -831,18 +831,25 @@ SELECT dbid,
 /*****************************************************************************************/
 
 COL db_time_secs HEA "DB Time|Secs";
+COL io_time_secs HEA "IO Time|Secs";
 COL u_io_secs HEA "User I/O|Secs";
 COL dbfsr_secs HEA "db file|scattered read|Secs";
 COL dpr_secs HEA "direct path read|Secs";
 COL s_io_secs HEA "System I/O|Secs";
 COL commt_secs HEA "Commit|Secs";
 COL lfpw_secs HEA "log file|parallel write|Secs";
-COL u_io_perc HEA "User I/O|Perc";
-COL dbfsr_perc HEA "db file|scattered read|Perc";
-COL dpr_perc HEA "direct path read|Perc";
-COL s_io_perc HEA "System I/O|Perc";
-COL commt_perc HEA "Commit|Perc";
-COL lfpw_perc HEA "log file|parallel write|Perc";
+COL u_io_perc_dbt HEA "User I/O|Perc of|DB Time";
+COL dbfsr_perc_dbt HEA "db file|scattered read|Perc of|DB Time";
+COL dpr_perc_dbt HEA "direct path read|Perc of|DB Time";
+COL s_io_perc_dbt HEA "System I/O|Perc of|DB Time";
+COL commt_perc_dbt HEA "Commit|Perc of|DB Time";
+COL lfpw_perc_dbt HEA "log file|parallel write|Perc of|DB Time";
+COL u_io_perc_iot HEA "User I/O|Perc of|IO Time";
+COL dbfsr_perc_iot HEA "db file|scattered read|Perc of|IO Time";
+COL dpr_perc_iot HEA "direct path read|Perc of|IO Time";
+COL s_io_perc_iot HEA "System I/O|Perc of|IO Time";
+COL commt_perc_iot HEA "Commit|Perc of|IO Time";
+COL lfpw_perc_iot HEA "log file|parallel write|Perc of|IO Time";
 
 PRO
 PRO
@@ -966,33 +973,44 @@ by_hh AS (
 SELECT MIN(snap_id) snap_id,
        dbid,
        end_time,
-       SUM(db_time) db_time,
-       SUM(u_io_time) u_io_time,
-       SUM(dbfsr_time) dbfsr_time,
-       SUM(dpr_time) dpr_time,
-       SUM(s_io_time) s_io_time,
-       SUM(commt_time) commt_time,
-       SUM(lfpw_time) lfpw_time
+       NVL(SUM(db_time), 0) db_time,
+       NVL(SUM(u_io_time), 0) u_io_time,
+       NVL(SUM(dbfsr_time), 0) dbfsr_time,
+       NVL(SUM(dpr_time), 0) dpr_time,
+       NVL(SUM(s_io_time), 0) s_io_time,
+       NVL(SUM(commt_time), 0) commt_time,
+       NVL(SUM(lfpw_time), 0) lfpw_time,
+       NVL(SUM(u_io_time), 0) +
+       NVL(SUM(s_io_time), 0) +
+       NVL(SUM(commt_time), 0) io_time
   FROM by_inst_and_hh
  GROUP BY
        dbid,
        end_time
 )
 SELECT ROUND(SUM(db_time) / 1e6, 2) db_time_secs,
+       ROUND(SUM(io_time) / 1e6, 2) io_time_secs,
        ROUND(SUM(u_io_time) / 1e6, 2) u_io_secs,
        ROUND(SUM(dbfsr_time) / 1e6, 2) dbfsr_secs,
        ROUND(SUM(dpr_time) / 1e6, 2) dpr_secs,
        ROUND(SUM(s_io_time) / 1e6, 2) s_io_secs,
-       ROUND(SUM(commt_time) / 1e6, 2) commt_secs,
        ROUND(SUM(lfpw_time) / 1e6, 2) lfpw_secs,
-       ROUND(100 * SUM(u_io_time) / SUM(db_time), 2) u_io_perc,
-       ROUND(100 * SUM(dbfsr_time) / SUM(db_time), 2) dbfsr_perc,
-       ROUND(100 * SUM(dpr_time) / SUM(db_time), 2) dpr_perc,
-       ROUND(100 * SUM(s_io_time) / SUM(db_time), 2) s_io_perc,
-       ROUND(100 * SUM(commt_time) / SUM(db_time), 2) commt_perc,
-       ROUND(100 * SUM(lfpw_time) / SUM(db_time), 2) lfpw_perc
+       ROUND(SUM(commt_time) / 1e6, 2) commt_secs,
+       ROUND(100 * SUM(u_io_time) / SUM(db_time), 2) u_io_perc_dbt,
+       ROUND(100 * SUM(dbfsr_time) / SUM(db_time), 2) dbfsr_perc_dbt,
+       ROUND(100 * SUM(dpr_time) / SUM(db_time), 2) dpr_perc_dbt,
+       ROUND(100 * SUM(s_io_time) / SUM(db_time), 2) s_io_perc_dbt,
+       ROUND(100 * SUM(lfpw_time) / SUM(db_time), 2) lfpw_perc_dbt,
+       ROUND(100 * SUM(commt_time) / SUM(db_time), 2) commt_perc_dbt,
+       ROUND(100 * SUM(u_io_time) / SUM(io_time), 2) u_io_perc_iot,
+       ROUND(100 * SUM(dbfsr_time) / SUM(io_time), 2) dbfsr_perc_iot,
+       ROUND(100 * SUM(dpr_time) / SUM(io_time), 2) dpr_perc_iot,
+       ROUND(100 * SUM(s_io_time) / SUM(io_time), 2) s_io_perc_iot,
+       ROUND(100 * SUM(lfpw_time) / SUM(io_time), 2) lfpw_perc_iot,
+       ROUND(100 * SUM(commt_time) / SUM(io_time), 2) commt_perc_iot
   FROM by_hh
 /
+
 WITH 
 db_time AS (
 SELECT snap_id,
@@ -1089,13 +1107,16 @@ SELECT MIN(t.snap_id) snap_id,
        t.dbid,
        t.instance_number,
        TRUNC(CAST(s.end_interval_time AS DATE), 'HH') end_time,
-       SUM(db_time) db_time,
-       SUM(u_io_time) u_io_time,
-       SUM(dbfsr_time) dbfsr_time,
-       SUM(dpr_time) dpr_time,
-       SUM(s_io_time) s_io_time,
-       SUM(commt_time) commt_time,
-       SUM(lfpw_time) lfpw_time
+       NVL(SUM(db_time), 0) db_time,
+       NVL(SUM(u_io_time), 0) u_io_time,
+       NVL(SUM(dbfsr_time), 0) dbfsr_time,
+       NVL(SUM(dpr_time), 0) dpr_time,
+       NVL(SUM(s_io_time), 0) s_io_time,
+       NVL(SUM(commt_time), 0) commt_time,
+       NVL(SUM(lfpw_time), 0) lfpw_time,
+       NVL(SUM(u_io_time), 0) +
+       NVL(SUM(s_io_time), 0) +
+       NVL(SUM(commt_time), 0) io_time
   FROM time_components t,
        dba_hist_snapshot s
  WHERE s.snap_id = t.snap_id
@@ -1117,7 +1138,8 @@ SELECT MIN(snap_id) snap_id,
        SUM(dpr_time) dpr_time,
        SUM(s_io_time) s_io_time,
        SUM(commt_time) commt_time,
-       SUM(lfpw_time) lfpw_time
+       SUM(lfpw_time) lfpw_time,
+       SUM(io_time) io_time
   FROM by_inst_and_hh
  GROUP BY
        dbid,
@@ -1128,18 +1150,25 @@ SELECT snap_id,
        TO_CHAR(end_time - (1/24), 'YYYY-MM-DD HH24:MI') begin_time,
        TO_CHAR(end_time, 'YYYY-MM-DD HH24:MI') end_time,
        ROUND(db_time / 1e6, 2) db_time_secs,
+       ROUND(io_time / 1e6, 2) io_time_secs,
        ROUND(u_io_time / 1e6, 2) u_io_secs,
        ROUND(dbfsr_time / 1e6, 2) dbfsr_secs,
        ROUND(dpr_time / 1e6, 2) dpr_secs,
        ROUND(s_io_time / 1e6, 2) s_io_secs,
-       ROUND(commt_time / 1e6, 2) commt_secs,
        ROUND(lfpw_time / 1e6, 2) lfpw_secs,
-       ROUND(100 * u_io_time / db_time, 2) u_io_perc,
-       ROUND(100 * dbfsr_time / db_time, 2) dbfsr_perc,
-       ROUND(100 * dpr_time / db_time, 2) dpr_perc,
-       ROUND(100 * s_io_time / db_time, 2) s_io_perc,
-       ROUND(100 * commt_time / db_time, 2) commt_perc,
-       ROUND(100 * lfpw_time / db_time, 2) lfpw_perc
+       ROUND(commt_time / 1e6, 2) commt_secs,
+       ROUND(100 * u_io_time / db_time, 2) u_io_perc_dbt,
+       ROUND(100 * dbfsr_time / db_time, 2) dbfsr_perc_dbt,
+       ROUND(100 * dpr_time / db_time, 2) dpr_perc_dbt,
+       ROUND(100 * s_io_time / db_time, 2) s_io_perc_dbt,
+       ROUND(100 * lfpw_time / db_time, 2) lfpw_perc_dbt,
+       ROUND(100 * commt_time / db_time, 2) commt_perc_dbt,
+       ROUND(100 * u_io_time / io_time, 2) u_io_perc_iot,
+       ROUND(100 * dbfsr_time / io_time, 2) dbfsr_perc_iot,
+       ROUND(100 * dpr_time / io_time, 2) dpr_perc_iot,
+       ROUND(100 * s_io_time / io_time, 2) s_io_perc_iot,
+       ROUND(100 * lfpw_time / io_time, 2) lfpw_perc_iot,
+       ROUND(100 * commt_time / io_time, 2) commt_perc_iot
   FROM by_hh
  ORDER BY
        snap_id,

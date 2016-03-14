@@ -23,7 +23,7 @@ GET &&common_edb360_prefix._query.sql
 
 -- header
 SPO &&one_spool_filename..txt;
-PRO &&title.&&title_suffix. (&&main_table.) 
+PRO &&section_id..&&report_sequence.. &&title.&&title_suffix. (&&main_table.) 
 PRO
 PRO &&abstract.
 PRO &&abstract2.
@@ -49,7 +49,7 @@ SET HEA ON;
 PRO &&row_num. rows selected.
 
 PRO 
-PRO &&edb360_prefix.&&edb360_copyright. Version &&edb360_vrsn.. Report executed on &&edb360_time_stamp. for database &&db_version. &&database_name_short. from host &&host_name_short..
+PRO &&edb360_prefix.&&edb360_copyright. Version &&edb360_vrsn.. Report executed on &&edb360_time_stamp. for database &&db_version. dbmod &&edb360_dbmod. from host &&host_hash..
 SPO OFF;
 
 -- get time t1

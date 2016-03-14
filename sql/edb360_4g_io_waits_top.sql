@@ -3,7 +3,8 @@ DEF section_id = '4g';
 DEF section_name = 'I/O Waits Histogram for Top Wait Events';
 EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
 SPO &&edb360_main_report..html APP;
-PRO <h2>&&section_name.</h2>
+PRO <h2>&&section_id.. &&section_name.</h2>
+PRO <ol start="&&report_sequence.">
 SPO OFF;
 
 COL wait_class_01 NEW_V wait_class_01;
@@ -33,7 +34,7 @@ COL event_name_12 NEW_V event_name_12;
 
 WITH
 events AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        h.wait_class,
        h.event_name,
        SUM(h.wait_time_milli * h.wait_count) time_waited
@@ -175,7 +176,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = 
 
 DEF skip_lch = 'Y';
 DEF skip_pch = 'Y';
-   
 
-
-
+SPO &&edb360_main_report..html APP;
+PRO </ol>
+SPO OFF;

@@ -1,4 +1,24 @@
 SPO 00000_readme_first.txt
+PRO If eDB360 disconnects right after this message it means the user executing it
+PRO owns a table called PLAN_TABLE that is not the Oracle seeded GTT plan table
+PRO owned by SYS (PLAN_TABLE$ table with a PUBLIC synonym PLAN_TABLE).
+PRO eDB360 requires the Oracle seeded PLAN_TABLE, consider dropping the one in this schema.
+WHENEVER SQLERROR EXIT;
+DECLARE
+ is_plan_table_in_usr_schema NUMBER; 
+BEGIN
+ SELECT COUNT(*)
+   INTO is_plan_table_in_usr_schema
+   FROM user_tables
+  WHERE table_name = 'PLAN_TABLE';
+  -- user has a physical table called PLAN_TABLE, abort
+  IF is_plan_table_in_usr_schema > 0 THEN
+    RAISE_APPLICATION_ERROR(-20100, 'PLAN_TABLE physical table present in user schema. ');
+  END IF;
+
+END;
+/
+WHENEVER SQLERROR CONTINUE;
 @@&&ash_validation.edb360_0h_ash_validation.sql
 @@edb360_0i_awr_info.sql
 SPO 00000_readme_first.txt APP
@@ -194,7 +214,7 @@ COL display_value CLE;
 COL update_comment CLE;
 SHOW PARAMETERS;
 PRO
-SELECT (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100 elapsed_seconds FROM DUAL;
+SELECT ROUND((DBMS_UTILITY.GET_TIME - :edb360_time0) / 100 / 3600, 3) elapsed_hours FROM DUAL;
 PRO
 PRO end log
 SPO OFF;

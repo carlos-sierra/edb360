@@ -3,7 +3,8 @@ DEF section_id = '3d';
 DEF section_name = 'Performance Summaries';
 EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
 SPO &&edb360_main_report..html APP;
-PRO <h2>&&section_name.</h2>
+PRO <h2>&&section_id.. &&section_name.</h2>
+PRO <ol start="&&report_sequence.">
 SPO OFF;
 
 DEF title = 'AAS for past minute';
@@ -16,7 +17,7 @@ BEGIN
 -- http://www.kylehailey.com/oracle-cpu-time/
 WITH 
 ora_cpu_used AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        ''2'' row_type,
        ''Oracle CPU used'' timed_event,
        sm.inst_id,
@@ -28,7 +29,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND sm.group_id = 2 -- 1 minute
 ),
 system_cpu_used AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        ''4'' row_type,
        ''System CPU used'' timed_event,
        sm.inst_id,
@@ -43,7 +44,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND p.name = ''cpu_count''
 ),
 non_idle_waits AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        ''6'' row_type,
        wc.wait_class timed_event,
        wcm.inst_id,
@@ -69,7 +70,7 @@ SELECT MIN(begin_time) begin_time, MAX(end_time) end_time FROM system_cpu_used
 SELECT MIN(begin_time) begin_time, MAX(end_time) end_time FROM non_idle_waits
 )),
 ora_dem_cpu AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        ''1'' row_type,
        ''Oracle demand for CPU'' timed_event,
        ash.inst_id,
@@ -121,7 +122,7 @@ SELECT * FROM system_cpu_used_no_ora
  UNION ALL
 SELECT * FROM non_idle_waits
 )
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        inst_id,
        timed_event,
        aas
@@ -143,7 +144,7 @@ BEGIN
 -- inspired by Kyle Hailey blogs
 -- http://www.kylehailey.com/wait-event-and-wait-class-metrics-vs-vsystem_event/
 -- http://www.kylehailey.com/oracle-cpu-time/
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        wc.wait_class,
        wcm.*,
        ROUND(wcm.time_waited/wcm.intsize_csec, 3) aas,
@@ -173,7 +174,7 @@ BEGIN
 -- inspired by Kyle Hailey blogs
 -- http://www.kylehailey.com/wait-event-and-wait-class-metrics-vs-vsystem_event/
 -- http://www.kylehailey.com/oracle-cpu-time/
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        en.wait_class,
        en.name event,
        em.*,
@@ -202,7 +203,7 @@ BEGIN
 -- inspired by Kyle Hailey blogs
 -- http://www.kylehailey.com/wait-event-and-wait-class-metrics-vs-vsystem_event/
 -- http://www.kylehailey.com/oracle-cpu-time/
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM gv$sysmetric
  WHERE group_id = 2 -- 1 minute
@@ -221,7 +222,7 @@ BEGIN
 -- inspired by Kyle Hailey blogs
 -- http://www.kylehailey.com/wait-event-and-wait-class-metrics-vs-vsystem_event/
 -- http://www.kylehailey.com/oracle-cpu-time/
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM gv$sysmetric_summary
  ORDER BY
@@ -237,7 +238,7 @@ DEF main_table = 'GV$WAITSTAT';
 BEGIN
   :sql_text := '
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM gv$waitstat
  WHERE count > 0
@@ -253,7 +254,7 @@ DEF title = 'System Wait Class';
 DEF main_table = 'GV$SYSTEM_WAIT_CLASS';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM gv$system_wait_class
  ORDER BY
@@ -268,7 +269,7 @@ DEF title = 'Segment Statistics';
 DEF main_table = 'GV$SEGSTAT';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        statistic_name, SUM(value) value
   FROM gv$segstat
  GROUP BY 
@@ -284,7 +285,7 @@ DEF abstract = 'Aggregated by SQL_ID and SQL Execution. Sorted by SQL_ID and Exe
 DEF main_table = 'GV$SQL_MONITOR';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        sql_id,
        sql_exec_start,
        sql_exec_id,
@@ -345,7 +346,7 @@ BEGIN
   :sql_text := '
 WITH
 monitored_sql AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        sql_id,
        sql_exec_start,
        sql_exec_id,
@@ -391,7 +392,7 @@ SELECT /*+ &&sq_fact_hints. */
        sql_exec_id
 HAVING MAX(sql_text) IS NOT NULL
 )
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        sql_id,
        SUM(executions) executions,
        MIN(sql_exec_start) min_sql_exec_start,
@@ -462,7 +463,7 @@ DEF abstract = 'Aggregated by SQL_ID and Error.';
 DEF main_table = 'GV$SQL_MONITOR';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        sql_id,
        error_number,
        error_facility,
@@ -490,7 +491,7 @@ DEF title = 'SQL Monitor (QUEUED)';
 DEF main_table = 'GV$SQL_MONITOR';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        sql_id,
        username,
        service_name,
@@ -533,7 +534,7 @@ BEGIN
   :sql_text := '
 WITH
 per_time AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        h.dbid,
        h.sql_id,
        SYSDATE - CAST(s.end_interval_time AS DATE) days_ago,
@@ -554,7 +555,7 @@ SELECT /*+ &&sq_fact_hints. */
        SYSDATE - CAST(s.end_interval_time AS DATE)
 ),
 avg_time AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        dbid,
        sql_id, 
        MEDIAN(time_per_exec) med_time_per_exec,
@@ -571,7 +572,7 @@ HAVING COUNT(*) >= &&captured_at_least_x_times.
    AND MEDIAN(time_per_exec) > &&med_elap_microsecs_threshold.
 ),
 time_over_median AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        h.dbid,
        h.sql_id,
        h.days_ago,
@@ -585,7 +586,7 @@ SELECT /*+ &&sq_fact_hints. */
  WHERE a.sql_id = h.sql_id
 ),
 ranked AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        RANK () OVER (ORDER BY ABS(REGR_SLOPE(t.time_per_exec_over_med, t.days_ago)) DESC) rank_num,
        t.dbid,
        t.sql_id,
@@ -602,7 +603,7 @@ SELECT /*+ &&sq_fact_hints. */
        t.sql_id
 HAVING ABS(REGR_SLOPE(t.time_per_exec_over_med, t.days_ago)) > &&min_slope_threshold.
 )
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        r.sql_id,
        r.change,
        r.slope,
@@ -663,7 +664,7 @@ BEGIN
   :sql_text := '
 WITH
 per_time AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        h.dbid,
        h.sql_id,
        SYSDATE - CAST(s.end_interval_time AS DATE) days_ago,
@@ -684,7 +685,7 @@ SELECT /*+ &&sq_fact_hints. */
        SYSDATE - CAST(s.end_interval_time AS DATE)
 ),
 avg_time AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        dbid,
        sql_id, 
        MEDIAN(time_per_exec) med_time_per_exec,
@@ -701,7 +702,7 @@ HAVING COUNT(*) >= &&captured_at_least_x_times.
    AND MEDIAN(time_per_exec) > &&med_elap_microsecs_threshold.
 ),
 time_over_median AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        h.dbid,
        h.sql_id,
        h.days_ago,
@@ -715,7 +716,7 @@ SELECT /*+ &&sq_fact_hints. */
  WHERE a.sql_id = h.sql_id
 ),
 ranked AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        RANK () OVER (ORDER BY ABS(REGR_SLOPE(t.time_per_exec_over_med, t.days_ago)) DESC) rank_num,
        t.dbid,
        t.sql_id,
@@ -732,7 +733,7 @@ SELECT /*+ &&sq_fact_hints. */
        t.sql_id
 HAVING ABS(REGR_SLOPE(t.time_per_exec_over_med, t.days_ago)) > &&min_slope_threshold.
 )
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
          r.rank_num
        , h.sql_id
        , h.instance_number instance_number_x
@@ -799,7 +800,7 @@ BEGIN
   :sql_text := '
 WITH
 per_phv AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        h.dbid,
        h.sql_id,
        h.plan_hash_value, 
@@ -829,7 +830,7 @@ SELECT /*+ &&sq_fact_hints. */
        h.plan_hash_value
 ),
 ranked1 AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        RANK () OVER (ORDER BY STDDEV(med_time_per_exec)/AVG(med_time_per_exec) DESC) rank_num1,
        dbid,
        sql_id,
@@ -844,7 +845,7 @@ SELECT /*+ &&sq_fact_hints. */
 HAVING COUNT(*) > 1
 ),
 ranked2 AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        RANK () OVER (ORDER BY r.total_elapsed_time DESC) rank_num2,
        r.rank_num1,
        r.sql_id,
@@ -866,7 +867,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND p.dbid = r.dbid
    AND p.sql_id = r.sql_id
 )
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        r.sql_id,
        r.plans,
        r.plan_hash_value,
@@ -900,7 +901,7 @@ BEGIN
 -- provided by David Kurtz
 WITH
 hist AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        h.sql_id,
        h.sql_plan_hash_value,
        h.dbid,
@@ -914,7 +915,7 @@ GROUP BY
        h.sql_plan_hash_value,
        h.dbid
 ), hist2 as (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        h.sql_id
      , h.sql_plan_hash_value
      , h.dbid
@@ -926,21 +927,21 @@ SELECT /*+ &&sq_fact_hints. */
     LEFT OUTER JOIN dba_hist_sqltext s
     ON s.sql_id = h.sql_id AND s.dbid = h.dbid
 ), hist3 AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        hist2.*
      , ROW_NUMBER() over (partition by dbid, sql_plan_hash_value order by sql_samples DESC) sql_id_rank
    FROM hist2
 ), hist4 AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        hist3.*
      , ROW_NUMBER() over (order by sql_samples DESC) rn
   FROM hist3
 WHERE sql_id_rank = 1
 ), total AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        SUM(samples) samples FROM hist
 )
-SELECT /*+ &&top_level_hints. */ 
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        h.sql_id plan_top_sql_id,
        h.sql_plan_hash_value,
        h.plan_samples,
@@ -969,7 +970,7 @@ DEF main_table = 'GV$SYSTEM_PARAMETER2';
 BEGIN
   :sql_text := '
 -- provided by Simon Pane
-SELECT /*+ &&top_level_hints. */ 
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        inst_id, name "PARAMETER", value, isdefault, ismodified
   FROM gv$system_parameter2
  WHERE name IN (''result_cache_mode'',''result_cache_max_size'',''result_cache_max_result'')
@@ -995,7 +996,7 @@ DEF main_table = 'GV$RESULT_CACHE_MEMORY';
 BEGIN
   :sql_text := '
 -- provided by Simon Pane
-SELECT /*+ &&top_level_hints. */ 
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        inst_id, free, count(*)
   FROM gv$result_cache_memory
  GROUP BY inst_id, free
@@ -1009,7 +1010,7 @@ DEF main_table = 'GV$RESULT_CACHE_STATISTICS';
 BEGIN
   :sql_text := '
 -- provided by Simon Pane
-SELECT /*+ &&top_level_hints. */ 
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        inst_id, name, value
   FROM gv$result_cache_statistics
  ORDER BY 1, 2
@@ -1023,7 +1024,7 @@ DEF main_table = 'CLIENT_RESULT_CACHE_STATS$';
 BEGIN
   :sql_text := '
 -- provided by Simon Pane
-SELECT /*+ &&top_level_hints. */ 
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        stat_id, SUBSTR(name,1,20), value, cache_id
   FROM client_result_cache_stats$
  ORDER BY cache_id, stat_id
@@ -1031,3 +1032,7 @@ SELECT /*+ &&top_level_hints. */
 END;
 /
 @@&&skip_10g.&&skip_11r1.edb360_9a_pre_one.sql
+
+SPO &&edb360_main_report..html APP;
+PRO </ol>
+SPO OFF;

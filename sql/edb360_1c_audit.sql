@@ -3,14 +3,15 @@ DEF section_id = '1c';
 DEF section_name = 'Auditing';
 EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
 SPO &&edb360_main_report..html APP;
-PRO <h2>&&section_name.</h2>
+PRO <h2>&&section_id.. &&section_name.</h2>
+PRO <ol start="&&report_sequence.">
 SPO OFF;
 
 DEF title = 'Default Object Auditing Options';
 DEF main_table = 'ALL_DEF_AUDIT_OPTS';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */ 
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        *
   FROM all_def_audit_opts
 ';
@@ -22,7 +23,7 @@ DEF title = 'Object Auditing Options';
 DEF main_table = 'DBA_OBJ_AUDIT_OPTS';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */ 
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        o.*
   FROM dba_obj_audit_opts o
  WHERE (o.alt,o.aud,o.com,o.del,o.gra,o.ind,o.ins,o.loc,o.ren,o.sel,o.upd,o.ref,o.exe,o.fbk,o.rea) NOT IN 
@@ -38,7 +39,7 @@ DEF title = 'Statement Auditing Options';
 DEF main_table = 'DBA_STMT_AUDIT_OPTS';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */ 
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        *
   FROM dba_stmt_audit_opts
  ORDER BY
@@ -52,7 +53,7 @@ DEF title = 'System Privileges Auditing Options';
 DEF main_table = 'DBA_PRIV_AUDIT_OPTS';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */ 
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        *
   FROM dba_priv_audit_opts
  ORDER BY
@@ -67,7 +68,7 @@ DEF main_table = 'GV$SYSTEM_PARAMETER2';
 BEGIN
   :sql_text := '
 -- provided by Simon Pane
-SELECT /*+ &&top_level_hints. */ 
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        inst_id, name "PARAMETER", value, isdefault, ismodified
   FROM gv$system_parameter2
  WHERE name LIKE ''%audit%''
@@ -82,7 +83,7 @@ DEF main_table = 'V$OPTION';
 BEGIN
   :sql_text := '
 -- provided by Simon Pane
-SELECT /*+ &&top_level_hints. */ 
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        value "Unified Auditing"
   FROM v$option
  WHERE parameter = ''Unified Auditing'' 
@@ -96,7 +97,7 @@ DEF main_table = 'DBA_AUDIT_MGMT_CONFIG_PARAMS';
 BEGIN
   :sql_text := '
 -- provided by Simon Pane
-SELECT /*+ &&top_level_hints. */ 
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        *
   FROM dba_audit_mgmt_config_params
  ORDER BY 1,2
@@ -110,7 +111,7 @@ DEF main_table = 'DBA_TABLES';
 BEGIN
   :sql_text := '
 -- provided by Simon Pane
-SELECT /*+ &&top_level_hints. */ 
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        SUBSTR(owner||''.''||table_name,1,30) audit_trail, tablespace_name
   FROM dba_tables
  --WHERE table_name IN (''AUD$'',''AUDIT$'',''FGA$'',''FGA_LOG$'')
@@ -127,7 +128,7 @@ DEF main_table = 'DBA_TAB_PRIVS';
 BEGIN
   :sql_text := '
 -- provided by Simon Pane
-SELECT /*+ &&top_level_hints. */ 
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        owner || ''.'' || table_name "TABLE", grantee, privilege, grantable
   FROM dba_tab_privs
  WHERE (   table_name IN (''AUD$'',''AUDIT$'',''FGA$'',''FGA_LOG$'')
@@ -140,3 +141,7 @@ SELECT /*+ &&top_level_hints. */
 END;
 /
 @@edb360_9a_pre_one.sql
+
+SPO &&edb360_main_report..html APP;
+PRO </ol>
+SPO OFF;

@@ -6,10 +6,10 @@
 --
 -- Author:      Carlos Sierra, Rodrigo Righetti
 --
--- Usage:       Collects Requirements from AWR and ASH views on databases with the 
+-- Usage:       Collects Requirements from AWR and ASH views on databases with the
 --				Oracle Diagnostics Pack license, it also collect from Statspack starting
---				9i databases up to 12c. 				 
---				 
+--				9i databases up to 12c.
+--
 --              The output of this script can be used to feed a Sizing and Provisioning
 --              application.
 --
@@ -17,9 +17,9 @@
 --              # sqlplus / as sysdba
 --              SQL> START sql/esp_master.sql
 --
---  Notes:      Developed and tested on 12.1.0.2, 12.1.0.1, 11.2.0.4, 11.2.0.3, 
+--  Notes:      Developed and tested on 12.1.0.2, 12.1.0.1, 11.2.0.4, 11.2.0.3,
 --				10.2.0.4, 9.2.0.8, 9.2.0.1
---             
+--
 ---------------------------------------------------------------------------------------
 --
 SET TERM ON;
@@ -39,18 +39,18 @@ BEGIN
 	BEGIN
 		EXECUTE IMMEDIATE 'SELECT ''--skip--''  FROM DBA_HIST_SNAPSHOT WHERE begin_interval_time >= systimestamp-2/24 AND rownum < 2'
 		INTO :vskip_statspack;
-	EXCEPTION 
-		WHEN OTHERS THEN 
+	EXCEPTION
+		WHEN OTHERS THEN
  		NULL;
-	END; 
+	END;
 	IF :vskip_statspack IS NULL THEN
     	BEGIN
     		EXECUTE IMMEDIATE 'SELECT ''--skip--'' FROM perfstat.stats$snapshot WHERE snap_time >= sysdate-2/24 AND rownum < 2'
     		INTO :vskip_awr ;
-    	EXCEPTION 
-    		WHEN OTHERS THEN 
+    	EXCEPTION
+    		WHEN OTHERS THEN
      		NULL;
-    	END; 
+    	END;
 	END IF;
 END;
 /
@@ -86,23 +86,29 @@ SELECT TO_CHAR(SYSDATE, 'YYYYMMDD') esp_collection_yyyymmdd FROM DUAL;
 @@&&skip_statspack.sql/resources_requirements_statspack.sql
 
 SET TERM ON;
-PRO
-PRO *** Please ignore error: "SP2-0310: unable to open file ..."
 
 -- cpu info for linux, aix and solaris. expect some errors
-HOS cat /proc/cpuinfo | grep -i name | sort | uniq >> cpuinfo_model_name_&&esp_host_name_short._&&esp_collection_yyyymmdd..txt
-HOS lsconf | grep Processor >> cpuinfo_model_name_&&esp_host_name_short._&&esp_collection_yyyymmdd..txt
-HOS psrinfo -v >> cpuinfo_model_name_&&esp_host_name_short._&&esp_collection_yyyymmdd..txt
-
-PRO
-PRO *** Please ignore error: "...: ...: command not found"
+SET TERM OFF ECHO OFF FEED OFF VER OFF HEA OFF PAGES 0 COLSEP ', ' LIN 32767 TRIMS ON TRIM ON TI OFF TIMI OFF ARRAY 100 NUM 20 SQLBL ON BLO . RECSEP OFF DEF OFF;
+SPO hostcommands_driver.sql
+SELECT decode(  platform_id,
+                13,'HOS cat /proc/cpuinfo | grep -i name | sort | uniq >> cpuinfo_model_name_&&esp_host_name_short._&&esp_collection_yyyymmdd..txt', -- Linux x86 64-bit
+                6,'HOS lsconf | grep Processor >> cpuinfo_model_name_&&esp_host_name_short._&&esp_collection_yyyymmdd..txt', -- AIX-Based Systems (64-bit)
+                2,'HOS psrinfo -v >> cpuinfo_model_name_&&esp_host_name_short._&&esp_collection_yyyymmdd..txt' -- Solaris[tm] OE (64-bit)
+        ) from v$database, product_component_version
+where 1=1
+and to_number(substr(product_component_version.version,1,2)) > 9
+and lower(product_component_version.product) like 'oracle%';
+SPO OFF
+SET DEF ON
+@hostcommands_driver.sql
+set feed on echo on
 
 -- zip esp
-HOS zip -qm esp_output_&&esp_host_name_short._&&esp_collection_yyyymmdd..zip cpuinfo_model_name_&&esp_host_name_short._&&esp_collection_yyyymmdd..txt 
-HOS zip -q  esp_output_&&esp_host_name_short._&&esp_collection_yyyymmdd..zip esp_requirements_*_&&esp_host_name_short._&&esp_collection_yyyymmdd.*.csv
-HOS zip -q  esp_output_&&esp_host_name_short._&&esp_collection_yyyymmdd..zip res_requirements_*_&&esp_host_name_short._&&esp_collection_yyyymmdd.*.txt 
+HOS if [ -f cpuinfo_model_name_&&esp_host_name_short._&&esp_collection_yyyymmdd..txt ]; then  zip -qm esp_output_&&esp_host_name_short._&&esp_collection_yyyymmdd..zip cpuinfo_model_name_&&esp_host_name_short._&&esp_collection_yyyymmdd..txt hostcommands_driver.sql; fi
+HOS if [ `ls esp_requirements_*_&&esp_host_name_short._&&esp_collection_yyyymmdd.*.csv 2>/dev/null | wc -l` -gt 0 ]; then zip -q  esp_output_&&esp_host_name_short._&&esp_collection_yyyymmdd..zip esp_requirements_*_&&esp_host_name_short._&&esp_collection_yyyymmdd.*.csv hostcommands_driver.sql; fi
+HOS if [ `ls res_requirements_*_&&esp_host_name_short._&&esp_collection_yyyymmdd.*.txt 2>/dev/null | wc -l` -gt 0 ]; then zip -q  esp_output_&&esp_host_name_short._&&esp_collection_yyyymmdd..zip res_requirements_*_&&esp_host_name_short._&&esp_collection_yyyymmdd.*.txt hostcommands_driver.sql; fi
 
 PRO
 PRO Generated esp_output_&&esp_host_name_short._&&esp_collection_yyyymmdd..zip
-PRO 
+PRO
 SET TERM ON ECHO OFF FEED ON VER ON HEA ON PAGES 14 COLSEP ' ' LIN 80 TRIMS OFF TRIM ON TI OFF TIMI OFF ARRAY 15 NUM 10 SQLBL OFF BLO ON RECSEP WR;

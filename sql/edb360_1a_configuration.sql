@@ -3,7 +3,8 @@ DEF section_id = '1a';
 DEF section_name = 'Database Configuration';
 EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
 SPO &&edb360_main_report..html APP;
-PRO <h2>&&section_name.</h2>
+PRO <h2>&&section_id.. &&section_name.</h2>
+PRO <ol start="&&report_sequence.">
 SPO OFF;
 
 DEF title = 'Identification';
@@ -19,6 +20,9 @@ SELECT d.dbid,
        i.instance_number,
        i.instance_name,
        LOWER(SUBSTR(i.host_name||''.'', 1, INSTR(i.host_name||''.'', ''.'') - 1)) host_name,
+           LPAD(ORA_HASH(
+       LOWER(SUBSTR(i.host_name||''.'', 1, INSTR(i.host_name||''.'', ''.'') - 1))
+           ,999999),6,''6'') host_hv,
        p.value cpu_count,
        ''&&ebs_release.'' ebs_release,
        ''&&ebs_system_name.'' ebs_system_name,
@@ -36,11 +40,12 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+
 DEF title = 'Version';
 DEF main_table = 'V$VERSION';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM v$version
 ';
@@ -52,7 +57,7 @@ DEF title = 'Database';
 DEF main_table = 'V$DATABASE';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM v$database
 ';
@@ -64,7 +69,7 @@ DEF title = 'Instance';
 DEF main_table = 'GV$INSTANCE';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM gv$instance
  ORDER BY
@@ -91,7 +96,7 @@ DEF title = 'Database and Instance History';
 DEF main_table = 'DBA_HIST_DATABASE_INSTANCE';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        dbid,				
        instance_number,	
        startup_time,		
@@ -114,7 +119,7 @@ DEF title = 'Instance Recovery';
 DEF main_table = 'GV$INSTANCE_RECOVERY';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM gv$instance_recovery
  ORDER BY
@@ -128,7 +133,7 @@ DEF title = 'Database Properties';
 DEF main_table = 'DATABASE_PROPERTIES';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM database_properties
 ';
@@ -141,7 +146,7 @@ DEF main_table = 'DBA_REGISTRY';
 BEGIN
   :sql_text := '
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_registry
  ORDER BY
@@ -155,7 +160,7 @@ DEF title = 'Registry History';
 DEF main_table = 'DBA_REGISTRY_HISTORY';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_registry_history
  ORDER BY
@@ -170,7 +175,7 @@ DEF main_table = 'DBA_REGISTRY_HIERARCHY';
 BEGIN
   :sql_text := '
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_registry_hierarchy
  ORDER BY
@@ -185,7 +190,7 @@ DEF main_table = 'DBA_FEATURE_USAGE_STATISTICS';
 BEGIN
   :sql_text := '
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_feature_usage_statistics
  ORDER BY
@@ -201,7 +206,7 @@ DEF main_table = 'GV$LICENSE';
 BEGIN
   :sql_text := '
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM gv$license
  ORDER BY
@@ -216,7 +221,7 @@ DEF main_table = 'GV$RESOURCE_LIMIT';
 BEGIN
   :sql_text := '
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM gv$resource_limit
  ORDER BY
@@ -231,7 +236,7 @@ BEGIN
  :sql_text_backup := '
 WITH
 by_instance_and_hh AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.instance_number,	
        TRUNC(CAST(s.begin_interval_time AS DATE), ''HH'') begin_time,
        MAX(r.snap_id) snap_id,
@@ -251,7 +256,7 @@ SELECT /*+ &&sq_fact_hints. */
        r.instance_number,
        TRUNC(CAST(s.begin_interval_time AS DATE), ''HH'')
 )
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        MAX(snap_id) snap_id,
        TO_CHAR(begin_time, ''YYYY-MM-DD HH24:MI'') begin_time,
        TO_CHAR(begin_time + (1/24), ''YYYY-MM-DD HH24:MI'') end_time,
@@ -361,7 +366,7 @@ DEF title = 'HWM Statistics';
 DEF main_table = 'DBA_HIGH_WATER_MARK_STATISTICS';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_high_water_mark_statistics
  ORDER BY
@@ -377,7 +382,7 @@ DEF main_table = 'DBA_DB_LINKS';
 BEGIN
   :sql_text := '
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_db_links
  ORDER BY
@@ -392,7 +397,7 @@ DEF title = 'Modified Parameters';
 DEF main_table = 'GV$SYSTEM_PARAMETER2';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM gv$system_parameter2
  WHERE ismodified = ''MODIFIED''
@@ -409,7 +414,7 @@ DEF title = 'Non-default Parameters';
 DEF main_table = 'GV$SYSTEM_PARAMETER2';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM gv$system_parameter2
  WHERE isdefault = ''FALSE''
@@ -426,7 +431,7 @@ DEF title = 'All Parameters';
 DEF main_table = 'GV$SYSTEM_PARAMETER2';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM gv$system_parameter2
  ORDER BY
@@ -442,7 +447,7 @@ DEF title = 'Parameter File';
 DEF main_table = 'V$SPPARAMETER';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM v$spparameter
  WHERE isspecified = ''TRUE''
@@ -461,7 +466,7 @@ BEGIN
   :sql_text := '
 WITH 
 all_parameters AS (
-SELECT /*+ &&sq_fact_hints. &&ds_hint. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
        snap_id,
        dbid,
        instance_number,
@@ -474,7 +479,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
 )
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        TO_CHAR(s.begin_interval_time, ''YYYY-MM-DD HH24:MI'') begin_time,
        TO_CHAR(s.end_interval_time, ''YYYY-MM-DD HH24:MI'') end_time,
        p.snap_id,
@@ -505,7 +510,7 @@ DEF title = 'SQLTXPLAIN Version';
 DEF main_table = 'SQLTXPLAIN.SQLI$_PARAMETER';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */ 
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
 sqltxplain.sqlt$a.get_param(''tool_version'') sqlt_version,
 sqltxplain.sqlt$a.get_param(''tool_date'') sqlt_version_date,
 sqltxplain.sqlt$a.get_param(''install_date'') install_date
@@ -515,6 +520,6 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
-
-
-
+SPO &&edb360_main_report..html APP;
+PRO </ol>
+SPO OFF;

@@ -7,18 +7,20 @@ SELECT TO_CHAR(SYSDATE, 'HH24:MI:SS') hh_mm_ss FROM DUAL;
 SELECT REPLACE(TRANSLATE('&&title.',
 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ''`~!@#$%^*()-_=+[]{}\|;:",.<>/?'||CHR(0)||CHR(9)||CHR(10)||CHR(13)||CHR(38),
 'abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz0123456789_'), '__', '_') title_no_spaces FROM DUAL;
-SELECT '&&common_edb360_prefix._&&section_id._&&title_no_spaces.' spool_filename FROM DUAL;
+SELECT '&&common_edb360_prefix._&&section_id._&&report_sequence._&&title_no_spaces.' spool_filename FROM DUAL;
 SET HEA OFF;
 SET TERM ON;
 
--- watchdog
-COL edb360_bypass NEW_V edb360_bypass;
-SELECT '--bypass--' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds
-/
+-- cleanup
+SELECT '0' row_num FROM DUAL;
 
--- log
+-- log and watchdog
 SPO &&edb360_log..txt APP;
-SELECT 'Elapsed Seconds so far: '||((DBMS_UTILITY.GET_TIME - :edb360_time0) / 100) FROM DUAL;
+COL edb360_bypass NEW_V edb360_bypass;
+SELECT '--timeout--' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds
+/
+SELECT 'Elapsed Hours so far: '||ROUND((DBMS_UTILITY.GET_TIME - :edb360_time0) / 100 / 3600, 3) FROM DUAL
+/
 PRO
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 PRO
@@ -27,13 +29,13 @@ PRO &&hh_mm_ss. &&title.&&title_suffix.
 
 -- count
 PRINT sql_text;
-SELECT '0' row_num FROM DUAL;
-PRO &&hh_mm_ss. &&section_id..
+--SELECT '0' row_num FROM DUAL;
+PRO &&hh_mm_ss. &&section_id..&&report_sequence.
 EXEC :sql_text_display := REPLACE(REPLACE(TRIM(CHR(10) FROM :sql_text)||';', '<', CHR(38)||'lt;'), '>', CHR(38)||'gt;');
 SET TIMI ON;
 SET SERVEROUT ON;
 BEGIN
-  DBMS_OUTPUT.PUT_LINE('Elapsed Seconds so far: '||((DBMS_UTILITY.GET_TIME - :edb360_time0) / 100)||CHR(10));
+  DBMS_OUTPUT.PUT_LINE('Elapsed Hours so far: '||ROUND((DBMS_UTILITY.GET_TIME - :edb360_time0) / 100 / 3600, 3)||CHR(10));
 END;
 /
 SET TIMI OFF;
@@ -44,14 +46,14 @@ HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_log..txt >> &&edb36
 
 -- spools query
 SPO &&common_edb360_prefix._query.sql;
-SELECT 'SELECT TO_CHAR(ROWNUM) row_num, v0.* FROM ('||CHR(10)||TRIM(CHR(10) FROM :sql_text)||CHR(10)||') v0 WHERE ROWNUM <= &&max_rows.' FROM DUAL;
+SELECT 'SELECT TO_CHAR(ROWNUM) row_num, v0.* FROM /* &&section_id..&&report_sequence. */ ('||CHR(10)||TRIM(CHR(10) FROM :sql_text)||CHR(10)||') v0 WHERE ROWNUM <= &&max_rows.' FROM DUAL;
 SPO OFF;
 SET HEA ON;
 GET &&common_edb360_prefix._query.sql
 
 -- update main report
 SPO &&edb360_main_report..html APP;
-PRO <li title="&&main_table.">&&title.
+PRO <li title="&&main_table.">&&edb360_bypass.&&title.
 SPO OFF;
 HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html >> &&edb360_log3..txt
 
@@ -109,10 +111,10 @@ DEF max_rows = '&&def_max_rows.';
 DEF skip_html = '';
 DEF skip_text = '';
 DEF skip_csv = '';
-DEF skip_lch = 'Y';
-DEF skip_pch = 'Y';
+DEF skip_lch = '--skip--';
+DEF skip_pch = '--skip--';
 DEF title_suffix = '';
-DEF haxis = '&&db_version. dbname:&&database_name_short. host:&&host_name_short. (avg cpu_count: &&avg_cpu_count.)';
+DEF haxis = '&&db_version. dbmod:&&edb360_dbmod. host:&&host_hash. (avg cpu_count: &&avg_cpu_count.)';
 
 -- update main report
 SPO &&edb360_main_report..html APP;
@@ -120,3 +122,8 @@ PRO <small><em> (&&row_num.) </em></small>
 PRO </li>
 SPO OFF;
 HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html >> &&edb360_log3..txt
+
+-- report sequence
+EXEC :repo_seq := :repo_seq + 1;
+SELECT TO_CHAR(:repo_seq) report_sequence FROM DUAL;
+

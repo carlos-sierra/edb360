@@ -3,7 +3,8 @@ DEF section_id = '5g';
 DEF section_name = 'Exadata';
 EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
 SPO &&edb360_main_report..html APP;
-PRO <h2>&&section_name.</h2>
+PRO <h2>&&section_id.. &&section_name.</h2>
+PRO <ol start="&&report_sequence.">
 SPO OFF;
 
 COL db_time_secs HEA "DB Time|Secs";
@@ -27,7 +28,7 @@ BEGIN
 -- requested by Frits Hoogland
 WITH 
 db_time AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
        dbid,
        instance_number,
@@ -39,7 +40,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND stat_name = ''DB time''
 ),
 system_event_detail AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
        dbid,
        instance_number,
@@ -56,7 +57,7 @@ SELECT /*+ &&sq_fact_hints. */
        snap_id
 ),
 system_event AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
        dbid,
        instance_number,
@@ -65,7 +66,7 @@ SELECT /*+ &&sq_fact_hints. */
   FROM system_event_detail
 ),
 system_wait AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
        dbid,
        instance_number,
@@ -77,7 +78,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND event_name IN (''db file scattered read'', ''direct path read'', ''log file parallel write'')
 ),
 time_components AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        d.snap_id,
        d.dbid,
        d.instance_number,
@@ -128,7 +129,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND w3.time_waited_micro >= 0
 ),
 by_inst_and_hh AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        MIN(t.snap_id) snap_id,
        t.dbid,
        t.instance_number,
@@ -153,7 +154,7 @@ SELECT /*+ &&sq_fact_hints. */
        TRUNC(CAST(s.end_interval_time AS DATE), ''HH'')
 ),
 by_hh AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        MIN(snap_id) snap_id,
        dbid,
        end_time,
@@ -215,7 +216,7 @@ BEGIN
 -- requested by Frits Hoogland
 WITH 
 db_time AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
        dbid,
        instance_number,
@@ -227,7 +228,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND stat_name = ''DB time''
 ),
 system_event_detail AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
        dbid,
        instance_number,
@@ -244,7 +245,7 @@ SELECT /*+ &&sq_fact_hints. */
        snap_id
 ),
 system_event AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
        dbid,
        instance_number,
@@ -253,7 +254,7 @@ SELECT /*+ &&sq_fact_hints. */
   FROM system_event_detail
 ),
 system_wait AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
        dbid,
        instance_number,
@@ -265,7 +266,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND event_name IN (''db file scattered read'', ''direct path read'', ''log file parallel write'')
 ),
 time_components AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        d.snap_id,
        d.dbid,
        d.instance_number,
@@ -316,7 +317,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND w3.time_waited_micro >= 0
 ),
 by_inst_and_hh AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        MIN(t.snap_id) snap_id,
        t.dbid,
        t.instance_number,
@@ -341,7 +342,7 @@ SELECT /*+ &&sq_fact_hints. */
        TRUNC(CAST(s.end_interval_time AS DATE), ''HH'')
 ),
 by_hh AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        MIN(snap_id) snap_id,
        dbid,
        end_time,
@@ -882,3 +883,6 @@ END;
 @@edb360_9a_pre_one.sql
 CLEAR BREAKS
 
+SPO &&edb360_main_report..html APP;
+PRO </ol>
+SPO OFF;

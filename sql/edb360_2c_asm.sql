@@ -3,14 +3,15 @@ DEF section_id = '2c';
 DEF section_name = 'Automatic Storage Management (ASM)';
 EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
 SPO &&edb360_main_report..html APP;
-PRO <h2>&&section_name.</h2>
+PRO <h2>&&section_id.. &&section_name.</h2>
+PRO <ol start="&&report_sequence.">
 SPO OFF;
 
 DEF title = 'ASM Attributes';
 DEF main_table = 'V$ASM_ATTRIBUTE';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM v$asm_attribute
  ORDER BY
@@ -24,7 +25,7 @@ DEF title = 'ASM Client';
 DEF main_table = 'V$ASM_CLIENT';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM v$asm_client
  ORDER BY
@@ -38,7 +39,7 @@ DEF title = 'ASM Template';
 DEF main_table = 'V$ASM_TEMPLATE';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM v$asm_template
  ORDER BY
@@ -52,7 +53,7 @@ DEF title = 'ASM Disk Group';
 DEF main_table = 'V$ASM_DISKGROUP';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM v$asm_diskgroup
  ORDER BY
@@ -66,7 +67,7 @@ DEF title = 'ASM Disk Group Stat';
 DEF main_table = 'V$ASM_DISKGROUP_STAT';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM v$asm_diskgroup_stat
  ORDER BY
@@ -80,7 +81,7 @@ DEF title = 'ASM Disk';
 DEF main_table = 'V$ASM_DISK';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM v$asm_disk
  ORDER BY
@@ -94,7 +95,7 @@ DEF title = 'ASM Disk Stat';
 DEF main_table = 'V$ASM_DISK_STAT';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM v$asm_disk_stat
  ORDER BY
@@ -108,7 +109,7 @@ DEF title = 'ASM Disk IO Stats';
 DEF main_table = 'GV$ASM_DISK_IOSTAT';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM gv$asm_disk_iostat
  ORDER BY
@@ -122,3 +123,6 @@ END;
 @@ck_free_17.sql
 HOS zip -m &&edb360_main_filename._&&edb360_file_time. ck_free.txt >> &&edb360_log3..txt
 
+SPO &&edb360_main_report..html APP;
+PRO </ol>
+SPO OFF;

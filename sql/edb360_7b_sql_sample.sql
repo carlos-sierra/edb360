@@ -4,7 +4,8 @@ DEF section_name = 'SQL Sample';
 EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
 
 SPO &&edb360_main_report..html APP;
-PRO <h2 title="Top SQL as per ASH">&&section_name.</h2>
+PRO <h2>&&section_id.. &&section_name.</h2>
+PRO <ol start="&&report_sequence.">
 SPO OFF;
 SET TERM ON;
 PRO Please wait ...
@@ -42,7 +43,7 @@ DECLARE
   l_count NUMBER := 0;
   CURSOR sql_cur IS
               WITH ranked_sql AS (
-            SELECT /*+ &&sq_fact_hints. &&ds_hint. */
+            SELECT /*+ &&sq_fact_hints. &&ds_hint. &&section_id..&&report_sequence. */
                    dbid,
                    sql_id,
                    MAX(user_id) user_id,
@@ -62,7 +63,7 @@ DECLARE
             HAVING COUNT(*) > 60 -- >10min
             ),
             top_sql AS (
-            SELECT /*+ &&sq_fact_hints. */
+            SELECT /*+ &&sq_fact_hints. &&section_id..&&report_sequence. */
                    r.sql_id,
                    TRIM(TO_CHAR(ROUND(r.db_time_hrs, 2), '9990.00')) db_time_hrs,
                    TRIM(TO_CHAR(ROUND(r.cpu_time_hrs, 2), '9990.00')) cpu_time_hrs,
@@ -83,7 +84,7 @@ DECLARE
                AND h.sql_id(+) = r.sql_id
             ),
             not_shared AS (
-            SELECT /*+ &&sq_fact_hints. */
+            SELECT /*+ &&sq_fact_hints. &&section_id..&&report_sequence. */
                    sql_id, COUNT(*) child_cursors,
                    RANK() OVER (ORDER BY COUNT(*) DESC NULLS LAST) AS sql_rank
               FROM gv$sql_shared_cursor
@@ -92,7 +93,7 @@ DECLARE
             HAVING COUNT(*) > 100
             ),
             top_not_shared AS (
-            SELECT /*+ &&sq_fact_hints. */
+            SELECT /*+ &&sq_fact_hints. &&section_id..&&report_sequence. */
                    ns.sql_rank,
                    ns.child_cursors,
                    ns.sql_id,
@@ -101,7 +102,7 @@ DECLARE
              WHERE ns.sql_rank <= &&edb360_conf_top_cur.
             ),
             by_signature AS (
-            SELECT /*+ &&sq_fact_hints. &&ds_hint. */
+            SELECT /*+ &&sq_fact_hints. &&ds_hint. &&section_id..&&report_sequence. */
                    force_matching_signature,
                    dbid,
                    ROW_NUMBER () OVER (ORDER BY COUNT(*) DESC) rn,
@@ -120,7 +121,7 @@ DECLARE
             HAVING COUNT(*) > 60 -- >10min
             ),
             top_signature AS (
-            SELECT /*+ &&sq_fact_hints. */
+            SELECT /*+ &&sq_fact_hints. &&section_id..&&report_sequence. */
                    r.rn,
                    r.force_matching_signature,
                    r.distinct_sql_id,
@@ -194,7 +195,7 @@ DECLARE
 		put_line('SPO &&edb360_log..txt APP;');
         put_line('SET HEAD OFF TERM ON;');
 		put_line('PRO '||CHR(38)||chr(38)||'hh_mm_ss. '||p_module);
-		put_line('SELECT ''Elapsed Seconds so far: ''||((DBMS_UTILITY.GET_TIME - :edb360_time0) / 100) FROM DUAL;');
+		put_line('SELECT ''Elapsed Hours so far: ''||ROUND((DBMS_UTILITY.GET_TIME - :edb360_time0) / 100 / 3600, 3) FROM DUAL;');
         put_line('SET HEAD ON TERM OFF;');
 		put_line('SPO OFF;');
   END update_log;
@@ -231,6 +232,8 @@ BEGIN
     put_line('SELECT ''*** time limit exceeded ***'' FROM DUAL WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NOT NULL;');
     put_line('SPO OFF;');
     put_line('HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html >> &&edb360_log3..txt');
+    put_line('EXEC :repo_seq := :repo_seq + 1;');
+    put_line('SELECT TO_CHAR(:repo_seq) report_sequence FROM DUAL;');
     IF sql_rec.rank_num <= &&edb360_conf_planx_top. AND sql_rec.sql_id != '0ckwjf2su2rpx' /* Beckman */ THEN
       put_line('COL edb360_bypass NEW_V edb360_bypass;');
       put_line('SELECT ''--bypass--'' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
@@ -448,5 +451,9 @@ SET SERVEROUT OFF HEAD ON PAGES &&def_max_rows.;
 HOS zip -m &&edb360_main_filename._&&edb360_file_time. 99930_&&common_edb360_prefix._top_sql_driver.sql 99950_&&common_edb360_prefix._top_sql_driver.sql sqld360_driver.sql >> &&edb360_log3..txt
 SET HEA ON LIN 32767 NEWP NONE PAGES &&def_max_rows. LONG 32000 LONGC 2000 WRA ON TRIMS ON TRIM ON TI OFF TIMI OFF ARRAY 1000 NUM 20 SQLBL ON BLO . RECSEP OFF;
 --COL row_num NEW_V row_num HEA '#' PRI;
+
+SPO &&edb360_main_report..html APP;
+PRO </ol>
+SPO OFF;
 
 

@@ -1,9 +1,10 @@
 @@&&edb360_0g.tkprof.sql
-DEF section_id = '6d';
+DEF section_id = '6e';
 DEF section_name = 'Active Session History (ASH) - Top Programs';
 EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
 SPO &&edb360_main_report..html APP;
-PRO <h2>&&section_name.</h2>
+PRO <h2>&&section_id.. &&section_name.</h2>
+PRO <ol start="&&report_sequence.">
 SPO OFF;
 
 DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
@@ -11,7 +12,7 @@ BEGIN
   :sql_text_backup := '
 WITH
 hist AS (
-SELECT /*+ &&sq_fact_hints. &&ds_hint. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
        program,
        ROW_NUMBER () OVER (ORDER BY COUNT(*) DESC) rn,
        COUNT(*) samples
@@ -24,7 +25,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */
        program
 ),
 total AS (
-SELECT /*+ &&sq_fact_hints. */ SUM(samples) samples FROM hist
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */ SUM(samples) samples FROM hist
 )
 SELECT h.program,
        h.samples,
@@ -425,3 +426,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_numb
 
 DEF skip_lch = 'Y';
 DEF skip_pch = 'Y';
+
+SPO &&edb360_main_report..html APP;
+PRO </ol>
+SPO OFF;

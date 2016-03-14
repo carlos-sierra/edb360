@@ -3,7 +3,8 @@ DEF section_id = '2d';
 DEF section_name = 'Backup and Recovery';
 EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
 SPO &&edb360_main_report..html APP;
-PRO <h2>&&section_name.</h2>
+PRO <h2>&&section_id.. &&section_name.</h2>
+PRO <ol start="&&report_sequence.">
 SPO OFF;
 
 DEF title = 'RMAN Backup Job Details';
@@ -11,7 +12,7 @@ DEF main_table = 'V$RMAN_BACKUP_JOB_DETAILS';
 BEGIN
   :sql_text := '
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM v$rman_backup_job_details
  --WHERE start_time >= (SYSDATE - 100)
@@ -27,7 +28,7 @@ DEF title = 'RMAN Output';
 DEF main_table = 'V$RMAN_OUTPUT';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM v$rman_output
 ';
@@ -39,7 +40,7 @@ DEF title = 'Fast Recovery Area';
 DEF main_table = 'V$RECOVERY_FILE_DEST';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM v$recovery_file_dest
 ';
@@ -51,7 +52,7 @@ DEF title = 'Fast Recovery Area Usage';
 DEF main_table = 'V$RECOVERY_AREA_USAGE';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM v$recovery_area_usage
 ';
@@ -63,7 +64,7 @@ DEF title = 'Restore Point';
 DEF main_table = 'V$RESTORE_POINT';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM v$restore_point
 ';
@@ -75,7 +76,7 @@ DEF title = 'Flashback Statistics';
 DEF main_table = 'V$FLASHBACK_DATABASE_STAT';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM v$flashback_database_stat
 ';
@@ -87,7 +88,7 @@ DEF title = 'Flashback Log';
 DEF main_table = 'V$FLASHBACK_DATABASE_LOG';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM v$flashback_database_log
 ';
@@ -99,7 +100,7 @@ DEF title = 'Block Corruption';
 DEF main_table = 'V$DATABASE_BLOCK_CORRUPTION';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM v$database_block_corruption
 ';
@@ -111,7 +112,7 @@ DEF title = 'Block Change Tracking';
 DEF main_table = 'V$BLOCK_CHANGE_TRACKING';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM v$block_change_tracking
 ';
@@ -124,7 +125,7 @@ DEF main_table = 'V$LOG';
 BEGIN
   :sql_text := '
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
      *
   FROM v$log
  ORDER BY 1, 2, 3, 4
@@ -137,7 +138,7 @@ DEF title = 'REDO LOG Files';
 DEF main_table = 'V$LOGFILE';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
      *
   FROM v$logfile
  ORDER BY 1, 2, 3, 4
@@ -151,7 +152,7 @@ DEF main_table = 'V$LOG_HISTORY';
 BEGIN
   :sql_text := '
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
  THREAD#, TO_CHAR(trunc(FIRST_TIME), ''YYYY-MON-DD'') day, count(*)
 from v$log_history
 where FIRST_TIME >= (sysdate - 31)
@@ -170,7 +171,7 @@ BEGIN
 -- requested by Weidong
 WITH
 log AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        thread#,
        TO_CHAR(TRUNC(first_time), ''YYYY-MM-DD'') yyyy_mm_dd,
        TO_CHAR(TRUNC(first_time), ''Dy'') day,
@@ -208,19 +209,19 @@ SELECT /*+ &&sq_fact_hints. */
        TRUNC(first_time) DESC NULLS LAST
 ),
 ordered_log AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        ROWNUM row_num_noprint, log.*
   FROM log
 ),
 min_set AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        thread#,
        MIN(row_num_noprint) min_row_num
   FROM ordered_log
  GROUP BY 
        thread#
 )
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        log.*
   FROM ordered_log log,
        min_set ms
@@ -242,7 +243,7 @@ BEGIN
 -- requested by Abdul Khan and Srinivas Kanaparthy
 WITH
 log AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        DISTINCT 
        thread#,
        sequence#,
@@ -253,7 +254,7 @@ SELECT /*+ &&sq_fact_hints. */
  WHERE first_time IS NOT NULL
 ),
 log_denorm AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        thread#,
        TO_CHAR(TRUNC(first_time), ''YYYY-MM-DD'') yyyy_mm_dd,
        TO_CHAR(TRUNC(first_time), ''Dy'') day,
@@ -293,19 +294,19 @@ SELECT /*+ &&sq_fact_hints. */
        TRUNC(first_time) DESC
 ),
 ordered_log AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        ROWNUM row_num_noprint, log_denorm.*
   FROM log_denorm
 ),
 min_set AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        thread#,
        MIN(row_num_noprint) min_row_num
   FROM ordered_log
  GROUP BY 
        thread#
 )
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        log.*
   FROM ordered_log log,
        min_set ms
@@ -326,7 +327,7 @@ BEGIN
   :sql_text := '
 WITH
 log AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        DISTINCT 
        thread#,
        sequence#,
@@ -337,7 +338,7 @@ SELECT /*+ &&sq_fact_hints. */
  WHERE first_time IS NOT NULL
 ),
 log_denorm AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        TO_CHAR(TRUNC(first_time), ''YYYY-MM-DD'') yyyy_mm_dd,
        TO_CHAR(TRUNC(first_time), ''Dy'') day,
        SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''00'', 1, 0)) h00,
@@ -374,16 +375,16 @@ SELECT /*+ &&sq_fact_hints. */
        TRUNC(first_time) DESC
 ),
 ordered_log AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        ROWNUM row_num_noprint, log_denorm.*
   FROM log_denorm
 ),
 min_set AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        MIN(row_num_noprint) min_row_num
   FROM ordered_log
 )
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        log.*
   FROM ordered_log log,
        min_set ms
@@ -539,7 +540,7 @@ DEF title = 'Unrecoverable Datafile';
 DEF main_table = 'V$DATAFILE';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM v$datafile
  WHERE unrecoverable_change# > 0
@@ -556,14 +557,14 @@ BEGIN
   :sql_text := '
 -- from http://www.pythian.com/blog/oracle-what-is-an-unrecoverable-data-file/
 -- by Catherine Chow
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
 df.name data_file_name, df.unrecoverable_time
 FROM v$datafile df, v$backup bk
 WHERE df.file#=bk.file#
 and df.unrecoverable_change#!=0
 and df.unrecoverable_time >  
 (select max(end_time) from v$rman_backup_job_details
-where INPUT_TYPE in (''DB FULL'' ,''DB INCR''))
+where INPUT_TYPE in (''DB FULL'' ,''DB INCR'') and status = ''COMPLETED'')
 ';
 END;
 /
@@ -575,7 +576,7 @@ BEGIN
   :sql_text := '
 -- from http://www.pythian.com/blog/oracle-what-is-an-unrecoverable-data-file/
 -- by Catherine Chow
-select /*+ &&top_level_hints. */
+select /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
 distinct dbo.owner,dbo.object_name, dbo.object_type, dfs.tablespace_name,
 dbt.logging table_level_logging, ts.logging tablespace_level_logging
 from v$segstat ss, dba_tablespaces ts, dba_objects dbo, dba_tables dbt,
@@ -595,4 +596,6 @@ END;
 /
 --@@edb360_9a_pre_one.sql too slow! possibly bug 1532624.1
 
-
+SPO &&edb360_main_report..html APP;
+PRO </ol>
+SPO OFF;

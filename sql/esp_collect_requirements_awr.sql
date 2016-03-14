@@ -6,10 +6,10 @@
 --
 -- Author:      Carlos Sierra, Rodrigo Righetti
 --
--- Usage:       Collects Requirements from AWR and ASH views on databases with the 
+-- Usage:       Collects Requirements from AWR and ASH views on databases with the
 --				Oracle Diagnostics Pack license, it also collect from Statspack starting
---				9i databases up to 12c. 				 
---				 
+--				9i databases up to 12c.
+--
 --              The output of this script can be used to feed a Sizing and Provisioning
 --              application.
 --
@@ -18,7 +18,7 @@
 --              SQL> START sql/esp_master.sql
 --
 --  Notes:      Developed and tested on 12.1.0.2, 11.2.0.3, 10.2.0.4, 9.2.0.1
---             
+--
 ---------------------------------------------------------------------------------------
 --
 DEF MAX_DAYS = '365';
@@ -115,8 +115,8 @@ SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'id', 'instance_name', 
 SELECT DISTINCT '&&ecr_collection_host.', '&&ecr_collection_key', 'id', 'instance_name', 'dba_hist_database_instance', instance_number, 0, instance_name FROM dba_hist_database_instance WHERE dbid = &&ecr_dbid. AND CAST(startup_time AS DATE) > SYSDATE - &&collection_days. ORDER BY instance_number
 /
 
--- cpu 
-WITH 
+-- cpu
+WITH
 cpu_per_inst_and_sample AS (
 SELECT /*+ &&ecr_sq_fact_hints. */
        h.instance_number,
@@ -124,7 +124,7 @@ SELECT /*+ &&ecr_sq_fact_hints. */
        h.sample_id,
        COUNT(*) aas_on_cpu_and_resmgr,
        SUM(CASE h.session_state WHEN 'ON CPU' THEN 1 ELSE 0 END) aas_on_cpu,
-       SUM(CASE h.event WHEN 'resmgr:cpu quantum' THEN 1 ELSE 0 END) aas_resmgr_cpu_quantum       
+       SUM(CASE h.event WHEN 'resmgr:cpu quantum' THEN 1 ELSE 0 END) aas_resmgr_cpu_quantum
   FROM dba_hist_active_sess_history h,
        dba_hist_snapshot s
  WHERE h.snap_id >= TO_NUMBER(NVL('&&ecr_min_snap_id.','0'))
@@ -296,14 +296,14 @@ SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'cpu', 'aas_on_cpu_avg'
 UNION ALL
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'cpu', 'aas_resmgr_cpu_quantum_avg', 'dba_hist_active_sess_history', -1, -1, SUM(aas_resmgr_cpu_quantum_avg) FROM cpu_per_inst
 /
-WITH 
+WITH
 cpu_per_inst_and_sample AS (
 SELECT /*+ &&ecr_sq_fact_hints. */
        inst_id,
        sample_id,
        COUNT(*) aas_on_cpu_and_resmgr,
        SUM(CASE session_state WHEN 'ON CPU' THEN 1 ELSE 0 END) aas_on_cpu,
-       SUM(CASE event WHEN 'resmgr:cpu quantum' THEN 1 ELSE 0 END) aas_resmgr_cpu_quantum       
+       SUM(CASE event WHEN 'resmgr:cpu quantum' THEN 1 ELSE 0 END) aas_resmgr_cpu_quantum
   FROM gv$active_session_history
  WHERE (session_state = 'ON CPU' OR event = 'resmgr:cpu quantum')
    AND CAST(sample_time AS DATE) > SYSDATE - &&collection_days.
@@ -504,7 +504,7 @@ SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'mem', 'sga_alloc', 'gv
 /
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'mem', 'sga_alloc', 'gv$sgainfo', -1, -1, SUM(bytes) FROM gv$sgainfo WHERE name = 'Maximum SGA Size'
 /
-WITH 
+WITH
 pga_per_inst AS (
 SELECT /*+ &&ecr_sq_fact_hints. */
        h.instance_number,
@@ -550,7 +550,7 @@ SELECT /*+ &&ecr_sq_fact_hints. */
 )
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'mem', parameter_name, 'dba_hist_parameter', instance_number, 0, value FROM par_per_inst
 UNION ALL
-SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'mem', parameter_name, 'dba_hist_parameter', -1, -1, SUM(value) FROM par_per_inst GROUP BY parameter_name 
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'mem', parameter_name, 'dba_hist_parameter', -1, -1, SUM(value) FROM par_per_inst GROUP BY parameter_name
  ORDER BY 3, 6 NULLS FIRST, 5
 /
 WITH
@@ -567,12 +567,12 @@ SELECT /*+ &&ecr_sq_fact_hints. */
 )
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'mem', parameter_name, 'gv$system_parameter', 0, inst_id, value FROM par_per_inst
 UNION ALL
-SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'mem', parameter_name, 'gv$system_parameter', -1, -1, SUM(value) FROM par_per_inst GROUP BY parameter_name 
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'mem', parameter_name, 'gv$system_parameter', -1, -1, SUM(value) FROM par_per_inst GROUP BY parameter_name
  ORDER BY 3, 5 NULLS FIRST, 6
 /
 
 -- db_size
-WITH 
+WITH
 sizes AS (
 SELECT /*+ &&ecr_sq_fact_hints. */
        'datafile' file_type,
@@ -1148,7 +1148,7 @@ SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'osstat', stat_name, 'g
 /
 
 -- cpu time series
-WITH 
+WITH
 cpu_per_inst_and_sample AS (
 SELECT /*+ &&ecr_sq_fact_hints. */
        h.instance_number,
@@ -1393,7 +1393,7 @@ SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'db_size_ts', 'temp', e
 /
 
 -- os time series: load, num_cpus, num_cpu_cores and physical memory
-WITH 
+WITH
 osstat_denorm AS (
 SELECT /*+ &&ecr_sq_fact_hints. */
        h.snap_id,
@@ -1450,6 +1450,651 @@ SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'os_ts', 'num_cpu_socke
  UNION ALL
 SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'os_ts', 'physical_memory_gb', end_time, instance_number, 0 inst_id, ROUND(physical_memory_bytes / POWER(2, 30), 3) value
   FROM osstat_denorm_2
+ ORDER BY
+       3, 4, 6, 5
+/
+-- nw_perf
+WITH
+sysstat_nwtraf AS (
+SELECT /*+ &&ecr_sq_fact_hints. */
+       h.instance_number,
+       h.snap_id,
+       SUM(CASE WHEN h.stat_name = 'bytes sent via SQL*Net to client'                   THEN h.value ELSE 0 END) tx_cl,
+       SUM(CASE WHEN h.stat_name = 'bytes received via SQL*Net from client'             THEN h.value ELSE 0 END) rx_cl,
+       SUM(CASE WHEN h.stat_name = 'bytes sent via SQL*Net to dblink'                   THEN h.value ELSE 0 END) tx_dl,
+       SUM(CASE WHEN h.stat_name = 'bytes received via SQL*Net from dblink'             THEN h.value ELSE 0 END) rx_dl
+  FROM dba_hist_sysstat h,
+       dba_hist_snapshot s
+ WHERE h.snap_id >= TO_NUMBER(NVL('&&ecr_min_snap_id.','0'))
+   AND h.dbid = &&ecr_dbid.
+   AND h.stat_name IN ('bytes sent via SQL*Net to client','bytes received via SQL*Net from client','bytes sent via SQL*Net to dblink','bytes received via SQL*Net from dblink')
+   AND s.snap_id = h.snap_id
+   AND s.dbid = h.dbid
+   AND s.instance_number = h.instance_number
+   AND CAST(s.begin_interval_time AS DATE) > SYSDATE - &&collection_days.
+ GROUP BY
+       h.instance_number,
+       h.snap_id
+),
+nwtraf_per_inst_and_snap_id AS (
+SELECT /*+ &&ecr_sq_fact_hints. */
+       h1.instance_number,
+       h1.snap_id,
+       (h1.tx_cl - h0.tx_cl) tx_cl,
+       (h1.rx_cl - h0.rx_cl) rx_cl,
+       (h1.tx_dl - h0.tx_dl) tx_dl,
+       (h1.rx_dl - h0.rx_dl) rx_dl,
+       (CAST(s1.end_interval_time AS DATE) - CAST(s1.begin_interval_time AS DATE)) * 86400 elapsed_sec
+  FROM sysstat_nwtraf h0,
+       dba_hist_snapshot s0,
+       sysstat_nwtraf h1,
+       dba_hist_snapshot s1
+ WHERE s0.snap_id >= TO_NUMBER(NVL('&&ecr_min_snap_id.','0'))
+   AND s0.dbid = &&ecr_dbid.
+   AND s0.snap_id = h0.snap_id
+   AND s0.instance_number = h0.instance_number
+   AND h1.instance_number = h0.instance_number
+   AND h1.snap_id = h0.snap_id + 1
+   AND s1.snap_id >= TO_NUMBER(NVL('&&ecr_min_snap_id.','0'))
+   AND s1.dbid = &&ecr_dbid.
+   AND s1.snap_id = h1.snap_id
+   AND s1.instance_number = h1.instance_number
+   AND s1.snap_id = s0.snap_id + 1
+   AND s1.startup_time = s0.startup_time
+),
+nwtraf_per_snap_id AS (
+SELECT /*+ &&ecr_sq_fact_hints. */
+       snap_id,
+       SUM(tx_cl) tx_cl,
+       SUM(rx_cl) rx_cl,
+       SUM(tx_dl) tx_dl,
+       SUM(rx_dl) rx_dl,
+       AVG(elapsed_sec) elapsed_sec
+  FROM nwtraf_per_inst_and_snap_id
+ GROUP BY
+       snap_id
+),
+nw_per_inst AS (
+SELECT /*+ &&ecr_sq_fact_hints. */
+       instance_number,
+       ROUND(100 * (SUM(tx_cl) + SUM(tx_dl)) / (SUM(tx_cl) + SUM(rx_cl) + SUM(tx_dl) + SUM(rx_dl)), 1) nw_tx_perc,
+       ROUND(100 * (SUM(rx_cl) + SUM(rx_dl)) / (SUM(tx_cl) + SUM(rx_cl) + SUM(tx_dl) + SUM(rx_dl)), 1) nw_rx_perc,
+       ROUND(100 * (SUM(rx_cl) + SUM(tx_cl)) / (SUM(tx_cl) + SUM(rx_cl) + SUM(tx_dl) + SUM(rx_dl)), 1) nw_cl_perc,
+       ROUND(100 * (SUM(rx_dl) + SUM(tx_dl)) / (SUM(tx_cl) + SUM(rx_cl) + SUM(tx_dl) + SUM(rx_dl)), 1) nw_dl_perc,
+       ROUND(MAX((tx_cl + rx_cl + tx_dl + rx_dl) / elapsed_sec)) nw_peak_bytes,
+       ROUND(MAX((tx_cl + tx_dl) / elapsed_sec)) nw_tx_peak_bytes,
+       ROUND(MAX((rx_cl + rx_dl) / elapsed_sec)) nw_rx_peak_bytes,
+       ROUND(PERCENTILE_DISC(0.999) WITHIN GROUP (ORDER BY (tx_cl + rx_cl + tx_dl + rx_dl) / elapsed_sec)) nw_999_bytes,
+       ROUND(PERCENTILE_DISC(0.999) WITHIN GROUP (ORDER BY (tx_cl + tx_dl) / elapsed_sec)) nw_tx_999_bytes,
+       ROUND(PERCENTILE_DISC(0.999) WITHIN GROUP (ORDER BY (rx_cl + rx_dl) / elapsed_sec)) nw_rx_999_bytes,
+       ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY (tx_cl + rx_cl + tx_dl + rx_dl) / elapsed_sec)) nw_99_bytes,
+       ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY (tx_cl + tx_dl) / elapsed_sec)) nw_tx_99_bytes,
+       ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY (rx_cl + rx_dl) / elapsed_sec)) nw_rx_99_bytes,
+       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY (tx_cl + rx_cl + tx_dl + rx_dl) / elapsed_sec)) nw_97_bytes,
+       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY (tx_cl + tx_dl) / elapsed_sec)) nw_tx_97_bytes,
+       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY (rx_cl + rx_dl) / elapsed_sec)) nw_rx_97_bytes,
+       ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY (tx_cl + rx_cl + tx_dl + rx_dl) / elapsed_sec)) nw_95_bytes,
+       ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY (tx_cl + tx_dl) / elapsed_sec)) nw_tx_95_bytes,
+       ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY (rx_cl + rx_dl) / elapsed_sec)) nw_rx_95_bytes,
+       ROUND(PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY (tx_cl + rx_cl + tx_dl + rx_dl) / elapsed_sec)) nw_90_bytes,
+       ROUND(PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY (tx_cl + tx_dl) / elapsed_sec)) nw_tx_90_bytes,
+       ROUND(PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY (rx_cl + rx_dl) / elapsed_sec)) nw_rx_90_bytes,
+       ROUND(PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY (tx_cl + rx_cl + tx_dl + rx_dl) / elapsed_sec)) nw_75_bytes,
+       ROUND(PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY (tx_cl + tx_dl) / elapsed_sec)) nw_tx_75_bytes,
+       ROUND(PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY (rx_cl + rx_dl) / elapsed_sec)) nw_rx_75_bytes,
+       ROUND(MEDIAN((tx_cl + rx_cl + tx_dl + rx_dl) / elapsed_sec)) nw_median_bytes,
+       ROUND(MEDIAN((tx_cl + tx_dl) / elapsed_sec)) nw_tx_median_bytes,
+       ROUND(MEDIAN((rx_cl + rx_dl) / elapsed_sec)) nw_rx_median_bytes,
+       ROUND(AVG((tx_cl + rx_cl + tx_dl + rx_dl) / elapsed_sec)) nw_avg_bytes,
+       ROUND(AVG((tx_cl + tx_dl) / elapsed_sec)) nw_tx_avg_bytes,
+       ROUND(AVG((rx_cl + rx_dl) / elapsed_sec)) nw_rx_avg_bytes
+  FROM nwtraf_per_inst_and_snap_id
+ WHERE elapsed_sec > 60 -- ignore snaps too close
+ GROUP BY
+       instance_number
+),
+nw_per_cluster AS ( -- combined
+SELECT /*+ &&ecr_sq_fact_hints. */
+       ROUND(100 * (SUM(tx_cl) + SUM(tx_dl)) / (SUM(tx_cl) + SUM(rx_cl) + SUM(tx_dl) + SUM(rx_dl)), 1) nw_tx_perc,
+       ROUND(100 * (SUM(rx_cl) + SUM(rx_dl)) / (SUM(tx_cl) + SUM(rx_cl) + SUM(tx_dl) + SUM(rx_dl)), 1) nw_rx_perc,
+       ROUND(100 * (SUM(rx_cl) + SUM(tx_cl)) / (SUM(tx_cl) + SUM(rx_cl) + SUM(tx_dl) + SUM(rx_dl)), 1) nw_cl_perc,
+       ROUND(100 * (SUM(rx_dl) + SUM(tx_dl)) / (SUM(tx_cl) + SUM(rx_cl) + SUM(tx_dl) + SUM(rx_dl)), 1) nw_dl_perc,
+       ROUND(MAX((tx_cl + rx_cl + tx_dl + rx_dl) / elapsed_sec)) nw_peak_bytes,
+       ROUND(MAX((tx_cl + tx_dl) / elapsed_sec)) nw_tx_peak_bytes,
+       ROUND(MAX((rx_cl + rx_dl) / elapsed_sec)) nw_rx_peak_bytes,
+       ROUND(PERCENTILE_DISC(0.999) WITHIN GROUP (ORDER BY (tx_cl + rx_cl + tx_dl + rx_dl) / elapsed_sec)) nw_999_bytes,
+       ROUND(PERCENTILE_DISC(0.999) WITHIN GROUP (ORDER BY (tx_cl + tx_dl) / elapsed_sec)) nw_tx_999_bytes,
+       ROUND(PERCENTILE_DISC(0.999) WITHIN GROUP (ORDER BY (rx_cl + rx_dl) / elapsed_sec)) nw_rx_999_bytes,
+       ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY (tx_cl + rx_cl + tx_dl + rx_dl) / elapsed_sec)) nw_99_bytes,
+       ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY (tx_cl + tx_dl) / elapsed_sec)) nw_tx_99_bytes,
+       ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY (rx_cl + rx_dl) / elapsed_sec)) nw_rx_99_bytes,
+       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY (tx_cl + rx_cl + tx_dl + rx_dl) / elapsed_sec)) nw_97_bytes,
+       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY (tx_cl + tx_dl) / elapsed_sec)) nw_tx_97_bytes,
+       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY (rx_cl + rx_dl) / elapsed_sec)) nw_rx_97_bytes,
+       ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY (tx_cl + rx_cl + tx_dl + rx_dl) / elapsed_sec)) nw_95_bytes,
+       ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY (tx_cl + tx_dl) / elapsed_sec)) nw_tx_95_bytes,
+       ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY (rx_cl + rx_dl) / elapsed_sec)) nw_rx_95_bytes,
+       ROUND(PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY (tx_cl + rx_cl + tx_dl + rx_dl) / elapsed_sec)) nw_90_bytes,
+       ROUND(PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY (tx_cl + tx_dl) / elapsed_sec)) nw_tx_90_bytes,
+       ROUND(PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY (rx_cl + rx_dl) / elapsed_sec)) nw_rx_90_bytes,
+       ROUND(PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY (tx_cl + rx_cl + tx_dl + rx_dl) / elapsed_sec)) nw_75_bytes,
+       ROUND(PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY (tx_cl + tx_dl) / elapsed_sec)) nw_tx_75_bytes,
+       ROUND(PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY (rx_cl + rx_dl) / elapsed_sec)) nw_rx_75_bytes,
+       ROUND(MEDIAN((tx_cl + rx_cl + tx_dl + rx_dl) / elapsed_sec)) nw_median_bytes,
+       ROUND(MEDIAN((tx_cl + tx_dl) / elapsed_sec)) nw_tx_median_bytes,
+       ROUND(MEDIAN((rx_cl + rx_dl) / elapsed_sec)) nw_rx_median_bytes,
+       ROUND(AVG((tx_cl + rx_cl + tx_dl + rx_dl) / elapsed_sec)) nw_avg_bytes,
+       ROUND(AVG((tx_cl + tx_dl) / elapsed_sec)) nw_tx_avg_bytes,
+       ROUND(AVG((rx_cl + rx_dl) / elapsed_sec)) nw_rx_avg_bytes
+  FROM nwtraf_per_snap_id
+ WHERE elapsed_sec > 60 -- ignore snaps too close
+)
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_tx_perc', 'dba_hist_sysstat', instance_number, 0, nw_tx_perc FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_rx_perc', 'dba_hist_sysstat', instance_number, 0, nw_rx_perc FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_cl_perc', 'dba_hist_sysstat', instance_number, 0, nw_cl_perc FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_dl_perc', 'dba_hist_sysstat', instance_number, 0, nw_dl_perc FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_peak_bytes', 'dba_hist_sysstat', instance_number, 0, nw_peak_bytes FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_tx_peak_bytes', 'dba_hist_sysstat', instance_number, 0, nw_tx_peak_bytes FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_rx_peak_bytes', 'dba_hist_sysstat', instance_number, 0, nw_rx_peak_bytes FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_999_bytes', 'dba_hist_sysstat', instance_number, 0, nw_999_bytes FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_tx_99_bytes', 'dba_hist_sysstat', instance_number, 0, nw_tx_99_bytes FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_rx_99_bytes', 'dba_hist_sysstat', instance_number, 0, nw_rx_99_bytes FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_99_bytes', 'dba_hist_sysstat', instance_number, 0, nw_99_bytes FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_tx_99_bytes', 'dba_hist_sysstat', instance_number, 0, nw_tx_99_bytes FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_rx_99_bytes', 'dba_hist_sysstat', instance_number, 0, nw_rx_99_bytes FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_97_bytes', 'dba_hist_sysstat', instance_number, 0, nw_97_bytes FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_tx_97_bytes', 'dba_hist_sysstat', instance_number, 0, nw_tx_97_bytes FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_rx_97_bytes', 'dba_hist_sysstat', instance_number, 0, nw_rx_97_bytes FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_95_bytes', 'dba_hist_sysstat', instance_number, 0, nw_95_bytes FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_tx_95_bytes', 'dba_hist_sysstat', instance_number, 0, nw_tx_95_bytes FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_rx_95_bytes', 'dba_hist_sysstat', instance_number, 0, nw_rx_95_bytes FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_90_bytes', 'dba_hist_sysstat', instance_number, 0, nw_90_bytes FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_tx_90_bytes', 'dba_hist_sysstat', instance_number, 0, nw_tx_90_bytes FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_rx_90_bytes', 'dba_hist_sysstat', instance_number, 0, nw_rx_90_bytes FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_75_bytes', 'dba_hist_sysstat', instance_number, 0, nw_75_bytes FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_tx_75_bytes', 'dba_hist_sysstat', instance_number, 0, nw_tx_75_bytes FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_rx_75_bytes', 'dba_hist_sysstat', instance_number, 0, nw_rx_75_bytes FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_median_bytes', 'dba_hist_sysstat', instance_number, 0, nw_median_bytes FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_tx_median_bytes', 'dba_hist_sysstat', instance_number, 0, nw_tx_median_bytes FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_rx_median_bytes', 'dba_hist_sysstat', instance_number, 0, nw_rx_median_bytes FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_avg_bytes', 'dba_hist_sysstat', instance_number, 0, nw_avg_bytes FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_tx_avg_bytes', 'dba_hist_sysstat', instance_number, 0, nw_tx_avg_bytes FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_rx_avg_bytes', 'dba_hist_sysstat', instance_number, 0, nw_rx_avg_bytes FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_tx_perc', 'dba_hist_sysstat', -1, -1, SUM(nw_tx_perc) FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_rx_perc', 'dba_hist_sysstat', -1, -1, SUM(nw_rx_perc) FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_cl_perc', 'dba_hist_sysstat', -1, -1, SUM(nw_cl_perc) FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_dl_perc', 'dba_hist_sysstat', -1, -1, SUM(nw_dl_perc) FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_peak_bytes', 'dba_hist_sysstat', -1, -1, SUM(nw_peak_bytes) FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_tx_peak_bytes', 'dba_hist_sysstat', -1, -1, SUM(nw_tx_peak_bytes) FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_rx_peak_bytes', 'dba_hist_sysstat', -1, -1, SUM(nw_rx_peak_bytes) FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_999_bytes', 'dba_hist_sysstat', -1, -1, SUM(nw_999_bytes) FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_tx_99_bytes', 'dba_hist_sysstat', -1, -1, SUM(nw_tx_99_bytes) FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_rx_99_bytes', 'dba_hist_sysstat', -1, -1, SUM(nw_rx_99_bytes) FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_99_bytes', 'dba_hist_sysstat', -1, -1, SUM(nw_99_bytes) FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_tx_99_bytes', 'dba_hist_sysstat', -1, -1, SUM(nw_tx_99_bytes) FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_rx_99_bytes', 'dba_hist_sysstat', -1, -1, SUM(nw_rx_99_bytes) FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_97_bytes', 'dba_hist_sysstat', -1, -1, SUM(nw_97_bytes) FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_tx_97_bytes', 'dba_hist_sysstat', -1, -1, SUM(nw_tx_97_bytes) FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_rx_97_bytes', 'dba_hist_sysstat', -1, -1, SUM(nw_rx_97_bytes) FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_95_bytes', 'dba_hist_sysstat', -1, -1, SUM(nw_95_bytes) FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_tx_95_bytes', 'dba_hist_sysstat', -1, -1, SUM(nw_tx_95_bytes) FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_rx_95_bytes', 'dba_hist_sysstat', -1, -1, SUM(nw_rx_95_bytes) FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_90_bytes', 'dba_hist_sysstat', -1, -1, SUM(nw_90_bytes) FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_tx_90_bytes', 'dba_hist_sysstat', -1, -1, SUM(nw_tx_90_bytes) FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_rx_90_bytes', 'dba_hist_sysstat', -1, -1, SUM(nw_rx_90_bytes) FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_75_bytes', 'dba_hist_sysstat', -1, -1, SUM(nw_75_bytes) FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_tx_75_bytes', 'dba_hist_sysstat', -1, -1, SUM(nw_tx_75_bytes) FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_rx_75_bytes', 'dba_hist_sysstat', -1, -1, SUM(nw_rx_75_bytes) FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_median_bytes', 'dba_hist_sysstat', -1, -1, SUM(nw_median_bytes) FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_tx_median_bytes', 'dba_hist_sysstat', -1, -1, SUM(nw_tx_median_bytes) FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_rx_median_bytes', 'dba_hist_sysstat', -1, -1, SUM(nw_rx_median_bytes) FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_avg_bytes', 'dba_hist_sysstat', -1, -1, SUM(nw_avg_bytes) FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_tx_avg_bytes', 'dba_hist_sysstat', -1, -1, SUM(nw_tx_avg_bytes) FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_rx_avg_bytes', 'dba_hist_sysstat', -1, -1, SUM(nw_rx_avg_bytes) FROM nw_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_tx_perc', 'dba_hist_sysstat', -2,-2, nw_tx_perc FROM nw_per_cluster
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_rx_perc', 'dba_hist_sysstat', -2,-2, nw_rx_perc FROM nw_per_cluster
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_cl_perc', 'dba_hist_sysstat', -2,-2, nw_cl_perc FROM nw_per_cluster
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_dl_perc', 'dba_hist_sysstat', -2,-2, nw_dl_perc FROM nw_per_cluster
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_peak_bytes', 'dba_hist_sysstat', -2,-2, nw_peak_bytes FROM nw_per_cluster
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_tx_peak_bytes', 'dba_hist_sysstat', -2,-2, nw_tx_peak_bytes FROM nw_per_cluster
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_rx_peak_bytes', 'dba_hist_sysstat', -2,-2, nw_rx_peak_bytes FROM nw_per_cluster
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_999_bytes', 'dba_hist_sysstat', -2,-2, nw_999_bytes FROM nw_per_cluster
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_tx_99_bytes', 'dba_hist_sysstat', -2,-2, nw_tx_99_bytes FROM nw_per_cluster
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_rx_99_bytes', 'dba_hist_sysstat', -2,-2, nw_rx_99_bytes FROM nw_per_cluster
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_99_bytes', 'dba_hist_sysstat', -2,-2, nw_99_bytes FROM nw_per_cluster
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_tx_99_bytes', 'dba_hist_sysstat', -2,-2, nw_tx_99_bytes FROM nw_per_cluster
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_rx_99_bytes', 'dba_hist_sysstat', -2,-2, nw_rx_99_bytes FROM nw_per_cluster
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_97_bytes', 'dba_hist_sysstat', -2,-2, nw_97_bytes FROM nw_per_cluster
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_tx_97_bytes', 'dba_hist_sysstat', -2,-2, nw_tx_97_bytes FROM nw_per_cluster
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_rx_97_bytes', 'dba_hist_sysstat', -2,-2, nw_rx_97_bytes FROM nw_per_cluster
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_95_bytes', 'dba_hist_sysstat', -2,-2, nw_95_bytes FROM nw_per_cluster
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_tx_95_bytes', 'dba_hist_sysstat', -2,-2, nw_tx_95_bytes FROM nw_per_cluster
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_rx_95_bytes', 'dba_hist_sysstat', -2,-2, nw_rx_95_bytes FROM nw_per_cluster
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_90_bytes', 'dba_hist_sysstat', -2,-2, nw_90_bytes FROM nw_per_cluster
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_tx_90_bytes', 'dba_hist_sysstat', -2,-2, nw_tx_90_bytes FROM nw_per_cluster
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_rx_90_bytes', 'dba_hist_sysstat', -2,-2, nw_rx_90_bytes FROM nw_per_cluster
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_75_bytes', 'dba_hist_sysstat', -2,-2, nw_75_bytes FROM nw_per_cluster
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_tx_75_bytes', 'dba_hist_sysstat', -2,-2, nw_tx_75_bytes FROM nw_per_cluster
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_rx_75_bytes', 'dba_hist_sysstat', -2,-2, nw_rx_75_bytes FROM nw_per_cluster
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_median_bytes', 'dba_hist_sysstat', -2,-2, nw_median_bytes FROM nw_per_cluster
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_tx_median_bytes', 'dba_hist_sysstat', -2,-2, nw_tx_median_bytes FROM nw_per_cluster
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_rx_median_bytes', 'dba_hist_sysstat', -2,-2, nw_rx_median_bytes FROM nw_per_cluster
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_avg_bytes', 'dba_hist_sysstat', -2,-2, nw_avg_bytes FROM nw_per_cluster
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_tx_avg_bytes', 'dba_hist_sysstat', -2,-2, nw_tx_avg_bytes FROM nw_per_cluster
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_rx_avg_bytes', 'dba_hist_sysstat', -2,-2, nw_rx_avg_bytes FROM nw_per_cluster
+/
+-- nw_perf time series
+WITH
+sysstat_nwtraf AS (
+SELECT /*+ &&ecr_sq_fact_hints. */
+       h.instance_number,
+       h.snap_id,
+       SUM(CASE WHEN h.stat_name = 'bytes sent via SQL*Net to client'                   THEN h.value ELSE 0 END) tx_cl,
+       SUM(CASE WHEN h.stat_name = 'bytes received via SQL*Net from client'             THEN h.value ELSE 0 END) rx_cl,
+       SUM(CASE WHEN h.stat_name = 'bytes sent via SQL*Net to dblink'                   THEN h.value ELSE 0 END) tx_dl,
+       SUM(CASE WHEN h.stat_name = 'bytes received via SQL*Net from dblink'             THEN h.value ELSE 0 END) rx_dl
+  FROM dba_hist_sysstat h,
+       dba_hist_snapshot s
+ WHERE h.snap_id >= TO_NUMBER(NVL('&&ecr_min_snap_id.','0'))
+   AND h.dbid = &&ecr_dbid.
+   AND h.stat_name IN ('bytes sent via SQL*Net to client','bytes received via SQL*Net from client','bytes sent via SQL*Net to dblink','bytes received via SQL*Net from dblink')
+   AND s.snap_id = h.snap_id
+   AND s.dbid = h.dbid
+   AND s.instance_number = h.instance_number
+   AND CAST(s.begin_interval_time AS DATE) > SYSDATE - &&collection_days.
+ GROUP BY
+       h.instance_number,
+       h.snap_id
+),
+nwtraf_per_inst_and_snap_id AS (
+SELECT /*+ &&ecr_sq_fact_hints. */
+       h1.instance_number,
+       TO_CHAR(TRUNC(CAST(s1.end_interval_time AS DATE), 'HH') + (1/24), '&&ecr_date_format.') end_time,
+       (h1.tx_cl - h0.tx_cl) tx_cl,
+       (h1.rx_cl - h0.rx_cl) rx_cl,
+       (h1.tx_dl - h0.tx_dl) tx_dl,
+       (h1.rx_dl - h0.rx_dl) rx_dl,
+       (CAST(s1.end_interval_time AS DATE) - CAST(s1.begin_interval_time AS DATE)) * 86400 elapsed_sec
+  FROM sysstat_nwtraf h0,
+       dba_hist_snapshot s0,
+       sysstat_nwtraf h1,
+       dba_hist_snapshot s1
+ WHERE s0.snap_id >= TO_NUMBER(NVL('&&ecr_min_snap_id.','0'))
+   AND s0.dbid = &&ecr_dbid.
+   AND s0.snap_id = h0.snap_id
+   AND s0.instance_number = h0.instance_number
+   AND h1.instance_number = h0.instance_number
+   AND h1.snap_id = h0.snap_id + 1
+   AND s1.snap_id >= TO_NUMBER(NVL('&&ecr_min_snap_id.','0'))
+   AND s1.dbid = &&ecr_dbid.
+   AND s1.snap_id = h1.snap_id
+   AND s1.instance_number = h1.instance_number
+   AND s1.snap_id = s0.snap_id + 1
+   AND s1.startup_time = s0.startup_time
+   AND (CAST(s1.end_interval_time AS DATE) - CAST(s1.begin_interval_time AS DATE)) * 86400 > 60 -- ignore snaps too close
+)
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf_ts', 'nw_tx_bytes', end_time, instance_number, 0 inst_id, ROUND(MAX((tx_cl + tx_dl) / elapsed_sec)) value
+  FROM nwtraf_per_inst_and_snap_id
+ GROUP BY
+       instance_number,
+       end_time
+ UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf_ts', 'nw_rx_bytes', end_time, instance_number, 0 inst_id, ROUND(MAX((rx_cl + rx_dl) / elapsed_sec)) value
+  FROM nwtraf_per_inst_and_snap_id
+ GROUP BY
+       instance_number,
+       end_time
+ UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf_ts', 'nw_cl_bytes', end_time, instance_number, 0 inst_id, ROUND(MAX((tx_cl + rx_cl) / elapsed_sec)) value
+  FROM nwtraf_per_inst_and_snap_id
+ GROUP BY
+       instance_number,
+       end_time
+ UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf_ts', 'nw_dl_bytes', end_time, instance_number, 0 inst_id, ROUND(MAX((tx_dl + rx_dl) / elapsed_sec)) value
+  FROM nwtraf_per_inst_and_snap_id
+ GROUP BY
+       instance_number,
+       end_time
+ ORDER BY
+       3, 4, 6, 5
+/
+
+-- ic_perf
+WITH
+hist_ictraf AS (
+SELECT /*+ &&ecr_sq_fact_hints. */
+       h.instance_number,
+       h.snap_id,
+       SUM(CASE WHEN h.stat_name = 'gc cr blocks received' 		                THEN h.value ELSE 0 END) gc_cr_bl_rx,
+       SUM(CASE WHEN h.stat_name = 'gc current blocks received'				THEN h.value ELSE 0 END) gc_cur_bl_rx,
+       SUM(CASE WHEN h.stat_name = 'gc cr blocks served'				THEN h.value ELSE 0 END) gc_cr_bl_serv,
+       SUM(CASE WHEN h.stat_name = 'gc current blocks served'				THEN h.value ELSE 0 END) gc_cur_bl_serv, 
+       SUM(CASE WHEN h.stat_name = 'gcs messages sent'   				THEN h.value ELSE 0 END) gcs_msg_sent, 
+       SUM(CASE WHEN h.stat_name = 'ges messages sent'   				THEN h.value ELSE 0 END) ges_msg_sent, 
+       SUM(CASE WHEN d.name      = 'gcs msgs received'   				THEN d.value ELSE 0 END) gcs_msg_rcv, 
+       SUM(CASE WHEN d.name      = 'ges msgs received'   				THEN d.value ELSE 0 END) ges_msg_rcv, 
+       SUM(CASE WHEN p.parameter_name = 'db_block_size'	 				THEN to_number(p.value) ELSE 0 END) block_size 
+  FROM dba_hist_sysstat h,
+       dba_hist_dlm_misc d,
+       dba_hist_snapshot s,
+       dba_hist_parameter p
+ WHERE h.snap_id >= TO_NUMBER(NVL('&&ecr_min_snap_id.','0'))
+   AND h.dbid = &&ecr_dbid.
+   AND h.stat_name IN ('gc cr blocks received','gc current blocks received','gc cr blocks served','gc current blocks served','gcs messages sent','ges messages sent')
+   AND d.name IN ('gcs msgs received','ges msgs received')
+   AND p.parameter_name = 'db_block_size'
+   AND s.snap_id = h.snap_id
+   AND d.snap_id = h.snap_id
+   AND p.snap_id = h.snap_id
+   AND s.dbid = h.dbid
+   AND d.dbid = h.dbid
+   AND p.dbid = h.dbid
+   AND s.instance_number = h.instance_number
+   AND d.instance_number = h.instance_number
+   AND p.instance_number = h.instance_number
+   AND CAST(s.begin_interval_time AS DATE) > SYSDATE - &&collection_days.
+ GROUP BY
+       h.instance_number,
+       h.snap_id
+),
+ictraf_per_inst_and_snap_id AS (
+SELECT /*+ &&ecr_sq_fact_hints. */
+       h1.instance_number,
+       h1.snap_id,
+       (h1.gc_cr_bl_rx - h0.gc_cr_bl_rx) gc_cr_bl_rx,
+       (h1.gc_cur_bl_rx - h0.gc_cur_bl_rx) gc_cur_bl_rx,
+       (h1.gc_cr_bl_serv - h0.gc_cr_bl_serv) gc_cr_bl_serv,
+       (h1.gc_cur_bl_serv - h0.gc_cur_bl_serv) gc_cur_bl_serv,
+       (h1.gcs_msg_sent - h0.gcs_msg_sent) gcs_msg_sent,
+       (h1.ges_msg_sent - h0.ges_msg_sent) ges_msg_sent,
+       (h1.gcs_msg_rcv - h0.gcs_msg_rcv) gcs_msg_rcv,
+       (h1.ges_msg_rcv - h0.ges_msg_rcv) ges_msg_rcv,
+	h1.block_size,
+       (CAST(s1.end_interval_time AS DATE) - CAST(s1.begin_interval_time AS DATE)) * 86400 elapsed_sec
+  FROM hist_ictraf h0,
+       dba_hist_snapshot s0,
+       hist_ictraf h1,
+       dba_hist_snapshot s1
+ WHERE s0.snap_id >= TO_NUMBER(NVL('&&ecr_min_snap_id.','0'))
+   AND s0.dbid = &&ecr_dbid.
+   AND s0.snap_id = h0.snap_id
+   AND s0.instance_number = h0.instance_number
+   AND h1.instance_number = h0.instance_number
+   AND h1.snap_id = h0.snap_id + 1
+   AND s1.snap_id >= TO_NUMBER(NVL('&&ecr_min_snap_id.','0'))
+   AND s1.dbid = &&ecr_dbid.
+   AND s1.snap_id = h1.snap_id
+   AND s1.instance_number = h1.instance_number
+   AND s1.snap_id = s0.snap_id + 1
+   AND s1.startup_time = s0.startup_time
+),
+ictraf_per_snap_id AS (
+SELECT /*+ &&ecr_sq_fact_hints. */
+       snap_id,
+       SUM(gc_cr_bl_rx) gc_cr_bl_rx,
+       SUM(gc_cur_bl_rx) gc_cur_bl_rx,
+       SUM(gc_cr_bl_serv) gc_cr_bl_serv,
+       SUM(gc_cur_bl_serv) gc_cur_bl_serv,
+       SUM(gcs_msg_sent) gcs_msg_sent,
+       SUM(ges_msg_sent) ges_msg_sent,
+       SUM(gcs_msg_rcv) gcs_msg_rcv,
+       SUM(ges_msg_rcv) ges_msg_rcv,
+       block_size, 
+       AVG(elapsed_sec) elapsed_sec
+  FROM ictraf_per_inst_and_snap_id
+ GROUP BY
+       snap_id
+),
+ic_per_inst AS (
+SELECT /*+ &&ecr_sq_fact_hints. */
+       instance_number,
+       ROUND(MAX(((gc_cr_bl_rx + gc_cur_bl_rx + gc_cr_bl_serv + gc_cur_bl_serv)*block_size)+((gcs_msg_sent + ges_msg_sent + gcs_msg_rcv + ges_msg_rcv)*200) / elapsed_sec)) ic_peak_bytes,
+       ROUND(PERCENTILE_DISC(0.999) WITHIN GROUP ( ORDER BY( ((gc_cr_bl_rx + gc_cur_bl_rx + gc_cr_bl_serv + gc_cur_bl_serv)*block_size)+((gcs_msg_sent + ges_msg_sent + gcs_msg_rcv + ges_msg_rcv)*200) / elapsed_sec) ) ) ic_999_bytes,
+       ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP ( ORDER BY( ((gc_cr_bl_rx + gc_cur_bl_rx + gc_cr_bl_serv + gc_cur_bl_serv)*block_size)+((gcs_msg_sent + ges_msg_sent + gcs_msg_rcv + ges_msg_rcv)*200) / elapsed_sec) ) ) ic_99_bytes,
+       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP ( ORDER BY(((gc_cr_bl_rx + gc_cur_bl_rx + gc_cr_bl_serv + gc_cur_bl_serv)*block_size)+((gcs_msg_sent + ges_msg_sent + gcs_msg_rcv + ges_msg_rcv)*200) / elapsed_sec) ) ) ic_97_bytes,
+       ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP ( ORDER BY(((gc_cr_bl_rx + gc_cur_bl_rx + gc_cr_bl_serv + gc_cur_bl_serv)*block_size)+((gcs_msg_sent + ges_msg_sent + gcs_msg_rcv + ges_msg_rcv)*200) / elapsed_sec) ) ) ic_95_bytes,
+       ROUND(PERCENTILE_DISC(0.90) WITHIN GROUP ( ORDER BY(((gc_cr_bl_rx + gc_cur_bl_rx + gc_cr_bl_serv + gc_cur_bl_serv)*block_size)+((gcs_msg_sent + ges_msg_sent + gcs_msg_rcv + ges_msg_rcv)*200) / elapsed_sec) ) ) ic_90_bytes,
+       ROUND(PERCENTILE_DISC(0.75) WITHIN GROUP ( ORDER BY(((gc_cr_bl_rx + gc_cur_bl_rx + gc_cr_bl_serv + gc_cur_bl_serv)*block_size)+((gcs_msg_sent + ges_msg_sent + gcs_msg_rcv + ges_msg_rcv)*200) / elapsed_sec) ) ) ic_75_bytes,
+       ROUND(MEDIAN((((gc_cr_bl_rx + gc_cur_bl_rx + gc_cr_bl_serv + gc_cur_bl_serv)*block_size)+((gcs_msg_sent + ges_msg_sent + gcs_msg_rcv + ges_msg_rcv)*200) / elapsed_sec))) ic_median_bytes,
+       ROUND(AVG((((gc_cr_bl_rx + gc_cur_bl_rx + gc_cr_bl_serv + gc_cur_bl_serv)*block_size)+((gcs_msg_sent + ges_msg_sent + gcs_msg_rcv + ges_msg_rcv)*200) / elapsed_sec))) ic_avg_bytes
+  FROM ictraf_per_inst_and_snap_id
+ WHERE elapsed_sec > 60 -- ignore snaps too close
+ GROUP BY
+       instance_number
+),
+ic_per_cluster AS ( -- combined
+SELECT /*+ &&ecr_sq_fact_hints. */
+       ROUND(MAX(((gc_cr_bl_rx + gc_cur_bl_rx + gc_cr_bl_serv + gc_cur_bl_serv)*block_size)+((gcs_msg_sent + ges_msg_sent + gcs_msg_rcv + ges_msg_rcv)*200) / elapsed_sec)) ic_peak_bytes,
+       ROUND(PERCENTILE_DISC(0.999) WITHIN GROUP ( ORDER BY((gc_cr_bl_rx + gc_cur_bl_rx + gc_cr_bl_serv + gc_cur_bl_serv)*block_size)+((gcs_msg_sent + ges_msg_sent + gcs_msg_rcv + ges_msg_rcv)*200) / elapsed_sec)) ic_999_bytes,
+       ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP ( ORDER BY((gc_cr_bl_rx + gc_cur_bl_rx + gc_cr_bl_serv + gc_cur_bl_serv)*block_size)+((gcs_msg_sent + ges_msg_sent + gcs_msg_rcv + ges_msg_rcv)*200) / elapsed_sec)) ic_99_bytes,
+       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP ( ORDER BY((gc_cr_bl_rx + gc_cur_bl_rx + gc_cr_bl_serv + gc_cur_bl_serv)*block_size)+((gcs_msg_sent + ges_msg_sent + gcs_msg_rcv + ges_msg_rcv)*200) / elapsed_sec)) ic_97_bytes,
+       ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP ( ORDER BY((gc_cr_bl_rx + gc_cur_bl_rx + gc_cr_bl_serv + gc_cur_bl_serv)*block_size)+((gcs_msg_sent + ges_msg_sent + gcs_msg_rcv + ges_msg_rcv)*200) / elapsed_sec)) ic_95_bytes,
+       ROUND(PERCENTILE_DISC(0.90) WITHIN GROUP ( ORDER BY((gc_cr_bl_rx + gc_cur_bl_rx + gc_cr_bl_serv + gc_cur_bl_serv)*block_size)+((gcs_msg_sent + ges_msg_sent + gcs_msg_rcv + ges_msg_rcv)*200) / elapsed_sec)) ic_90_bytes,
+       ROUND(PERCENTILE_DISC(0.75) WITHIN GROUP ( ORDER BY((gc_cr_bl_rx + gc_cur_bl_rx + gc_cr_bl_serv + gc_cur_bl_serv)*block_size)+((gcs_msg_sent + ges_msg_sent + gcs_msg_rcv + ges_msg_rcv)*200) / elapsed_sec)) ic_75_bytes,
+       ROUND(MEDIAN(((gc_cr_bl_rx + gc_cur_bl_rx + gc_cr_bl_serv + gc_cur_bl_serv)*block_size)+((gcs_msg_sent + ges_msg_sent + gcs_msg_rcv + ges_msg_rcv)*200) / elapsed_sec)) ic_median_bytes,
+       ROUND(AVG(((gc_cr_bl_rx + gc_cur_bl_rx + gc_cr_bl_serv + gc_cur_bl_serv)*block_size)+((gcs_msg_sent + ges_msg_sent + gcs_msg_rcv + ges_msg_rcv)*200) / elapsed_sec)) ic_avg_bytes
+  FROM ictraf_per_snap_id
+ WHERE elapsed_sec > 60 -- ignore snaps too close
+)
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'ic_perf', 'ic_peak_bytes', 'dba_hist_sysstat|dlm_misc', instance_number, 0, ic_peak_bytes FROM ic_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'ic_perf', 'ic_999_bytes', 'dba_hist_sysstat|dlm_misc', instance_number, 0, ic_999_bytes FROM ic_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'ic_perf', 'ic_99_bytes', 'dba_hist_sysstat|dlm_misc', instance_number, 0, ic_99_bytes FROM ic_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'ic_perf', 'ic_97_bytes', 'dba_hist_sysstat|dlm_misc', instance_number, 0, ic_97_bytes FROM ic_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'ic_perf', 'ic_95_bytes', 'dba_hist_sysstat|dlm_misc', instance_number, 0, ic_95_bytes FROM ic_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'ic_perf', 'ic_90_bytes', 'dba_hist_sysstat|dlm_misc', instance_number, 0, ic_90_bytes FROM ic_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'ic_perf', 'ic_75_bytes', 'dba_hist_sysstat|dlm_misc', instance_number, 0, ic_75_bytes FROM ic_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'ic_perf', 'ic_median_bytes', 'dba_hist_sysstat|dlm_misc', instance_number, 0, ic_median_bytes FROM ic_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'ic_perf', 'ic_peak_bytes', 'dba_hist_sysstat|dlm_misc', -1, -1, SUM(ic_peak_bytes) FROM ic_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'ic_perf', 'ic_999_bytes', 'dba_hist_sysstat|dlm_misc', -1, -1, SUM(ic_999_bytes) FROM ic_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'ic_perf', 'ic_99_bytes', 'dba_hist_sysstat|dlm_misc', -1, -1, SUM(ic_99_bytes) FROM ic_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'ic_perf', 'ic_97_bytes', 'dba_hist_sysstat|dlm_misc', -1, -1, SUM(ic_97_bytes) FROM ic_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'ic_perf', 'ic_95_bytes', 'dba_hist_sysstat|dlm_misc', -1, -1, SUM(ic_95_bytes) FROM ic_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'ic_perf', 'ic_90_bytes', 'dba_hist_sysstat|dlm_misc', -1, -1, SUM(ic_90_bytes) FROM ic_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'ic_perf', 'ic_75_bytes', 'dba_hist_sysstat|dlm_misc', -1, -1, SUM(ic_75_bytes) FROM ic_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'ic_perf', 'ic_median_bytes', 'dba_hist_sysstat|dlm_misc', -1, -1, SUM(ic_median_bytes) FROM ic_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'ic_perf', 'ic_avg_bytes', 'dba_hist_sysstat|dlm_misc', -1, 01, SUM(ic_avg_bytes) FROM ic_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'ic_perf', 'ic_peak_bytes', 'dba_hist_sysstat|dlm_misc', -2, -2, ic_peak_bytes FROM ic_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'ic_perf', 'ic_999_bytes', 'dba_hist_sysstat|dlm_misc', -2, -2, ic_999_bytes FROM ic_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'ic_perf', 'ic_99_bytes', 'dba_hist_sysstat|dlm_misc', -2, -2, ic_99_bytes FROM ic_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'ic_perf', 'ic_97_bytes', 'dba_hist_sysstat|dlm_misc', -2, -2, ic_97_bytes FROM ic_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'ic_perf', 'ic_95_bytes', 'dba_hist_sysstat|dlm_misc', -2, -2, ic_95_bytes FROM ic_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'ic_perf', 'ic_90_bytes', 'dba_hist_sysstat|dlm_misc', -2, -2, ic_90_bytes FROM ic_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'ic_perf', 'ic_75_bytes', 'dba_hist_sysstat|dlm_misc', -2, -2, ic_75_bytes FROM ic_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'ic_perf', 'ic_median_bytes', 'dba_hist_sysstat|dlm_misc', -2, -2, ic_median_bytes FROM ic_per_inst
+UNION ALL
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'ic_perf', 'ic_avg_bytes', 'dba_hist_sysstat|dlm_misc', -2, -2, ic_avg_bytes FROM ic_per_inst
+/
+-- ic_perf time series
+WITH
+hist_ictraf AS (
+SELECT /*+ &&ecr_sq_fact_hints. */
+       h.instance_number,
+       h.snap_id,
+       SUM(CASE WHEN h.stat_name = 'gc cr blocks received'                              THEN h.value ELSE 0 END) gc_cr_bl_rx,
+       SUM(CASE WHEN h.stat_name = 'gc current blocks received'                         THEN h.value ELSE 0 END) gc_cur_bl_rx,
+       SUM(CASE WHEN h.stat_name = 'gc cr blocks served'                                THEN h.value ELSE 0 END) gc_cr_bl_serv,
+       SUM(CASE WHEN h.stat_name = 'gc current blocks served'                           THEN h.value ELSE 0 END) gc_cur_bl_serv,
+       SUM(CASE WHEN h.stat_name = 'gcs messages sent'                                  THEN h.value ELSE 0 END) gcs_msg_sent,
+       SUM(CASE WHEN h.stat_name = 'ges messages sent'                                  THEN h.value ELSE 0 END) ges_msg_sent,
+       SUM(CASE WHEN d.name      = 'gcs msgs received'                                  THEN d.value ELSE 0 END) gcs_msg_rcv,
+       SUM(CASE WHEN d.name      = 'ges msgs received'                                  THEN d.value ELSE 0 END) ges_msg_rcv,
+       SUM(CASE WHEN p.parameter_name = 'db_block_size'                                 THEN to_number(p.value) ELSE 0 END) block_size
+  FROM dba_hist_sysstat h,
+       dba_hist_dlm_misc d,
+       dba_hist_snapshot s,
+       dba_hist_parameter p
+ WHERE h.snap_id >= TO_NUMBER(NVL('&&ecr_min_snap_id.','0'))
+   AND h.dbid = &&ecr_dbid.
+   AND h.stat_name IN ('gc cr blocks received','gc current blocks received','gc cr blocks served','gc current blocks served','gcs messages sent','ges messages sent')
+   AND d.name IN ('gcs msgs received','ges msgs received')
+   AND p.parameter_name = 'db_block_size'
+   AND s.snap_id = h.snap_id
+   AND d.snap_id = h.snap_id
+   AND p.snap_id = h.snap_id
+   AND s.dbid = h.dbid
+   AND d.dbid = h.dbid
+   AND p.dbid = h.dbid
+   AND s.instance_number = h.instance_number
+   AND d.instance_number = h.instance_number
+   AND p.instance_number = h.instance_number
+   AND CAST(s.begin_interval_time AS DATE) > SYSDATE - &&collection_days.
+ GROUP BY
+       h.instance_number,
+       h.snap_id
+),
+ictraf_per_inst_and_snap_id AS (
+SELECT /*+ &&ecr_sq_fact_hints. */
+       h1.instance_number,
+       TO_CHAR(TRUNC(CAST(s1.end_interval_time AS DATE), 'HH') + (1/24), '&&ecr_date_format.') end_time,
+       (h1.gc_cr_bl_rx - h0.gc_cr_bl_rx) gc_cr_bl_rx,
+       (h1.gc_cur_bl_rx - h0.gc_cur_bl_rx) gc_cur_bl_rx,
+       (h1.gc_cr_bl_serv - h0.gc_cr_bl_serv) gc_cr_bl_serv,
+       (h1.gc_cur_bl_serv - h0.gc_cur_bl_serv) gc_cur_bl_serv,
+       (h1.gcs_msg_sent - h0.gcs_msg_sent) gcs_msg_sent,
+       (h1.ges_msg_sent - h0.ges_msg_sent) ges_msg_sent,
+       (h1.gcs_msg_rcv - h0.gcs_msg_rcv) gcs_msg_rcv,
+       (h1.ges_msg_rcv - h0.ges_msg_rcv) ges_msg_rcv,
+        h1.block_size,
+       (CAST(s1.end_interval_time AS DATE) - CAST(s1.begin_interval_time AS DATE)) * 86400 elapsed_sec
+  FROM hist_ictraf h0,
+       dba_hist_snapshot s0,
+       hist_ictraf h1,
+       dba_hist_snapshot s1
+ WHERE s0.snap_id >= TO_NUMBER(NVL('&&ecr_min_snap_id.','0'))
+   AND s0.dbid = &&ecr_dbid.
+   AND s0.snap_id = h0.snap_id
+   AND s0.instance_number = h0.instance_number
+   AND h1.instance_number = h0.instance_number
+   AND h1.snap_id = h0.snap_id + 1
+   AND s1.snap_id >= TO_NUMBER(NVL('&&ecr_min_snap_id.','0'))
+   AND s1.dbid = &&ecr_dbid.
+   AND s1.snap_id = h1.snap_id
+   AND s1.instance_number = h1.instance_number
+   AND s1.snap_id = s0.snap_id + 1
+   AND s1.startup_time = s0.startup_time
+)
+SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'ic_perf_ts', 'interconnect_bytes', end_time, instance_number, 0 inst_id, ROUND(MAX(((gc_cr_bl_rx + gc_cur_bl_rx + gc_cr_bl_serv + gc_cur_bl_serv)*block_size)+((gcs_msg_sent + ges_msg_sent + gcs_msg_rcv + ges_msg_rcv)*200) / elapsed_sec)) value
+  FROM ictraf_per_inst_and_snap_id
+ GROUP BY
+       instance_number,
+       end_time
  ORDER BY
        3, 4, 6, 5
 /

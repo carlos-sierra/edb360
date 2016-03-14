@@ -3,7 +3,8 @@ DEF section_id = '4d';
 DEF section_name = 'System Time Model';
 EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
 SPO &&edb360_main_report..html APP;
-PRO <h2>&&section_name.</h2>
+PRO <h2>&&section_id.. &&section_name.</h2>
+PRO <ol start="&&report_sequence.">
 SPO OFF;
 
 DEF main_table = 'DBA_HIST_SYS_TIME_MODEL';
@@ -45,7 +46,7 @@ BEGIN
   :sql_text_backup := '
 WITH
 sys_time_model_denorm_2 AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
        dbid,
        instance_number,
@@ -92,7 +93,7 @@ SELECT /*+ &&sq_fact_hints. */
        instance_number
 ),
 sys_time_model_denorm_3 AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        h1.snap_id,
        h1.dbid,
        h1.instance_number,
@@ -136,7 +137,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND s1.begin_interval_time > (s0.begin_interval_time + (1 / (24 * 60))) /* filter out snaps apart < 1 min */
 ),
 sys_time_model_denorm_4 AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
        dbid,
        TO_CHAR(MIN(begin_interval_time), ''YYYY-MM-DD HH24:MI'') begin_time,
@@ -257,4 +258,6 @@ DEF abstract = 'Average Active Sessions (AAS).'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '8');
 @@&&skip_all.edb360_9a_pre_one.sql
 
-
+SPO &&edb360_main_report..html APP;
+PRO </ol>
+SPO OFF;

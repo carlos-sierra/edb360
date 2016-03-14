@@ -3,7 +3,8 @@ DEF section_id = '1b';
 DEF section_name = 'Security';
 EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
 SPO &&edb360_main_report..html APP;
-PRO <h2>&&section_name.</h2>
+PRO <h2>&&section_id.. &&section_name.</h2>
+PRO <ol start="&&report_sequence.">
 SPO OFF;
 
 DEF title = 'Users';
@@ -11,7 +12,7 @@ DEF main_table = 'DBA_USERS';
 BEGIN
   :sql_text := '
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
-SELECT /*+ &&top_level_hints. */ 
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        *
   FROM dba_users
  ORDER BY username
@@ -25,7 +26,7 @@ DEF main_table = 'DBA_PROFILES';
 BEGIN
   :sql_text := '
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
-SELECT /*+ &&top_level_hints. */ 
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        *
   FROM dba_profiles
  ORDER BY profile
@@ -39,7 +40,7 @@ DEF main_table = 'DBA_ROLE_PRIVS';
 BEGIN
   :sql_text := '
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        p.* from dba_role_privs p
 where (p.granted_role in 
 (''AQ_ADMINISTRATOR_ROLE'',''DELETE_CATALOG_ROLE'',''DBA'',''DM_CATALOG_ROLE'',''EXECUTE_CATALOG_ROLE'',
@@ -62,7 +63,7 @@ DEF main_table = 'DBA_USERS';
 BEGIN
   :sql_text := '
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        * from dba_users u
 where (default_tablespace in (''SYSAUX'',''SYSTEM'') or
 temporary_tablespace not in
@@ -88,7 +89,7 @@ DEF main_table = 'PROXY_USERS';
 BEGIN
   :sql_text := '
 -- provided by Simon Pane
-SELECT /*+ &&top_level_hints. */ *
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ *
   FROM proxy_users
  ORDER BY client';
 END;
@@ -100,7 +101,7 @@ DEF main_table = 'DBA_PROFILES';
 BEGIN
   :sql_text := '
 -- provided by Simon Pane
-SELECT /*+ &&top_level_hints. */ 
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        owner, object_name, created, last_ddl_time, status
   FROM dba_objects
  WHERE object_name IN (SELECT limit
@@ -116,7 +117,7 @@ DEF main_table = 'DBA_USERS';
 BEGIN
   :sql_text := '
 -- provided by Simon Pane
-SELECT /*+ &&top_level_hints. */ DISTINCT 
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ DISTINCT 
        u.NAME "SCHEMA", d.account_status
   FROM SYS.user$ u, SYS.dba_users d
  WHERE u.NAME = d.username
@@ -140,6 +141,6 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
-
-
-
+SPO &&edb360_main_report..html APP;
+PRO </ol>
+SPO OFF;

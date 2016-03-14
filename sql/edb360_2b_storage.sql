@@ -3,14 +3,15 @@ DEF section_id = '2b';
 DEF section_name = 'Storage';
 EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
 SPO &&edb360_main_report..html APP;
-PRO <h2>&&section_name.</h2>
+PRO <h2>&&section_id.. &&section_name.</h2>
+PRO <ol start="&&report_sequence.">
 SPO OFF;
 
 DEF title = 'Tablespace';
 DEF main_table = 'V$TABLESPACE';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM v$tablespace
  ORDER BY
@@ -24,7 +25,7 @@ DEF title = 'Tablespaces';
 DEF main_table = 'DBA_TABLESPACES';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_tablespaces
  ORDER BY
@@ -38,7 +39,7 @@ DEF title = 'Tablespace Groups';
 DEF main_table = 'DBA_TABLESPACE_GROUPS';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_tablespace_groups
  ORDER BY
@@ -52,7 +53,7 @@ DEF title = 'Default Tablespace Use';
 DEF main_table = 'DBA_USERS';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        default_tablespace, COUNT(*)
   FROM dba_users
  GROUP BY
@@ -68,7 +69,7 @@ DEF title = 'Temporary Tablespace Use';
 DEF main_table = 'DBA_USERS';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        temporary_tablespace, COUNT(*)
   FROM dba_users
  GROUP BY
@@ -84,7 +85,7 @@ DEF title = 'UNDO Stat';
 DEF main_table = 'GV$UNDOSTAT';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM gv$undostat
 ';
@@ -101,7 +102,7 @@ BEGIN
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
 WITH
 files AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        tablespace_name,
        SUM(DECODE(autoextensible, ''YES'', maxbytes, bytes)) / 1024 / 1024 / 1024 total_gb
   FROM dba_data_files
@@ -109,7 +110,7 @@ SELECT /*+ &&sq_fact_hints. */
        tablespace_name
 ),
 segments AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        tablespace_name,
        SUM(bytes) / 1024 / 1024 / 1024 used_gb
   FROM dba_segments
@@ -118,7 +119,7 @@ SELECT /*+ &&sq_fact_hints. */
        tablespace_name
 ),
 tablespaces AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        files.tablespace_name,
        ROUND(files.total_gb, 1) total_gb,
        ROUND(segments.used_gb, 1) used_gb,
@@ -131,7 +132,7 @@ SELECT /*+ &&sq_fact_hints. */
        files.tablespace_name
 ),
 total AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        ''Total'' tablespace_name,
        SUM(total_gb) total_gb,
        SUM(used_gb) used_gb,
@@ -159,7 +160,7 @@ DEF main_table = 'GV$TEMP_EXTENT_POOL';
 BEGIN
   :sql_text := '
 -- requested by Rodrigo Righetti
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
 a.tablespace_name, round(A.AVAIL_SIZE_GB,1) AVAIL_SIZE_GB, 
 round(B.TOT_GBBYTES_CACHED,1) TOT_GBBYTES_CACHED , 
 round(B.TOT_GBBYTES_USED,1) TOT_GBBYTES_USED,
@@ -184,7 +185,7 @@ DEF title = 'Datafile';
 DEF main_table = 'V$DATAFILE';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM v$datafile
  ORDER BY
@@ -198,7 +199,7 @@ DEF title = 'Data Files';
 DEF main_table = 'DBA_DATA_FILES';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_data_files
  ORDER BY
@@ -216,7 +217,7 @@ BEGIN
   :sql_text := '
 WITH
 alloc AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        tablespace_name,
        COUNT(*) datafiles,
        ROUND(SUM(bytes)/1024/1024/1024) gb
@@ -225,7 +226,7 @@ SELECT /*+ &&sq_fact_hints. */
        tablespace_name
 ),
 free AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        tablespace_name,
        ROUND(SUM(bytes)/1024/1024/1024) gb
   FROM dba_free_space
@@ -233,7 +234,7 @@ SELECT /*+ &&sq_fact_hints. */
        tablespace_name
 ),
 tablespaces AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        a.tablespace_name,
        a.datafiles,
        a.gb alloc_gb,
@@ -245,7 +246,7 @@ SELECT /*+ &&sq_fact_hints. */
        a.tablespace_name
 ),
 total AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        SUM(alloc_gb) alloc_gb,
        SUM(used_gb) used_gb,
        SUM(free_gb) free_gb
@@ -286,7 +287,7 @@ DEF title = 'Tempfile';
 DEF main_table = 'V$TEMPFILE';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM v$tempfile
  ORDER BY
@@ -300,7 +301,7 @@ DEF title = 'Temp Files';
 DEF main_table = 'DBA_TEMP_FILES';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_temp_files
  ORDER BY
@@ -314,7 +315,7 @@ DEF title = 'I/O Statistics for DB Files';
 DEF main_table = 'V$IOSTAT_FILE';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM v$iostat_file
  ORDER BY
@@ -328,7 +329,7 @@ DEF title = 'Kernel I/O taking long';
 DEF main_table = 'V$KERNEL_IO_OUTLIER';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM v$kernel_io_outlier
  ORDER BY
@@ -342,7 +343,7 @@ DEF title = 'Log Writer I/O taking long';
 DEF main_table = 'V$LGWRIO_OUTLIER';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM v$lgwrio_outlier
  ORDER BY
@@ -356,7 +357,7 @@ DEF title = 'I/O taking long';
 DEF main_table = 'V$IO_OUTLIER';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM v$io_outlier
  ORDER BY
@@ -370,7 +371,7 @@ DEF title = 'SYSAUX Occupants';
 DEF main_table = 'V$SYSAUX_OCCUPANTS';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM v$sysaux_occupants
  ORDER BY
@@ -385,7 +386,7 @@ DEF main_table = 'V$DATAFILE';
 BEGIN
   :sql_text := '
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        TO_CHAR(creation_time, ''YYYY-MM'') creation_month,
        ROUND(SUM(bytes)/1024/1024) mb_growth,
        ROUND(SUM(bytes)/1024/1024/1024) gb_growth,
@@ -406,7 +407,7 @@ COL gb FOR 999990.000;
 BEGIN
   :sql_text := '
 WITH schema_object AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        segment_type,
        owner,
        segment_name,
@@ -423,14 +424,14 @@ SELECT /*+ &&sq_fact_hints. */
        segment_name,
        tablespace_name
 ), totals AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        SUM(segments) segments,
        SUM(extents) extents,
        SUM(blocks) blocks,
        SUM(bytes) bytes
   FROM schema_object
 ), top_200_pre AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        ROWNUM rank, v1.*
        FROM (
 SELECT so.segment_type,
@@ -456,7 +457,7 @@ SELECT p.*,
        (SELECT SUM(p2.bytes_perc) FROM top_200_pre p2 WHERE p2.rank <= p.rank) bytes_perc_cum
   FROM top_200_pre p
 ), top_200_totals AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        SUM(segments) segments,
        SUM(extents) extents,
        SUM(blocks) blocks,
@@ -467,7 +468,7 @@ SELECT /*+ &&sq_fact_hints. */
        SUM(bytes_perc) bytes_perc
   FROM top_200
 ), top_100_totals AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        SUM(segments) segments,
        SUM(extents) extents,
        SUM(blocks) blocks,
@@ -479,7 +480,7 @@ SELECT /*+ &&sq_fact_hints. */
   FROM top_200
  WHERE rank < 101
 ), top_20_totals AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        SUM(segments) segments,
        SUM(extents) extents,
        SUM(blocks) blocks,
@@ -689,7 +690,7 @@ BEGIN
   :sql_text := '
 WITH
 tables AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        owner,
        segment_name,
        SUM(bytes) bytes
@@ -701,7 +702,7 @@ GROUP BY
        segment_name
 ),
 indexes AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        owner,
        segment_name,
        SUM(bytes) bytes
@@ -713,7 +714,7 @@ GROUP BY
        segment_name
 ),
 idx_tbl AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        d.table_owner,
        d.table_name,
        SUM(i.bytes) bytes
@@ -726,10 +727,12 @@ GROUP BY
        d.table_name
 ),
 total AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        t.owner,
        t.segment_name table_name,
-       (t.bytes + NVL(i.bytes, 0)) bytes
+       (t.bytes + NVL(i.bytes, 0)) bytes,
+       t.bytes table_bytes,
+       NVL(i.bytes, 0) indexes_bytes
   FROM tables t,
        idx_tbl i
 WHERE t.owner = i.table_owner(+)
@@ -737,7 +740,9 @@ WHERE t.owner = i.table_owner(+)
 )
 SELECT owner,
        table_name,
-       ROUND(bytes / 1024 / 1024 / 1024, 3) gb
+       ROUND(bytes / 1024 / 1024 / 1024, 3) total_gb,
+       ROUND(table_bytes / 1024 / 1024 / 1024, 3) table_gb,
+       ROUND(indexes_bytes / 1024 / 1024 / 1024, 3) indexes_gb
   FROM total
 WHERE bytes > 1024 * 1024 * 1024
 ORDER BY
@@ -754,7 +759,7 @@ BEGIN
   :sql_text := '
 WITH
 tables AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        owner,
        segment_name,
        SUM(bytes) bytes
@@ -766,7 +771,7 @@ GROUP BY
        segment_name
 ),
 indexes AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        owner,
        segment_name,
        SUM(bytes) bytes
@@ -778,7 +783,7 @@ GROUP BY
        segment_name
 ),
 idx_tbl AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        d.table_owner,
        d.table_name,
        d.owner,
@@ -795,7 +800,7 @@ GROUP BY
        d.index_name
 ),
 total AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        t.owner table_owner,
        t.segment_name table_name,
        t.bytes t_bytes,
@@ -833,7 +838,7 @@ DEF main_table = 'DBA_TABLES';
 BEGIN
   :sql_text := '
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
-SELECT /*+ &&top_level_hints. */ 
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
    owner, table_name, blocks, block_size, 
    round(blocks * block_size / 1048576) mb, 
    num_rows, avg_row_len, degree, sample_size, last_analyzed
@@ -857,7 +862,7 @@ DEF main_table = 'DBA_SEGMENTS';
 BEGIN
   :sql_text := '
 -- http://askdba.org/weblog/2009/07/cleanup-temporary-segments-in-permanent-tablespace/
-select /*+ &&top_level_hints. */
+select /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
 tablespace_name, owner, segment_name,
 round(sum(bytes/power(2, 20))) mega_bytes 
 from dba_segments
@@ -876,7 +881,7 @@ DEF main_table = 'DBA_SEGMENTS';
 BEGIN
   :sql_text := '
 -- provided by Simon Pane
-SELECT /*+ &&top_level_hints. */ 
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        s.owner, s.segment_type, s.tablespace_name, COUNT(1)
   FROM dba_segments s
  WHERE ''&&edb360_conf_incl_segments.'' = ''Y''
@@ -900,7 +905,7 @@ DEF main_table = 'DBMS_SPACE';
 BEGIN
   :sql_text := '
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
-SELECT /*+ &&top_level_hints. */ 
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        *
 FROM TABLE(dbms_space.asa_recommendations())
 Where segment_owner not in &&exclusion_list. and
@@ -916,7 +921,7 @@ DEF main_table = 'DBA_RECYCLEBIN';
 BEGIN
   :sql_text := '
 -- requested by Milton Quinteros
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_recyclebin
  WHERE owner NOT IN &&exclusion_list.
@@ -934,7 +939,7 @@ DEF main_table = 'DBA_RECYCLEBIN';
 BEGIN
   :sql_text := '
 -- requested by Dimas Chbane
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        ROUND(SUM(r.space * t.block_size) / POWER(2, 20)) gb_space,
        r.owner
   FROM dba_recyclebin r,
@@ -955,7 +960,7 @@ DEF main_table = 'DBA_TABLES';
 BEGIN
   :sql_text := '
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
-SELECT /*+ &&top_level_hints. */ 
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
    (round(blocks * block_size / 1048576)) - 
       (round(num_rows * avg_row_len * (1+(pct_free/100)) * decode (compression,''ENABLED'',0.50,1.00) / 1048576)) over_allocated_mb,
    owner, table_name, blocks, block_size, pct_free,
@@ -1050,7 +1055,7 @@ BEGIN
 -- http://carlos-sierra.net/2014/07/18/free-script-to-very-quickly-and-cheaply-estimate-the-size-of-an-index-if-it-were-to-be-rebuilt/
 WITH 
 indexes AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        pt.object_owner, 
        pt.object_name,
        TO_NUMBER(EXTRACTVALUE(VALUE(d), ''/info'')) estimated_bytes
@@ -1062,7 +1067,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND EXTRACTVALUE(VALUE(d), ''/info/@type'') = ''index_size'' -- grab index_size type
 ),
 segments AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        owner, segment_name, SUM(bytes) actual_bytes
   FROM dba_segments
  WHERE ''&&edb360_conf_incl_segments.'' = ''Y''
@@ -1075,7 +1080,7 @@ HAVING SUM(bytes) > POWER(2, 20) -- only indexes with actual size > 1 MB
        segment_name
 ),
 list_bytes AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        (s.actual_bytes - i.estimated_bytes) actual_minus_estimated,
        s.actual_bytes,
        i.estimated_bytes,
@@ -1087,7 +1092,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND s.owner(+) = i.object_owner
    AND s.segment_name(+) = i.object_name
 )
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        ROUND(actual_minus_estimated / POWER(2, 20)) actual_minus_estimated,
        ROUND(actual_bytes / POWER(2, 20)) actual_mb,
        ROUND(estimated_bytes / POWER(2, 20)) estimated_mb,
@@ -1104,3 +1109,7 @@ END;
 /
 @@edb360_9a_pre_one.sql
 DELETE plan_table WHERE statement_id IN (:random1, :random2);
+
+SPO &&edb360_main_report..html APP;
+PRO </ol>
+SPO OFF;

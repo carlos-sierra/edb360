@@ -3,14 +3,15 @@ DEF section_id = '3c';
 DEF section_name = 'Cost-based Optimizer (CBO) Statistics';
 EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
 SPO &&edb360_main_report..html APP;
-PRO <h2>&&section_name.</h2>
+PRO <h2>&&section_id.. &&section_name.</h2>
+PRO <ol start="&&report_sequence.">
 SPO OFF;
 
 DEF title = 'CBO System Statistics';
 DEF main_table = 'SYS.AUX_STATS$';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM sys.aux_stats$
 ';
@@ -22,7 +23,7 @@ DEF title = 'CBO System Statistics History';
 DEF main_table = 'SYS.WRI$_OPTSTAT_AUX_HISTORY';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM sys.wri$_optstat_aux_history
  ORDER BY 1 DESC, 2
@@ -57,7 +58,7 @@ DEF title = 'Tables Summary';
 DEF main_table = 'DBA_TABLES';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        owner,
        COUNT(*) tables_count,
        SUM(DECODE(last_analyzed, NULL, 1, 0)) not_analyzed,
@@ -110,7 +111,7 @@ DEF title = 'Tab Summary';
 DEF main_table = 'DBA_TAB_STATISTICS';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        owner,
        object_type,
        COUNT(*) type_count,
@@ -149,7 +150,7 @@ DEF title = 'Table Columns Summary';
 DEF main_table = 'DBA_TAB_COLS';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        owner,
        COUNT(DISTINCT table_name) tables_count,
        COUNT(*) columns_count,
@@ -187,7 +188,7 @@ DEF title = 'Indexes Summary';
 DEF main_table = 'DBA_INDEXES';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        owner,
        COUNT(DISTINCT table_name) tables_count,
        COUNT(*) indexes_count,
@@ -227,7 +228,7 @@ DEF title = 'Ind Summary';
 DEF main_table = 'DBA_IND_STATISTICS';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        owner,
        object_type,
        COUNT(*) type_count,
@@ -260,7 +261,7 @@ DEF title = 'Table Partitions Summary';
 DEF main_table = 'DBA_TAB_PARTITIONS';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        table_owner,
        COUNT(DISTINCT table_name) tables_count,
        COUNT(*) partitions_count,
@@ -303,7 +304,7 @@ DEF title = 'Index Partitions Summary';
 DEF main_table = 'DBA_IND_PARTITIONS';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        index_owner,
        COUNT(DISTINCT index_name) indexes_count,
        COUNT(*) partitions_count,
@@ -341,7 +342,7 @@ DEF title = 'Tables with Missing Stats';
 DEF main_table = 'DBA_TAB_STATISTICS';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        s.owner, s.table_name, s.stale_stats, s.stattype_locked
   FROM dba_tab_statistics s,
        dba_tables t
@@ -371,7 +372,7 @@ DEF title = 'Tables with Stale Stats';
 DEF main_table = 'DBA_TAB_STATISTICS';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        s.owner, s.table_name, s.num_rows, s.last_analyzed, s.stattype_locked
   FROM dba_tab_statistics s,
        dba_tables t
@@ -401,7 +402,7 @@ DEF title = 'Tables with Outdated Stats';
 DEF main_table = 'DBA_TAB_STATISTICS';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        s.owner, s.table_name, s.num_rows, s.last_analyzed, s.stale_stats, s.stattype_locked
   FROM dba_tab_statistics s,
        dba_tables t
@@ -431,7 +432,7 @@ DEF title = 'Tables with Locked Stats';
 DEF main_table = 'DBA_TAB_STATISTICS';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        s.owner, s.table_name, t.temporary, s.num_rows, s.last_analyzed, s.stale_stats, s.stattype_locked, e.type_name external_table_type
   FROM dba_tab_statistics s,
        dba_tables t,
@@ -456,7 +457,7 @@ DEF title = 'Global Temporary Tables with Stats';
 DEF main_table = 'DBA_TAB_STATISTICS';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        s.owner, s.table_name, s.num_rows, s.last_analyzed, s.stale_stats, s.stattype_locked
   FROM dba_tab_statistics s,
        dba_tables t
@@ -479,7 +480,7 @@ DEF title = 'Temp Tables with Stats';
 DEF main_table = 'DBA_TAB_STATISTICS';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        s.owner, s.table_name, t.temporary, s.num_rows, s.last_analyzed, s.stale_stats, s.stattype_locked
   FROM dba_tab_statistics s,
        dba_tables t
@@ -505,11 +506,64 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+DEF title = 'Objects with many Stats Versions';
+DEF main_table = 'WRI$_OPTSTAT_TAB_HISTORY';
+BEGIN
+  :sql_text := '
+WITH
+h AS (
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
+       obj#,
+       COUNT(*) versions,
+       MIN(savtime) min_savtime,
+       MAX(savtime) max_savtime,
+       MEDIAN(savtime) med_savtime,
+       MIN(rowcnt) min_rowcnt,
+       MAX(rowcnt) max_rowcnt,
+       MEDIAN(rowcnt) med_rowcnt,
+       MIN(blkcnt) min_blkcnt,
+       MAX(blkcnt) max_blkcnt,
+       MEDIAN(blkcnt) med_blkcnt
+  FROM sys.wri$_optstat_tab_history
+ GROUP BY
+       obj#
+HAVING COUNT(*) > DBMS_STATS.GET_STATS_HISTORY_RETENTION
+)
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
+       h.versions,
+       o.owner,
+       o.object_name,
+       o.subobject_name,
+       o.object_type,
+       o.object_id,
+       h.min_savtime,
+       h.max_savtime,
+       h.med_savtime,
+       h.min_rowcnt,
+       h.max_rowcnt,
+       h.med_rowcnt,
+       h.min_blkcnt,
+       h.max_blkcnt,
+       h.med_blkcnt
+  FROM h, dba_objects o
+ WHERE o.object_id = h.obj#
+   AND o.owner NOT IN &&exclusion_list.
+   AND o.owner NOT IN &&exclusion_list2.
+ ORDER BY
+       h.versions DESC,
+       o.owner,
+       o.object_name,
+       o.subobject_name
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
 DEF title = 'SYS Stats for WRH$, WRI$, WRM$ and WRR$ Tables';
 DEF main_table = 'DBA_TABLES';
 BEGIN
   :sql_text := '
-select /*+ &&top_level_hints. */ 
+select /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
 table_name, blocks, num_rows, sample_size, last_analyzed
 from dba_tables 
 where owner = ''SYS''
@@ -524,7 +578,7 @@ DEF title = 'SYS Stats for WRH$, WRI$, WRM$ and WRR$ Indexes';
 DEF main_table = 'DBA_INDEXES';
 BEGIN
   :sql_text := '
-select /*+ &&top_level_hints. */ 
+select /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
 table_name, index_name, blevel, leaf_blocks, distinct_keys, num_rows, sample_size, last_analyzed
 from dba_indexes 
 where owner = ''SYS''
@@ -539,7 +593,7 @@ DEF title = 'Table Modifications for WRH$, WRI$, WRM$ and WRR$';
 DEF main_table = 'DBA_TAB_MODIFICATIONS';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        table_name, partition_name, inserts, updates, deletes, timestamp, truncated
   FROM dba_tab_modifications
  WHERE table_owner = ''SYS''
@@ -551,3 +605,6 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+SPO &&edb360_main_report..html APP;
+PRO </ol>
+SPO OFF;

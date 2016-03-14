@@ -3,7 +3,8 @@ DEF section_id = '3f';
 DEF section_name = 'Interconnect Ping Latency Stats';
 EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
 SPO &&edb360_main_report..html APP;
-PRO <h2>&&section_name.</h2>
+PRO <h2>&&section_id.. &&section_name.</h2>
+PRO <ol start="&&report_sequence.">
 SPO OFF;
 
 DEF main_table = 'DBA_HIST_INTERCONNECT_PINGS';
@@ -16,7 +17,7 @@ BEGIN
   :sql_text_backup := '
 WITH
 interconnect_pings AS (
-SELECT /*+ &&sq_fact_hints. &&ds_hint. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
        h.snap_id,
        h.dbid,
        h.instance_number,
@@ -39,7 +40,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */
    AND s.end_interval_time - s.begin_interval_time > TO_DSINTERVAL(''+00 00:01:00.000000'') -- exclude snaps less than 1m appart
 ),
 per_source_and_target AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        MAX(snap_id) snap_id,
        instance_number,
        target_instance,
@@ -62,7 +63,7 @@ SELECT /*+ &&sq_fact_hints. */
        TRUNC(end_interval_time, ''HH'')
 ),
 per_source AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
        instance_number,
        -1 target_instance,
@@ -80,7 +81,7 @@ SELECT /*+ &&sq_fact_hints. */
        end_time
 ),
 per_target AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
        -1 instance_number,
        target_instance,
@@ -98,7 +99,7 @@ SELECT /*+ &&sq_fact_hints. */
        end_time
 ),
 per_cluster AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
        -1 instance_number,
        -1 target_instance,
@@ -184,7 +185,7 @@ SELECT t.snap_id,
    AND c.end_time = t.end_time
 ),
 denorm_target AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
        end_time,
        instance_number inst_num,
@@ -216,7 +217,7 @@ SELECT /*+ &&sq_fact_hints. */
        instance_number
 ),
 denorm_source AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
        end_time,
        target_instance inst_num,
@@ -247,7 +248,7 @@ SELECT /*+ &&sq_fact_hints. */
        end_time,
        target_instance
 )
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
        TO_CHAR(end_time - (1/24), ''YYYY-MM-DD HH24:MI'') begin_time,
        TO_CHAR(end_time, ''YYYY-MM-DD HH24:MI'') end_time,
@@ -627,3 +628,6 @@ EXEC :sql_text := REPLACE(:sql_text, '@denorm@', 'source');
 
 DEF skip_lch = 'Y';
 
+SPO &&edb360_main_report..html APP;
+PRO </ol>
+SPO OFF;

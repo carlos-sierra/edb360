@@ -3,7 +3,8 @@ DEF section_id = '4c';
 DEF section_name = 'Memory Statistics History';
 EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
 SPO &&edb360_main_report..html APP;
-PRO <h2>&&section_name.</h2>
+PRO <h2>&&section_id.. &&section_name.</h2>
+PRO <ol start="&&report_sequence.">
 SPO OFF;
 
 DEF main_table = 'DBA_HIST_OSSTAT';
@@ -30,7 +31,7 @@ BEGIN
   :sql_text_backup := '
 WITH
 vm AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        h1.snap_id,
        h1.dbid,
        h1.instance_number,
@@ -54,7 +55,7 @@ SELECT /*+ &&sq_fact_hints. */
        h1.instance_number
 ),
 sga AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        h1.snap_id,
        h1.dbid,
        h1.instance_number,
@@ -69,7 +70,7 @@ SELECT /*+ &&sq_fact_hints. */
        h1.instance_number
 ),
 pga AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        h1.snap_id,
        h1.dbid,
        h1.instance_number,
@@ -85,7 +86,7 @@ SELECT /*+ &&sq_fact_hints. */
        h1.instance_number
 ),
 mem AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snp.snap_id,
        snp.dbid,
        snp.instance_number,
@@ -202,3 +203,6 @@ DEF title = 'Memory Statistics for Instance 8';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '8');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
+SPO &&edb360_main_report..html APP;
+PRO </ol>
+SPO OFF;

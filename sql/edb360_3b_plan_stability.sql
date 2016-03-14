@@ -3,7 +3,8 @@ DEF section_id = '3b';
 DEF section_name = 'Plan Stability';
 EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
 SPO &&edb360_main_report..html APP;
-PRO <h2>&&section_name.</h2>
+PRO <h2>&&section_id.. &&section_name.</h2>
+PRO <ol start="&&report_sequence.">
 SPO OFF;
 
 DEF title = 'SQL Patches';
@@ -155,4 +156,6 @@ END;
 /
 @@&&skip_10g.edb360_9a_pre_one.sql       
 
-
+SPO &&edb360_main_report..html APP;
+PRO </ol>
+SPO OFF;

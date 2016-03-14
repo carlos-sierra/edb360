@@ -3,7 +3,8 @@ DEF section_id = '4a';
 DEF section_name = 'System Global Area (SGA) Statistics History';
 EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
 SPO &&edb360_main_report..html APP;
-PRO <h2>&&section_name.</h2>
+PRO <h2>&&section_id.. &&section_name.</h2>
+PRO <ol start="&&report_sequence.">
 SPO OFF;
 
 DEF main_table = 'DBA_HIST_SGASTAT';
@@ -30,7 +31,7 @@ BEGIN
   :sql_text_backup := '
 WITH 
 sgastat_denorm_1 AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
        dbid,
        instance_number,
@@ -53,7 +54,7 @@ SELECT /*+ &&sq_fact_hints. */
        instance_number
 ),
 sgastat_denorm_2 AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        h1.snap_id,
        h1.dbid,
        h1.instance_number,
@@ -176,3 +177,7 @@ SELECT NULL skip_all FROM gv$instance WHERE instance_number = 8;
 DEF title = 'SGA Statistics for Instance 8';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '8');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+SPO &&edb360_main_report..html APP;
+PRO </ol>
+SPO OFF;

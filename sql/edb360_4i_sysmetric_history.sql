@@ -3,7 +3,8 @@ DEF section_id = '4i';
 DEF section_name = 'System Metric History per Hour';
 EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
 SPO &&edb360_main_report..html APP;
-PRO <h2>&&section_name.</h2>
+PRO <h2>&&section_id.. &&section_name.</h2>
+PRO <ol start="&&report_sequence.">
 SPO OFF;
 
 DEF main_table = 'DBA_HIST_SYSMETRIC_HISTORY';
@@ -30,7 +31,7 @@ BEGIN
   :sql_text_backup := '
 WITH 
 per_instance_and_hour AS (
-SELECT /*+ &&sq_fact_hints. &&ds_hint. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
        MIN(snap_id) snap_id,
        instance_number,
        TRUNC(begin_time, ''HH'') begin_time_hh,
@@ -54,7 +55,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */
        instance_number,
        TRUNC(begin_time, ''HH'')
 )
-SELECT /*+ &&top_level_hints. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        MIN(snap_id) snap_id,
        TO_CHAR(begin_time_hh, ''YYYY-MM-DD HH24:MI'') begin_time,
        TO_CHAR(begin_time_hh + (1/24), ''YYYY-MM-DD HH24:MI'') end_time,
@@ -246,3 +247,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@metric_name@', '&&title.');
 DEF skip_lch = 'Y';
 
 /*****************************************************************************************/
+
+SPO &&edb360_main_report..html APP;
+PRO </ol>
+SPO OFF;

@@ -3,7 +3,8 @@ DEF section_id = '1f';
 DEF section_name = 'Resources (as per Statspack)';
 EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
 SPO &&edb360_main_report..html APP;
-PRO <h2>&&section_name.</h2>
+PRO <h2>&&section_id.. &&section_name.</h2>
+PRO <ol start="&&report_sequence.">
 SPO OFF;
 
 REM **********************************************************
@@ -28,6 +29,9 @@ WHERE 1=1
 AND end_interval_time < TO_DATE('&&edb360_date_to.', 'YYYY-MM-DD') + 1;
 SELECT '-1' sp_maximum_snap_id FROM DUAL WHERE TRIM('&&sp_maximum_snap_id.') IS NULL;
 
+DEF skip_if_missing = '--';
+COL skip_if_missing NEW_V skip_if_missing;
+SELECT NULL skip_if_missing FROM DUAL WHERE TO_NUMBER('&&sp_minimum_snap_id.') > -1 AND TO_NUMBER('&&sp_maximum_snap_id.') > -1;
 
 DEF title = 'Memory Size (MEM)';
 DEF main_table = 'GV$SYSTEM_PARAMETER2';
@@ -38,11 +42,12 @@ BEGIN
   :sql_text := '
 WITH
 par AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        d.dbid,
        d.name,
        i.inst_id,
-       LOWER(SUBSTR(i.host_name||''.'', 1, INSTR(i.host_name||''.'', ''.'') - 1)) host_name,
+       /* LOWER(SUBSTR(i.host_name||''.'', 1, INSTR(i.host_name||''.'', ''.'') - 1)) */ 
+       LPAD(ORA_HASH(SYS_CONTEXT(''USERENV'', ''SERVER_HOST''),999999),6,''6'') host_name,
        i.instance_number,
        i.instance_name,
        SUM(CASE p.name WHEN ''memory_target'' THEN TO_NUMBER(value) END) memory_target,
@@ -65,21 +70,21 @@ SELECT /*+ &&sq_fact_hints. */
        i.instance_name
 ),
 sga_max AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        inst_id,
        bytes
   FROM gv$sgainfo
  WHERE name = ''Maximum SGA Size''
 ),
 pga_max AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        inst_id,
        value bytes
   FROM gv$pgastat
  WHERE name = ''maximum PGA allocated''
 ),
 pga AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        par.dbid,
        par.name,
        par.inst_id,
@@ -94,7 +99,7 @@ SELECT /*+ &&sq_fact_hints. */
  WHERE par.inst_id = pga_max.inst_id
 ),
 amm AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        par.dbid,
        par.name,
        par.inst_id,
@@ -107,7 +112,7 @@ SELECT /*+ &&sq_fact_hints. */
   FROM par
 ),
 asmm AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        par.dbid,
        par.name,
        par.inst_id,
@@ -123,7 +128,7 @@ SELECT /*+ &&sq_fact_hints. */
  WHERE par.inst_id = pga.inst_id
 ),
 no_mm AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        pga.dbid,
        pga.name,
        pga.inst_id,
@@ -139,7 +144,7 @@ SELECT /*+ &&sq_fact_hints. */
  WHERE sga_max.inst_id = pga.inst_id
 ),
 them_all AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        amm.dbid,
        amm.name,
        amm.inst_id,
@@ -317,7 +322,7 @@ BEGIN
   :sql_text := '
 WITH
 max_snap AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        MAX(snap_id) snap_id,
        dbid,
        instance_number,
@@ -332,7 +337,7 @@ SELECT /*+ &&sq_fact_hints. */
        name
 ),
 last_value AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        s.snap_id,
        s.dbid,
        s.instance_number,
@@ -347,7 +352,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND p.snap_id BETWEEN &&sp_minimum_snap_id. AND &&sp_maximum_snap_id.
 ),
 last_snap AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        p.snap_id,
        p.dbid,
        p.instance_number,
@@ -362,10 +367,11 @@ SELECT /*+ &&sq_fact_hints. */
    AND s.snap_id BETWEEN &&sp_minimum_snap_id. AND &&sp_maximum_snap_id.
 ),
 par AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        p.dbid,
        di.db_name,
-       LOWER(SUBSTR(di.host_name||''.'', 1, INSTR(di.host_name||''.'', ''.'') - 1)) host_name,
+       /* LOWER(SUBSTR(di.host_name||''.'', 1, INSTR(di.host_name||''.'', ''.'') - 1)) */ 
+       LPAD(ORA_HASH(SYS_CONTEXT(''USERENV'', ''SERVER_HOST''),999999),6,''6'') host_name,
        p.instance_number,
        di.instance_name,
        SUM(CASE p.name WHEN ''memory_target'' THEN TO_NUMBER(p.value) ELSE 0 END) memory_target,
@@ -386,7 +392,7 @@ SELECT /*+ &&sq_fact_hints. */
        di.instance_name
 ),
 sgainfo AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
        dbid,
        instance_number,
@@ -400,7 +406,7 @@ SELECT /*+ &&sq_fact_hints. */
        instance_number
 ),
 sga_max AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        dbid,
        instance_number,
        MAX(sga_size) bytes
@@ -410,7 +416,7 @@ SELECT /*+ &&sq_fact_hints. */
        instance_number
 ),
 pga_max AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        dbid,
        instance_number,
        MAX(value) bytes
@@ -423,7 +429,7 @@ SELECT /*+ &&sq_fact_hints. */
        instance_number
 ),
 pga AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        par.dbid,
        par.db_name,
        par.host_name,
@@ -438,7 +444,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND par.instance_number = pga_max.instance_number
 ),
 amm AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        par.dbid,
        par.db_name,
        par.host_name,
@@ -450,7 +456,7 @@ SELECT /*+ &&sq_fact_hints. */
   FROM par
 ),
 asmm AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        par.dbid,
        par.db_name,
        par.host_name,
@@ -466,7 +472,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND par.instance_number = pga.instance_number
 ),
 no_mm AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        pga.dbid,
        pga.db_name,
        pga.host_name,
@@ -482,7 +488,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND sga_max.instance_number = pga.instance_number
 ),
 them_all AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        amm.dbid,
        amm.db_name,
        amm.host_name,
@@ -651,7 +657,7 @@ SELECT TO_NUMBER(NULL) dbid,
 ';
 END;
 /
-@@edb360_9a_pre_one.sql
+@@&&skip_if_missing.edb360_9a_pre_one.sql
 
 DEF title = 'Database Size on Disk';
 DEF main_table = 'GV$DATABASE';
@@ -661,7 +667,7 @@ BEGIN
   :sql_text := '
 WITH 
 sizes AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        ''Data'' file_type,
        SUM(bytes) bytes
   FROM v$datafile
@@ -679,7 +685,7 @@ SELECT ''Control'' file_type,
   FROM v$controlfile
 ),
 dbsize AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        ''Total'' file_type,
        SUM(bytes) bytes
   FROM sizes
@@ -724,7 +730,7 @@ BEGIN
   :sql_text := '
 WITH 
 sysstat_io AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
        dbid,
        instance_number,
@@ -742,7 +748,7 @@ SELECT /*+ &&sq_fact_hints. */
        instance_number
 ),
 snaps AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
        dbid,
        instance_number,
@@ -758,13 +764,14 @@ SELECT /*+ &&sq_fact_hints. */
    AND snap_id BETWEEN &&sp_minimum_snap_id. AND &&sp_maximum_snap_id.
 ),
 rw_per_snap_and_inst AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        t1.snap_id,
        t1.dbid,
        t1.instance_number,
        di.instance_name,
        di.db_name,
-       LOWER(SUBSTR(di.host_name||''.'', 1, INSTR(di.host_name||''.'', ''.'') - 1)) host_name,
+       /* LOWER(SUBSTR(di.host_name||''.'', 1, INSTR(di.host_name||''.'', ''.'') - 1)) */ 
+       LPAD(ORA_HASH(SYS_CONTEXT(''USERENV'', ''SERVER_HOST''),999999),6,''6'') host_name,
        ROUND((t1.r_reqs - t0.r_reqs) / s1.elapsed_sec) r_iops,
        ROUND((t1.w_reqs - t0.w_reqs) / s1.elapsed_sec) w_iops,
        ROUND((t1.r_bytes - t0.r_bytes) / 1024 / 1024 / s1.elapsed_sec) r_mbps,
@@ -793,7 +800,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND di.startup_time = s1.startup_time
 ),
 rw_per_snap_and_cluster AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
        dbid,
        db_name,
@@ -808,7 +815,7 @@ SELECT /*+ &&sq_fact_hints. */
        db_name
 ),
 rw_max_per_inst AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        dbid,
        instance_number,
        instance_name,
@@ -845,7 +852,7 @@ SELECT /*+ &&sq_fact_hints. */
        host_name
 ),
 rw_max_per_cluster AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        dbid,
        db_name,
        MAX(r_iops + w_iops) peak_rw_iops,
@@ -876,7 +883,7 @@ SELECT /*+ &&sq_fact_hints. */
        db_name
 ),
 peak_rw_iops_per_inst AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        r.instance_number,
@@ -890,7 +897,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 peak_rw_mbps_per_inst AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        r.instance_number,
@@ -904,7 +911,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 perc_99_99_rw_iops_per_inst AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        r.instance_number,
@@ -918,7 +925,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 perc_99_99_rw_mbps_per_inst AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        r.instance_number,
@@ -932,7 +939,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 perc_99_9_rw_iops_per_inst AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        r.instance_number,
@@ -946,7 +953,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 perc_99_9_rw_mbps_per_inst AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        r.instance_number,
@@ -960,7 +967,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 perc_99_rw_iops_per_inst AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        r.instance_number,
@@ -974,7 +981,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 perc_99_rw_mbps_per_inst AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        r.instance_number,
@@ -988,7 +995,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 perc_95_rw_iops_per_inst AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        r.instance_number,
@@ -1002,7 +1009,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 perc_95_rw_mbps_per_inst AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        r.instance_number,
@@ -1016,7 +1023,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 perc_90_rw_iops_per_inst AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        r.instance_number,
@@ -1030,7 +1037,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 perc_90_rw_mbps_per_inst AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        r.instance_number,
@@ -1044,7 +1051,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 perc_75_rw_iops_per_inst AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        r.instance_number,
@@ -1058,7 +1065,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 perc_75_rw_mbps_per_inst AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        r.instance_number,
@@ -1072,7 +1079,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 perc_50_rw_iops_per_inst AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        r.instance_number,
@@ -1086,7 +1093,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 perc_50_rw_mbps_per_inst AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        r.instance_number,
@@ -1100,7 +1107,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 peak_rw_iops_per_cluster AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        r.r_iops peak_r_iops,
@@ -1112,7 +1119,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 peak_rw_mbps_per_cluster AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        r.r_mbps peak_r_mbps,
@@ -1124,7 +1131,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 perc_99_99_rw_iops_per_cluster AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        r.r_iops perc_99_99_r_iops,
@@ -1136,7 +1143,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 perc_99_99_rw_mbps_per_cluster AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        r.r_mbps perc_99_99_r_mbps,
@@ -1148,7 +1155,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 perc_99_9_rw_iops_per_cluster AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        r.r_iops perc_99_9_r_iops,
@@ -1160,7 +1167,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 perc_99_9_rw_mbps_per_cluster AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        r.r_mbps perc_99_9_r_mbps,
@@ -1172,7 +1179,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 perc_99_rw_iops_per_cluster AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        r.r_iops perc_99_r_iops,
@@ -1184,7 +1191,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 perc_99_rw_mbps_per_cluster AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        r.r_mbps perc_99_r_mbps,
@@ -1196,7 +1203,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 perc_95_rw_iops_per_cluster AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        r.r_iops perc_95_r_iops,
@@ -1208,7 +1215,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 perc_95_rw_mbps_per_cluster AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        r.r_mbps perc_95_r_mbps,
@@ -1220,7 +1227,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 perc_90_rw_iops_per_cluster AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        r.r_iops perc_90_r_iops,
@@ -1232,7 +1239,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 perc_90_rw_mbps_per_cluster AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        r.r_mbps perc_90_r_mbps,
@@ -1244,7 +1251,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 perc_75_rw_iops_per_cluster AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        r.r_iops perc_75_r_iops,
@@ -1256,7 +1263,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 perc_75_rw_mbps_per_cluster AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        r.r_mbps perc_75_r_mbps,
@@ -1268,7 +1275,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 perc_50_rw_iops_per_cluster AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        r.r_iops perc_50_r_iops,
@@ -1280,7 +1287,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 perc_50_rw_mbps_per_cluster AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        r.r_mbps perc_50_r_mbps,
@@ -1292,7 +1299,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 per_instance AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        x.dbid,
        x.db_name,
        x.instance_number,
@@ -1358,7 +1365,7 @@ SELECT /*+ &&sq_fact_hints. */
        x.instance_number
 ),
 per_cluster AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        x.dbid,
        x.db_name,
        TO_NUMBER(NULL) instance_number,
@@ -1426,7 +1433,7 @@ SELECT * FROM per_cluster
 ';
 END;
 /
-@@edb360_9a_pre_one.sql
+@@&&skip_if_missing.edb360_9a_pre_one.sql
 
 DEF title = 'CPU usage';
 DEF main_table = 'STATS$SYS_TIME_MODEL';
@@ -1436,7 +1443,7 @@ BEGIN
   :sql_text := '
 WITH 
 sys_cpu AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        ss.snap_id snap_id,
        ss.dbid dbid,
        ss.instance_number instance_number,
@@ -1452,7 +1459,7 @@ SELECT /*+ &&sq_fact_hints. */
        instance_number
 ),
 snaps AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
        dbid,
        instance_number,
@@ -1468,13 +1475,14 @@ SELECT /*+ &&sq_fact_hints. */
    AND snap_id BETWEEN &&sp_minimum_snap_id. AND &&sp_maximum_snap_id.
 ),
 cpu_per_snap_and_inst AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        t1.snap_id,
        t1.dbid,
        t1.instance_number,
        di.instance_name,
        di.db_name,
-       LOWER(SUBSTR(di.host_name||''.'', 1, INSTR(di.host_name||''.'', ''.'') - 1)) host_name,
+       /* LOWER(SUBSTR(di.host_name||''.'', 1, INSTR(di.host_name||''.'', ''.'') - 1)) */ 
+       LPAD(ORA_HASH(SYS_CONTEXT(''USERENV'', ''SERVER_HOST''),999999),6,''6'') host_name,
        ROUND((t1.cpu - t0.cpu) / 1000000 / s1.elapsed_sec) cpu_s
   FROM sys_cpu t0,
        sys_cpu t1,
@@ -1500,7 +1508,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND di.startup_time = s1.startup_time
 ),
 cpu_per_snap_and_cluster AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
        dbid,
        db_name,
@@ -1512,7 +1520,7 @@ SELECT /*+ &&sq_fact_hints. */
        db_name
 ),
 cpu_max_per_inst AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        dbid,
        instance_number,
        instance_name,
@@ -1536,7 +1544,7 @@ SELECT /*+ &&sq_fact_hints. */
        host_name
 ),
 cpu_max_per_cluster AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        dbid,
        db_name,
        MAX(cpu_s) peak_cpu_s,
@@ -1554,7 +1562,7 @@ SELECT /*+ &&sq_fact_hints. */
        db_name
 ),
 peak_cpu_per_inst AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        r.instance_number,
@@ -1566,7 +1574,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 perc_99_99_cpu_per_inst AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        r.instance_number,
@@ -1578,7 +1586,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 perc_99_9_cpu_per_inst AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        r.instance_number,
@@ -1590,7 +1598,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 perc_99_cpu_per_inst AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        r.instance_number,
@@ -1602,7 +1610,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 perc_95_cpu_per_inst AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        r.instance_number,
@@ -1614,7 +1622,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 perc_90_cpu_per_inst AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        r.instance_number,
@@ -1626,7 +1634,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 perc_75_cpu_per_inst AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        r.instance_number,
@@ -1638,7 +1646,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 perc_50_cpu_per_inst AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        r.instance_number,
@@ -1650,7 +1658,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 peak_cpu_per_cluster AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        m.peak_cpu_s peak_cpu_s
@@ -1660,7 +1668,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 perc_99_99_cpu_per_cluster AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        m.perc_99_99_cpu_s perc_99_99_cpu_s
@@ -1670,7 +1678,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 perc_99_9_cpu_per_cluster AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        m.perc_99_9_cpu_s perc_99_9_cpu_s
@@ -1680,7 +1688,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 perc_99_cpu_per_cluster AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        m.perc_99_cpu_s perc_99_cpu_s
@@ -1690,7 +1698,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 perc_95_cpu_per_cluster AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        m.perc_95_cpu_s per_95_cpu_s
@@ -1700,7 +1708,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 perc_90_cpu_per_cluster AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        m.perc_90_cpu_s perc_90_cpu_s
@@ -1710,7 +1718,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 perc_75_cpu_per_cluster AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        m.perc_75_cpu_s perc_75_cpu_s
@@ -1720,7 +1728,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 perc_50_cpu_per_cluster AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        r.snap_id,
        r.dbid,
        m.perc_50_cpu_s
@@ -1730,7 +1738,7 @@ SELECT /*+ &&sq_fact_hints. */
    AND r.dbid = m.dbid
 ),
 per_instance AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        x.dbid,
        x.db_name,
        x.instance_number,
@@ -1751,7 +1759,7 @@ SELECT /*+ &&sq_fact_hints. */
        x.instance_number
 ),
 per_cluster AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        x.dbid,
        x.db_name,
        TO_NUMBER(NULL) instance_number,
@@ -1774,4 +1782,8 @@ SELECT * FROM per_cluster
 ';
 END;
 /
-@@edb360_9a_pre_one.sql
+@@&&skip_if_missing.edb360_9a_pre_one.sql
+
+SPO &&edb360_main_report..html APP;
+PRO </ol>
+SPO OFF;
