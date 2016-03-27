@@ -39,8 +39,8 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        dbid,
        instance_number,
        TRUNC(end_interval_time, ''HH'') end_time,
-       ROUND(SUM(bytes_received) / POWER(2,20) / 3600, 2) mbps_received,
-       ROUND(SUM(bytes_sent) / POWER(2,20) / 3600, 2) mbps_sent
+       ROUND(SUM(bytes_received) / POWER(10,6) / 3600, 2) mbps_received,
+       ROUND(SUM(bytes_sent) / POWER(10,6) / 3600, 2) mbps_sent
   FROM ic_client_stats
   WHERE startup_time_interval = TO_DSINTERVAL(''+00 00:00:00.000000'') -- include only snaps from same startup
     AND bytes_received >= 0

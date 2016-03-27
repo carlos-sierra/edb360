@@ -18,7 +18,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. slow on ppts20 */
        COUNT(*) samples
   FROM dba_hist_active_sess_history
  WHERE @filter_predicate@
-   AND current_obj# > 0
+   AND current_obj# >= 0
    AND wait_class IN (''Application'', ''Cluster'', ''Concurrency'', ''System I/O'', ''User I/O'')
    AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
@@ -29,10 +29,10 @@ total AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */ SUM(samples) samples FROM hist
 )
 SELECT h.current_obj#||
-       NVL(
-       (SELECT TRIM(''.'' FROM '' ''||o.owner||''.''||o.object_name||''.''||o.subobject_name) FROM dba_objects o WHERE o.object_id = h.current_obj# AND ROWNUM = 1), 
-       (SELECT TRIM(''.'' FROM '' ''||o.owner||''.''||o.object_name||''.''||o.subobject_name) FROM dba_objects o WHERE o.data_object_id = h.current_obj# AND ROWNUM = 1) 
-       ) data_object,
+       CASE h.current_obj# WHEN 0 THEN '' UNDO'' ELSE
+       (SELECT TRIM(''.'' FROM '' ''||o.owner||''.''||o.object_name||''.''||o.subobject_name) FROM dba_objects o WHERE o.object_id = h.current_obj# AND ROWNUM = 1) 
+       END
+       data_object,
        h.samples,
        ROUND(100 * h.samples / t.samples, 1) percent,
        NULL dummy_01

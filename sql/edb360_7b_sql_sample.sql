@@ -43,7 +43,7 @@ DECLARE
   l_count NUMBER := 0;
   CURSOR sql_cur IS
               WITH ranked_sql AS (
-            SELECT /*+ &&sq_fact_hints. &&ds_hint. &&section_id..&&report_sequence. */
+            SELECT /*+ &&sq_fact_hints. &&ds_hint. FULL(h.ash) FULL(h.evt) FULL(h.sn) &&section_id..&&report_sequence. */
                    dbid,
                    sql_id,
                    MAX(user_id) user_id,
@@ -52,7 +52,7 @@ DECLARE
                    ROUND(SUM(CASE session_state WHEN 'ON CPU' THEN 1 ELSE 0 END) / 360, 6) cpu_time_hrs,
                    ROUND(SUM(CASE WHEN session_state = 'WAITING' AND wait_class IN ('User I/O', 'System I/O') THEN 1 ELSE 0 END) / 360, 6) io_time_hrs,
                    ROW_NUMBER () OVER (ORDER BY COUNT(*) DESC) rank_num
-              FROM dba_hist_active_sess_history
+              FROM dba_hist_active_sess_history h
              WHERE sql_id IS NOT NULL
                AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
                AND dbid = &&edb360_dbid.
@@ -301,7 +301,7 @@ BEGIN
       */
       put_line('-- update main report6');
       put_line('SPO &&edb360_main_report..html APP;');
-      put_line('PRO <a href="sqld360_&&database_name_short._'||sql_rec.sql_id||'_&&host_name_short._&&edb360_file_time..zip">sqld360(zip)</a>');
+      put_line('PRO <a href="sqld360_&&edb360_dbmod._'||sql_rec.sql_id||'_&&host_hash._&&edb360_file_time..zip">sqld360(zip)</a>');
       put_line('SPO OFF;');
       put_line('-- zip');
       put_line('HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html >> &&edb360_log3..txt');
@@ -342,7 +342,7 @@ BEGIN
       /* remains on original cursor loop above
       put_line('-- update main report6');
       put_line('SPO &&edb360_main_report..html APP;');
-      put_line('PRO <a href="sqld360_&&database_name_short._'||sql_rec.sql_id||'_&&host_name_short._&&edb360_file_time..zip">sqld360(zip)</a>');
+      put_line('PRO <a href="sqld360_&&edb360_dbmod._'||sql_rec.sql_id||'_&&host_hash._&&edb360_file_time..zip">sqld360(zip)</a>');
       put_line('SPO OFF;');
       put_line('-- zip');
       put_line('HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html >> &&edb360_log3..txt');
@@ -416,8 +416,8 @@ BEGIN
   FOR i IN (SELECT operation, remarks FROM plan_table WHERE statement_id = 'SQLD360_SQLID')
   LOOP
     l_count := l_count + 1;
-    put_line('HOS mv '||i.remarks||' sqld360_&&database_name_short._'||i.operation||'_&&host_name_short._&&edb360_file_time..zip >> &&edb360_log3..txt');
-    put_line('HOS zip -m &&edb360_main_filename._&&edb360_file_time. sqld360_&&database_name_short._'||i.operation||'_&&host_name_short._&&edb360_file_time..zip >> &&edb360_log3..txt');
+    put_line('HOS mv '||i.remarks||' sqld360_&&edb360_dbmod._'||i.operation||'_&&host_hash._&&edb360_file_time..zip >> &&edb360_log3..txt');
+    put_line('HOS zip -m &&edb360_main_filename._&&edb360_file_time. sqld360_&&edb360_dbmod._'||i.operation||'_&&host_hash._&&edb360_file_time..zip >> &&edb360_log3..txt');
   END LOOP;
   IF l_count > 0 THEN
     put_line('-- just in case individual file "mv" failed');

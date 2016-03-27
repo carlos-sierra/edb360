@@ -2,6 +2,10 @@
 
 /*************************** ok to modify (if really needed) ****************************/
 
+-- section to report. null means all (default)
+-- report column, or section, or range of columns or range of sections i.e. 3, 3-4, 3a, 3a-4c, 3-4c, 3c-4
+DEF edb360_sections = '';
+
 -- edb360 trace
 DEF sql_trace_level = '1';
 
@@ -76,3 +80,5 @@ DEF edb360_conf_sqld360_top_tc = '0';
 --DEF edb360_conf_incl_xml = 'Y';
 --DEF edb360_conf_incl_text = 'Y';
 --DEF edb360_conf_incl_csv = 'Y';
+
+--DEF edb360_sections = '2a';

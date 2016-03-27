@@ -104,7 +104,7 @@ BEGIN
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        owner, object_name, created, last_ddl_time, status
   FROM dba_objects
- WHERE object_name IN (SELECT limit
+ WHERE object_name IN (SELECT /*+ &&top_level_hints. */ limit
                          FROM dba_profiles
                         WHERE resource_name = ''PASSWORD_VERIFY_FUNCTION'')
  ORDER BY 1,2';

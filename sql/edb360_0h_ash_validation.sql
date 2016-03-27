@@ -1,15 +1,15 @@
 -- ASH validation
-WHENEVER SQLERROR EXIT SQL.SQLCODE;
+--WHENEVER SQLERROR EXIT SQL.SQLCODE;
 SET FEED OFF VER OFF ECHO OFF TIMI OFF TIM OFF TERM ON LIN 120 TRIMS ON PAGES 100;
 PRO
 PRO Last analyzed CBO stats on ASH table and partitions
 PRO
-COL age_days NEW_V age_days FOR A8;
+COL ash_age_days NEW_V ash_age_days FOR A8;
 COL table_or_partition FOR A30;
 COL locked FOR A6;
 COL stale FOR A5;
-SELECT NVL(TO_CHAR(TRUNC(SYSDATE - last_analyzed)), 'UNKNOWN') age_days,
-       TO_CHAR(last_analyzed, 'YYYY-MM-DD/HH24:MI:SS') last_analyzed,
+SELECT NVL(TO_CHAR(TRUNC(SYSDATE - last_analyzed)), 'UNKNOWN') ash_age_days,
+       TO_CHAR(last_analyzed, '&&edb360_date_format.') last_analyzed,
        CASE WHEN partition_name IS NULL THEN table_name ELSE partition_name END table_or_partition,
        blocks, num_rows, stattype_locked locked, stale_stats stale
   FROM dba_tab_statistics
@@ -18,20 +18,20 @@ SELECT NVL(TO_CHAR(TRUNC(SYSDATE - last_analyzed)), 'UNKNOWN') age_days,
  ORDER BY
        last_analyzed NULLS LAST
 /
-PRO
-PRO ASH stats are &&age_days. days old.
-PRO If older than a month then edb360 may take long to execute.
-PRO
-ACC kill_me PROMPT 'hit the "return" key to continue, or enter X to exit this session: '
-SET TERM OFF;
-SELECT 0/0 FROM DUAL WHERE SUBSTR(TRIM(UPPER('&&kill_me.')), 1, 1) = 'X';
-SET TERM ON;
+--PRO
+--PRO ASH stats are &&ash_age_days. days old.
+--PRO If older than a month then edb360 may take long to execute.
+--PRO
+--ACC kill_me PROMPT 'hit the "return" key to continue, or enter X to exit this session: '
+--SET TERM OFF;
+--SELECT 0/0 FROM DUAL WHERE SUBSTR(TRIM(UPPER('&&kill_me.')), 1, 1) = 'X';
+--SET TERM ON;
 PRO
 PRO Last DDL on ASH objects
 PRO
-COL age_days NEW_V age_days FOR A8;
-SELECT NVL(TO_CHAR(TRUNC(SYSDATE - last_ddl_time)), 'UNKNOWN') age_days,
-       TO_CHAR(last_ddl_time, 'YYYY-MM-DD/HH24:MI:SS') last_ddl_time,
+COL ddl_age_days NEW_V ddl_age_days FOR A8;
+SELECT NVL(TO_CHAR(TRUNC(SYSDATE - last_ddl_time)), 'UNKNOWN') ddl_age_days,
+       TO_CHAR(last_ddl_time, '&&edb360_date_format.') last_ddl_time,
        CASE WHEN subobject_name IS NULL THEN object_name ELSE subobject_name END table_or_partition
   FROM dba_objects
  WHERE owner = 'SYS'
@@ -39,15 +39,15 @@ SELECT NVL(TO_CHAR(TRUNC(SYSDATE - last_ddl_time)), 'UNKNOWN') age_days,
  ORDER BY
        last_ddl_time NULLS LAST
 /
-PRO
-PRO Last DDL on ASH objects is &&age_days. days old.
-PRO If older than a month then edb360 may take long to execute.
-PRO Ref: MOS 387914.1 and 1965061.1
-PRO
-ACC kill_me PROMPT 'hit the "return" key to continue, or enter X to exit this session: '
-SET TERM OFF;
-SELECT 0/0 FROM DUAL WHERE SUBSTR(TRIM(UPPER('&&kill_me.')), 1, 1) = 'X';
-SET TERM ON;
+--PRO
+--PRO Last DDL on ASH objects is &&ddl_age_days. days old.
+--PRO If older than a month then edb360 may take long to execute.
+--PRO Ref: MOS 387914.1 and 1965061.1
+--PRO
+--ACC kill_me PROMPT 'hit the "return" key to continue, or enter X to exit this session: '
+--SET TERM OFF;
+--SELECT 0/0 FROM DUAL WHERE SUBSTR(TRIM(UPPER('&&kill_me.')), 1, 1) = 'X';
+--SET TERM ON;
 PRO
 PRO Percent of inserts into an ASH segment
 PRO
@@ -55,7 +55,7 @@ COL percent_of_inserts NEW_V percent_of_inserts FOR A7 HEA '% INS';
 SELECT NVL(TO_CHAR(CASE WHEN s.num_rows > 0 THEN ROUND(100 * m.inserts / s.num_rows) END), 'UNKNOWN') percent_of_inserts,
        m.inserts, s.num_rows, 
        CASE WHEN m.partition_name IS NULL THEN m.table_name ELSE m.partition_name END table_or_partition,
-       TO_CHAR(m.timestamp, 'YYYY-MM-DD/HH24:MI:SS') timestamp
+       TO_CHAR(m.timestamp, '&&edb360_date_format.') timestamp
   FROM dba_tab_modifications m,
        dba_tab_statistics s
  WHERE m.table_owner = 'SYS'
@@ -68,26 +68,43 @@ SELECT NVL(TO_CHAR(CASE WHEN s.num_rows > 0 THEN ROUND(100 * m.inserts / s.num_r
  ORDER BY
        CASE WHEN s.num_rows > 0 THEN ROUND(100 * m.inserts / s.num_rows) END NULLS LAST
 /
-PRO
-PRO Max percent of INSERTs into an ASH segment since stats gathering is &&percent_of_inserts.%
-PRO If over 50% then edb360 may take long to execute.
-PRO
-ACC kill_me PROMPT 'hit the "return" key to continue, or enter X to exit this session: '
-SET TERM OFF;
-SELECT 0/0 FROM DUAL WHERE SUBSTR(TRIM(UPPER('&&kill_me.')), 1, 1) = 'X';
-SET TERM ON;
-WHENEVER SQLERROR CONTINUE;
+--PRO
+--PRO Max percent of INSERTs into an ASH segment since stats gathering is &&percent_of_inserts.%
+--PRO If over 50% then edb360 may take long to execute.
+--PRO
+--ACC kill_me PROMPT 'hit the "return" key to continue, or enter X to exit this session: '
+--SET TERM OFF;
+--SELECT 0/0 FROM DUAL WHERE SUBSTR(TRIM(UPPER('&&kill_me.')), 1, 1) = 'X';
+--SET TERM ON;
+--WHENEVER SQLERROR CONTINUE;
 
 PRO
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 PRO
+PRO ASH validation
+PRO
+PRO ASH stats are &&ash_age_days. days old.
+PRO If older than a month then edb360 may take long to execute.
+PRO
+PRO Last DDL on ASH objects is &&ddl_age_days. days old.
+PRO If older than a month then edb360 may take long to execute.
+PRO Ref: MOS 387914.1 and 1965061.1
+PRO
+PRO Max percent of INSERTs into an ASH segment since stats gathering is &&percent_of_inserts.%
+PRO If over 50% then edb360 may take long to execute.
+PRO
+PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+PRO
+PRO Please wait 30 seconds... (or kill with control-C)
+PRO
+EXEC DBMS_LOCK.SLEEP(30);
 
 -- WRH$_ACTIVE_SESSION_HISTORY Does Not Get Purged Based Upon the Retention Policy (Doc ID 387914.1) 
 SET FEED OFF VER OFF ECHO OFF TIMI OFF TIM OFF TERM ON LIN 120 TRIMS ON PAGES 100;
 
 SELECT 
   partition_name,
-  ROUND(bytes/POWER(2,30), 3) Size_GB
+  ROUND(bytes/POWER(10,9), 3) Size_GB
 FROM dba_segments
 WHERE segment_name='WRH$_ACTIVE_SESSION_HISTORY'
 ORDER BY partition_name;
@@ -129,7 +146,8 @@ PRO
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 PRO
 
-COL age_days CLE;
+COL ash_age_days CLE;
+COL ddl_age_days CLE;
 COL table_or_partition CLE;
 COL locked CLE;
 COL stale CLE;

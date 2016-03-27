@@ -18,7 +18,7 @@ COL sp_minimum_snap_id NEW_V sp_minimum_snap_id NOPRI;
 SELECT NVL(TO_CHAR(MIN(snap_id)), '0') sp_minimum_snap_id 
 FROM &&statspack_user..stats$snapshot s
 WHERE 1=1 
-AND begin_interval_time > TO_DATE('&&edb360_date_from.', 'YYYY-MM-DD');
+AND begin_interval_time > TO_DATE('&&edb360_date_from.', '&&edb360_date_format.');
 SELECT '-1' sp_minimum_snap_id FROM DUAL WHERE TRIM('&&sp_minimum_snap_id.') IS NULL;
 
 DEF sp_maximum_snap_id = '';
@@ -26,7 +26,7 @@ COL sp_maximum_snap_id NEW_V sp_maximum_snap_id NOPRI;
 SELECT NVL(TO_CHAR(MAX(snap_id)), '&&sp_minimum_snap_id.') sp_maximum_snap_id 
 FROM &&statspack_user..stats$snapshot s
 WHERE 1=1
-AND end_interval_time < TO_DATE('&&edb360_date_to.', 'YYYY-MM-DD') + 1;
+AND end_interval_time < TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') + 1;
 SELECT '-1' sp_maximum_snap_id FROM DUAL WHERE TRIM('&&sp_maximum_snap_id.') IS NULL;
 
 DEF skip_if_missing = '--';
@@ -108,7 +108,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        par.instance_name,
        par.memory_target,
        par.memory_max_target,
-       GREATEST(par.memory_target, par.memory_max_target) + (6 * 1024 * 1024) bytes
+       GREATEST(par.memory_target, par.memory_max_target) + (6 * POWER(2,20)) bytes
   FROM par
 ),
 asmm AS (
@@ -122,7 +122,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        par.sga_target,
        par.sga_max_size,
        pga.bytes pga_bytes,
-       GREATEST(sga_target, sga_max_size) + pga.bytes + (6 * 1024 * 1024) bytes
+       GREATEST(sga_target, sga_max_size) + pga.bytes + (6 * POWER(2,20)) bytes
   FROM par,
        pga
  WHERE par.inst_id = pga.inst_id
@@ -138,7 +138,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        sga_max.bytes max_sga,
        pga.bytes max_pga,
        pga.pga_aggregate_target,
-       sga_max.bytes + pga.bytes + (5 * 1024 * 1024) bytes
+       sga_max.bytes + pga.bytes + (5 * POWER(2,20)) bytes
   FROM sga_max,
        pga
  WHERE sga_max.inst_id = pga.inst_id
@@ -452,7 +452,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        par.instance_name,
        par.memory_target,
        par.memory_max_target,
-       GREATEST(par.memory_target, par.memory_max_target) + (6 * 1024 * 1024) bytes
+       GREATEST(par.memory_target, par.memory_max_target) + (6 * POWER(2,20)) bytes
   FROM par
 ),
 asmm AS (
@@ -465,7 +465,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        par.sga_target,
        par.sga_max_size,
        pga.bytes pga_bytes,
-       GREATEST(sga_target, sga_max_size) + pga.bytes + (6 * 1024 * 1024) bytes
+       GREATEST(sga_target, sga_max_size) + pga.bytes + (6 * POWER(2,20)) bytes
   FROM pga,
        par
  WHERE par.dbid = pga.dbid
@@ -481,7 +481,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        sga_max.bytes max_sga,
        pga.bytes max_pga,
        pga.pga_aggregate_target,
-       sga_max.bytes + pga.bytes + (5 * 1024 * 1024) bytes
+       sga_max.bytes + pga.bytes + (5 * POWER(2,20)) bytes
   FROM pga,
        sga_max
  WHERE sga_max.dbid = pga.dbid
@@ -695,11 +695,11 @@ SELECT d.dbid,
        s.file_type,
        s.bytes,
        CASE 
-       WHEN s.bytes > POWER(2,50) THEN ROUND(s.bytes/POWER(2,50),3)||'' P''
-       WHEN s.bytes > POWER(2,40) THEN ROUND(s.bytes/POWER(2,40),3)||'' T''
-       WHEN s.bytes > POWER(2,30) THEN ROUND(s.bytes/POWER(2,30),3)||'' G''
-       WHEN s.bytes > POWER(2,20) THEN ROUND(s.bytes/POWER(2,20),3)||'' M''
-       WHEN s.bytes > POWER(2,10) THEN ROUND(s.bytes/POWER(2,10),3)||'' K''
+       WHEN s.bytes > POWER(10,15) THEN ROUND(s.bytes/POWER(10,15),3)||'' P''
+       WHEN s.bytes > POWER(10,12) THEN ROUND(s.bytes/POWER(10,12),3)||'' T''
+       WHEN s.bytes > POWER(10,9) THEN ROUND(s.bytes/POWER(10,9),3)||'' G''
+       WHEN s.bytes > POWER(10,6) THEN ROUND(s.bytes/POWER(10,6),3)||'' M''
+       WHEN s.bytes > POWER(10,3) THEN ROUND(s.bytes/POWER(10,3),3)||'' K''
        WHEN s.bytes > 0 THEN s.bytes||'' B'' END approx
   FROM v$database d,
        sizes s
@@ -709,11 +709,11 @@ SELECT d.dbid,
        s.file_type,
        s.bytes,
        CASE 
-       WHEN s.bytes > POWER(2,50) THEN ROUND(s.bytes/POWER(2,50),3)||'' P''
-       WHEN s.bytes > POWER(2,40) THEN ROUND(s.bytes/POWER(2,40),3)||'' T''
-       WHEN s.bytes > POWER(2,30) THEN ROUND(s.bytes/POWER(2,30),3)||'' G''
-       WHEN s.bytes > POWER(2,20) THEN ROUND(s.bytes/POWER(2,20),3)||'' M''
-       WHEN s.bytes > POWER(2,10) THEN ROUND(s.bytes/POWER(2,10),3)||'' K''
+       WHEN s.bytes > POWER(10,15) THEN ROUND(s.bytes/POWER(10,15),3)||'' P''
+       WHEN s.bytes > POWER(10,12) THEN ROUND(s.bytes/POWER(10,12),3)||'' T''
+       WHEN s.bytes > POWER(10,9) THEN ROUND(s.bytes/POWER(10,9),3)||'' G''
+       WHEN s.bytes > POWER(10,6) THEN ROUND(s.bytes/POWER(10,6),3)||'' M''
+       WHEN s.bytes > POWER(10,3) THEN ROUND(s.bytes/POWER(10,3),3)||'' K''
        WHEN s.bytes > 0 THEN s.bytes||'' B'' END approx
   FROM v$database d,
        dbsize s
@@ -774,8 +774,8 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        LPAD(ORA_HASH(SYS_CONTEXT(''USERENV'', ''SERVER_HOST''),999999),6,''6'') host_name,
        ROUND((t1.r_reqs - t0.r_reqs) / s1.elapsed_sec) r_iops,
        ROUND((t1.w_reqs - t0.w_reqs) / s1.elapsed_sec) w_iops,
-       ROUND((t1.r_bytes - t0.r_bytes) / 1024 / 1024 / s1.elapsed_sec) r_mbps,
-       ROUND((t1.w_bytes - t0.w_bytes) / 1024 / 1024 / s1.elapsed_sec) w_mbps
+       ROUND((t1.r_bytes - t0.r_bytes) / POWER(10,6) / s1.elapsed_sec) r_mbps,
+       ROUND((t1.w_bytes - t0.w_bytes) / POWER(10,6)/ s1.elapsed_sec) w_mbps
   FROM sysstat_io t0,
        sysstat_io t1,
        snaps s0,

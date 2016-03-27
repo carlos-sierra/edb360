@@ -168,7 +168,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
        SUM(CASE h.event WHEN ''resmgr:cpu quantum'' THEN 1 ELSE 0 END) aas_resmgr_cpu_quantum,
        MIN(s.begin_interval_time) begin_interval_time,
        MAX(s.end_interval_time) end_interval_time      
-  FROM dba_hist_active_sess_history h,
+  FROM dba_hist_active_sess_history h, 
        dba_hist_snapshot s
  WHERE h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND h.dbid = &&edb360_dbid.
@@ -758,9 +758,9 @@ SELECT dbid,
        order_by,
        metric,
        instance_number,
-       ROUND(mem_bytes / POWER(2, 30), 1) mem_gb,
-       ROUND(sga_bytes / POWER(2, 30), 1) sga_gb,
-       ROUND(pga_bytes / POWER(2, 30), 1) pga_gb,
+       ROUND(mem_bytes / POWER(2,30), 1) mem_gb,
+       ROUND(sga_bytes / POWER(2,30), 1) sga_gb,
+       ROUND(pga_bytes / POWER(2,30), 1) pga_gb,
        TO_CHAR(CAST(begin_interval_time AS DATE), ''YYYY-MM-DD HH24:MI'') begin_interval_time,
        TO_CHAR(CAST(end_interval_time AS DATE), ''YYYY-MM-DD HH24:MI'') end_interval_time,
        snap_shots,
@@ -772,9 +772,9 @@ SELECT dbid,
        order_by,
        metric,
        instance_number,
-       ROUND(mem_bytes / POWER(2, 30), 1) mem_gb,
-       ROUND(sga_bytes / POWER(2, 30), 1) sga_gb,
-       ROUND(pga_bytes / POWER(2, 30), 1) pga_gb,
+       ROUND(mem_bytes / POWER(2,30), 1) mem_gb,
+       ROUND(sga_bytes / POWER(2,30), 1) sga_gb,
+       ROUND(pga_bytes / POWER(2,30), 1) pga_gb,
        TO_CHAR(CAST(begin_interval_time AS DATE), ''YYYY-MM-DD HH24:MI'') begin_interval_time,
        TO_CHAR(CAST(end_interval_time AS DATE), ''YYYY-MM-DD HH24:MI'') end_interval_time,
        snap_shots,
@@ -865,7 +865,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        par.instance_name,
        par.memory_target,
        par.memory_max_target,
-       GREATEST(NVL(par.memory_target, 0), NVL(par.memory_max_target, 0)) + (6 * 1024 * 1024) bytes
+       GREATEST(NVL(par.memory_target, 0), NVL(par.memory_max_target, 0)) + (6 * POWER(2,20)) bytes
   FROM par
 ),
 asmm AS (
@@ -879,7 +879,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        par.sga_target,
        par.sga_max_size,
        pga.bytes pga_bytes,
-       GREATEST(NVL(sga_target, 0), NVL(sga_max_size, 0)) + NVL(pga.bytes, 0) + (6 * 1024 * 1024) bytes
+       GREATEST(NVL(sga_target, 0), NVL(sga_max_size, 0)) + NVL(pga.bytes, 0) + (6 * POWER(2,20)) bytes
   FROM par,
        pga
  WHERE par.inst_id = pga.inst_id
@@ -895,7 +895,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        sga_max.bytes max_sga,
        pga.bytes max_pga,
        pga.pga_aggregate_target,
-       sga_max.bytes + pga.bytes + (5 * 1024 * 1024) bytes
+       sga_max.bytes + pga.bytes + (5 * POWER(2,20)) bytes
   FROM sga_max,
        pga
  WHERE sga_max.inst_id = pga.inst_id
@@ -1117,7 +1117,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        par.instance_name,
        par.memory_target,
        par.memory_max_target,
-       GREATEST(NVL(par.memory_target, 0), NVL(par.memory_max_target, 0)) + (6 * 1024 * 1024) bytes
+       GREATEST(NVL(par.memory_target, 0), NVL(par.memory_max_target, 0)) + (6 * POWER(2,20)) bytes
   FROM par
 ),
 asmm AS (
@@ -1130,7 +1130,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        par.sga_target,
        par.sga_max_size,
        pga.bytes pga_bytes,
-       GREATEST(NVL(sga_target, 0), NVL(sga_max_size, 0)) + NVL(pga.bytes, 0) + (6 * 1024 * 1024) bytes
+       GREATEST(NVL(sga_target, 0), NVL(sga_max_size, 0)) + NVL(pga.bytes, 0) + (6 * POWER(2,20)) bytes
   FROM pga,
        par
  WHERE par.dbid = pga.dbid
@@ -1147,7 +1147,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        sga_max.bytes max_sga,
        pga.bytes max_pga,
        pga.pga_aggregate_target,
-       sga_max.bytes + pga.bytes + (5 * 1024 * 1024) bytes
+       sga_max.bytes + pga.bytes + (5 * POWER(2,20)) bytes
   FROM pga,
        sga_max
  WHERE sga_max.dbid = pga.dbid
@@ -1326,9 +1326,9 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        MIN(snap_id) snap_id,
        begin_time,
        end_time,
-       ROUND(SUM(sga_bytes) / POWER(2, 30), 3) sga_gb,
-       ROUND(SUM(pga_bytes) / POWER(2, 30), 3) pga_gb,
-       ROUND(SUM(mem_bytes) / POWER(2, 30), 3) mem_gb,
+       ROUND(SUM(sga_bytes) / POWER(2,30), 3) sga_gb,
+       ROUND(SUM(pga_bytes) / POWER(2,30), 3) pga_gb,
+       ROUND(SUM(mem_bytes) / POWER(2,30), 3) mem_gb,
        SUM(sga_bytes) sga_bytes,
        SUM(pga_bytes) pga_bytes,
        SUM(mem_bytes) mem_bytes,
@@ -1469,13 +1469,13 @@ SELECT d.dbid,
        d.name db_name,
        s.file_type,
        s.bytes,
-       ROUND(s.bytes/POWER(2,30),3) gb,
+       ROUND(s.bytes/POWER(10,9),3) gb,
        CASE 
-       WHEN s.bytes > POWER(2,50) THEN ROUND(s.bytes/POWER(2,50),3)||'' P''
-       WHEN s.bytes > POWER(2,40) THEN ROUND(s.bytes/POWER(2,40),3)||'' T''
-       WHEN s.bytes > POWER(2,30) THEN ROUND(s.bytes/POWER(2,30),3)||'' G''
-       WHEN s.bytes > POWER(2,20) THEN ROUND(s.bytes/POWER(2,20),3)||'' M''
-       WHEN s.bytes > POWER(2,10) THEN ROUND(s.bytes/POWER(2,10),3)||'' K''
+       WHEN s.bytes > POWER(10,15) THEN ROUND(s.bytes/POWER(10,15),3)||'' P''
+       WHEN s.bytes > POWER(10,12) THEN ROUND(s.bytes/POWER(10,12),3)||'' T''
+       WHEN s.bytes > POWER(10,9) THEN ROUND(s.bytes/POWER(10,9),3)||'' G''
+       WHEN s.bytes > POWER(10,6) THEN ROUND(s.bytes/POWER(10,6),3)||'' M''
+       WHEN s.bytes > POWER(10,3) THEN ROUND(s.bytes/POWER(10,3),3)||'' K''
        WHEN s.bytes > 0 THEN s.bytes||'' B'' END display
   FROM v$database d,
        sizes s
@@ -1484,13 +1484,13 @@ SELECT d.dbid,
        d.name db_name,
        s.file_type,
        s.bytes,
-       ROUND(s.bytes/POWER(2,30),3) gb,
+       ROUND(s.bytes/POWER(10,9),3) gb,
        CASE 
-       WHEN s.bytes > POWER(2,50) THEN ROUND(s.bytes/POWER(2,50),3)||'' P''
-       WHEN s.bytes > POWER(2,40) THEN ROUND(s.bytes/POWER(2,40),3)||'' T''
-       WHEN s.bytes > POWER(2,30) THEN ROUND(s.bytes/POWER(2,30),3)||'' G''
-       WHEN s.bytes > POWER(2,20) THEN ROUND(s.bytes/POWER(2,20),3)||'' M''
-       WHEN s.bytes > POWER(2,10) THEN ROUND(s.bytes/POWER(2,10),3)||'' K''
+       WHEN s.bytes > POWER(10,15) THEN ROUND(s.bytes/POWER(10,15),3)||'' P''
+       WHEN s.bytes > POWER(10,12) THEN ROUND(s.bytes/POWER(10,12),3)||'' T''
+       WHEN s.bytes > POWER(10,9) THEN ROUND(s.bytes/POWER(10,9),3)||'' G''
+       WHEN s.bytes > POWER(10,6) THEN ROUND(s.bytes/POWER(10,6),3)||'' M''
+       WHEN s.bytes > POWER(10,3) THEN ROUND(s.bytes/POWER(10,3),3)||'' K''
        WHEN s.bytes > 0 THEN s.bytes||'' B'' END display
   FROM v$database d,
        dbsize s
@@ -1551,10 +1551,10 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
 SELECT MAX(snap_id) snap_id,
        TO_CHAR(end_time - (1/24), ''YYYY-MM-DD HH24:MI'') begin_time,
        TO_CHAR(end_time, ''YYYY-MM-DD HH24:MI'') end_time,
-       ROUND(MAX(all_tablespaces_bytes) / POWER(2, 30), 3),
-       ROUND(MAX(perm_tablespaces_bytes) / POWER(2, 30), 3),
-       ROUND(MAX(undo_tablespaces_bytes) / POWER(2, 30), 3),
-       ROUND(MAX(temp_tablespaces_bytes) / POWER(2, 30), 3),
+       ROUND(MAX(all_tablespaces_bytes) / POWER(10,9), 3),
+       ROUND(MAX(perm_tablespaces_bytes) / POWER(10,9), 3),
+       ROUND(MAX(undo_tablespaces_bytes) / POWER(10,9), 3),
+       ROUND(MAX(temp_tablespaces_bytes) / POWER(10,9), 3),
        0 dummy_05,
        0 dummy_06,
        0 dummy_07,
@@ -1692,33 +1692,33 @@ SELECT dbid,
        ROUND(AVG(w_reqs / elapsed_sec)) w_iops_avg,
        ROUND(100 * SUM(r_bytes) / (SUM(r_bytes) + SUM(w_bytes)), 1) r_bytes_perc,
        ROUND(100 * SUM(w_bytes) / (SUM(r_bytes) + SUM(w_bytes)), 1) w_bytes_perc,
-       ROUND(MAX((r_bytes + w_bytes) / POWER(2, 20) / elapsed_sec)) rw_mbps_peak,
-       ROUND(MAX(r_bytes / POWER(2, 20) / elapsed_sec)) r_mbps_peak,
-       ROUND(MAX(w_bytes / POWER(2, 20) / elapsed_sec)) w_mbps_peak,
-       ROUND(PERCENTILE_DISC(0.999) WITHIN GROUP (ORDER BY (r_bytes + w_bytes) / POWER(2, 20) / elapsed_sec)) rw_mbps_999,
-       ROUND(PERCENTILE_DISC(0.999) WITHIN GROUP (ORDER BY r_bytes / POWER(2, 20) / elapsed_sec)) r_mbps_999,
-       ROUND(PERCENTILE_DISC(0.999) WITHIN GROUP (ORDER BY w_bytes / POWER(2, 20) / elapsed_sec)) w_mbps_999,
-       ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY (r_bytes + w_bytes) / POWER(2, 20) / elapsed_sec)) rw_mbps_99,
-       ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY r_bytes / POWER(2, 20) / elapsed_sec)) r_mbps_99,
-       ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY w_bytes / POWER(2, 20) / elapsed_sec)) w_mbps_99,
-       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY (r_bytes + w_bytes) / POWER(2, 20) / elapsed_sec)) rw_mbps_97,
-       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY r_bytes / POWER(2, 20) / elapsed_sec)) r_mbps_97,
-       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY w_bytes / POWER(2, 20) / elapsed_sec)) w_mbps_97,
-       ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY (r_bytes + w_bytes) / POWER(2, 20) / elapsed_sec)) rw_mbps_95,
-       ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY r_bytes / POWER(2, 20) / elapsed_sec)) r_mbps_95,
-       ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY w_bytes / POWER(2, 20) / elapsed_sec)) w_mbps_95,
-       ROUND(PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY (r_bytes + w_bytes) / POWER(2, 20) / elapsed_sec)) rw_mbps_90,
-       ROUND(PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY r_bytes / POWER(2, 20) / elapsed_sec)) r_mbps_90,
-       ROUND(PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY w_bytes / POWER(2, 20) / elapsed_sec)) w_mbps_90,
-       ROUND(PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY (r_bytes + w_bytes) / POWER(2, 20) / elapsed_sec)) rw_mbps_75,
-       ROUND(PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY r_bytes / POWER(2, 20) / elapsed_sec)) r_mbps_75,
-       ROUND(PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY w_bytes / POWER(2, 20) / elapsed_sec)) w_mbps_75,
-       ROUND(MEDIAN((r_bytes + w_bytes) / POWER(2, 20) / elapsed_sec)) rw_mbps_med,
-       ROUND(MEDIAN(r_bytes / POWER(2, 20) / elapsed_sec)) r_mbps_med,
-       ROUND(MEDIAN(w_bytes / POWER(2, 20) / elapsed_sec)) w_mbps_med,
-       ROUND(AVG((r_bytes + w_bytes) / POWER(2, 20) / elapsed_sec)) rw_mbps_avg,
-       ROUND(AVG(r_bytes / POWER(2, 20) / elapsed_sec)) r_mbps_avg,
-       ROUND(AVG(w_bytes / POWER(2, 20) / elapsed_sec)) w_mbps_avg
+       ROUND(MAX((r_bytes + w_bytes) / POWER(10,6) / elapsed_sec)) rw_mbps_peak,
+       ROUND(MAX(r_bytes / POWER(10,6) / elapsed_sec)) r_mbps_peak,
+       ROUND(MAX(w_bytes / POWER(10,6) / elapsed_sec)) w_mbps_peak,
+       ROUND(PERCENTILE_DISC(0.999) WITHIN GROUP (ORDER BY (r_bytes + w_bytes) / POWER(10,6) / elapsed_sec)) rw_mbps_999,
+       ROUND(PERCENTILE_DISC(0.999) WITHIN GROUP (ORDER BY r_bytes / POWER(10,6) / elapsed_sec)) r_mbps_999,
+       ROUND(PERCENTILE_DISC(0.999) WITHIN GROUP (ORDER BY w_bytes / POWER(10,6) / elapsed_sec)) w_mbps_999,
+       ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY (r_bytes + w_bytes) / POWER(10,6) / elapsed_sec)) rw_mbps_99,
+       ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY r_bytes / POWER(10,6) / elapsed_sec)) r_mbps_99,
+       ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY w_bytes / POWER(10,6) / elapsed_sec)) w_mbps_99,
+       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY (r_bytes + w_bytes) / POWER(10,6) / elapsed_sec)) rw_mbps_97,
+       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY r_bytes / POWER(10,6) / elapsed_sec)) r_mbps_97,
+       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY w_bytes / POWER(10,6) / elapsed_sec)) w_mbps_97,
+       ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY (r_bytes + w_bytes) / POWER(10,6) / elapsed_sec)) rw_mbps_95,
+       ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY r_bytes / POWER(10,6) / elapsed_sec)) r_mbps_95,
+       ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY w_bytes / POWER(10,6) / elapsed_sec)) w_mbps_95,
+       ROUND(PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY (r_bytes + w_bytes) / POWER(10,6) / elapsed_sec)) rw_mbps_90,
+       ROUND(PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY r_bytes / POWER(10,6) / elapsed_sec)) r_mbps_90,
+       ROUND(PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY w_bytes / POWER(10,6) / elapsed_sec)) w_mbps_90,
+       ROUND(PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY (r_bytes + w_bytes) / POWER(10,6) / elapsed_sec)) rw_mbps_75,
+       ROUND(PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY r_bytes / POWER(10,6) / elapsed_sec)) r_mbps_75,
+       ROUND(PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY w_bytes / POWER(10,6) / elapsed_sec)) w_mbps_75,
+       ROUND(MEDIAN((r_bytes + w_bytes) / POWER(10,6) / elapsed_sec)) rw_mbps_med,
+       ROUND(MEDIAN(r_bytes / POWER(10,6) / elapsed_sec)) r_mbps_med,
+       ROUND(MEDIAN(w_bytes / POWER(10,6) / elapsed_sec)) w_mbps_med,
+       ROUND(AVG((r_bytes + w_bytes) / POWER(10,6) / elapsed_sec)) rw_mbps_avg,
+       ROUND(AVG(r_bytes / POWER(10,6) / elapsed_sec)) r_mbps_avg,
+       ROUND(AVG(w_bytes / POWER(10,6) / elapsed_sec)) w_mbps_avg
   FROM io_per_inst_and_snap_id
  WHERE elapsed_sec > 60 -- ignore snaps too close
  GROUP BY
@@ -1762,33 +1762,33 @@ SELECT dbid,
        ROUND(AVG(w_reqs / elapsed_sec)) w_iops_avg,
        ROUND(100 * SUM(r_bytes) / (SUM(r_bytes) + SUM(w_bytes)), 1) r_bytes_perc,
        ROUND(100 * SUM(w_bytes) / (SUM(r_bytes) + SUM(w_bytes)), 1) w_bytes_perc,
-       ROUND(MAX((r_bytes + w_bytes) / POWER(2, 20) / elapsed_sec)) rw_mbps_peak,
-       ROUND(MAX(r_bytes / POWER(2, 20) / elapsed_sec)) r_mbps_peak,
-       ROUND(MAX(w_bytes / POWER(2, 20) / elapsed_sec)) w_mbps_peak,
-       ROUND(PERCENTILE_DISC(0.999) WITHIN GROUP (ORDER BY (r_bytes + w_bytes) / POWER(2, 20) / elapsed_sec)) rw_mbps_999,
-       ROUND(PERCENTILE_DISC(0.999) WITHIN GROUP (ORDER BY r_bytes / POWER(2, 20) / elapsed_sec)) r_mbps_999,
-       ROUND(PERCENTILE_DISC(0.999) WITHIN GROUP (ORDER BY w_bytes / POWER(2, 20) / elapsed_sec)) w_mbps_999,
-       ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY (r_bytes + w_bytes) / POWER(2, 20) / elapsed_sec)) rw_mbps_99,
-       ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY r_bytes / POWER(2, 20) / elapsed_sec)) r_mbps_99,
-       ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY w_bytes / POWER(2, 20) / elapsed_sec)) w_mbps_99,
-       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY (r_bytes + w_bytes) / POWER(2, 20) / elapsed_sec)) rw_mbps_97,
-       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY r_bytes / POWER(2, 20) / elapsed_sec)) r_mbps_97,
-       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY w_bytes / POWER(2, 20) / elapsed_sec)) w_mbps_97,
-       ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY (r_bytes + w_bytes) / POWER(2, 20) / elapsed_sec)) rw_mbps_95,
-       ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY r_bytes / POWER(2, 20) / elapsed_sec)) r_mbps_95,
-       ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY w_bytes / POWER(2, 20) / elapsed_sec)) w_mbps_95,
-       ROUND(PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY (r_bytes + w_bytes) / POWER(2, 20) / elapsed_sec)) rw_mbps_90,
-       ROUND(PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY r_bytes / POWER(2, 20) / elapsed_sec)) r_mbps_90,
-       ROUND(PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY w_bytes / POWER(2, 20) / elapsed_sec)) w_mbps_90,
-       ROUND(PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY (r_bytes + w_bytes) / POWER(2, 20) / elapsed_sec)) rw_mbps_75,
-       ROUND(PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY r_bytes / POWER(2, 20) / elapsed_sec)) r_mbps_75,
-       ROUND(PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY w_bytes / POWER(2, 20) / elapsed_sec)) w_mbps_75,
-       ROUND(MEDIAN((r_bytes + w_bytes) / POWER(2, 20) / elapsed_sec)) rw_mbps_med,
-       ROUND(MEDIAN(r_bytes / POWER(2, 20) / elapsed_sec)) r_mbps_med,
-       ROUND(MEDIAN(w_bytes / POWER(2, 20) / elapsed_sec)) w_mbps_med,
-       ROUND(AVG((r_bytes + w_bytes) / POWER(2, 20) / elapsed_sec)) rw_mbps_avg,
-       ROUND(AVG(r_bytes / POWER(2, 20) / elapsed_sec)) r_mbps_avg,
-       ROUND(AVG(w_bytes / POWER(2, 20) / elapsed_sec)) w_mbps_avg
+       ROUND(MAX((r_bytes + w_bytes) / POWER(10,6) / elapsed_sec)) rw_mbps_peak,
+       ROUND(MAX(r_bytes / POWER(10,6) / elapsed_sec)) r_mbps_peak,
+       ROUND(MAX(w_bytes / POWER(10,6) / elapsed_sec)) w_mbps_peak,
+       ROUND(PERCENTILE_DISC(0.999) WITHIN GROUP (ORDER BY (r_bytes + w_bytes) / POWER(10,6) / elapsed_sec)) rw_mbps_999,
+       ROUND(PERCENTILE_DISC(0.999) WITHIN GROUP (ORDER BY r_bytes / POWER(10,6) / elapsed_sec)) r_mbps_999,
+       ROUND(PERCENTILE_DISC(0.999) WITHIN GROUP (ORDER BY w_bytes / POWER(10,6) / elapsed_sec)) w_mbps_999,
+       ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY (r_bytes + w_bytes) / POWER(10,6) / elapsed_sec)) rw_mbps_99,
+       ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY r_bytes / POWER(10,6) / elapsed_sec)) r_mbps_99,
+       ROUND(PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY w_bytes / POWER(10,6) / elapsed_sec)) w_mbps_99,
+       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY (r_bytes + w_bytes) / POWER(10,6) / elapsed_sec)) rw_mbps_97,
+       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY r_bytes / POWER(10,6) / elapsed_sec)) r_mbps_97,
+       ROUND(PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY w_bytes / POWER(10,6) / elapsed_sec)) w_mbps_97,
+       ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY (r_bytes + w_bytes) / POWER(10,6) / elapsed_sec)) rw_mbps_95,
+       ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY r_bytes / POWER(10,6) / elapsed_sec)) r_mbps_95,
+       ROUND(PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY w_bytes / POWER(10,6) / elapsed_sec)) w_mbps_95,
+       ROUND(PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY (r_bytes + w_bytes) / POWER(10,6) / elapsed_sec)) rw_mbps_90,
+       ROUND(PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY r_bytes / POWER(10,6) / elapsed_sec)) r_mbps_90,
+       ROUND(PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY w_bytes / POWER(10,6) / elapsed_sec)) w_mbps_90,
+       ROUND(PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY (r_bytes + w_bytes) / POWER(10,6) / elapsed_sec)) rw_mbps_75,
+       ROUND(PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY r_bytes / POWER(10,6) / elapsed_sec)) r_mbps_75,
+       ROUND(PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY w_bytes / POWER(10,6) / elapsed_sec)) w_mbps_75,
+       ROUND(MEDIAN((r_bytes + w_bytes) / POWER(10,6) / elapsed_sec)) rw_mbps_med,
+       ROUND(MEDIAN(r_bytes / POWER(10,6) / elapsed_sec)) r_mbps_med,
+       ROUND(MEDIAN(w_bytes / POWER(10,6) / elapsed_sec)) w_mbps_med,
+       ROUND(AVG((r_bytes + w_bytes) / POWER(10,6) / elapsed_sec)) rw_mbps_avg,
+       ROUND(AVG(r_bytes / POWER(10,6) / elapsed_sec)) r_mbps_avg,
+       ROUND(AVG(w_bytes / POWER(10,6) / elapsed_sec)) w_mbps_avg
   FROM io_per_snap_id
  WHERE elapsed_sec > 60 -- ignore snaps too close
  GROUP BY
@@ -1927,9 +1927,9 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        ROUND(MAX((r_reqs + w_reqs) / elapsed_sec)) rw_iops,
        ROUND(MAX(r_reqs / elapsed_sec)) r_iops,
        ROUND(MAX(w_reqs / elapsed_sec)) w_iops,
-       ROUND(MAX((r_bytes + w_bytes) / POWER(2, 20) / elapsed_sec), 3) rw_mbps,
-       ROUND(MAX(r_bytes / POWER(2, 20) / elapsed_sec), 3) r_mbps,
-       ROUND(MAX(w_bytes / POWER(2, 20) / elapsed_sec), 3) w_mbps
+       ROUND(MAX((r_bytes + w_bytes) / POWER(10,6) / elapsed_sec), 3) rw_mbps,
+       ROUND(MAX(r_bytes / POWER(10,6) / elapsed_sec), 3) r_mbps,
+       ROUND(MAX(w_bytes / POWER(10,6) / elapsed_sec), 3) w_mbps
   FROM io_per_inst_and_snap_id
  GROUP BY
        instance_number,
@@ -2346,18 +2346,18 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        ROUND(MAX((r_reqs + w_reqs) / elapsed_sec)) rw_iops,
        ROUND(MAX(r_reqs / elapsed_sec)) r_iops,
        ROUND(MAX(w_reqs / elapsed_sec)) w_iops,
-       ROUND(MAX(r_total_bytes / POWER(2, 20) / elapsed_sec), 3) r_total_mbps,
-       ROUND(MAX(r_appl_bytes / POWER(2, 20) / elapsed_sec), 3) r_appl_mbps,
-       ROUND(MAX(w_total_bytes / POWER(2, 20) / elapsed_sec), 3) w_total_mbps,
-       ROUND(MAX(w_appl_bytes / POWER(2, 20) / elapsed_sec), 3) w_appl_mbps,
-       ROUND(MAX(redo_size / POWER(2, 20) / elapsed_sec), 3) redo_size_mbps,
-       ROUND(MAX(r_total_bytes_single_block_req / POWER(2, 20) / elapsed_sec), 3) r_total_single_block_mbps,
-       ROUND(MAX(r_total_bytes_multi_block_req / POWER(2, 20) / elapsed_sec), 3) r_total_multi_block_mbps,
-       --ROUND(MAX(r_total_bytes_multi_block_req * (r_buffered_multi_block_req / GREATEST(r_total_multi_block_requests, 1)) / POWER(2, 20) / elapsed_sec), 3) r_buffered_multi_block_mbps,
-       --ROUND(MAX(r_total_bytes_multi_block_req * (r_direct / GREATEST(r_total_multi_block_requests, 1)) / POWER(2, 20) / elapsed_sec), 3) r_direct_multi_block_mbps,
-       ROUND(MAX((r_bytes + w_bytes) / POWER(2, 20) / elapsed_sec), 3) rw_mbps,
-       ROUND(MAX(r_bytes / POWER(2, 20) / elapsed_sec), 3) r_mbps,
-       ROUND(MAX(w_bytes / POWER(2, 20) / elapsed_sec), 3) w_mbps
+       ROUND(MAX(r_total_bytes / POWER(10,6) / elapsed_sec), 3) r_total_mbps,
+       ROUND(MAX(r_appl_bytes / POWER(10,6) / elapsed_sec), 3) r_appl_mbps,
+       ROUND(MAX(w_total_bytes / POWER(10,6) / elapsed_sec), 3) w_total_mbps,
+       ROUND(MAX(w_appl_bytes / POWER(10,6) / elapsed_sec), 3) w_appl_mbps,
+       ROUND(MAX(redo_size / POWER(10,6) / elapsed_sec), 3) redo_size_mbps,
+       ROUND(MAX(r_total_bytes_single_block_req / POWER(10,6) / elapsed_sec), 3) r_total_single_block_mbps,
+       ROUND(MAX(r_total_bytes_multi_block_req / POWER(10,6) / elapsed_sec), 3) r_total_multi_block_mbps,
+       --ROUND(MAX(r_total_bytes_multi_block_req * (r_buffered_multi_block_req / GREATEST(r_total_multi_block_requests, 1)) / POWER(10,6) / elapsed_sec), 3) r_buffered_multi_block_mbps,
+       --ROUND(MAX(r_total_bytes_multi_block_req * (r_direct / GREATEST(r_total_multi_block_requests, 1)) / POWER(10,6) / elapsed_sec), 3) r_direct_multi_block_mbps,
+       ROUND(MAX((r_bytes + w_bytes) / POWER(10,6) / elapsed_sec), 3) rw_mbps,
+       ROUND(MAX(r_bytes / POWER(10,6) / elapsed_sec), 3) r_mbps,
+       ROUND(MAX(w_bytes / POWER(10,6) / elapsed_sec), 3) w_mbps
   FROM io_per_inst_and_snap_id
  GROUP BY
        instance_number,

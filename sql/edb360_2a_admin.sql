@@ -1780,9 +1780,10 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        force_matching_signature, COUNT(*) cnt, MIN(sql_id) min_sql_id, MAX(SQL_ID) max_sql_id
   FROM gv$sql
  WHERE force_matching_signature > 0
+   AND UPPER(sql_text) NOT LIKE ''%EDB360%''
  GROUP BY
        force_matching_signature
-HAVING COUNT(*) > 49
+HAVING COUNT(*) > 99
 )
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        DISTINCT lit.cnt, s.force_matching_signature, s.parsing_schema_name owner,
@@ -1791,7 +1792,6 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
   FROM lit, gv$sql s, dba_objects o
  WHERE s.force_matching_signature = lit.force_matching_signature
    AND s.sql_id = lit.min_sql_id
-   AND UPPER(s.sql_text) NOT LIKE ''%EDB360%''
    AND o.object_id(+) = s.program_id
  ORDER BY 
        1 DESC, 2
@@ -1811,9 +1811,10 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        force_matching_signature, COUNT(*) cnt, MIN(sql_id) min_sql_id, MAX(SQL_ID) max_sql_id
   FROM gv$sql
  WHERE force_matching_signature > 0
+   AND UPPER(sql_text) NOT LIKE ''%EDB360%''
  GROUP BY
        force_matching_signature
-HAVING COUNT(*) > 49
+HAVING COUNT(*) > 99
 )
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        DISTINCT s.parsing_schema_name owner, lit.cnt, s.force_matching_signature,
@@ -1822,7 +1823,6 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
   FROM lit, gv$sql s, dba_objects o
  WHERE s.force_matching_signature = lit.force_matching_signature
    AND s.sql_id = lit.min_sql_id
-   AND UPPER(s.sql_text) NOT LIKE ''%EDB360%''
    AND o.object_id(+) = s.program_id
  ORDER BY 
        1, 2 DESC, 3
@@ -1882,7 +1882,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
   FROM gv$sql v1
  GROUP BY
        v1.sql_id
-HAVING COUNT(*) > 49
+HAVING COUNT(*) > 99
  ORDER BY
        child_cursors DESC,
        v1.sql_id
@@ -1891,7 +1891,7 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
-DEF title = 'SQL with over 100 unshared child cursors';
+DEF title = 'SQL with 100 or more unshared child cursors';
 DEF main_table = 'GV$SQL_SHARED_CURSOR';
 BEGIN
   :sql_text := '
@@ -1903,7 +1903,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
   FROM gv$sql_shared_cursor
  GROUP BY
        sql_id
-HAVING COUNT(*) > 100
+HAVING COUNT(*) > 99
 )
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        ns.sql_rank,
@@ -2235,7 +2235,7 @@ DEF main_table = 'V$SYSAUX_OCCUPANTS';
 BEGIN
   :sql_text := '
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
-       v.*, ROUND(v.space_usage_kbytes / POWER(2, 20), 3) space_usage_gbs
+       v.*, ROUND(v.space_usage_kbytes / POWER(10,6), 3) space_usage_gbs
   FROM v$sysaux_occupants v
  ORDER BY 1
 ';
@@ -2371,16 +2371,16 @@ BEGIN
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        s.owner, s.table_owner, COUNT(1)
   FROM sys.dba_synonyms s
- WHERE s.table_owner||''.''||s.table_name NOT IN
-       (select o.owner||''.''||o.object_name
+ WHERE NOT EXISTS
+       (select NULL
           from sys.dba_objects o
          where o.object_name = s.table_name
            and o.owner = s.table_owner)
-   AND s.owner NOT IN (''SYS'',''SYSTEM'')
-   AND s.table_owner NOT IN (''SYS'',''SYSTEM'')
    AND s.db_link IS NULL
-and s.owner not in &&exclusion_list.
-and s.owner not in &&exclusion_list2.
+   AND s.owner NOT IN &&exclusion_list.
+   AND s.owner NOT IN &&exclusion_list2.
+   AND s.table_owner NOT IN &&exclusion_list.
+   AND s.table_owner NOT IN &&exclusion_list2.
  GROUP BY s.owner, s.table_owner
  ORDER BY s.owner';
 END;

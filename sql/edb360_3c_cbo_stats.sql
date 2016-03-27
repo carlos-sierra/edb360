@@ -93,7 +93,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
   FROM dba_tables t
  WHERE table_name NOT LIKE ''BIN$%'' -- bug 9930151 reported by brad peek
    AND NOT EXISTS (
-SELECT NULL
+SELECT /*+ &&top_level_hints. */ NULL
   FROM dba_external_tables e
  WHERE e.owner = t.owner
    AND e.table_name = t.table_name 
@@ -132,7 +132,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
   FROM dba_tab_statistics s
  WHERE table_name NOT LIKE ''BIN$%'' -- bug 9930151 reported by brad peek
    AND NOT EXISTS (
-SELECT NULL
+SELECT /*+ &&top_level_hints. */ NULL
   FROM dba_external_tables e
  WHERE e.owner = s.owner
    AND e.table_name = s.table_name 
@@ -170,7 +170,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
    AND owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
    AND NOT EXISTS (
-SELECT NULL
+SELECT /*+ &&top_level_hints. */ NULL
   FROM dba_external_tables e
  WHERE e.owner = c.owner
    AND e.table_name = c.table_name 

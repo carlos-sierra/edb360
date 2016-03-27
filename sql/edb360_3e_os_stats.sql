@@ -279,8 +279,8 @@ SELECT snap_id,
        ROUND(100 * SUM(os_cpu_wait_time_secs / num_cpus) / SUM(interval_secs), 1) os_cpu_wait_time_perc,
        ROUND(100 * SUM(rsrc_mgr_cpu_wait_time_secs / num_cpus) / SUM(interval_secs), 1) rsrc_mgr_cpu_wait_perc,
        ROUND(100 * SUM(iowait_time_secs / num_cpus) / SUM(interval_secs), 1) iowait_perc,
-       ROUND(SUM(vm_in_bytes) / POWER(2, 30), 3) vm_in_gb,
-       ROUND(SUM(vm_out_bytes) / POWER(2, 30), 3) vm_out_gb,
+       ROUND(SUM(vm_in_bytes) / POWER(2,30), 3) vm_in_gb,
+       ROUND(SUM(vm_out_bytes) / POWER(2,30), 3) vm_out_gb,
        0 dummy_13,
        0 dummy_14,
        0 dummy_15
@@ -494,8 +494,8 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        ROUND(100 * os_cpu_wait_time_secs / num_cpus / interval_secs, 1) os_cpu_wait_time_perc,
        ROUND(100 * rsrc_mgr_cpu_wait_time_secs / num_cpus / interval_secs, 1) rsrc_mgr_cpu_wait_time_perc,
        ROUND(100 * iowait_time_secs / num_cpus / interval_secs, 1) iowait_time_perc,
-       ROUND(vm_in_bytes / POWER(2, 30), 3) vm_in_bytes,
-       ROUND(vm_out_bytes / POWER(2, 30), 3) vm_out_bytes
+       ROUND(vm_in_bytes / POWER(2,30), 3) vm_in_bytes,
+       ROUND(vm_out_bytes / POWER(2,30), 3) vm_out_bytes
   FROM osstat_delta
 ),
 osstat_denorm_3 AS (

@@ -46,7 +46,7 @@ EXEC :get_time_t1 := DBMS_UTILITY.get_time;
 -- update log2
 SET HEA OFF;
 SPO &&edb360_log2..txt APP;
-SELECT TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS')||' , '||
+SELECT TO_CHAR(SYSDATE, '&&edb360_date_format.')||' , '||
        TO_CHAR((:get_time_t1 - :get_time_t0)/100, '999999990.00')||' , rows:'||
        '&&row_num., &&section_id., &&main_table., &&edb360_prev_sql_id., &&edb360_prev_child_number., &&title_no_spaces., xml , &&one_spool_filename..xml'
   FROM DUAL

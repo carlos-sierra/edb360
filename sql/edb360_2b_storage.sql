@@ -104,7 +104,7 @@ WITH
 files AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        tablespace_name,
-       SUM(DECODE(autoextensible, ''YES'', maxbytes, bytes)) / 1024 / 1024 / 1024 total_gb
+       SUM(DECODE(autoextensible, ''YES'', maxbytes, bytes)) / POWER(10,9) total_gb
   FROM dba_data_files
  GROUP BY
        tablespace_name
@@ -112,7 +112,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
 segments AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        tablespace_name,
-       SUM(bytes) / 1024 / 1024 / 1024 used_gb
+       SUM(bytes) / POWER(10,9) used_gb
   FROM dba_segments
  WHERE ''&&edb360_conf_incl_segments.'' = ''Y''
  GROUP BY
@@ -167,12 +167,12 @@ round(B.TOT_GBBYTES_USED,1) TOT_GBBYTES_USED,
 ROUND(100*(B.TOT_GBBYTES_CACHED/A.AVAIL_SIZE_GB),1) PERC_CACHED,
 ROUND(100*(B.TOT_GBBYTES_USED/A.AVAIL_SIZE_GB),1) PERC_USED
 FROM
-(select  tablespace_name,sum(bytes)/POWER(2,30) AVAIL_SIZE_GB
+(select  tablespace_name,sum(bytes)/POWER(10,9) AVAIL_SIZE_GB
 from dba_temp_files
 group by tablespace_name) A,
 (SELECT tablespace_name, 
-SUM(BYTES_CACHED)/POWER(2,30) TOT_GBBYTES_CACHED, 
-SUM(BYTES_USED)/POWER(2,30) TOT_GBBYTES_USED
+SUM(BYTES_CACHED)/POWER(10,9) TOT_GBBYTES_CACHED, 
+SUM(BYTES_USED)/POWER(10,9) TOT_GBBYTES_USED
 FROM GV$TEMP_EXTENT_POOL
 GROUP BY  TABLESPACE_NAME) B
 where a.tablespace_name=b.tablespace_name
@@ -220,7 +220,7 @@ alloc AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        tablespace_name,
        COUNT(*) datafiles,
-       ROUND(SUM(bytes)/1024/1024/1024) gb
+       ROUND(SUM(bytes)/POWER(10,9)) gb
   FROM dba_data_files
  GROUP BY
        tablespace_name
@@ -228,7 +228,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
 free AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        tablespace_name,
-       ROUND(SUM(bytes)/1024/1024/1024) gb
+       ROUND(SUM(bytes)/POWER(10,9)) gb
   FROM dba_free_space
  GROUP BY
        tablespace_name
@@ -388,9 +388,9 @@ BEGIN
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        TO_CHAR(creation_time, ''YYYY-MM'') creation_month,
-       ROUND(SUM(bytes)/1024/1024) mb_growth,
-       ROUND(SUM(bytes)/1024/1024/1024) gb_growth,
-       ROUND(SUM(bytes)/1024/1024/1024/1024, 1) tb_growth
+       ROUND(SUM(bytes)/POWER(10,6)) mb_growth,
+       ROUND(SUM(bytes)/POWER(10,9)) gb_growth,
+       ROUND(SUM(bytes)/POWER(10,12), 1) tb_growth
   FROM v$datafile
  GROUP BY
        TO_CHAR(creation_time, ''YYYY-MM'')
@@ -511,7 +511,7 @@ SELECT v.rank,
        v.extents,
        v.blocks,
        v.bytes,
-       ROUND(v.bytes / 1024 / 1024 / 1024, 3) gb,
+       ROUND(v.bytes / POWER(10,9), 3) gb,
        LPAD(TO_CHAR(v.segments_perc, ''990.000''), 7) segments_perc,
        LPAD(TO_CHAR(v.extents_perc, ''990.000''), 7) extents_perc,
        LPAD(TO_CHAR(v.blocks_perc, ''990.000''), 7) blocks_perc,
@@ -740,11 +740,11 @@ WHERE t.owner = i.table_owner(+)
 )
 SELECT owner,
        table_name,
-       ROUND(bytes / 1024 / 1024 / 1024, 3) total_gb,
-       ROUND(table_bytes / 1024 / 1024 / 1024, 3) table_gb,
-       ROUND(indexes_bytes / 1024 / 1024 / 1024, 3) indexes_gb
+       ROUND(bytes / POWER(10,9), 3) total_gb,
+       ROUND(table_bytes / POWER(10,9), 3) table_gb,
+       ROUND(indexes_bytes / POWER(10,9), 3) indexes_gb
   FROM total
-WHERE bytes > 1024 * 1024 * 1024
+WHERE bytes > POWER(10,9)
 ORDER BY
        bytes DESC NULLS LAST
 ';
@@ -812,15 +812,15 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
 WHERE t.owner = i.table_owner
    AND t.segment_name = i.table_name
    AND i.bytes > t.bytes
-   AND t.bytes > 1024 * 1024 * 10 /* 10M */
+   AND t.bytes > POWER(10,7) /* 10M */
 )
 SELECT table_owner,
        table_name,
-       ROUND(t_bytes / 1024 / 1024 / 1024, 3) table_gb,
+       ROUND(t_bytes / POWER(10,9), 3) table_gb,
        index_owner,
        index_name,
-       ROUND(i_bytes / 1024 / 1024 / 1024, 3) index_gb,
-       ROUND((i_bytes - t_bytes) / 1024 / 1024 / 1024, 3) dif_gb,
+       ROUND(i_bytes / POWER(10,9), 3) index_gb,
+       ROUND((i_bytes - t_bytes) / POWER(10,9), 3) dif_gb,
        ROUND(100 * (i_bytes - t_bytes) / t_bytes, 1) dif_perc
   FROM total
 ORDER BY
@@ -840,18 +840,18 @@ BEGIN
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
    owner, table_name, blocks, block_size, 
-   round(blocks * block_size / 1048576) mb, 
+   round(blocks * block_size / POWER(10,6)) mb, 
    num_rows, avg_row_len, degree, sample_size, last_analyzed
 from 
    dba_tables, 
    dba_tablespaces
 where
    dba_tablespaces.tablespace_name = dba_tables.tablespace_name and
-   (blocks * block_size / 1048576) >= 1024 and
+   (blocks * block_size / POWER(10,6)) >= POWER(10,3) and
    partitioned = ''NO'' and
    owner not in &&exclusion_list. and
    owner not in &&exclusion_list2.
-order by owner, (blocks * block_size / 1048576) desc
+order by owner, (blocks * block_size / POWER(10,6)) desc
 ';
 END;
 /
@@ -864,12 +864,12 @@ BEGIN
 -- http://askdba.org/weblog/2009/07/cleanup-temporary-segments-in-permanent-tablespace/
 select /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
 tablespace_name, owner, segment_name,
-round(sum(bytes/power(2, 20))) mega_bytes 
+round(sum(bytes/POWER(10,6))) mega_bytes 
 from dba_segments
 where ''&&edb360_conf_incl_segments.'' = ''Y''
 and segment_type = ''TEMPORARY'' 
 group by tablespace_name, owner, segment_name
-having round(sum(bytes/power(2, 20))) > 0
+having round(sum(bytes/POWER(10,6))) > 0
 order by tablespace_name, owner, segment_name
 ';
 END;
@@ -940,14 +940,14 @@ BEGIN
   :sql_text := '
 -- requested by Dimas Chbane
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
-       ROUND(SUM(r.space * t.block_size) / POWER(2, 20)) gb_space,
+       ROUND(SUM(r.space * t.block_size) / POWER(10,6)) gb_space,
        r.owner
   FROM dba_recyclebin r,
        dba_tablespaces t
  WHERE r.ts_name = t.tablespace_name
  GROUP BY
        r.owner
-HAVING ROUND(SUM(r.space * t.block_size) / POWER(2, 20)) > 0
+HAVING ROUND(SUM(r.space * t.block_size) / POWER(10,6)) > 0
  ORDER BY
        1 DESC, 2
 ';
@@ -961,20 +961,20 @@ BEGIN
   :sql_text := '
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
-   (round(blocks * block_size / 1048576)) - 
-      (round(num_rows * avg_row_len * (1+(pct_free/100)) * decode (compression,''ENABLED'',0.50,1.00) / 1048576)) over_allocated_mb,
+   (round(blocks * block_size / POWER(10,6))) - 
+      (round(num_rows * avg_row_len * (1+(pct_free/100)) * decode (compression,''ENABLED'',0.50,1.00) / POWER(10,6))) over_allocated_mb,
    owner, table_name, blocks, block_size, pct_free,
-   round(blocks * block_size / 1048576) actual_mb,
-   round(num_rows * avg_row_len * (1+(pct_free/100)) * decode (compression,''ENABLED'',0.50,1.00) / 1048576) estimate_mb,
+   round(blocks * block_size / POWER(10,6)) actual_mb,
+   round(num_rows * avg_row_len * (1+(pct_free/100)) * decode (compression,''ENABLED'',0.50,1.00) / POWER(10,6)) estimate_mb,
    num_rows, avg_row_len, degree, compression, sample_size, to_char(last_analyzed,''MM/DD/RRRR'') last_analyzed
 from
    dba_tables,
    dba_tablespaces
 where
    dba_tablespaces.tablespace_name = dba_tables.tablespace_name and
-   (blocks * block_size / 1048576) >= 10 and
-   abs(round(blocks * block_size / 1048576) - round(num_rows * avg_row_len * (1+(pct_free/100)) * decode (compression,''ENABLED'',0.50,1.00) / 1048576)) / 
-      (round(blocks * block_size / 1048576)) >= 0.25 and
+   (blocks * block_size / POWER(10,6)) >= 10 and
+   abs(round(blocks * block_size / POWER(10,6)) - round(num_rows * avg_row_len * (1+(pct_free/100)) * decode (compression,''ENABLED'',0.50,1.00) / POWER(10,6))) / 
+      (round(blocks * block_size / POWER(10,6))) >= 0.25 and
    owner not in &&exclusion_list. and
    owner not in &&exclusion_list2.
 order by 
@@ -1074,7 +1074,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
    AND owner NOT IN &&exclusion_list. -- exclude non-application schemas
    AND owner NOT IN &&exclusion_list2. -- exclude more non-application schemas
    AND segment_type LIKE ''INDEX%''
-HAVING SUM(bytes) > POWER(2, 20) -- only indexes with actual size > 1 MB
+HAVING SUM(bytes) > POWER(10,6) -- only indexes with actual size > 1 MB
  GROUP BY
        owner,
        segment_name
@@ -1088,18 +1088,18 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        i.object_name
   FROM indexes i,
        segments s
- WHERE i.estimated_bytes > POWER(2, 20) -- only indexes with estimated size > 1 MB
+ WHERE i.estimated_bytes > POWER(10,6) -- only indexes with estimated size > 1 MB
    AND s.owner(+) = i.object_owner
    AND s.segment_name(+) = i.object_name
 )
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
-       ROUND(actual_minus_estimated / POWER(2, 20)) actual_minus_estimated,
-       ROUND(actual_bytes / POWER(2, 20)) actual_mb,
-       ROUND(estimated_bytes / POWER(2, 20)) estimated_mb,
+       ROUND(actual_minus_estimated / POWER(10,6)) actual_minus_estimated,
+       ROUND(actual_bytes / POWER(10,6)) actual_mb,
+       ROUND(estimated_bytes / POWER(10,6)) estimated_mb,
        object_owner owner,
        object_name index_name
   FROM list_bytes
- WHERE actual_minus_estimated > POWER(2, 20) -- only differences > 1 MB
+ WHERE actual_minus_estimated > POWER(10,6) -- only differences > 1 MB
  ORDER BY
        1 DESC,
        object_owner,

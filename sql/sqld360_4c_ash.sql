@@ -70,63 +70,63 @@ END;
 
 DEF skip_pch='';
 DEF skip_all = '&&is_single_instance.';
-DEF title = 'Number of executions per PHV for Cluster';
+DEF title = 'Number of Executions per PHV for Cluster';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', 'position');
 @@&&skip_all.&&skip_diagnostics.sqld360_9a_pre_one.sql
 
 DEF skip_pch='';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 1;
-DEF title = 'Number of executions per PHV for Instance 1';
+DEF title = 'Number of Executions per PHV for Instance 1';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '1');
 @@&&skip_all.&&skip_diagnostics.sqld360_9a_pre_one.sql
 
 DEF skip_pch='';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 2;
-DEF title = 'Number of executions per PHV for Instance 2';
+DEF title = 'Number of Executions per PHV for Instance 2';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '2');
 @@&&skip_all.&&skip_diagnostics.sqld360_9a_pre_one.sql
 
 DEF skip_pch='';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 3;
-DEF title = 'Number of executions per PHV for Instance 3';
+DEF title = 'Number of Executions per PHV for Instance 3';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '3');
 @@&&skip_all.&&skip_diagnostics.sqld360_9a_pre_one.sql
 
 DEF skip_pch='';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 4;
-DEF title = 'Number of executions per PHV for Instance 4';
+DEF title = 'Number of Executions per PHV for Instance 4';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '4');
 @@&&skip_all.&&skip_diagnostics.sqld360_9a_pre_one.sql
 
 DEF skip_pch='';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 5;
-DEF title = 'Number of executions per PHV for Instance 5';
+DEF title = 'Number of Executions per PHV for Instance 5';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '5');
 @@&&skip_all.&&skip_diagnostics.sqld360_9a_pre_one.sql
 
 DEF skip_pch='';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 6;
-DEF title = 'Number of executions per PHV for Instance 6';
+DEF title = 'Number of Executions per PHV for Instance 6';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '6');
 @@&&skip_all.&&skip_diagnostics.sqld360_9a_pre_one.sql
 
 DEF skip_pch='';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 7;
-DEF title = 'Number of executions per PHV for Instance 7';
+DEF title = 'Number of Executions per PHV for Instance 7';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '7');
 @@&&skip_all.&&skip_diagnostics.sqld360_9a_pre_one.sql
 
 DEF skip_pch='';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 8;
-DEF title = 'Number of executions per PHV for Instance 8';
+DEF title = 'Number of Executions per PHV for Instance 8';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '8');
 @@&&skip_all.&&skip_diagnostics.sqld360_9a_pre_one.sql
 
@@ -609,7 +609,7 @@ SELECT 0 snap_id,
                TRUNC(MEDIAN(cpu_time),3) med_cpu_time,
                TRUNC(PERCENTILE_DISC(0.&&sqld360_conf_avg_et_percth.) WITHIN GROUP (ORDER BY cpu_time),3) percth_cpu_time,
                TRUNC(AVG(db_time),3) avg_db_time,
-               TRUNC(MEDIAN(db_time) med_db_time,
+               TRUNC(MEDIAN(db_time),3) med_db_time,
                TRUNC(PERCENTILE_DISC(0.&&sqld360_conf_avg_et_percth.) WITHIN GROUP (ORDER BY db_time),3) percth_db_time
           FROM (SELECT TO_DATE(SUBSTR(distribution,1,12),''YYYYMMDDHH24MI'') start_time,
                        NVL(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'','',1,3)+1,INSTR(partition_stop,'','',1,4)-INSTR(partition_stop,'','',1,3)-1)),position)||''-''|| 
@@ -1580,12 +1580,12 @@ DEF skip_lch = 'Y';
 
 BEGIN
   :sql_text_backup := '
-SELECT inst_id, session_id, session_serial#, MIN(sample_time) streak_start, MAX(sample_time) streak_end, COUNT(*) streak_num_samples
-  FROM (SELECT inst_id, session_id, session_serial#, sample_time, nvl(start_of_streak, 
+SELECT inst_id, session_id, session_serial#, COUNT(DISTINCT event) num_events, MIN(event) min_event, MAX(event) max_event, MIN(sample_time) streak_start, MAX(sample_time) streak_end, COUNT(*) streak_num_samples
+  FROM (SELECT inst_id, session_id, session_serial#, sample_time, event, nvl(start_of_streak, 
                MAX(start_of_streak) OVER (PARTITION BY inst_id, session_id, session_serial# ORDER BY sample_time ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING)) start_of_streak
-          FROM (SELECT inst_id, session_id, session_serial#, sample_time, 
+          FROM (SELECT inst_id, session_id, session_serial#, sample_time, event, 
                        CASE WHEN diff_in_sample IS NULL OR diff_in_sample > 1 THEN sample_time ELSE NULL END start_of_streak
-                  FROM (SELECT position inst_id, cpu_cost session_id, io_cost session_serial#, timestamp sample_time, 
+                  FROM (SELECT position inst_id, cpu_cost session_id, io_cost session_serial#, timestamp sample_time, object_node event,
                                TRUNC((timestamp-LAG(timestamp) OVER (PARTITION BY position, cpu_cost, io_cost ORDER BY timestamp))*86400) diff_in_sample
                           FROM plan_table
                          WHERE remarks = ''&&sqld360_sqlid.''
@@ -1665,12 +1665,12 @@ DEF skip_lch = 'Y';
 
 BEGIN
   :sql_text_backup := '
-SELECT inst_id, session_id, session_serial#, MIN(sample_time) streak_start, MAX(sample_time) streak_end, COUNT(*) streak_num_samples
-  FROM (SELECT inst_id, session_id, session_serial#, sample_time, nvl(start_of_streak, 
+SELECT inst_id, session_id, session_serial#, COUNT(DISTINCT event) num_events, MIN(event) min_event, MAX(event) max_event, MIN(sample_time) streak_start, MAX(sample_time) streak_end, COUNT(*) streak_num_samples
+  FROM (SELECT inst_id, session_id, session_serial#, sample_time, event, nvl(start_of_streak, 
                MAX(start_of_streak) OVER (PARTITION BY inst_id, session_id, session_serial# ORDER BY sample_time ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING)) start_of_streak
-          FROM (SELECT inst_id, session_id, session_serial#, sample_time, 
+          FROM (SELECT inst_id, session_id, session_serial#, sample_time, event,
                        CASE WHEN diff_in_sample IS NULL OR diff_in_sample > 10 THEN sample_time ELSE NULL END start_of_streak
-                  FROM (SELECT position inst_id, cpu_cost session_id, io_cost session_serial#, timestamp sample_time, 
+                  FROM (SELECT position inst_id, cpu_cost session_id, io_cost session_serial#, timestamp sample_time, object_node event,
                                TRUNC((timestamp-LAG(timestamp) OVER (PARTITION BY position, cpu_cost, io_cost ORDER BY timestamp))*86400) diff_in_sample
                           FROM plan_table
                          WHERE remarks = ''&&sqld360_sqlid.''

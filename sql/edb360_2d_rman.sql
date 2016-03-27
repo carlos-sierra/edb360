@@ -282,9 +282,9 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''21'', 1, 0)) h21,
        SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''22'', 1, 0)) h22,
        SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''23'', 1, 0)) h23,
-       ROUND(SUM(blocks * block_size) / POWER(2, 30), 1) TOT_GB,
+       ROUND(SUM(blocks * block_size) / POWER(10,9), 1) TOT_GB,
        COUNT(*) cnt,
-       ROUND(SUM(blocks * block_size) / POWER(2, 30) / COUNT(*), 1) AVG_GB
+       ROUND(SUM(blocks * block_size) / POWER(10,9) / COUNT(*), 1) AVG_GB
   FROM log
  GROUP BY
        thread#,
@@ -365,9 +365,9 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''21'', 1, 0)) h21,
        SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''22'', 1, 0)) h22,
        SUM(DECODE(TO_CHAR(first_time, ''HH24''), ''23'', 1, 0)) h23,
-       ROUND(SUM(blocks * block_size) / POWER(2, 30), 1) TOT_GB,
+       ROUND(SUM(blocks * block_size) / POWER(10,9), 1) TOT_GB,
        COUNT(*) cnt,
-       ROUND(SUM(blocks * block_size) / POWER(2, 30) / COUNT(*), 1) AVG_GB
+       ROUND(SUM(blocks * block_size) / POWER(10,9) / COUNT(*), 1) AVG_GB
   FROM log
  GROUP BY
        TRUNC(first_time)

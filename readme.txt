@@ -39,27 +39,15 @@ Notes
 
    note: this method requires Oracle Tuning pack license in all databases in such host.
 
-2. If you need to execute only a portion of edb360 (i.e. a column, section or range) use 
-   these commands. Notice hidden parameter _o_release can be set to one section (i.e. 3b),
-   one column (i.e. 3), a range of sections (i.e. 5c-6b) or range of columns (i.e. 5-7):
-
-   SQL> DEF _o_release = '3b';
-   SQL> @edb360.sql T
-   
-   SQL> DEF _o_release = '3b-7z';
-   SQL> @edb360.sql T
-
-   note: valid column range for hidden parameter _o_release is 1 to 7. 
-
-3. If you need to generate edb360 for a range of dates other than last 31 days; or change
+2. If you need to generate edb360 for a range of dates other than last 31 days; or change
    default "working hours" between 7:30AM and 7:30PM; or suppress an output format such as
    text or csv; modify then file edb360_00_config.sql (back it up first).
    
-4. How to find the license pack option that you have installed?
+3. How to find the license pack option that you have installed?
 
    select value from v$parameter where name = 'control_management_pack_access';
 
-5. How to find how many days are kept in the AWR repository?
+4. How to find how many days are kept in the AWR repository?
 
    select retention from DBA_HIST_WR_CONTROL;
 

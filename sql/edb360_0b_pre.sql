@@ -1,5 +1,5 @@
-DEF edb360_vYYNN = 'v1605';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2016-03-13)';
+DEF edb360_vYYNN = 'v1606';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2016-03-27)';
 DEF edb360_copyright = ' (c) 2016';
 
 -- parameters
@@ -70,21 +70,26 @@ SELECT TO_CHAR(TO_DATE('&&edb360_conf_date_to.', 'YYYY-MM-DD') - TO_DATE('&&edb3
 SELECT '0' history_days FROM DUAL WHERE NVL(TRIM('&&diagnostics_pack.'), 'N') = 'N';
 SET TERM OFF;
 
+-- Dates format
+DEF edb360_date_format = 'YYYY-MM-DD"T"HH24:MI:SS';
+DEF edb360_timestamp_format = 'YYYY-MM-DD"T"HH24:MI:SS.FF';
+DEF edb360_timestamp_tz_format = 'YYYY-MM-DD"T"HH24:MI:SS.FFTZH:TZM';
+
 COL edb360_date_from NEW_V edb360_date_from;
 COL edb360_date_to NEW_V edb360_date_to;
-SELECT CASE '&&edb360_conf_date_from.' WHEN 'YYYY-MM-DD' THEN TO_CHAR(SYSDATE - &&history_days., 'YYYY-MM-DD') ELSE '&&edb360_conf_date_from.' END edb360_date_from FROM DUAL;
-SELECT CASE '&&edb360_conf_date_to.' WHEN 'YYYY-MM-DD' THEN TO_CHAR(SYSDATE + 1, 'YYYY-MM-DD') ELSE '&&edb360_conf_date_to.' END edb360_date_to FROM DUAL;
+SELECT CASE '&&edb360_conf_date_from.' WHEN 'YYYY-MM-DD' THEN TO_CHAR(SYSDATE - &&history_days., '&&edb360_date_format.') ELSE '&&edb360_conf_date_from.T00:00:00' END edb360_date_from FROM DUAL;
+SELECT CASE '&&edb360_conf_date_to.' WHEN 'YYYY-MM-DD' THEN TO_CHAR(SYSDATE, '&&edb360_date_format.') ELSE '&&edb360_conf_date_to.T23:59:59' END edb360_date_to FROM DUAL;
 
 VAR hist_work_days NUMBER;
 VAR hist_days NUMBER;
 BEGIN
-  :hist_days := TO_DATE('&&edb360_date_to.', 'YYYY-MM-DD') - TO_DATE('&&edb360_date_from.', 'YYYY-MM-DD') + 1;
+  :hist_days := ROUND(TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - TO_DATE('&&edb360_date_from.', '&&edb360_date_format.'));
   :hist_work_days := 0;
   FOR i IN 0 .. :hist_days - 1
   LOOP
-    IF TO_CHAR(TO_DATE('&&edb360_date_from.', 'YYYY-MM-DD') + i, 'D') BETWEEN TO_NUMBER('&&edb360_conf_work_day_from.') AND TO_NUMBER('&&edb360_conf_work_day_to.') THEN
+    IF TO_CHAR(TO_DATE('&&edb360_date_from.', '&&edb360_date_format.') + i, 'D') BETWEEN TO_NUMBER('&&edb360_conf_work_day_from.') AND TO_NUMBER('&&edb360_conf_work_day_to.') THEN
       :hist_work_days := :hist_work_days + 1;
-      dbms_output.put_line((TO_DATE('&&edb360_date_from.', 'YYYY-MM-DD') + i)||' '||:hist_work_days);
+      dbms_output.put_line((TO_DATE('&&edb360_date_from.', '&&edb360_date_format.') + i)||' '||:hist_work_days);
     END IF;
   END LOOP;
 END;
@@ -94,31 +99,31 @@ PRINT :hist_days;
 COL hist_work_days NEW_V hist_work_days;
 SELECT TO_CHAR(:hist_work_days) hist_work_days FROM DUAL;
 
--- hidden parameter _o_release: report column, or section, or range of columns or range of sections i.e. 3, 3-4, 3a, 3a-4c, 3-4c, 3c-4
+-- hidden parameter edb360_sections: report column, or section, or range of columns or range of sections i.e. 3, 3-4, 3a, 3a-4c, 3-4c, 3c-4
 VAR edb360_sec_from VARCHAR2(2);
 VAR edb360_sec_to   VARCHAR2(2);
 BEGIN
-  IF LENGTH('&&_o_release.') > 5 THEN -- no hidden parameter passed
+  IF LENGTH('&&edb360_sections.') > 5 THEN -- no hidden parameter passed
     :edb360_sec_from := '1a';
     :edb360_sec_to := '9z';
-  ELSIF LENGTH('&&_o_release.') = 5 AND SUBSTR('&&_o_release.', 3, 1) = '-' AND LOWER(SUBSTR('&&_o_release.', 1, 2)) BETWEEN '1a' AND '9z' AND LOWER(SUBSTR('&&_o_release.', 4, 2)) BETWEEN '1a' AND '9z' THEN -- i.e. 1a-7b
-    :edb360_sec_from := LOWER(SUBSTR('&&_o_release.', 1, 2));
-    :edb360_sec_to := LOWER(SUBSTR('&&_o_release.', 4, 2));
-  ELSIF LENGTH('&&_o_release.') = 4 AND SUBSTR('&&_o_release.', 3, 1) = '-' AND LOWER(SUBSTR('&&_o_release.', 1, 2)) BETWEEN '1a' AND '9z' AND LOWER(SUBSTR('&&_o_release.', 4, 1)) BETWEEN '1' AND '9' THEN -- i.e. 3b-7
-    :edb360_sec_from := LOWER(SUBSTR('&&_o_release.', 1, 2));
-    :edb360_sec_to := LOWER(SUBSTR('&&_o_release.', 4, 1))||'z';
-  ELSIF LENGTH('&&_o_release.') = 4 AND SUBSTR('&&_o_release.', 2, 1) = '-' AND LOWER(SUBSTR('&&_o_release.', 1, 1)) BETWEEN '1' AND '9' AND LOWER(SUBSTR('&&_o_release.', 3, 2)) BETWEEN '1a' AND '9z' THEN -- i.e. 3-5b
-    :edb360_sec_from := LOWER(SUBSTR('&&_o_release.', 1, 1))||'a';
-    :edb360_sec_to := LOWER(SUBSTR('&&_o_release.', 3, 2));
-  ELSIF LENGTH('&&_o_release.') = 3 AND SUBSTR('&&_o_release.', 2, 1) = '-' AND LOWER(SUBSTR('&&_o_release.', 1, 1)) BETWEEN '1' AND '9' AND LOWER(SUBSTR('&&_o_release.', 3, 1)) BETWEEN '1' AND '9' THEN -- i.e. 3-5
-    :edb360_sec_from := LOWER(SUBSTR('&&_o_release.', 1, 1))||'a';
-    :edb360_sec_to := LOWER(SUBSTR('&&_o_release.', 3, 1))||'z';
-  ELSIF LENGTH('&&_o_release.') = 2 AND LOWER(SUBSTR('&&_o_release.', 1, 2)) BETWEEN '1a' AND '9z' THEN -- i.e. 7b
-    :edb360_sec_from := LOWER(SUBSTR('&&_o_release.', 1, 2));
+  ELSIF LENGTH('&&edb360_sections.') = 5 AND SUBSTR('&&edb360_sections.', 3, 1) = '-' AND LOWER(SUBSTR('&&edb360_sections.', 1, 2)) BETWEEN '1a' AND '9z' AND LOWER(SUBSTR('&&edb360_sections.', 4, 2)) BETWEEN '1a' AND '9z' THEN -- i.e. 1a-7b
+    :edb360_sec_from := LOWER(SUBSTR('&&edb360_sections.', 1, 2));
+    :edb360_sec_to := LOWER(SUBSTR('&&edb360_sections.', 4, 2));
+  ELSIF LENGTH('&&edb360_sections.') = 4 AND SUBSTR('&&edb360_sections.', 3, 1) = '-' AND LOWER(SUBSTR('&&edb360_sections.', 1, 2)) BETWEEN '1a' AND '9z' AND LOWER(SUBSTR('&&edb360_sections.', 4, 1)) BETWEEN '1' AND '9' THEN -- i.e. 3b-7
+    :edb360_sec_from := LOWER(SUBSTR('&&edb360_sections.', 1, 2));
+    :edb360_sec_to := LOWER(SUBSTR('&&edb360_sections.', 4, 1))||'z';
+  ELSIF LENGTH('&&edb360_sections.') = 4 AND SUBSTR('&&edb360_sections.', 2, 1) = '-' AND LOWER(SUBSTR('&&edb360_sections.', 1, 1)) BETWEEN '1' AND '9' AND LOWER(SUBSTR('&&edb360_sections.', 3, 2)) BETWEEN '1a' AND '9z' THEN -- i.e. 3-5b
+    :edb360_sec_from := LOWER(SUBSTR('&&edb360_sections.', 1, 1))||'a';
+    :edb360_sec_to := LOWER(SUBSTR('&&edb360_sections.', 3, 2));
+  ELSIF LENGTH('&&edb360_sections.') = 3 AND SUBSTR('&&edb360_sections.', 2, 1) = '-' AND LOWER(SUBSTR('&&edb360_sections.', 1, 1)) BETWEEN '1' AND '9' AND LOWER(SUBSTR('&&edb360_sections.', 3, 1)) BETWEEN '1' AND '9' THEN -- i.e. 3-5
+    :edb360_sec_from := LOWER(SUBSTR('&&edb360_sections.', 1, 1))||'a';
+    :edb360_sec_to := LOWER(SUBSTR('&&edb360_sections.', 3, 1))||'z';
+  ELSIF LENGTH('&&edb360_sections.') = 2 AND LOWER(SUBSTR('&&edb360_sections.', 1, 2)) BETWEEN '1a' AND '9z' THEN -- i.e. 7b
+    :edb360_sec_from := LOWER(SUBSTR('&&edb360_sections.', 1, 2));
     :edb360_sec_to := :edb360_sec_from;
-  ELSIF LENGTH('&&_o_release.') = 1 AND LOWER(SUBSTR('&&_o_release.', 1, 1)) BETWEEN '1' AND '9' THEN -- i.e. 7
-    :edb360_sec_from := LOWER(SUBSTR('&&_o_release.', 1, 1))||'a';
-    :edb360_sec_to := LOWER(SUBSTR('&&_o_release.', 1, 1))||'z';
+  ELSIF LENGTH('&&edb360_sections.') = 1 AND LOWER(SUBSTR('&&edb360_sections.', 1, 1)) BETWEEN '1' AND '9' THEN -- i.e. 7
+    :edb360_sec_from := LOWER(SUBSTR('&&edb360_sections.', 1, 1))||'a';
+    :edb360_sec_to := LOWER(SUBSTR('&&edb360_sections.', 1, 1))||'z';
   ELSE -- wrong use of hidden parameter
     :edb360_sec_from := '1a';
     :edb360_sec_to := '9z';
@@ -314,9 +319,9 @@ ALTER SESSION SET "_serial_direct_read" = ALWAYS;
 ALTER SESSION SET "_small_table_threshold" = 1001;
 -- nls
 ALTER SESSION SET NLS_NUMERIC_CHARACTERS = ".,";
-ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD/HH24:MI:SS';
-ALTER SESSION SET NLS_TIMESTAMP_FORMAT = 'YYYY-MM-DD/HH24:MI:SS.FF';
-ALTER SESSION SET NLS_TIMESTAMP_TZ_FORMAT = 'YYYY-MM-DD/HH24:MI:SS.FF TZH:TZM';
+ALTER SESSION SET NLS_DATE_FORMAT = '&&edb360_date_format.';
+ALTER SESSION SET NLS_TIMESTAMP_FORMAT = '&&edb360_timestamp_format.';
+ALTER SESSION SET NLS_TIMESTAMP_TZ_FORMAT = '&&edb360_timestamp_tz_format.';
 -- adding to prevent slow access to ASH with non default NLS settings
 ALTER SESSION SET NLS_SORT = 'BINARY';
 ALTER SESSION SET NLS_COMP = 'BINARY';
@@ -355,15 +360,15 @@ ALTER SESSION SET TRACEFILE_IDENTIFIER = "&&edb360_tracefile_identifier.";
 --ALTER SESSION SET STATISTICS_LEVEL = 'ALL';
 ALTER SESSION SET EVENTS '10046 TRACE NAME CONTEXT FOREVER, LEVEL &&sql_trace_level.';
 
--- esp collection
-@&&skip_diagnostics.sql/esp_master.sql
+-- esp collection. note: skip if executing for one section
+@&&skip_diagnostics.&&edb360_sections.sql/esp_master.sql
 SET TERM OFF; 
 
 -- nls (2nd time as esp may change them)
 ALTER SESSION SET NLS_NUMERIC_CHARACTERS = ".,";
-ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD/HH24:MI:SS';
-ALTER SESSION SET NLS_TIMESTAMP_FORMAT = 'YYYY-MM-DD/HH24:MI:SS.FF';
-ALTER SESSION SET NLS_TIMESTAMP_TZ_FORMAT = 'YYYY-MM-DD/HH24:MI:SS.FF TZH:TZM';
+ALTER SESSION SET NLS_DATE_FORMAT = '&&edb360_date_format.';
+ALTER SESSION SET NLS_TIMESTAMP_FORMAT = '&&edb360_timestamp_format.';
+ALTER SESSION SET NLS_TIMESTAMP_TZ_FORMAT = '&&edb360_timestamp_tz_format.';
 
 -- initialization
 --COL row_num NEW_V row_num FOR 9999999 HEA '#' PRI;
@@ -408,10 +413,10 @@ COL between_times NEW_V between_times;
 COL between_dates NEW_V between_dates;
 SELECT ', between &&edb360_date_from. and &&edb360_date_to.' between_dates FROM DUAL;
 COL minimum_snap_id NEW_V minimum_snap_id;
-SELECT NVL(TO_CHAR(MIN(snap_id)), '0') minimum_snap_id FROM dba_hist_snapshot WHERE '&&diagnostics_pack.' = 'Y' AND dbid = &&edb360_dbid. AND begin_interval_time > TO_DATE('&&edb360_date_from.', 'YYYY-MM-DD');
+SELECT NVL(TO_CHAR(MIN(snap_id)), '0') minimum_snap_id FROM dba_hist_snapshot WHERE '&&diagnostics_pack.' = 'Y' AND dbid = &&edb360_dbid. AND begin_interval_time > TO_DATE('&&edb360_date_from.', '&&edb360_date_format.');
 SELECT '-1' minimum_snap_id FROM DUAL WHERE TRIM('&&minimum_snap_id.') IS NULL;
 COL maximum_snap_id NEW_V maximum_snap_id;
-SELECT NVL(TO_CHAR(MAX(snap_id)), '&&minimum_snap_id.') maximum_snap_id FROM dba_hist_snapshot WHERE '&&diagnostics_pack.' = 'Y' AND dbid = &&edb360_dbid. AND end_interval_time < TO_DATE('&&edb360_date_to.', 'YYYY-MM-DD') + 1;
+SELECT NVL(TO_CHAR(MAX(snap_id)), '&&minimum_snap_id.') maximum_snap_id FROM dba_hist_snapshot WHERE '&&diagnostics_pack.' = 'Y' AND dbid = &&edb360_dbid. AND end_interval_time < TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') + 1;
 SELECT '-1' maximum_snap_id FROM DUAL WHERE TRIM('&&maximum_snap_id.') IS NULL;
 
 -- ebs
@@ -570,7 +575,8 @@ COL dummy_13 NOPRI;
 COL dummy_14 NOPRI;
 COL dummy_15 NOPRI;
 COL edb360_time_stamp NEW_V edb360_time_stamp FOR A20;
-SELECT TO_CHAR(SYSDATE, 'YYYY-MM-DD/HH24:MI:SS') edb360_time_stamp FROM DUAL;
+DEF total_hours = '';
+SELECT TO_CHAR(SYSDATE, '&&edb360_date_format.') edb360_time_stamp FROM DUAL;
 COL hh_mm_ss NEW_V hh_mm_ss FOR A8;
 COL title_no_spaces NEW_V title_no_spaces;
 COL spool_filename NEW_V spool_filename;
@@ -729,10 +735,11 @@ SPO &&edb360_main_report..html;
 PRO </head>
 PRO <body>
 
-PRO <h1><em>&&edb360_conf_tool_page.eDB360</a></em> &&edb360_vYYNN.: an Oracle database 360-degree view &&edb360_conf_all_pages_logo.</h1>
+PRO <h1><em>&&edb360_conf_tool_page.eDB360</a></em> &&edb360_vYYNN.: 360-degree comprehensive report on an Oracle database &&edb360_conf_all_pages_logo.</h1>
 PRO
 PRO <pre>
-PRO dbmod:&&edb360_dbmod. version:&&db_version. host:&&host_hash. license:&&license_pack. days:&&history_days. from:&&edb360_date_from. to:&&edb360_date_to. today:&&edb360_time_stamp.
+--PRO version:&&db_version. dbmod:&&edb360_dbmod. host:&&host_hash. license:&&license_pack. days:&&history_days. This report covers the time interval between &&edb360_date_from. and &&edb360_date_to. Timestamp: &&edb360_time_stamp.
+PRO License:&&license_pack.. This report covers the time interval between &&edb360_date_from. and &&edb360_date_to.. Days:&&history_days.. Timestamp:&&edb360_time_stamp..
 PRO </pre>
 PRO
 SPO OFF;

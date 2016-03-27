@@ -7,21 +7,61 @@ PRO <h2>&&section_id.. &&section_name.</h2>
 PRO <ol start="&&report_sequence.">
 SPO OFF;
 
+DEF title = 'FTS with single-block reads';
+DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
+BEGIN
+  :sql_text := '
+WITH
+ash AS (
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
+       current_obj#, COUNT(*) samples
+  FROM dba_hist_active_sess_history
+ WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND dbid = &&edb360_dbid.
+   AND event = ''cell single block physical read''
+   AND sql_plan_operation = ''TABLE ACCESS''
+   AND sql_plan_options = ''STORAGE FULL''
+ GROUP BY
+       current_obj#
+)
+SELECT a.samples,
+       a.current_obj#,
+       CASE a.current_obj# WHEN 0 THEN ''SYS'' ELSE o.owner END owner,
+       CASE a.current_obj# WHEN 0 THEN ''UNDO'' ELSE o.object_name END object_name,
+       CASE a.current_obj# WHEN 0 THEN NULL ELSE o.subobject_name END subobject_name
+  FROM ash a,
+       dba_objects o
+ WHERE o.object_id(+) = a.current_obj#
+ ORDER BY
+       a.samples DESC,
+       a.current_obj#
+';
+END;
+/
+@@&&skip_diagnostics.edb360_9a_pre_one.sql
+
 COL db_time_secs HEA "DB Time|Secs";
+COL io_time_secs HEA "IO Time|Secs";
 COL u_io_secs HEA "User I/O|Secs";
 COL dbfsr_secs HEA "db file|scattered read|Secs";
 COL dpr_secs HEA "direct path read|Secs";
 COL s_io_secs HEA "System I/O|Secs";
 COL commt_secs HEA "Commit|Secs";
 COL lfpw_secs HEA "log file|parallel write|Secs";
-COL u_io_perc HEA "User I/O|Perc";
-COL dbfsr_perc HEA "db file|scattered read|Perc";
-COL dpr_perc HEA "direct path read|Perc";
-COL s_io_perc HEA "System I/O|Perc";
-COL commt_perc HEA "Commit|Perc";
-COL lfpw_perc HEA "log file|parallel write|Perc";
+COL u_io_perc_dbt HEA "User I/O|Perc of|DB Time";
+COL dbfsr_perc_dbt HEA "db file|scattered read|Perc of|DB Time";
+COL dpr_perc_dbt HEA "direct path read|Perc of|DB Time";
+COL s_io_perc_dbt HEA "System I/O|Perc of|DB Time";
+COL commt_perc_dbt HEA "Commit|Perc of|DB Time";
+COL lfpw_perc_dbt HEA "log file|parallel write|Perc of|DB Time";
+COL u_io_perc_iot HEA "User I/O|Perc of|IO Time";
+COL dbfsr_perc_iot HEA "db file|scattered read|Perc of|IO Time";
+COL dpr_perc_iot HEA "direct path read|Perc of|IO Time";
+COL s_io_perc_iot HEA "System I/O|Perc of|IO Time";
+COL commt_perc_iot HEA "Commit|Perc of|IO Time";
+COL lfpw_perc_iot HEA "log file|parallel write|Perc of|IO Time";
 
-DEF title = 'Relevant Time Composition';
+DEF title = 'Relevant I/O Time Composition';
 DEF main_table = 'DBA_HIST_SYSTEM_EVENT';
 BEGIN
   :sql_text := '
@@ -158,38 +198,48 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        MIN(snap_id) snap_id,
        dbid,
        end_time,
-       SUM(db_time) db_time,
-       SUM(u_io_time) u_io_time,
-       SUM(dbfsr_time) dbfsr_time,
-       SUM(dpr_time) dpr_time,
-       SUM(s_io_time) s_io_time,
-       SUM(commt_time) commt_time,
-       SUM(lfpw_time) lfpw_time
+       NVL(SUM(db_time), 0) db_time,
+       NVL(SUM(u_io_time), 0) u_io_time,
+       NVL(SUM(dbfsr_time), 0) dbfsr_time,
+       NVL(SUM(dpr_time), 0) dpr_time,
+       NVL(SUM(s_io_time), 0) s_io_time,
+       NVL(SUM(commt_time), 0) commt_time,
+       NVL(SUM(lfpw_time), 0) lfpw_time,
+       NVL(SUM(u_io_time), 0) +
+       NVL(SUM(s_io_time), 0) +
+       NVL(SUM(commt_time), 0) io_time
   FROM by_inst_and_hh
  GROUP BY
        dbid,
        end_time
 )
 SELECT ROUND(SUM(db_time) / 1e6, 2) db_time_secs,
+       ROUND(SUM(io_time) / 1e6, 2) io_time_secs,
        ROUND(SUM(u_io_time) / 1e6, 2) u_io_secs,
        ROUND(SUM(dbfsr_time) / 1e6, 2) dbfsr_secs,
        ROUND(SUM(dpr_time) / 1e6, 2) dpr_secs,
        ROUND(SUM(s_io_time) / 1e6, 2) s_io_secs,
-       ROUND(SUM(commt_time) / 1e6, 2) commt_secs,
        ROUND(SUM(lfpw_time) / 1e6, 2) lfpw_secs,
-       ROUND(100 * SUM(u_io_time) / SUM(db_time), 2) u_io_perc,
-       ROUND(100 * SUM(dbfsr_time) / SUM(db_time), 2) dbfsr_perc,
-       ROUND(100 * SUM(dpr_time) / SUM(db_time), 2) dpr_perc,
-       ROUND(100 * SUM(s_io_time) / SUM(db_time), 2) s_io_perc,
-       ROUND(100 * SUM(commt_time) / SUM(db_time), 2) commt_perc,
-       ROUND(100 * SUM(lfpw_time) / SUM(db_time), 2) lfpw_perc
+       ROUND(SUM(commt_time) / 1e6, 2) commt_secs,
+       ROUND(100 * SUM(u_io_time) / SUM(db_time), 2) u_io_perc_dbt,
+       ROUND(100 * SUM(dbfsr_time) / SUM(db_time), 2) dbfsr_perc_dbt,
+       ROUND(100 * SUM(dpr_time) / SUM(db_time), 2) dpr_perc_dbt,
+       ROUND(100 * SUM(s_io_time) / SUM(db_time), 2) s_io_perc_dbt,
+       ROUND(100 * SUM(lfpw_time) / SUM(db_time), 2) lfpw_perc_dbt,
+       ROUND(100 * SUM(commt_time) / SUM(db_time), 2) commt_perc_dbt,
+       ROUND(100 * SUM(u_io_time) / SUM(io_time), 2) u_io_perc_iot,
+       ROUND(100 * SUM(dbfsr_time) / SUM(io_time), 2) dbfsr_perc_iot,
+       ROUND(100 * SUM(dpr_time) / SUM(io_time), 2) dpr_perc_iot,
+       ROUND(100 * SUM(s_io_time) / SUM(io_time), 2) s_io_perc_iot,
+       ROUND(100 * SUM(lfpw_time) / SUM(io_time), 2) lfpw_perc_iot,
+       ROUND(100 * SUM(commt_time) / SUM(io_time), 2) commt_perc_iot
   FROM by_hh
 ';
 END;
 /
 @@&&skip_diagnostics.edb360_9a_pre_one.sql
 
-DEF title = 'Relevant Time Composition';
+DEF title = 'Relevant I/O Time Composition';
 DEF main_table = 'DBA_HIST_SYSTEM_EVENT';
 DEF chartype = 'LineChart';
 DEF skip_lch = '';
@@ -197,13 +247,13 @@ DEF stacked = '';
 DEF vaxis = 'Time Component in Seconds';
 DEF vbaseline = '';
 DEF tit_01 = 'DB Time';
-DEF tit_02 = 'User I/O';
-DEF tit_03 = 'db file scattered read';
-DEF tit_04 = 'direct path read';
-DEF tit_05 = 'System I/O';
-DEF tit_06 = 'Commit';
-DEF tit_07 = 'log file parallel write';
-DEF tit_08 = '';
+DEF tit_02 = 'I/O Time';
+DEF tit_03 = 'User I/O';
+DEF tit_04 = 'db file scattered read';
+DEF tit_05 = 'direct path read';
+DEF tit_06 = 'System I/O';
+DEF tit_07 = 'Commit';
+DEF tit_08 = 'log file parallel write';
 DEF tit_09 = '';
 DEF tit_10 = '';
 DEF tit_11 = '';
@@ -322,20 +372,22 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        t.dbid,
        t.instance_number,
        TRUNC(CAST(s.end_interval_time AS DATE), ''HH'') end_time,
-       SUM(db_time) db_time,
-       SUM(u_io_time) u_io_time,
-       SUM(dbfsr_time) dbfsr_time,
-       SUM(dpr_time) dpr_time,
-       SUM(s_io_time) s_io_time,
-       SUM(commt_time) commt_time,
-       SUM(lfpw_time) lfpw_time
+       NVL(SUM(db_time), 0) db_time,
+       NVL(SUM(u_io_time), 0) u_io_time,
+       NVL(SUM(dbfsr_time), 0) dbfsr_time,
+       NVL(SUM(dpr_time), 0) dpr_time,
+       NVL(SUM(s_io_time), 0) s_io_time,
+       NVL(SUM(commt_time), 0) commt_time,
+       NVL(SUM(lfpw_time), 0) lfpw_time,
+       NVL(SUM(u_io_time), 0) +
+       NVL(SUM(s_io_time), 0) +
+       NVL(SUM(commt_time), 0) io_time
   FROM time_components t,
        dba_hist_snapshot s
- WHERE s.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
-   AND s.dbid = &&edb360_dbid.
-   AND s.snap_id = t.snap_id
+ WHERE s.snap_id = t.snap_id
    AND s.dbid = t.dbid
    AND s.instance_number = t.instance_number
+   AND CAST(s.begin_interval_time AS DATE) > SYSDATE - &&collection_days.
  GROUP BY
        t.dbid,
        t.instance_number,
@@ -352,33 +404,36 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        SUM(dpr_time) dpr_time,
        SUM(s_io_time) s_io_time,
        SUM(commt_time) commt_time,
-       SUM(lfpw_time) lfpw_time
+       SUM(lfpw_time) lfpw_time,
+       SUM(io_time) io_time
   FROM by_inst_and_hh
  GROUP BY
        dbid,
        end_time
 )
 SELECT snap_id,
+       --dbid,
        TO_CHAR(end_time - (1/24), ''YYYY-MM-DD HH24:MI'') begin_time,
        TO_CHAR(end_time, ''YYYY-MM-DD HH24:MI'') end_time,
        ROUND(db_time / 1e6, 2) db_time_secs,
+       ROUND(io_time / 1e6, 2) io_time_secs,
        ROUND(u_io_time / 1e6, 2) u_io_secs,
        ROUND(dbfsr_time / 1e6, 2) dbfsr_secs,
        ROUND(dpr_time / 1e6, 2) dpr_secs,
        ROUND(s_io_time / 1e6, 2) s_io_secs,
-       ROUND(commt_time / 1e6, 2) commt_secs,
        ROUND(lfpw_time / 1e6, 2) lfpw_secs,
-       ROUND(100 * u_io_time / db_time, 2) u_io_perc,
-       ROUND(100 * dbfsr_time / db_time, 2) dbfsr_perc,
-       ROUND(100 * dpr_time / db_time, 2) dpr_perc,
-       ROUND(100 * s_io_time / db_time, 2) s_io_perc,
-       ROUND(100 * commt_time / db_time, 2) commt_perc,
-       ROUND(100 * lfpw_time / db_time, 2) lfpw_perc,
+       ROUND(commt_time / 1e6, 2) commt_secs,
+       0 dummy_09,
+       0 dummy_10,
+       0 dummy_11,
+       0 dummy_12,
+       0 dummy_13,
        0 dummy_14,
        0 dummy_15
   FROM by_hh
  ORDER BY
        snap_id,
+       dbid,
        end_time
 ';
 END;
@@ -429,8 +484,8 @@ SELECT
     disktype
   , cv_cellname
   , status
-  , ROUND(SUM(physicalsize/1024/1024/1024)) total_gb
-  , ROUND(AVG(physicalsize/1024/1024/1024)) avg_gb
+  , ROUND(SUM(physicalsize/POWER(10,9))) total_gb
+  , ROUND(AVG(physicalsize/POWER(10,9))) avg_gb
   , COUNT(*) num_disks
   , SUM(CASE WHEN predfailStatus  = ''TRUE'' THEN 1 END) predfail
   , SUM(CASE WHEN poorPerfStatus  = ''TRUE'' THEN 1 END) poorperf

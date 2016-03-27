@@ -1,3 +1,5 @@
+VAR edb360_main_time0 NUMBER;
+EXEC :edb360_main_time0 := DBMS_UTILITY.GET_TIME;
 SPO 00000_readme_first.txt
 PRO If eDB360 disconnects right after this message it means the user executing it
 PRO owns a table called PLAN_TABLE that is not the Oracle seeded GTT plan table
@@ -19,6 +21,7 @@ BEGIN
 END;
 /
 WHENEVER SQLERROR CONTINUE;
+DEF edb360_date_format = 'YYYY-MM-DD"T"HH24:MI:SS';
 @@&&ash_validation.edb360_0h_ash_validation.sql
 @@edb360_0i_awr_info.sql
 SPO 00000_readme_first.txt APP
@@ -224,8 +227,8 @@ SPO &&edb360_main_report..html APP;
 PRO
 PRO </td></tr></table>
 SPO OFF;
+VAR edb360_main_time1 NUMBER;
+EXEC :edb360_main_time1 := DBMS_UTILITY.GET_TIME;
 @@edb360_0c_post.sql
 EXEC DBMS_APPLICATION_INFO.SET_MODULE(NULL,NULL);
 
--- list of generated files
---HOS unzip -l &&edb360_main_filename._&&edb360_file_time. >> &&edb360_log3..txt
