@@ -8,6 +8,7 @@ PRO eDB360 requires the Oracle seeded PLAN_TABLE, consider dropping the one in t
 WHENEVER SQLERROR EXIT;
 DECLARE
  is_plan_table_in_usr_schema NUMBER; 
+ l_version v$instance.version%TYPE;
 BEGIN
  SELECT COUNT(*)
    INTO is_plan_table_in_usr_schema
@@ -15,9 +16,12 @@ BEGIN
   WHERE table_name = 'PLAN_TABLE';
   -- user has a physical table called PLAN_TABLE, abort
   IF is_plan_table_in_usr_schema > 0 THEN
-    RAISE_APPLICATION_ERROR(-20100, 'PLAN_TABLE physical table present in user schema. ');
+    RAISE_APPLICATION_ERROR(-20100, 'PLAN_TABLE physical table present in user schema.');
   END IF;
-
+  SELECT version INTO l_version FROM v$instance;
+  IF SUBSTR(l_version, 1, 2) != SUBSTR('&&_o_release.', 1, 2) THEN
+    RAISE_APPLICATION_ERROR(-20101, 'Set configuration parameter "edb360_sections" on sql/edb360_00_config.sql instead.');
+  END IF;
 END;
 /
 WHENEVER SQLERROR CONTINUE;

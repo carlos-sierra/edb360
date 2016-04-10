@@ -396,6 +396,27 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+-- special contribution from David Mann
+-- http://ba6.us/?q=ArchivedLogRedoInGB_HeatMap
+EXEC :file_seq := :file_seq + 1;
+SELECT '&&common_edb360_prefix._&&section_id._'||LPAD(:file_seq, 5, '0')||'_archived_redo_log_heat_map' one_spool_filename FROM DUAL;
+SET SERVEROUT ON
+SPO &&one_spool_filename..html
+@@2016-03-08-RedoLogSizeHeatMap.sql
+SPO OFF
+SET SERVEROUT OFF
+HOS zip -m &&edb360_main_filename._&&edb360_file_time. &&one_spool_filename..html >> &&edb360_log3..txt
+-- update main report
+SPO &&edb360_main_report..html APP;
+PRO <li title="V$ARCHIVED_LOG">ARCHIVED REDO LOG Heat Map for past 31 Days
+PRO <a href="&&one_spool_filename..html">html</a>
+PRO </li>
+SPO OFF;
+HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html >> &&edb360_log3..txt
+-- report sequence
+EXEC :repo_seq := :repo_seq + 1;
+SELECT TO_CHAR(:repo_seq) report_sequence FROM DUAL;
+
 DEF title = 'NOLOGGING Objects';
 DEF main_table = 'DBA_TABLESPACES';
 BEGIN

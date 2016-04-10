@@ -81,4 +81,6 @@ DEF edb360_conf_sqld360_top_tc = '0';
 --DEF edb360_conf_incl_text = 'Y';
 --DEF edb360_conf_incl_csv = 'Y';
 
---DEF edb360_sections = '2a';
+--DEF edb360_sections = '2c-2d';
+--DEF edb360_sections = '5d';
+--DEF edb360_sections = '7';

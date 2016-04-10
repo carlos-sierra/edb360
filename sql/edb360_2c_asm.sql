@@ -120,8 +120,23 @@ END;
 @@&&skip_10g.edb360_9a_pre_one.sql
 
 -- special addition from MOS 1551288.1
+-- add seq to spool_filename
+EXEC :file_seq := :file_seq + 1;
+SELECT '&&common_edb360_prefix._&&section_id._'||LPAD(:file_seq, 5, '0')||'_failure_diskgroup_space_reserve_requirements' one_spool_filename FROM DUAL;
+SPO &&one_spool_filename..txt
 @@ck_free_17.sql
-HOS zip -m &&edb360_main_filename._&&edb360_file_time. ck_free.txt >> &&edb360_log3..txt
+SPO OFF
+HOS zip -m &&edb360_main_filename._&&edb360_file_time. &&one_spool_filename..txt >> &&edb360_log3..txt
+-- update main report
+SPO &&edb360_main_report..html APP;
+PRO <li title="V$ASM_DISKGROUP">DISK and CELL Failure Diskgroup Space Reserve Requirements
+PRO <a href="&&one_spool_filename..txt">text</a>
+PRO </li>
+SPO OFF;
+HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html >> &&edb360_log3..txt
+-- report sequence
+EXEC :repo_seq := :repo_seq + 1;
+SELECT TO_CHAR(:repo_seq) report_sequence FROM DUAL;
 
 SPO &&edb360_main_report..html APP;
 PRO </ol>

@@ -7,232 +7,6 @@ PRO <h2>&&section_id.. &&section_name.</h2>
 PRO <ol start="&&report_sequence.">
 SPO OFF;
 
-DEF title = 'AAS for past minute';
-DEF main_table = 'GV$WAITCLASSMETRIC';
-COL aas FOR 999990.000;
-BEGIN
-  :sql_text := '
--- inspired by Kyle Hailey blogs
--- http://www.kylehailey.com/wait-event-and-wait-class-metrics-vs-vsystem_event/
--- http://www.kylehailey.com/oracle-cpu-time/
-WITH 
-ora_cpu_used AS (
-SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
-       ''2'' row_type,
-       ''Oracle CPU used'' timed_event,
-       sm.inst_id,
-       sm.begin_time,
-       sm.end_time,
-       ROUND(sm.value / 100, 3) aas --(/ 100 is to convert from cs to sec)
-  FROM gv$sysmetric sm
- WHERE sm.metric_name=''CPU Usage Per Sec''
-   AND sm.group_id = 2 -- 1 minute
-),
-system_cpu_used AS (
-SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
-       ''4'' row_type,
-       ''System CPU used'' timed_event,
-       sm.inst_id,
-       sm.begin_time,
-       sm.end_time,
-       ROUND((sm.value / 100) * TO_NUMBER(p.value), 3) aas -- (/ 100 is to convert % to fraction)
-  FROM gv$sysmetric sm,
-       gv$system_parameter2 p
- WHERE sm.metric_name=''Host CPU Utilization (%)''
-   AND sm.group_id = 2 -- 1 minute
-   AND sm.inst_id = p.inst_id
-   AND p.name = ''cpu_count''
-),
-non_idle_waits AS (
-SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
-       ''6'' row_type,
-       wc.wait_class timed_event,
-       wcm.inst_id,
-       wcm.begin_time,
-       wcm.end_time,
-       ROUND(wcm.time_waited/wcm.intsize_csec, 3) aas
-  FROM gv$waitclassmetric wcm,
-       gv$system_wait_class wc
- WHERE wcm.inst_id = wc.inst_id
-   AND wcm.wait_class_id = wc.wait_class_id
-   AND wcm.wait_class# = wc.wait_class#
-   AND wcm.time_waited > 0
-   AND wcm.wait_count > 0
-   AND wc.wait_class != ''Idle''
-   AND ROUND(wcm.time_waited/wcm.intsize_csec, 3) >= 0.001
-),
-time_window AS ( -- one row with oldest and newest date sample
-SELECT MIN(begin_time) begin_time, MAX(end_time) end_time FROM (
-SELECT MIN(begin_time) begin_time, MAX(end_time) end_time FROM ora_cpu_used
- UNION ALL
-SELECT MIN(begin_time) begin_time, MAX(end_time) end_time FROM system_cpu_used
- UNION ALL
-SELECT MIN(begin_time) begin_time, MAX(end_time) end_time FROM non_idle_waits
-)),
-ora_dem_cpu AS (
-SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
-       ''1'' row_type,
-       ''Oracle demand for CPU'' timed_event,
-       ash.inst_id,
-       tw.begin_time,
-       tw.end_time,
-       ROUND(COUNT(*) / ((tw.end_time - tw.begin_time) * 24 * 60 * 60), 3) aas -- samples over time in secs
-  FROM gv$active_session_history ash,
-       time_window tw
- WHERE ash.session_state = ''ON CPU''
-   AND CAST(sample_time AS DATE) BETWEEN tw.begin_time AND tw.end_time
-   AND ''&&diagnostics_pack.'' = ''Y''
- GROUP BY
-       ash.inst_id,
-       tw.begin_time,
-       tw.end_time
-),
-ora_wait_cpu AS (
-SELECT ''3'' row_type,
-       ''Oracle wait for CPU (demand - used)'' timed_event,
-       d.inst_id,
-       LEAST(d.begin_time, u.begin_time) begin_time,
-       GREATEST(d.end_time, u.end_time) end_time,
-       CASE WHEN d.aas > u.aas THEN d.aas - u.aas ELSE 0 END aas
-  FROM ora_dem_cpu d,
-       ora_cpu_used u
- WHERE d.inst_id = u.inst_id
-),
-system_cpu_used_no_ora AS (
-SELECT ''5'' row_type,
-       ''System CPU used (excludes Oracle)'' timed_event,
-       s.inst_id,
-       LEAST(s.begin_time, u.begin_time) begin_time,
-       GREATEST(s.end_time, u.end_time) end_time,
-       CASE WHEN s.aas > u.aas THEN s.aas - u.aas ELSE 0 END aas
-  FROM system_cpu_used s,
-       ora_cpu_used u
- WHERE s.inst_id = u.inst_id
-),
-all_pieces AS (
-SELECT * FROM ora_dem_cpu
- UNION ALL
-SELECT * FROM ora_cpu_used
- UNION ALL
-SELECT * FROM ora_wait_cpu
- UNION ALL
-SELECT * FROM system_cpu_used
- UNION ALL
-SELECT * FROM system_cpu_used_no_ora
- UNION ALL
-SELECT * FROM non_idle_waits
-)
-SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
-       inst_id,
-       timed_event,
-       aas
-  FROM all_pieces
- ORDER BY
-       inst_id,
-       row_type,
-       aas DESC,
-       timed_event
-';
-END;
-/
-@@&&skip_diagnostics.edb360_9a_pre_one.sql       
-
-DEF title = 'Wait Class Metric for past minute';
-DEF main_table = 'GV$WAITCLASSMETRIC';
-BEGIN
-  :sql_text := '
--- inspired by Kyle Hailey blogs
--- http://www.kylehailey.com/wait-event-and-wait-class-metrics-vs-vsystem_event/
--- http://www.kylehailey.com/oracle-cpu-time/
-SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
-       wc.wait_class,
-       wcm.*,
-       ROUND(wcm.time_waited/wcm.intsize_csec, 3) aas,
-       CASE WHEN wc.wait_class = ''User I/O'' THEN 
-       ROUND(10 * wcm.time_waited  / wcm.wait_count, 3) END avg_io_ms
-  FROM gv$waitclassmetric wcm,
-       gv$system_wait_class wc
- WHERE wcm.inst_id = wc.inst_id
-   AND wcm.wait_class_id = wc.wait_class_id
-   AND wcm.wait_class# = wc.wait_class#
-   AND wcm.time_waited > 0
-   AND wcm.wait_count > 0
-   AND wc.wait_class != ''Idle''
-   AND ROUND(wcm.time_waited/wcm.intsize_csec, 3) >= 0.001
- ORDER BY
-       wcm.inst_id,
-       wc.wait_class
-';
-END;
-/
-@@edb360_9a_pre_one.sql
-
-DEF title = 'Event Metric for past minute';
-DEF main_table = 'GV$EVENTMETRIC';
-BEGIN
-  :sql_text := '
--- inspired by Kyle Hailey blogs
--- http://www.kylehailey.com/wait-event-and-wait-class-metrics-vs-vsystem_event/
--- http://www.kylehailey.com/oracle-cpu-time/
-SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
-       en.wait_class,
-       en.name event,
-       em.*,
-       ROUND(em.time_waited / em.intsize_csec, 3) aas,
-       CASE WHEN en.wait_class = ''User I/O'' THEN 10 * em.time_waited  / em.wait_count END avg_io_ms
-  FROM gv$eventmetric em,
-       gv$event_name en
- WHERE em.inst_id = en.inst_id
-   AND em.event_id = en.event_id
-   AND em.event# = en.event#
-   AND em.time_waited > 0
-   AND em.wait_count > 0
-   AND en.wait_class != ''Idle''
- ORDER BY
-       em.inst_id,
-       en.wait_class,
-       en.name';
-END;
-/
-@@edb360_9a_pre_one.sql
-
-DEF title = 'System Metric for past minute';
-DEF main_table = 'GV$SYSMETRIC';
-BEGIN
-  :sql_text := '
--- inspired by Kyle Hailey blogs
--- http://www.kylehailey.com/wait-event-and-wait-class-metrics-vs-vsystem_event/
--- http://www.kylehailey.com/oracle-cpu-time/
-SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
-       *
-  FROM gv$sysmetric
- WHERE group_id = 2 -- 1 minute
- ORDER BY
-       inst_id,
-       metric_name
-';
-END;
-/
-@@edb360_9a_pre_one.sql
-
-DEF title = 'System Metric Summary for past hour';
-DEF main_table = 'GV$SYSMETRIC_SUMMARY';
-BEGIN
-  :sql_text := '
--- inspired by Kyle Hailey blogs
--- http://www.kylehailey.com/wait-event-and-wait-class-metrics-vs-vsystem_event/
--- http://www.kylehailey.com/oracle-cpu-time/
-SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
-       *
-  FROM gv$sysmetric_summary
- ORDER BY
-       inst_id,
-       metric_name
-';
-END;
-/
-@@edb360_9a_pre_one.sql
-
 DEF title = 'Wait Statistics';
 DEF main_table = 'GV$WAITSTAT';
 BEGIN
@@ -1032,6 +806,232 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
 END;
 /
 @@&&skip_10g.&&skip_11r1.edb360_9a_pre_one.sql
+
+DEF title = 'AAS for past minute';
+DEF main_table = 'GV$WAITCLASSMETRIC';
+COL aas FOR 999990.000;
+BEGIN
+  :sql_text := '
+-- inspired by Kyle Hailey blogs
+-- http://www.kylehailey.com/wait-event-and-wait-class-metrics-vs-vsystem_event/
+-- http://www.kylehailey.com/oracle-cpu-time/
+WITH 
+ora_cpu_used AS (
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
+       ''2'' row_type,
+       ''Oracle CPU used'' timed_event,
+       sm.inst_id,
+       sm.begin_time,
+       sm.end_time,
+       ROUND(sm.value / 100, 3) aas --(/ 100 is to convert from cs to sec)
+  FROM gv$sysmetric sm
+ WHERE sm.metric_name=''CPU Usage Per Sec''
+   AND sm.group_id = 2 -- 1 minute
+),
+system_cpu_used AS (
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
+       ''4'' row_type,
+       ''System CPU used'' timed_event,
+       sm.inst_id,
+       sm.begin_time,
+       sm.end_time,
+       ROUND((sm.value / 100) * TO_NUMBER(p.value), 3) aas -- (/ 100 is to convert % to fraction)
+  FROM gv$sysmetric sm,
+       gv$system_parameter2 p
+ WHERE sm.metric_name=''Host CPU Utilization (%)''
+   AND sm.group_id = 2 -- 1 minute
+   AND sm.inst_id = p.inst_id
+   AND p.name = ''cpu_count''
+),
+non_idle_waits AS (
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
+       ''6'' row_type,
+       wc.wait_class timed_event,
+       wcm.inst_id,
+       wcm.begin_time,
+       wcm.end_time,
+       ROUND(wcm.time_waited/wcm.intsize_csec, 3) aas
+  FROM gv$waitclassmetric wcm,
+       gv$system_wait_class wc
+ WHERE wcm.inst_id = wc.inst_id
+   AND wcm.wait_class_id = wc.wait_class_id
+   AND wcm.wait_class# = wc.wait_class#
+   AND wcm.time_waited > 0
+   AND wcm.wait_count > 0
+   AND wc.wait_class != ''Idle''
+   AND ROUND(wcm.time_waited/wcm.intsize_csec, 3) >= 0.001
+),
+time_window AS ( -- one row with oldest and newest date sample
+SELECT MIN(begin_time) begin_time, MAX(end_time) end_time FROM (
+SELECT MIN(begin_time) begin_time, MAX(end_time) end_time FROM ora_cpu_used
+ UNION ALL
+SELECT MIN(begin_time) begin_time, MAX(end_time) end_time FROM system_cpu_used
+ UNION ALL
+SELECT MIN(begin_time) begin_time, MAX(end_time) end_time FROM non_idle_waits
+)),
+ora_dem_cpu AS (
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
+       ''1'' row_type,
+       ''Oracle demand for CPU'' timed_event,
+       ash.inst_id,
+       tw.begin_time,
+       tw.end_time,
+       ROUND(COUNT(*) / ((tw.end_time - tw.begin_time) * 24 * 60 * 60), 3) aas -- samples over time in secs
+  FROM gv$active_session_history ash,
+       time_window tw
+ WHERE ash.session_state = ''ON CPU''
+   AND CAST(sample_time AS DATE) BETWEEN tw.begin_time AND tw.end_time
+   AND ''&&diagnostics_pack.'' = ''Y''
+ GROUP BY
+       ash.inst_id,
+       tw.begin_time,
+       tw.end_time
+),
+ora_wait_cpu AS (
+SELECT ''3'' row_type,
+       ''Oracle wait for CPU (demand - used)'' timed_event,
+       d.inst_id,
+       LEAST(d.begin_time, u.begin_time) begin_time,
+       GREATEST(d.end_time, u.end_time) end_time,
+       CASE WHEN d.aas > u.aas THEN d.aas - u.aas ELSE 0 END aas
+  FROM ora_dem_cpu d,
+       ora_cpu_used u
+ WHERE d.inst_id = u.inst_id
+),
+system_cpu_used_no_ora AS (
+SELECT ''5'' row_type,
+       ''System CPU used (excludes Oracle)'' timed_event,
+       s.inst_id,
+       LEAST(s.begin_time, u.begin_time) begin_time,
+       GREATEST(s.end_time, u.end_time) end_time,
+       CASE WHEN s.aas > u.aas THEN s.aas - u.aas ELSE 0 END aas
+  FROM system_cpu_used s,
+       ora_cpu_used u
+ WHERE s.inst_id = u.inst_id
+),
+all_pieces AS (
+SELECT * FROM ora_dem_cpu
+ UNION ALL
+SELECT * FROM ora_cpu_used
+ UNION ALL
+SELECT * FROM ora_wait_cpu
+ UNION ALL
+SELECT * FROM system_cpu_used
+ UNION ALL
+SELECT * FROM system_cpu_used_no_ora
+ UNION ALL
+SELECT * FROM non_idle_waits
+)
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
+       inst_id,
+       timed_event,
+       aas
+  FROM all_pieces
+ ORDER BY
+       inst_id,
+       row_type,
+       aas DESC,
+       timed_event
+';
+END;
+/
+@@&&skip_diagnostics.edb360_9a_pre_one.sql       
+
+DEF title = 'Wait Class Metric for past minute';
+DEF main_table = 'GV$WAITCLASSMETRIC';
+BEGIN
+  :sql_text := '
+-- inspired by Kyle Hailey blogs
+-- http://www.kylehailey.com/wait-event-and-wait-class-metrics-vs-vsystem_event/
+-- http://www.kylehailey.com/oracle-cpu-time/
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
+       wc.wait_class,
+       wcm.*,
+       ROUND(wcm.time_waited/wcm.intsize_csec, 3) aas,
+       CASE WHEN wc.wait_class = ''User I/O'' THEN 
+       ROUND(10 * wcm.time_waited  / wcm.wait_count, 3) END avg_io_ms
+  FROM gv$waitclassmetric wcm,
+       gv$system_wait_class wc
+ WHERE wcm.inst_id = wc.inst_id
+   AND wcm.wait_class_id = wc.wait_class_id
+   AND wcm.wait_class# = wc.wait_class#
+   AND wcm.time_waited > 0
+   AND wcm.wait_count > 0
+   AND wc.wait_class != ''Idle''
+   AND ROUND(wcm.time_waited/wcm.intsize_csec, 3) >= 0.001
+ ORDER BY
+       wcm.inst_id,
+       wc.wait_class
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+DEF title = 'Event Metric for past minute';
+DEF main_table = 'GV$EVENTMETRIC';
+BEGIN
+  :sql_text := '
+-- inspired by Kyle Hailey blogs
+-- http://www.kylehailey.com/wait-event-and-wait-class-metrics-vs-vsystem_event/
+-- http://www.kylehailey.com/oracle-cpu-time/
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
+       en.wait_class,
+       en.name event,
+       em.*,
+       ROUND(em.time_waited / em.intsize_csec, 3) aas,
+       CASE WHEN en.wait_class = ''User I/O'' THEN 10 * em.time_waited  / em.wait_count END avg_io_ms
+  FROM gv$eventmetric em,
+       gv$event_name en
+ WHERE em.inst_id = en.inst_id
+   AND em.event_id = en.event_id
+   AND em.event# = en.event#
+   AND em.time_waited > 0
+   AND em.wait_count > 0
+   AND en.wait_class != ''Idle''
+ ORDER BY
+       em.inst_id,
+       en.wait_class,
+       en.name';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+DEF title = 'System Metric for past minute';
+DEF main_table = 'GV$SYSMETRIC';
+BEGIN
+  :sql_text := '
+-- inspired by Kyle Hailey blogs
+-- http://www.kylehailey.com/wait-event-and-wait-class-metrics-vs-vsystem_event/
+-- http://www.kylehailey.com/oracle-cpu-time/
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
+       *
+  FROM gv$sysmetric
+ WHERE group_id = 2 -- 1 minute
+ ORDER BY
+       inst_id,
+       metric_name
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+DEF title = 'System Metric Summary for past hour';
+DEF main_table = 'GV$SYSMETRIC_SUMMARY';
+BEGIN
+  :sql_text := '
+-- inspired by Kyle Hailey blogs
+-- http://www.kylehailey.com/wait-event-and-wait-class-metrics-vs-vsystem_event/
+-- http://www.kylehailey.com/oracle-cpu-time/
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
+       *
+  FROM gv$sysmetric_summary
+ ORDER BY
+       inst_id,
+       metric_name
+';
+END;
+/
+@@edb360_9a_pre_one.sql
 
 SPO &&edb360_main_report..html APP;
 PRO </ol>

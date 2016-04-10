@@ -607,7 +607,8 @@ DEF main_table = 'DBA_SEGMENTS';
 BEGIN
   :sql_text := '
 -- requested by David Kurtz
-SELECT  t.owner, t.table_name, t.tablespace_name, t.num_rows, t.blocks hwm_blocks, t.last_analyzed, s.blocks seg_blocks
+SELECT  /*+ LEADING(T) USE_NL(S) */
+        t.owner, t.table_name, t.tablespace_name, t.num_rows, t.blocks hwm_blocks, t.last_analyzed, s.blocks seg_blocks
 FROM    dba_tables t
 ,       dba_segments s
 WHERE   ''&&edb360_conf_incl_segments.'' = ''Y''
@@ -634,7 +635,8 @@ DEF main_table = 'DBA_SEGMENTS';
 BEGIN
   :sql_text := '
 -- requested by David Kurtz
-SELECT  t.table_owner, t.table_name, t.partition_name, t.tablespace_name, t.num_rows, t.blocks hwm_blocks, t.last_analyzed, s.blocks seg_blocks
+SELECT  /*+ LEADING(T) USE_NL(S) */
+        t.table_owner, t.table_name, t.partition_name, t.tablespace_name, t.num_rows, t.blocks hwm_blocks, t.last_analyzed, s.blocks seg_blocks
 FROM    dba_tab_partitions t
 ,       dba_segments s
 WHERE   ''&&edb360_conf_incl_segments.'' = ''Y''
@@ -661,7 +663,8 @@ DEF main_table = 'DBA_SEGMENTS';
 BEGIN
   :sql_text := '
 -- requested by David Kurtz
-SELECT  t.table_owner, t.table_name, t.partition_name, t.subpartition_name, t.tablespace_name, t.num_rows, t.blocks hwm_blocks, t.last_analyzed, s.blocks seg_blocks
+SELECT  /*+ LEADING(T) USE_NL(S) */
+        t.table_owner, t.table_name, t.partition_name, t.subpartition_name, t.tablespace_name, t.num_rows, t.blocks hwm_blocks, t.last_analyzed, s.blocks seg_blocks
 FROM    dba_tab_subpartitions t
 ,       dba_segments s
 WHERE   ''&&edb360_conf_incl_segments.'' = ''Y''

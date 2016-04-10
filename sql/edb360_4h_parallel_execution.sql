@@ -60,8 +60,6 @@ END;
 /
 @@&&edb360_skip_px_mem.edb360_9a_pre_one.sql
 
-gv$sysstat
-
 DEF title = 'System Stats';
 DEF main_table = 'GV$SYSSTAT';
 BEGIN

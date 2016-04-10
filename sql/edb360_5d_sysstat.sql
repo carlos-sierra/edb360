@@ -436,6 +436,33 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_14', '"'||SUBSTR('&&tit_14.',14,30)|
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
+DEF abstract = 'Number of times a consistent read was requested for a block.';
+DEF title = 'Consistent Gets (direct and from cache) per Hour';
+DEF vaxis = 'Counts';
+DEF tit_01 = 'consistent gets';
+DEF tit_02 = 'consistent gets direct';
+DEF tit_03 = 'consistent gets from cache';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
+EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name_01@', '&&tit_01.');
+EXEC :sql_text := REPLACE(:sql_text, '@stat_name_02@', '&&tit_02.');
+EXEC :sql_text := REPLACE(:sql_text, '@stat_name_03@', '&&tit_03.');
+EXEC :sql_text := REPLACE(:sql_text, 'dummy_01', '"'||SUBSTR('&&tit_01.',1,30)||'"');
+EXEC :sql_text := REPLACE(:sql_text, 'dummy_02', '"'||SUBSTR('&&tit_02.',1,30)||'"');
+EXEC :sql_text := REPLACE(:sql_text, 'dummy_03', '"'||SUBSTR('&&tit_03.',1,30)||'"');
+@@edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
 DEF title = 'Cursor and SQL Area evicted per Hour';
 DEF vaxis = 'Count';
 DEF tit_01 = 'CCursor + sql area evicted';
@@ -816,6 +843,33 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_09', '"'||SUBSTR('&&tit_09.',10,30)|
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
+DEF abstract = 'Total number of data blocks read from disk. "physical reads" value can be greater than the value of "physical reads direct" plus "physical reads cache" as reads into process private buffers also included in this statistic.';
+DEF title = 'Physical Reads Blocks (direct and cache) per Hour';
+DEF vaxis = 'Blocks';
+DEF tit_01 = 'physical reads';
+DEF tit_02 = 'physical reads cache';
+DEF tit_03 = 'physical reads direct';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
+EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name_01@', '&&tit_01.');
+EXEC :sql_text := REPLACE(:sql_text, '@stat_name_02@', '&&tit_02.');
+EXEC :sql_text := REPLACE(:sql_text, '@stat_name_03@', '&&tit_03.');
+EXEC :sql_text := REPLACE(:sql_text, 'dummy_01', '"'||SUBSTR('&&tit_01.',10,30)||'"');
+EXEC :sql_text := REPLACE(:sql_text, 'dummy_02', '"'||SUBSTR('&&tit_02.',10,30)||'"');
+EXEC :sql_text := REPLACE(:sql_text, 'dummy_03', '"'||SUBSTR('&&tit_03.',10,30)||'"');
+@@edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
 DEF title = 'Physical Reads Bytes per Hour';
 DEF vaxis = 'Bytes';
 DEF tit_01 = 'physical read bytes';
@@ -867,6 +921,31 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_01', '"'||SUBSTR('&&tit_01.',10,30)|
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_02', '"'||SUBSTR('&&tit_02.',10,30)||'"');
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_03', '"'||SUBSTR('&&tit_03.',10,30)||'"');
 EXEC :sql_text := REPLACE(:sql_text, 'dummy_04', '"'||SUBSTR('&&tit_04.',10,30)||'"');
+@@edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF abstract = 'The difference between "physical read total IO requests" and "physical read total multi block requests" gives the total number of single block read requests';
+DEF title = 'Physical Reads Total IO Requests per Hour';
+DEF vaxis = 'Requests';
+DEF tit_01 = 'physical read total IO requests';
+DEF tit_02 = 'physical read total multi block requests';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
+EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name_01@', '&&tit_01.');
+EXEC :sql_text := REPLACE(:sql_text, '@stat_name_02@', '&&tit_02.');
+EXEC :sql_text := REPLACE(:sql_text, 'dummy_01', '"'||SUBSTR('&&tit_01.',10,30)||'"');
+EXEC :sql_text := REPLACE(:sql_text, 'dummy_02', '"'||SUBSTR('&&tit_02.',10,30)||'"');
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
