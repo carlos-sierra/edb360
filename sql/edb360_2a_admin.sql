@@ -1746,24 +1746,27 @@ END;
 
 DEF title = 'Tables with more than 255 Columns';
 DEF main_table = 'DBA_TAB_COLUMNS';
-DEF abstract = 'Tables with more than 255 Columns are subject to intra-block chained rows';
+DEF abstract = 'Tables with more than 255 Columns are subject to intra-block chained rows. Continuation pieces could be stored on other blocks, even on different storage units. See MOS 9373758 and 18940497';
 BEGIN
   :sql_text := '
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        COUNT(*) columns,
-       owner,
-       table_name
-  FROM dba_tab_columns
- WHERE owner NOT IN &&exclusion_list.
-   AND owner NOT IN &&exclusion_list2.
-   AND table_name NOT LIKE ''BIN%''
+       c.owner,
+       c.table_name,
+       (SELECT t.avg_row_len FROM dba_tables t WHERE t.owner = c.owner AND t.table_name = c.table_name AND ROWNUM = 1) avg_row_len
+  FROM dba_tab_columns c
+ WHERE c.owner NOT IN &&exclusion_list.
+   AND c.owner NOT IN &&exclusion_list2.
+   AND c.table_name NOT LIKE ''BIN%''
+   AND NOT EXISTS
+       (SELECT NULL FROM dba_views v WHERE v.owner = c.owner AND v.view_name = c.table_name)
  GROUP BY
-       owner, table_name
+       c.owner, c.table_name
 HAVING COUNT(*) > 255
  ORDER BY
        1 DESC, 
-       owner,
-       table_name
+       c.owner,
+       c.table_name
 ';
 END;
 /

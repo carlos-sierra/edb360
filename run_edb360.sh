@@ -28,7 +28,7 @@ sqlplus -s /nolog <<EOF
 connect / as sysdba
 
 DEF ash_validation = '--skip--';
-@sql/edb360_0a_main.sql T
+@sql/edb360_0a_main.sql T NULL
 EOF
 
 done

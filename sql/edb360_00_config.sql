@@ -40,9 +40,11 @@ DEF edb360_conf_incl_stat_mem = 'Y';
 DEF edb360_conf_incl_px_mem = 'Y';
 
 -- include DBA_SEGMENTS on queries with no filter on segment_name (default Y)
+-- note: some releases of Oracle produce suboptimal plans when no segment_name is passed
 DEF edb360_conf_incl_segments = 'Y';
 
 -- include DBMS_METADATA calls (default Y)
+-- note: some releases of Oracle take very long to generate metadata
 DEF edb360_conf_incl_metadata = 'Y';
 
 /**************************** not recommended to modify *********************************/
@@ -72,15 +74,8 @@ DEF edb360_conf_sqlhc_top = '0';
 DEF edb360_conf_sqld360_top = '16';
 DEF edb360_conf_sqld360_top_tc = '0';
 
-/**************************** enter your modifications here *****************************/
+/************************************ modifications *************************************/
 
---DEF edb360_conf_date_from = '2015-03-01';
---DEF edb360_conf_date_to = '2015-03-10';
-
---DEF edb360_conf_incl_xml = 'Y';
---DEF edb360_conf_incl_text = 'Y';
---DEF edb360_conf_incl_csv = 'Y';
-
---DEF edb360_sections = '2c-2d';
---DEF edb360_sections = '5d';
---DEF edb360_sections = '7';
+-- If you need to modify any parameter create a new custom configuration file with a
+-- subset of the DEF above, and place on same edb360-master/sql directory; then when
+-- you execute edb360.sql, pass on second parameter the name of your configuration file

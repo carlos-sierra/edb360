@@ -24,6 +24,20 @@ END;
 -- skipped on 10g due to bug as per mos 420200.1
 @@&&skip_10g.edb360_9a_pre_one.sql
 
+DEF title = 'RMAN Backup Set Details';
+DEF main_table = 'V$BACKUP_SET_DETAILS';
+BEGIN
+  :sql_text := '
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
+       *
+  FROM v$backup_set_details
+ ORDER BY
+       1, 2, 3, 4, 5
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
 DEF title = 'RMAN Output';
 DEF main_table = 'V$RMAN_OUTPUT';
 BEGIN
@@ -401,6 +415,7 @@ END;
 EXEC :file_seq := :file_seq + 1;
 SELECT '&&common_edb360_prefix._&&section_id._'||LPAD(:file_seq, 5, '0')||'_archived_redo_log_heat_map' one_spool_filename FROM DUAL;
 SET SERVEROUT ON
+SET SERVEROUT ON SIZE 1000000;
 SPO &&one_spool_filename..html
 @@2016-03-08-RedoLogSizeHeatMap.sql
 SPO OFF

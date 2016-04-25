@@ -1,6 +1,9 @@
+-- time zero for edb360 (begin)
 VAR edb360_main_time0 NUMBER;
 EXEC :edb360_main_time0 := DBMS_UTILITY.GET_TIME;
+
 SPO 00000_readme_first.txt
+-- initial validation
 PRO If eDB360 disconnects right after this message it means the user executing it
 PRO owns a table called PLAN_TABLE that is not the Oracle seeded GTT plan table
 PRO owned by SYS (PLAN_TABLE$ table with a PUBLIC synonym PLAN_TABLE).
@@ -25,6 +28,42 @@ BEGIN
 END;
 /
 WHENEVER SQLERROR CONTINUE;
+
+-- parameters
+PRO
+PRO Parameter 1: 
+PRO If your Database is licensed to use the Oracle Tuning pack please enter T.
+PRO If you have a license for Diagnostics pack but not for Tuning pack, enter D.
+PRO If you have both Tuning and Diagnostics packs, enter T.
+PRO Be aware value N reduces the output content substantially. Avoid N if possible.
+PRO
+PRO Oracle Pack License? (Tuning, Diagnostics or None) [ T | D | N ] (required)
+COL license_pack NEW_V license_pack FOR A1;
+SELECT NVL(UPPER(SUBSTR(TRIM('&1.'), 1, 1)), '?') license_pack FROM DUAL;
+WHENEVER SQLERROR EXIT SQL.SQLCODE;
+BEGIN
+  IF NOT '&&license_pack.' IN ('T', 'D', 'N') THEN
+    RAISE_APPLICATION_ERROR(-20000, 'Invalid Oracle Pack License "&&license_pack.". Valid values are T, D and N.');
+  END IF;
+END;
+/
+WHENEVER SQLERROR CONTINUE;
+PRO
+PRO Parameter 2:
+PRO Name of an optional custom configuration file executed right after 
+PRO sql/edb360_00_config.sql. If such file name is provided, then corresponding file
+PRO should exist under edb360-master/sql. Filename is case sensitivive and its existence
+PRO is not validated. Example: custom_config_01.sql
+PRO If no custom configuration file is needed, simply hit the "return" key.
+PRO
+PRO Custom configuration filename? (optional)
+COL custom_config_filename NEW_V custom_config_filename;
+SELECT NVL(TRIM('&2.'), 'NULL') custom_config_filename FROM DUAL;
+HOS ls -lat sql/&&custom_config_filename.
+HOS more sql/&&custom_config_filename.
+SET TERM OFF;
+
+-- ash verification
 DEF edb360_date_format = 'YYYY-MM-DD"T"HH24:MI:SS';
 @@&&ash_validation.edb360_0h_ash_validation.sql
 @@edb360_0i_awr_info.sql
@@ -38,6 +77,12 @@ PRO initial log:
 PRO
 DEF
 @@edb360_00_config.sql
+PRO
+PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+PRO
+PRO custom configuration filename: "&&custom_config_filename."
+PRO
+@@&&custom_config_filename.
 -- links
 DEF edb360_conf_tool_page = '<a href="http://carlos-sierra.net/edb360-an-oracle-database-360-degree-view/" target="_blank">';
 DEF edb360_conf_all_pages_icon = '<a href="http://carlos-sierra.net/edb360-an-oracle-database-360-degree-view/" target="_blank"><img src="edb360_img.jpg" alt="eDB360" height="47" width="50" /></a>';
@@ -231,6 +276,7 @@ SPO &&edb360_main_report..html APP;
 PRO
 PRO </td></tr></table>
 SPO OFF;
+-- time one for edb360 (end)
 VAR edb360_main_time1 NUMBER;
 EXEC :edb360_main_time1 := DBMS_UTILITY.GET_TIME;
 @@edb360_0c_post.sql

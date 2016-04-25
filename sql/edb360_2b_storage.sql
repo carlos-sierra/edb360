@@ -1000,6 +1000,7 @@ COL random2 NEW_V random2 FOR A30;
 SELECT :random1 random1, :random2 random2 FROM DUAL;
 DELETE plan_table WHERE statement_id IN (:random1, :random2);
 SET SERVEROUT ON;
+SET SERVEROUT ON SIZE 1000000;
 -- log
 SPO &&edb360_log..txt APP;
 PRO

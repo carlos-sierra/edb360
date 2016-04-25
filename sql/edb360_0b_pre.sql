@@ -1,26 +1,7 @@
-DEF edb360_vYYNN = 'v1607';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2016-04-10)';
+DEF edb360_vYYNN = 'v1608';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2016-04-24)';
 DEF edb360_copyright = ' (c) 2016';
 
--- parameters
-PRO
-PRO Parameter 1: 
-PRO If your Database is licensed to use the Oracle Tuning pack please enter T.
-PRO If you have a license for Diagnostics pack but not for Tuning pack, enter D.
-PRO Be aware value N reduces the output content substantially. Avoid N if possible.
-PRO
-PRO Oracle Pack License? (Tuning, Diagnostics or None) [ T | D | N ] (required)
-COL license_pack NEW_V license_pack FOR A1;
-SELECT NVL(UPPER(SUBSTR(TRIM('&1.'), 1, 1)), '?') license_pack FROM DUAL;
-WHENEVER SQLERROR EXIT SQL.SQLCODE;
-BEGIN
-  IF NOT '&&license_pack.' IN ('T', 'D', 'N') THEN
-    RAISE_APPLICATION_ERROR(-20000, 'Invalid Oracle Pack License "&&license_pack.". Valid values are T, D and N.');
-  END IF;
-END;
-/
-WHENEVER SQLERROR CONTINUE;
-PRO
 SET TERM OFF;
 -- watchdog
 VAR edb360_time0 NUMBER;
@@ -59,10 +40,6 @@ SELECT startup_time, dbid, instance_number, COUNT(*) snaps,
        startup_time, dbid, instance_number
 /
 
---PRO
---PRO Parameter 2: Days of History? (default 31)
---PRO Use default value of 31 unless you have been instructed otherwise.
---PRO
 COL history_days NEW_V history_days;
 -- range: takes at least 31 days and at most as many as actual history, with a default of 31. parameter restricts within that range. 
 SELECT TO_CHAR(LEAST(CEIL(SYSDATE - CAST(MIN(begin_interval_time) AS DATE)), GREATEST(31, TO_NUMBER(NVL(TRIM('&&edb360_conf_days.'), '31'))))) history_days FROM dba_hist_snapshot WHERE '&&diagnostics_pack.' = 'Y' AND dbid = (SELECT dbid FROM v$database);
@@ -314,6 +291,10 @@ DEF edb360_main_filename = '&&common_edb360_prefix._&&host_hash.';
 DEF edb360_tracefile_identifier = '&&common_edb360_prefix.';
 DEF edb360_tar_filename = '00008_&&edb360_main_filename._&&edb360_file_time.';
 
+-- custom configuration file
+HOS ls -lat sql/&&custom_config_filename. >> &&edb360_log3..txt
+HOS more sql/&&custom_config_filename. >> &&edb360_log3..txt
+
 -- Exadata
 ALTER SESSION SET "_serial_direct_read" = ALWAYS;
 ALTER SESSION SET "_small_table_threshold" = 1001;
@@ -416,7 +397,7 @@ COL minimum_snap_id NEW_V minimum_snap_id;
 SELECT NVL(TO_CHAR(MIN(snap_id)), '0') minimum_snap_id FROM dba_hist_snapshot WHERE '&&diagnostics_pack.' = 'Y' AND dbid = &&edb360_dbid. AND begin_interval_time > TO_DATE('&&edb360_date_from.', '&&edb360_date_format.');
 SELECT '-1' minimum_snap_id FROM DUAL WHERE TRIM('&&minimum_snap_id.') IS NULL;
 COL maximum_snap_id NEW_V maximum_snap_id;
-SELECT NVL(TO_CHAR(MAX(snap_id)), '&&minimum_snap_id.') maximum_snap_id FROM dba_hist_snapshot WHERE '&&diagnostics_pack.' = 'Y' AND dbid = &&edb360_dbid. AND end_interval_time < TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') + 1;
+SELECT NVL(TO_CHAR(MAX(snap_id)), '&&minimum_snap_id.') maximum_snap_id FROM dba_hist_snapshot WHERE '&&diagnostics_pack.' = 'Y' AND dbid = &&edb360_dbid. AND end_interval_time < TO_DATE('&&edb360_date_to.', '&&edb360_date_format.');
 SELECT '-1' maximum_snap_id FROM DUAL WHERE TRIM('&&maximum_snap_id.') IS NULL;
 
 -- ebs

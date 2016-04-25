@@ -112,6 +112,7 @@ ORDER BY partition_name;
 SELECT dbid, instance_number, snap_id, end_interval_time FROM dba_hist_snapshot ORDER BY dbid, instance_number, snap_id;
 
 set serveroutput on 
+SET SERVEROUT ON SIZE 1000000;
 declare 
 CURSOR cur_part IS 
 SELECT partition_name from dba_tab_partitions 

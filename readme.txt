@@ -1,11 +1,22 @@
-EDB360 v1604 (2016-02-18) by Carlos Sierra
-
+EDB360 v1608 (2016-04-24) by Carlos Sierra
+~~~~~~~~~~~~
 EDB360 is a "free to use" tool to perform an initial assessment of a remote system. 
+
 It gives a glance of a database state. It also helps to document any findings.
-EDB360 installs nothing. For better results execute connected as SYS or DBA.
-It takes a few hours to execute. Output ZIP file can be large (over 100 MBs), so
-you may want to execute EDB360 from a system directory with at least 1 GB of free 
-space. Best time to execute EDB360 is close to the end of a working day.
+
+EDB360 installs nothing on the database. 
+
+For better results execute connected as DBA or user with access to data dictionary.
+
+EDB360 takes a few hours to execute. 
+
+Output ZIP file can be large (over 100 MBs), so you may want to place and execute EDB360
+from a system directory with at least 1 GB of free space. 
+
+Best time to execute EDB360 is close to the end of a working day and let it execute
+overnight.
+
+****************************************************************************************
 
 Steps
 ~~~~~
@@ -16,15 +27,21 @@ Steps
    $ cd edb360-master
    $ sqlplus dba_user/dba_pwd
 
-2. Execute edb360.sql indicating if your database is licensed for the Oracle Tuning Pack, 
+2. Execute edb360.sql passing two parameters.
+
+   Parameter 1: Oracle License Pack (required)
+   
+   Indicate if your database is licensed for the Oracle Tuning Pack, 
    the Diagnostics Pack or None [ T | D | N ]. Example below specifies Tuning Pack. If 
    both Tuning and Diagnostics pass then T.
-
-   SQL> @edb360.sql T
    
-3. Unzip output edb360_<dbname>_<host>_YYYYMMDD_HH24MI.zip into a directory on your PC
+   Parameter 2: Custom edb360 configuration filename (optional)
 
-4. Review main html file 00001_edb360_<dbname>_index.html
+   SQL> @edb360.sql T NULL
+   
+3. Unzip output edb360_<NNNNNN>_<NNNNNN>_YYYYMMDD_HH24MI.zip into a directory on your PC
+
+4. Open and review main html file 00001_edb360_<NNNNNN>_index.html using a browser
 
 ****************************************************************************************
 
@@ -32,16 +49,15 @@ Notes
 ~~~~~
 1. If you need to execute edb360 against all databases in host use then run_db360.sh:
 
-   $ unzip edb360.zip
-   $ cd edb360
-   $ rm sql/edb360_0h_ash_validation.sql
+   $ unzip edb360-master.zip
+   $ cd edb360-master
    $ sh run_db360.sh
 
    note: this method requires Oracle Tuning pack license in all databases in such host.
 
 2. If you need to generate edb360 for a range of dates other than last 31 days; or change
    default "working hours" between 7:30AM and 7:30PM; or suppress an output format such as
-   text or csv; modify then file edb360_00_config.sql (back it up first).
+   text or csv; set a custom configuration file based on edb360_00_config.sql.
    
 3. How to find the license pack option that you have installed?
 
@@ -50,6 +66,13 @@ Notes
 4. How to find how many days are kept in the AWR repository?
 
    select retention from DBA_HIST_WR_CONTROL;
+
+5. eDB360 needs the following grants
+
+   grant select any dictionary to xxx;
+   grant advisor to xxx;
+   grant execute on dbms_workload_repository to xxx;
+   grant execute on dbms_lock to xxx;
 
 ****************************************************************************************
 
@@ -63,12 +86,12 @@ Troubleshooting steps below are for improving performance of edb360 based on kno
 
 Steps:
 
-1. Review files 00002_edb360_dbname_log.txt, 00003_edb360_dbname_log2.txt, 
-   00004_edb360_dbname_log3.txt and 00005_edb360_dbname_tkprof_sort.txt. 
+1. Review files 00002_edb360_NNNNNN_log.txt, 00003_edb360_NNNNNN_log2.txt, 
+   00004_edb360_NNNNNN_log3.txt and 00005_edb360_NNNNNN_tkprof_sort.txt. 
    First log shows the state of the statistics for AWR Tables. If stats are old then 
-   gather them fresh with script edb360/sql/gather_stats_wr_sys.sql
+   gather them fresh with script edb360-master/sql/gather_stats_wr_sys.sql
    
-2. If number of rows on WRH$_ACTIVE_SESSION_HISTORY as per 00002_edb360_dbname_log.txt is
+2. If number of rows on WRH$_ACTIVE_SESSION_HISTORY as per 00002_edb360_NNNNNN_log.txt is
    several millions, then you may not be purging data periodically. 
    There are some known bugs and some blog posts on this regard. Review MOS 387914.1.
    Execute query below to validate ASH age:

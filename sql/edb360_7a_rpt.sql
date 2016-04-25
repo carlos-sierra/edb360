@@ -3,6 +3,7 @@ DEF section_id = '7a';
 DEF section_name = 'AWR/ADDM/ASH Reports';
 EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
 SET VER OFF FEED OFF SERVEROUT ON HEAD OFF PAGES 50000 LIN 32767 TRIMS ON TRIM ON TI OFF TIMI OFF ARRAY 1000;
+SET SERVEROUT ON SIZE 1000000;
 SPO &&edb360_main_report..html APP;
 PRO <h2>&&section_id.. &&section_name.</h2>
 PRO <ol start="&&report_sequence.">
@@ -322,7 +323,7 @@ BEGIN
       put_line('SELECT TO_CHAR(:repo_seq) report_sequence FROM DUAL;');
 
       -- awr all modes
-      IF '&&edb360_conf_incl_awr_rpt.' = 'Y' AND l_instances > 1 AND '&&db_version.' >= '11' THEN
+      IF '&&edb360_conf_incl_awr_rpt.' = 'Y' AND l_instances > 1 AND '&&db_version.' >= '11.2' THEN
         put_line('COL edb360_bypass NEW_V edb360_bypass;');
         put_line('SELECT ''--bypass--'' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
         l_standard_filename := 'awrrpt_rac_'||j.bid||'_'||j.eid||'_'||j.rep;
@@ -418,7 +419,7 @@ BEGIN
       END IF;
       
       -- ash all nodes
-      IF '&&edb360_conf_incl_ash_rpt.' = 'Y' AND l_instances > 1 AND '&&db_version.' >= '11' THEN
+      IF '&&edb360_conf_incl_ash_rpt.' = 'Y' AND l_instances > 1 AND '&&db_version.' >= '11.2' THEN
         put_line('COL edb360_bypass NEW_V edb360_bypass;');
         put_line('SELECT ''--bypass--'' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
         l_standard_filename := 'ashrpt_rac_'||j.bid||'_'||j.eid||'_'||j.rep;

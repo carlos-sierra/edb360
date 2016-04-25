@@ -47,7 +47,7 @@ COL aas_user_io FOR 999990.000;
 
 BEGIN
   :sql_text_backup := '
-SELECT /*+ &&ds_hint. */
+SELECT /*+ &&ds_hint. FULL(h.ash) FULL(h.evt) FULL(h.sn) */
        MIN(snap_id) snap_id,
        TO_CHAR(TRUNC(sample_time, ''HH''), ''YYYY-MM-DD HH24:MI'')          begin_time,
        TO_CHAR(TRUNC(sample_time, ''HH'') + (1/24), ''YYYY-MM-DD HH24:MI'') end_time,
@@ -66,7 +66,7 @@ SELECT /*+ &&ds_hint. */
        ROUND(SUM(CASE wait_class    WHEN ''Scheduler''      THEN 10 ELSE 0 END) / 3600, 3) aas_scheduler,
        ROUND(SUM(CASE wait_class    WHEN ''Idle''           THEN 10 ELSE 0 END) / 3600, 3) aas_idle,
        ROUND(SUM(CASE wait_class    WHEN  ''Other''         THEN 10 ELSE 0 END) / 3600, 3) aas_other
-  FROM dba_hist_active_sess_history
+  FROM dba_hist_active_sess_history h
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
    AND instance_number = @instance_number@
@@ -141,6 +141,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '8');
 @@&&skip_all.edb360_9a_pre_one.sql
 
 SET SERVEROUT ON;
+SET SERVEROUT ON SIZE 1000000;
 SPO 99820_&&common_edb360_prefix._chart_setup_driver2.sql;
 DECLARE
   l_count NUMBER;
@@ -169,7 +170,7 @@ DEF vbaseline = '';
 
 BEGIN
   :sql_text_backup := '
-SELECT /*+ &&ds_hint. */
+SELECT /*+ &&ds_hint. FULL(h.ash) FULL(h.evt) FULL(h.sn) */
        MIN(snap_id) snap_id,
        TO_CHAR(TRUNC(sample_time, ''HH''), ''YYYY-MM-DD HH24:MI'')          begin_time,
        TO_CHAR(TRUNC(sample_time, ''HH'') + (1/24), ''YYYY-MM-DD HH24:MI'') end_time,
@@ -188,7 +189,7 @@ SELECT /*+ &&ds_hint. */
        0 dummy_13,
        0 dummy_14,
        0 dummy_15
-  FROM dba_hist_active_sess_history
+  FROM dba_hist_active_sess_history h
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
    AND @filter_predicate@

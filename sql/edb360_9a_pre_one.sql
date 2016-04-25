@@ -34,6 +34,7 @@ PRO &&hh_mm_ss. &&section_id..&&report_sequence.
 EXEC :sql_text_display := REPLACE(REPLACE(TRIM(CHR(10) FROM :sql_text)||';', '<', CHR(38)||'lt;'), '>', CHR(38)||'gt;');
 SET TIMI ON;
 SET SERVEROUT ON;
+SET SERVEROUT ON SIZE 1000000;
 BEGIN
   DBMS_OUTPUT.PUT_LINE('Elapsed Hours so far: '||ROUND((DBMS_UTILITY.GET_TIME - :edb360_time0) / 100 / 3600, 3)||CHR(10));
 END;

@@ -384,6 +384,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', 'instance_numbe
 @@edb360_9a_pre_one.sql
 
 SET SERVEROUT ON;
+SET SERVEROUT ON SIZE 1000000;
 SPO 99810_&&common_edb360_prefix._chart_setup_driver1.sql;
 DECLARE
   l_count NUMBER;

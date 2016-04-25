@@ -276,6 +276,7 @@ END;
 /
 
 SET SERVEROUT ON;
+SET SERVEROUT ON SIZE 1000000;
 SPO 99800_&&common_edb360_prefix._chart_setup_driver2.sql;
 DECLARE
   l_count NUMBER;

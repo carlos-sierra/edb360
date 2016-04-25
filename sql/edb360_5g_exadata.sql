@@ -710,6 +710,7 @@ WITH
       , CAST(EXTRACTVALUE(VALUE(v), ''/griddisk/offset          /text()'')                   AS VARCHAR2(100)) offset
       , CAST(EXTRACTVALUE(VALUE(v), ''/griddisk/size            /text()'')                   AS VARCHAR2(100)) disk_size
       , CAST(EXTRACTVALUE(VALUE(v), ''/griddisk/status          /text()'')                   AS VARCHAR2(100)) status
+      , CAST(EXTRACTVALUE(VALUE(v), ''/griddisk/cachedBy        /text()'')                   AS VARCHAR2(100)) cachedBy
     FROM
         v$cell_config c
       , TABLE(XMLSEQUENCE(EXTRACT(XMLTYPE(c.confval), ''/cli-output/griddisk''))) v  -- gv$ isn''t needed, all cells should be visible in all instances
@@ -748,6 +749,7 @@ SELECT
   , pd.name                         physdisk_name
   , SUBSTR(pd.status,1,20)          physdisk_status
   , lun.lunWriteCacheMode
+  , gd.cachedBy
 --  , SUBSTR(cd.devicename,1,20)      cd_devicename
 --  , SUBSTR(lun.devicename,1,20)     lun_devicename
 --    disktype
