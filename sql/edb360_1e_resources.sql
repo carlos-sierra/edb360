@@ -20,7 +20,7 @@ COL days FOR 990.0 HEA "Days|Hist";
 COL avg_snaps_per_day FOR 990.0 HEA "Avg|Snaps|per|Day";
 COL min_sample_time FOR A18 HEA "Begin Interval";
 COL max_sample_time FOR A18 HEA "End Interval";
-COL samples FOR 9999999 HEA "Samples";
+COL samples FOR 9999999999 HEA "Samples";
 COL hours FOR 9990.0 HEA "Hours|Hist";
 
 DEF title = 'CPU Demand Percentiles (MEM)';
