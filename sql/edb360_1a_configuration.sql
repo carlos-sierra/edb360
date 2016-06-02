@@ -39,7 +39,7 @@ data AS (SELECT /*+ &&sq_fact_hints. */ SUM(bytes) bytes, COUNT(*) files, COUNT(
 temp AS (SELECT /*+ &&sq_fact_hints. */ SUM(bytes) bytes FROM v$tempfile),
 log AS (SELECT /*+ &&sq_fact_hints. */ SUM(bytes) * MAX(members) bytes FROM v$log),
 control AS (SELECT /*+ &&sq_fact_hints. */ SUM(block_size * file_size_blks) bytes FROM v$controlfile),
-cell AS (SELECT /*+ &&sq_fact_hints. */ COUNT(DISTINCT cell_name) cnt FROM v$cell_state),
+&&skip_10g.&&skip_11r1. cell AS (SELECT /*+ &&sq_fact_hints. */ COUNT(DISTINCT cell_name) cnt FROM v$cell_state),
 core AS (SELECT /*+ &&sq_fact_hints. */ SUM(value) cnt FROM gv$osstat WHERE stat_name = ''NUM_CPU_CORES''),
 cpu AS (SELECT /*+ &&sq_fact_hints. */ SUM(value) cnt FROM gv$osstat WHERE stat_name = ''NUM_CPUS''),
 pmem AS (SELECT /*+ &&sq_fact_hints. */ SUM(value) bytes FROM gv$osstat WHERE stat_name = ''PHYSICAL_MEMORY_BYTES'')
@@ -64,16 +64,16 @@ CASE WHEN pga.target > 0 THEN ''PGA ''   ||TRIM(TO_CHAR(ROUND(pga.target / POWER
 CASE WHEN mem.target > 0 THEN ''AMM'' ELSE CASE WHEN sga.target > 0 THEN ''ASMM'' ELSE ''MANUAL'' END END
   FROM mem, sga, pga
  UNION ALL
-SELECT ''Hardware:'', CASE WHEN cell.cnt > 0 THEN ''Engineered System ''||
-CASE WHEN ''&&processor_model.'' LIKE ''%5675%'' THEN ''X2-2 '' END|| 
-CASE WHEN ''&&processor_model.'' LIKE ''%2690%'' THEN ''X3-2 '' END|| 
-CASE WHEN ''&&processor_model.'' LIKE ''%2697%'' THEN ''X4-2 '' END|| 
-CASE WHEN ''&&processor_model.'' LIKE ''%2699%'' THEN ''X5-2 '' END|| 
-CASE WHEN ''&&processor_model.'' LIKE ''%8870%'' THEN ''X3-8 '' END|| 
-CASE WHEN ''&&processor_model.'' LIKE ''%8895%'' THEN ''X4-8 or X5-8 '' END|| 
-''with ''||cell.cnt||'' storage servers'' 
-ELSE ''Unknown'' END FROM cell
- UNION ALL
+&&skip_10g.&&skip_11r1. SELECT ''Hardware:'', CASE WHEN cell.cnt > 0 THEN ''Engineered System ''||
+&&skip_10g.&&skip_11r1. CASE WHEN ''&&processor_model.'' LIKE ''%5675%'' THEN ''X2-2 '' END|| 
+&&skip_10g.&&skip_11r1. CASE WHEN ''&&processor_model.'' LIKE ''%2690%'' THEN ''X3-2 '' END|| 
+&&skip_10g.&&skip_11r1. CASE WHEN ''&&processor_model.'' LIKE ''%2697%'' THEN ''X4-2 '' END|| 
+&&skip_10g.&&skip_11r1. CASE WHEN ''&&processor_model.'' LIKE ''%2699%'' THEN ''X5-2 '' END|| 
+&&skip_10g.&&skip_11r1. CASE WHEN ''&&processor_model.'' LIKE ''%8870%'' THEN ''X3-8 '' END|| 
+&&skip_10g.&&skip_11r1. CASE WHEN ''&&processor_model.'' LIKE ''%8895%'' THEN ''X4-8 or X5-8 '' END|| 
+&&skip_10g.&&skip_11r1. ''with ''||cell.cnt||'' storage servers'' 
+&&skip_10g.&&skip_11r1. ELSE ''Unknown'' END FROM cell
+&&skip_10g.&&skip_11r1.  UNION ALL
 SELECT ''Processor:'', ''&&processor_model.'' FROM DUAL
  UNION ALL
 SELECT ''Physical CPUs:'', core.cnt||'' cores''||CASE WHEN rac.instances > 0 THEN '', on ''||rac.db_type END FROM rac, core

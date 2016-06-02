@@ -672,7 +672,9 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
   FROM dba_hist_snapshot s,
        dba_hist_sga g,
        dba_hist_pgastat p
- WHERE g.snap_id = s.snap_id
+ WHERE s.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND s.dbid = &&edb360_dbid.
+   AND g.snap_id = s.snap_id
    AND g.dbid = s.dbid
    AND g.instance_number = s.instance_number
    AND p.snap_id = s.snap_id
@@ -1604,7 +1606,9 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        SUM(CASE WHEN h.stat_name = ''physical read total bytes'' THEN value ELSE 0 END) r_bytes,
        SUM(CASE WHEN h.stat_name IN (''physical write total bytes'', ''redo size'') THEN value ELSE 0 END) w_bytes
   FROM dba_hist_sysstat h
- WHERE h.stat_name IN (''physical read total IO requests'', ''physical write total IO requests'', ''redo writes'', ''physical read total bytes'', ''physical write total bytes'', ''redo size'')
+ WHERE h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND h.dbid = &&edb360_dbid.
+   AND h.stat_name IN (''physical read total IO requests'', ''physical write total IO requests'', ''redo writes'', ''physical read total bytes'', ''physical write total bytes'', ''redo size'')
  GROUP BY
        h.snap_id,
        h.dbid,

@@ -191,7 +191,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        begin_time,
        end_time,
        /* "cell physical IO bytes eligible for predicate offload" / "physical read total bytes" */
-       CASE WHEN prtb > 0 THEN ROUND(100 * eligible / prtb, 1) ELSE 0 END "Elegible Percent", 
+       CASE WHEN prtb > 0 THEN ROUND(100 * eligible / prtb, 1) ELSE 0 END "Eligible Percent", 
        /* ("cell physical IO bytes eligible for predicate offload" - "cell physical IO interconnect bytes")/ "cell physical IO bytes eligible for predicate offload" */
        CASE WHEN eligible > ib THEN ROUND(100 * (eligible - ib) / eligible, 1) ELSE 0 END "IO Saved Percent", 
        /* "cell physical IO bytes saved by storage index" / "cell physical IO bytes eligible for predicate offload" */
@@ -218,7 +218,7 @@ END;
 DEF skip_lch = '';
 DEF title = 'Smart Scan efficiency per Hour';
 DEF vaxis = 'Percent %';
-DEF tit_01 = 'Elegible Percent';
+DEF tit_01 = 'Eligible Percent';
 DEF tit_02 = 'IO Saved Percent';
 DEF tit_03 = 'Storage Index efficency Percent';
 DEF tit_04 = '';

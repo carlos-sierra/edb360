@@ -78,6 +78,7 @@ COL esp_collection_yyyymmdd NEW_V esp_collection_yyyymmdd FOR A8;
 SELECT TO_CHAR(SYSDATE, 'YYYYMMDD') esp_collection_yyyymmdd FROM DUAL;
 
 -- AWR collector
+@@&&skip_awr.sql/escp_collect_awr.sql
 @@&&skip_awr.sql/esp_collect_requirements_awr.sql
 @@&&skip_awr.sql/resources_requirements_awr.sql
 
@@ -105,6 +106,7 @@ set feed on echo on
 
 -- zip esp
 HOS if [ -f cpuinfo_model_name_&&esp_host_name_short._&&esp_collection_yyyymmdd..txt ]; then  zip -qm esp_output_&&esp_host_name_short._&&esp_collection_yyyymmdd..zip cpuinfo_model_name_&&esp_host_name_short._&&esp_collection_yyyymmdd..txt hostcommands_driver.sql; fi
+HOS if [ `ls escp_&&esp_host_name_short._&&esp_collection_yyyymmdd..csv 2>/dev/null | wc -l` -gt 0 ]; then zip -q  esp_output_&&esp_host_name_short._&&esp_collection_yyyymmdd..zip escp_&&esp_host_name_short._&&esp_collection_yyyymmdd..csv hostcommands_driver.sql; fi
 HOS if [ `ls esp_requirements_*_&&esp_host_name_short._&&esp_collection_yyyymmdd.*.csv 2>/dev/null | wc -l` -gt 0 ]; then zip -q  esp_output_&&esp_host_name_short._&&esp_collection_yyyymmdd..zip esp_requirements_*_&&esp_host_name_short._&&esp_collection_yyyymmdd.*.csv hostcommands_driver.sql; fi
 HOS if [ `ls res_requirements_*_&&esp_host_name_short._&&esp_collection_yyyymmdd.*.txt 2>/dev/null | wc -l` -gt 0 ]; then zip -q  esp_output_&&esp_host_name_short._&&esp_collection_yyyymmdd..zip res_requirements_*_&&esp_host_name_short._&&esp_collection_yyyymmdd.*.txt hostcommands_driver.sql; fi
 

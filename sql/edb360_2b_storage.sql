@@ -100,11 +100,13 @@ COL pct_used FOR 999990.0;
 BEGIN
   :sql_text := '
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
+-- fixed by Rodigo Righetti
 WITH
 files AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        tablespace_name,
-       SUM(DECODE(autoextensible, ''YES'', maxbytes, bytes)) / POWER(10,9) total_gb
+       SUM(DECODE(autoextensible, ''YES'', maxbytes, bytes)) / POWER(10,9) Max_size_gb,
+       SUM( bytes) / POWER(10,9) Size_gb
   FROM dba_data_files
  GROUP BY
        tablespace_name
@@ -121,12 +123,13 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
 tablespaces AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        files.tablespace_name,
-       ROUND(files.total_gb, 1) total_gb,
+       ROUND(files.size_gb, 1) size_gb,
        ROUND(segments.used_gb, 1) used_gb,
-       ROUND(100 * segments.used_gb / files.total_gb, 1) pct_used
+       ROUND(100 * segments.used_gb / files.size_gb, 1) pct_used,
+       ROUND(files.max_size_gb, 1) max_size_gb
   FROM files,
        segments
- WHERE files.total_gb > 0
+ WHERE files.size_gb > 0
    AND files.tablespace_name = segments.tablespace_name(+)
  ORDER BY
        files.tablespace_name
@@ -134,22 +137,25 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
 total AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        ''Total'' tablespace_name,
-       SUM(total_gb) total_gb,
+       SUM(size_gb) size_gb,
        SUM(used_gb) used_gb,
-       ROUND(100 * SUM(used_gb) / SUM(total_gb), 1) pct_used
+       ROUND(100 * SUM(used_gb) / SUM(size_gb), 1) pct_used,
+       sum(max_size_gb) max_size_gb
   FROM tablespaces
 )
 SELECT tablespace_name,
-       total_gb,
+       size_gb,
        used_gb,
-       pct_used
-  FROM tablespaces 
+       pct_used,
+       max_size_gb
+  FROM tablespaces
  UNION ALL
 SELECT tablespace_name,
-       total_gb,
+       size_gb,
        used_gb,
-       pct_used
-  FROM total 
+       pct_used,
+       max_size_gb
+  FROM total
 ';
 END;
 /
