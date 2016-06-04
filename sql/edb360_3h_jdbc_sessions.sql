@@ -12,7 +12,8 @@ DEF main_table = 'GV$SESSION';
 BEGIN
   :sql_text := '
 -- from monitor_jdbc_conn.sql 
-select count(*), module from gv$session 
+select count(*), module  /* &&section_id..&&report_sequence. */
+from gv$session 
 where program like ''%JDBC%'' 
 group by module 
 order by 1 DESC, 2
@@ -26,7 +27,8 @@ DEF main_table = 'GV$SESSION';
 BEGIN
   :sql_text := '
 -- from monitor_jdbc_conn.sql 
-select count(*), process, module from gv$session 
+select count(*), process, module  /* &&section_id..&&report_sequence. */
+from gv$session 
 where program like ''%JDBC%'' 
 group by process, module 
 order by 1 DESC, 2, 3
@@ -40,7 +42,8 @@ DEF main_table = 'GV$SESSION';
 BEGIN
   :sql_text := '
 -- from monitor_jdbc_conn.sql 
-select count(*), machine from gv$session 
+select count(*), machine  /* &&section_id..&&report_sequence. */
+from gv$session 
 where program like ''%JDBC%'' 
 group by machine 
 order by 1 DESC, 2
@@ -54,7 +57,8 @@ DEF main_table = 'GV$SESSION';
 BEGIN
   :sql_text := '
 -- from monitor_jdbc_conn.sql 
-select count(*), machine, process from gv$session 
+select count(*), machine, process /* &&section_id..&&report_sequence. */
+from gv$session 
 where program like ''%JDBC%'' 
 group by machine, process 
 order by 1 DESC, 2, 3
@@ -68,7 +72,7 @@ DEF main_table = 'GV$SESSION';
 BEGIN
   :sql_text := '
 -- from monitor_jdbc_conn.sql 
-select TRUNC(last_call_et/3600) hours_idle,count(*)  
+select TRUNC(last_call_et/3600) hours_idle,count(*) /* &&section_id..&&report_sequence. */
 from gv$session 
 where program like ''%JDBC%''
 --and  last_call_et > 3600
@@ -85,7 +89,7 @@ DEF main_table = 'GV$SESSION';
 BEGIN
   :sql_text := '
 -- from monitor_jdbc_conn.sql 
-select TRUNC(last_call_et/3600) hours_idle,machine, program,count(*)  
+select TRUNC(last_call_et/3600) hours_idle,machine, program,count(*) /* &&section_id..&&report_sequence. */
 from gv$session 
 where program like ''%JDBC%''
 --and  last_call_et > 3600
@@ -102,7 +106,7 @@ DEF main_table = 'GV$SESSION';
 BEGIN
   :sql_text := '
 -- from monitor_jdbc_conn.sql 
-select s.last_call_et last_call_et_secs, 
+select s.last_call_et last_call_et_secs,  /* &&section_id..&&report_sequence. */
 s.*,  t.sql_text current_sql, t2.sql_text prev_sql 
 from gv$session s, gv$sql t, gv$sql t2
 where s.inst_id =t.inst_id(+)
@@ -128,7 +132,7 @@ DEF main_table = 'GV$SESSION';
 BEGIN
   :sql_text := '
 -- from monitor_jdbc_conn.sql 
-select s.last_call_et last_call_et_secs, 
+select s.last_call_et last_call_et_secs,  /* &&section_id..&&report_sequence. */
 s.*,  t.sql_text current_sql, t2.sql_text prev_sql 
 from gv$session s, gv$sql t, gv$sql t2
 where s.inst_id =t.inst_id(+)

@@ -42,19 +42,25 @@ SET BLO ON;
 SET RECSEP WR;
 UNDEF 1
 
--- alert log (3 methods) note: prefix of &&edb360_sections. is to bypass lsnr when requesting some section(s)
+-- alert log (few methods) note: prefix of &&edb360_sections. is to bypass copy when requesting only some section(s)
 COL db_name_upper NEW_V db_name_upper;
 COL db_name_lower NEW_V db_name_lower;
+COL instance_name_upper NEW_V instance_name_upper;
+COL instance_name_lower NEW_V instance_name_lower;
 COL background_dump_dest NEW_V background_dump_dest;
 SELECT UPPER(SYS_CONTEXT('USERENV', 'DB_NAME')) db_name_upper FROM DUAL;
 SELECT LOWER(SYS_CONTEXT('USERENV', 'DB_NAME')) db_name_lower FROM DUAL;
+SELECT UPPER(SYS_CONTEXT('USERENV', 'INSTANCE_NAME')) instance_name_upper FROM DUAL;
+SELECT LOWER(SYS_CONTEXT('USERENV', 'INSTANCE_NAME')) instance_name_lower FROM DUAL;
 SELECT value background_dump_dest FROM v$parameter WHERE name = 'background_dump_dest';
 HOS &&edb360_sections.cp &&background_dump_dest./alert_&&db_name_upper.*.log . >> &&edb360_log3..txt
 HOS &&edb360_sections.cp &&background_dump_dest./alert_&&db_name_lower.*.log . >> &&edb360_log3..txt
+HOS &&edb360_sections.cp &&background_dump_dest./alert_&&instance_name_upper.*.log . >> &&edb360_log3..txt
+HOS &&edb360_sections.cp &&background_dump_dest./alert_&&instance_name_lower.*.log . >> &&edb360_log3..txt
 HOS &&edb360_sections.cp &&background_dump_dest./alert_&&_connect_identifier..log . >> &&edb360_log3..txt
 HOS &&edb360_sections.rename alert_ 00006_&&common_edb360_prefix._alert_ alert_*.log >> &&edb360_log3..txt
 
--- listener log (last 100K + counts per hour) note: prefix of &&edb360_sections. is to bypass lsnr when requesting some section(s)
+-- listener log (last 100K + counts per hour) note: prefix of &&edb360_sections. is to bypass lsnr when requesting only some section(s)
 HOS &&edb360_sections.lsnrctl show trc_directory | grep trc_directory | awk '{print "HOS cat "$6"/listener.log | fgrep \"establish\" | awk '\''{ print $1\",\"$2 }'\'' | awk -F: '\''{ print \",\"$1 }'\'' | uniq -c > listener_logons.csv"} END {print "HOS sed -i '\''1s/^/COUNT ,DATE,HOUR\\n/'\'' listener_logons.csv"}' > listener_log_driver.sql
 HOS &&edb360_sections.lsnrctl show trc_directory | grep trc_directory | awk 'BEGIN {b = "HOS tail -100000000c "; e = " > listener_tail.log"} {print b, $6"/listener.log", e } END {print "HOS zip -m listener_log.zip listener_logons.csv listener_tail.log listener_log_driver.sql"}' >> listener_log_driver.sql
 @&&edb360_sections.listener_log_driver.sql

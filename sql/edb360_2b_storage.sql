@@ -460,6 +460,18 @@ SELECT so.segment_type,
  WHERE ROWNUM < 201
 ), top_200 AS (
 SELECT p.*,
+       (SELECT object_id
+          FROM dba_objects o
+         WHERE o.object_type = p.segment_type
+           AND o.owner = p.owner
+           AND o.object_name = p.segment_name
+           AND o.object_type NOT LIKE ''%PARTITION%'') object_id,
+       (SELECT data_object_id
+          FROM dba_objects o
+         WHERE o.object_type = p.segment_type
+           AND o.owner = p.owner
+           AND o.object_name = p.segment_name
+           AND o.object_type NOT LIKE ''%PARTITION%'') data_object_id,
        (SELECT SUM(p2.bytes_perc) FROM top_200_pre p2 WHERE p2.rank <= p.rank) bytes_perc_cum
   FROM top_200_pre p
 ), top_200_totals AS (
@@ -502,6 +514,8 @@ SELECT v.rank,
        v.segment_type,
        v.owner,
        v.segment_name,
+       v.object_id,
+       v.data_object_id,
        v.tablespace_name,
        CASE
        WHEN v.segment_type LIKE ''INDEX%'' THEN
@@ -528,6 +542,8 @@ SELECT d.rank,
        d.segment_type,
        d.owner,
        d.segment_name,
+       d.object_id,
+       d.data_object_id,
        d.tablespace_name,
        d.segments,
        d.extents,
@@ -544,6 +560,8 @@ SELECT TO_NUMBER(NULL) rank,
        NULL segment_type,
        NULL owner,
        NULL segment_name,
+       TO_NUMBER(NULL),
+       TO_NUMBER(NULL),
        ''TOP  20'' tablespace_name,
        st.segments,
        st.extents,
@@ -560,6 +578,8 @@ SELECT TO_NUMBER(NULL) rank,
        NULL segment_type,
        NULL owner,
        NULL segment_name,
+       TO_NUMBER(NULL),
+       TO_NUMBER(NULL),
        ''TOP 100'' tablespace_name,
        st.segments,
        st.extents,
@@ -576,6 +596,8 @@ SELECT TO_NUMBER(NULL) rank,
        NULL segment_type,
        NULL owner,
        NULL segment_name,
+       TO_NUMBER(NULL),
+       TO_NUMBER(NULL),
        ''TOP 200'' tablespace_name,
        st.segments,
        st.extents,
@@ -592,6 +614,8 @@ SELECT TO_NUMBER(NULL) rank,
        NULL segment_type,
        NULL owner,
        NULL segment_name,
+       TO_NUMBER(NULL),
+       TO_NUMBER(NULL),
        ''TOTAL'' tablespace_name,
        t.segments,
        t.extents,

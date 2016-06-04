@@ -162,6 +162,7 @@ SPO OFF;
 @@&&is_single_instance.&&skip_diagnostics.&&edb360_3f.ic_latency.sql
 @@&&is_single_instance.&&skip_diagnostics.&&edb360_3g.ic_performance.sql
 @@&&edb360_3h.jdbc_sessions.sql
+@@&&edb360_3i.dataguard.sql
 
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

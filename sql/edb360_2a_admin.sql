@@ -826,6 +826,25 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+DEF title = 'Columns with Histogram on Long String';
+DEF main_table = 'DBA_TAB_COLS';
+BEGIN
+  :sql_text := '
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
+       *
+  FROM dba_tab_cols
+ WHERE num_buckets BETWEEN 2 AND 253
+   AND data_type LIKE ''%CHAR%''
+   AND char_length > 32
+   AND avg_col_len > 6
+   AND data_length > 32
+ ORDER BY 
+       owner, table_name, column_id
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
 DEF title = 'Hidden Columns';
 DEF main_table = 'DBA_TAB_COLS';
 BEGIN
