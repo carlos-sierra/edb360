@@ -2,6 +2,8 @@
 --
 -- File name:   escp_collect_awr.sql (2016-06-01)
 --
+--              Enkitec Sizing and Capacity Planing eSCP
+--
 -- Purpose:     Collect Resources Metrics for an Oracle Database
 --
 -- Author:      Carlos Sierra
@@ -15,7 +17,7 @@
 --                  DBA_HIST_PGASTAT             MEM
 --                  DBA_HIST_TBSPC_SPACE_USAGE   DISK
 --                  DBA_HIST_LOG                 DISK
---                  DBA_HIST_SYSSTAT             IOPS MBPS NETW IC
+--                  DBA_HIST_SYSSTAT             IOPS MBPS PHYR PHYW NETW IC
 --                  DBA_HIST_DLM_MISC            IC
 --                  DBA_HIST_OSSTAT              OS
 --
@@ -415,6 +417,12 @@ SELECT CASE h.stat_name
        WHEN 'physical read total bytes'              THEN 'MBPS'
        WHEN 'physical write total bytes'             THEN 'MBPS'
        WHEN 'redo size'                              THEN 'MBPS'
+       WHEN 'physical reads'                         THEN 'PHYR'
+       WHEN 'physical reads direct'                  THEN 'PHYR'
+       WHEN 'physical reads cache'                   THEN 'PHYR'
+       WHEN 'physical writes'                        THEN 'PHYW'
+       WHEN 'physical writes direct'                 THEN 'PHYW'
+       WHEN 'physical writes from cache'             THEN 'PHYW'
        WHEN 'bytes sent via SQL*Net to client'       THEN 'NETW'
        WHEN 'bytes received via SQL*Net from client' THEN 'NETW'
        WHEN 'bytes sent via SQL*Net to dblink'       THEN 'NETW'
@@ -433,6 +441,12 @@ SELECT CASE h.stat_name
        WHEN 'physical read total bytes'              THEN 'RBYTES'
        WHEN 'physical write total bytes'             THEN 'WBYTES'
        WHEN 'redo size'                              THEN 'WREDOBYTES'
+       WHEN 'physical reads'                         THEN 'PHYR'
+       WHEN 'physical reads direct'                  THEN 'PHYRD'
+       WHEN 'physical reads cache'                   THEN 'PHYRC'
+       WHEN 'physical writes'                        THEN 'PHYW'
+       WHEN 'physical writes direct'                 THEN 'PHYWD'
+       WHEN 'physical writes from cache'             THEN 'PHYWC'
        WHEN 'bytes sent via SQL*Net to client'       THEN 'TOCLIENT'
        WHEN 'bytes received via SQL*Net from client' THEN 'FROMCLIENT'
        WHEN 'bytes sent via SQL*Net to dblink'       THEN 'TODBLINK'
@@ -458,6 +472,12 @@ SELECT CASE h.stat_name
        'physical read total bytes',
        'physical write total bytes',
        'redo size',
+       'physical reads',
+       'physical reads direct',
+       'physical reads cache',
+       'physical writes',
+       'physical writes direct',
+       'physical writes from cache',
        'bytes sent via SQL*Net to client',
        'bytes received via SQL*Net from client',
        'bytes sent via SQL*Net to dblink',
@@ -481,17 +501,24 @@ SELECT CASE h.stat_name
        WHEN 'physical read total bytes'              THEN 2.1
        WHEN 'physical write total bytes'             THEN 2.2
        WHEN 'redo size'                              THEN 2.3
-       WHEN 'bytes sent via SQL*Net to client'       THEN 3.1
-       WHEN 'bytes received via SQL*Net from client' THEN 3.2
-       WHEN 'bytes sent via SQL*Net to dblink'       THEN 3.3
-       WHEN 'bytes received via SQL*Net from dblink' THEN 3.4
-       WHEN 'gc cr blocks received'                  THEN 4.1
-       WHEN 'gc current blocks received'             THEN 4.2
-       WHEN 'gc cr blocks served'                    THEN 4.3
-       WHEN 'gc current blocks served'               THEN 4.4
-       WHEN 'gcs messages sent'                      THEN 4.5
-       WHEN 'ges messages sent'                      THEN 4.6
-       END,
+       WHEN 'physical reads'                         THEN 3.1
+       WHEN 'physical reads direct'                  THEN 3.2
+       WHEN 'physical reads cache'                   THEN 3.3
+       WHEN 'physical writes'                        THEN 4.1
+       WHEN 'physical writes direct'                 THEN 4.2
+       WHEN 'physical writes from cache'             THEN 4.3
+       WHEN 'bytes sent via SQL*Net to client'       THEN 5.1
+       WHEN 'bytes received via SQL*Net from client' THEN 5.2
+       WHEN 'bytes sent via SQL*Net to dblink'       THEN 5.3
+       WHEN 'bytes received via SQL*Net from dblink' THEN 5.4
+       WHEN 'gc cr blocks received'                  THEN 6.1
+       WHEN 'gc current blocks received'             THEN 6.2
+       WHEN 'gc cr blocks served'                    THEN 6.3
+       WHEN 'gc current blocks served'               THEN 6.4
+       WHEN 'gcs messages sent'                      THEN 6.5
+       WHEN 'ges messages sent'                      THEN 6.6
+       ELSE 9.9 END,
+       h.stat_name,
        h.instance_number,
        s.end_interval_time
 /
@@ -521,7 +548,8 @@ SELECT 'IC'                       escp_metric_group,
        CASE h.name
        WHEN 'gcs msgs received' THEN 1
        WHEN 'ges msgs received' THEN 2
-       END,
+       ELSE 9 END,
+       h.name,
        h.instance_number,
        s.end_interval_time
 /
@@ -529,17 +557,26 @@ SELECT 'IC'                       escp_metric_group,
 -- DBA_HIST_OSSTAT OS
 SELECT 'OS'                       escp_metric_group,
        CASE h.stat_name
-       WHEN 'LOAD'                  THEN 'OSLOAD'
-       WHEN 'NUM_CPUS'              THEN 'OSCPUS'
-       WHEN 'NUM_CPU_CORES'         THEN 'OSCORES'
-       WHEN 'PHYSICAL_MEMORY_BYTES' THEN 'OSMEMBYTES'
+       WHEN 'LOAD'                   THEN 'OSLOAD'
+       WHEN 'NUM_CPUS'               THEN 'OSCPUS'
+       WHEN 'NUM_CPU_CORES'          THEN 'OSCORES'
+       WHEN 'PHYSICAL_MEMORY_BYTES'  THEN 'OSMEMBYTES'
+       WHEN 'OS_CPU_WAIT_TIME'       THEN 'OSCPUWAIT'
+       WHEN 'RSRC_MGR_CPU_WAIT_TIME' THEN 'RMCPUAWIT'
        END                        escp_metric_acronym,
        TO_CHAR(h.instance_number) escp_instance_number,
        s.end_interval_time        escp_end_date,
        TO_CHAR(h.value)           escp_value
   FROM dba_hist_osstat   h,
        dba_hist_snapshot s
- WHERE h.stat_name IN ('LOAD', 'NUM_CPUS', 'NUM_CPU_CORES', 'PHYSICAL_MEMORY_BYTES')
+ WHERE h.stat_name IN (
+       'LOAD', 
+       'NUM_CPUS', 
+       'NUM_CPU_CORES', 
+       'PHYSICAL_MEMORY_BYTES', 
+       'OS_CPU_WAIT_TIME', 
+       'RSRC_MGR_CPU_WAIT_TIME'
+       )
    AND h.snap_id >= &&escp_min_snap_id.
    AND h.dbid = &&escp_this_dbid.
    AND s.snap_id = h.snap_id
@@ -548,11 +585,14 @@ SELECT 'OS'                       escp_metric_group,
    AND s.end_interval_time >= SYSTIMESTAMP - &&escp_collection_days.
  ORDER BY
        CASE h.stat_name
-       WHEN 'LOAD'                  THEN 1
-       WHEN 'NUM_CPUS'              THEN 2
-       WHEN 'NUM_CPU_CORES'         THEN 3
-       WHEN 'PHYSICAL_MEMORY_BYTES' THEN 4
-       END,
+       WHEN 'LOAD'                   THEN 1
+       WHEN 'NUM_CPUS'               THEN 2
+       WHEN 'NUM_CPU_CORES'          THEN 3
+       WHEN 'PHYSICAL_MEMORY_BYTES'  THEN 4
+       WHEN 'OS_CPU_WAIT_TIME'       THEN 5
+       WHEN 'RSRC_MGR_CPU_WAIT_TIME' THEN 6
+       ELSE 9 END,
+       h.stat_name,
        h.instance_number,
        s.end_interval_time
 /   

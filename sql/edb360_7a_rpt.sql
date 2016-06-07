@@ -4,6 +4,7 @@ DEF section_name = 'AWR/ADDM/ASH Reports';
 EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
 SET VER OFF FEED OFF SERVEROUT ON HEAD OFF PAGES 50000 LIN 32767 TRIMS ON TRIM ON TI OFF TIMI OFF ARRAY 1000;
 SET SERVEROUT ON SIZE 1000000;
+SET SERVEROUT ON SIZE UNL;
 SPO &&edb360_main_report..html APP;
 PRO <h2>&&section_id.. &&section_name.</h2>
 PRO <ol start="&&report_sequence.">

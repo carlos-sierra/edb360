@@ -416,6 +416,7 @@ EXEC :file_seq := :file_seq + 1;
 SELECT '&&common_edb360_prefix._&&section_id._'||LPAD(:file_seq, 5, '0')||'_archived_redo_log_heat_map' one_spool_filename FROM DUAL;
 SET SERVEROUT ON
 SET SERVEROUT ON SIZE 1000000;
+SET SERVEROUT ON SIZE UNL;
 SPO &&one_spool_filename..html
 @@2016-03-08-RedoLogSizeHeatMap.sql
 SPO OFF

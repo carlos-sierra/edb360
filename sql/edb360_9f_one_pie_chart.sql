@@ -34,6 +34,7 @@ PRO        var data = google.visualization.arrayToDataTable([
 -- body
 SET SERVEROUT ON;
 SET SERVEROUT ON SIZE 1000000;
+SET SERVEROUT ON SIZE UNL;
 DECLARE
   cur SYS_REFCURSOR;
   l_slice VARCHAR2(32767);

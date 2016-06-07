@@ -113,6 +113,7 @@ SELECT dbid, instance_number, snap_id, end_interval_time FROM dba_hist_snapshot 
 
 set serveroutput on 
 SET SERVEROUT ON SIZE 1000000;
+SET SERVEROUT ON SIZE UNL;
 declare 
 CURSOR cur_part IS 
 SELECT partition_name from dba_tab_partitions 
