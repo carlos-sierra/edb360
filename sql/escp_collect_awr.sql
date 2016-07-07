@@ -1,6 +1,6 @@
 ----------------------------------------------------------------------------------------
 --
--- File name:   escp_collect_awr.sql (2016-06-01)
+-- File name:   escp_collect_awr.sql (2016-07-07)
 --
 --              Enkitec Sizing and Capacity Planing eSCP
 --
@@ -298,8 +298,7 @@ SELECT 'INSTANCE'                 escp_metric_group,
 ---------------------------------------------------------------------------------------
 
 -- DBA_HIST_ACTIVE_SESS_HISTORY CPU
-SELECT 'CPU'                      escp_metric_group,
-       CASE h.session_state 
+SELECT CASE h.session_state 
        WHEN 'ON CPU' THEN 'CPU' 
        ELSE 'RMCPUQ' 
        END                        escp_metric_acronym,
@@ -561,8 +560,14 @@ SELECT 'OS'                       escp_metric_group,
        WHEN 'NUM_CPUS'               THEN 'OSCPUS'
        WHEN 'NUM_CPU_CORES'          THEN 'OSCORES'
        WHEN 'PHYSICAL_MEMORY_BYTES'  THEN 'OSMEMBYTES'
+       WHEN 'IDLE_TIME'              THEN 'OSIDLE'
+       WHEN 'BUSY_TIME'              THEN 'OSBUSY'
+       WHEN 'USER_TIME'              THEN 'OSUSER'
+       WHEN 'SYS_TIME'               THEN 'OSSYS'
+       WHEN 'IOWAIT_TIME'            THEN 'OSIOWAIT'
+       WHEN 'NICE_TIME'              THEN 'OSNICEWAIT'
        WHEN 'OS_CPU_WAIT_TIME'       THEN 'OSCPUWAIT'
-       WHEN 'RSRC_MGR_CPU_WAIT_TIME' THEN 'RMCPUAWIT'
+       WHEN 'RSRC_MGR_CPU_WAIT_TIME' THEN 'RMCPUWAIT'
        END                        escp_metric_acronym,
        TO_CHAR(h.instance_number) escp_instance_number,
        s.end_interval_time        escp_end_date,
@@ -573,7 +578,13 @@ SELECT 'OS'                       escp_metric_group,
        'LOAD', 
        'NUM_CPUS', 
        'NUM_CPU_CORES', 
-       'PHYSICAL_MEMORY_BYTES', 
+       'PHYSICAL_MEMORY_BYTES',
+       'IDLE_TIME',
+       'BUSY_TIME',
+       'USER_TIME',
+       'SYS_TIME',
+       'IOWAIT_TIME',
+       'NICE_TIME', 
        'OS_CPU_WAIT_TIME', 
        'RSRC_MGR_CPU_WAIT_TIME'
        )
@@ -585,13 +596,19 @@ SELECT 'OS'                       escp_metric_group,
    AND s.end_interval_time >= SYSTIMESTAMP - &&escp_collection_days.
  ORDER BY
        CASE h.stat_name
-       WHEN 'LOAD'                   THEN 1
-       WHEN 'NUM_CPUS'               THEN 2
-       WHEN 'NUM_CPU_CORES'          THEN 3
-       WHEN 'PHYSICAL_MEMORY_BYTES'  THEN 4
-       WHEN 'OS_CPU_WAIT_TIME'       THEN 5
-       WHEN 'RSRC_MGR_CPU_WAIT_TIME' THEN 6
-       ELSE 9 END,
+       WHEN 'LOAD'                   THEN 01
+       WHEN 'NUM_CPUS'               THEN 02
+       WHEN 'NUM_CPU_CORES'          THEN 03
+       WHEN 'PHYSICAL_MEMORY_BYTES'  THEN 04
+       WHEN 'IDLE_TIME'              THEN 05
+       WHEN 'BUSY_TIME'              THEN 06
+       WHEN 'USER_TIME'              THEN 07
+       WHEN 'SYS_TIME'               THEN 08
+       WHEN 'IOWAIT_TIME'            THEN 09
+       WHEN 'NICE_TIME'              THEN 10
+       WHEN 'OS_CPU_WAIT_TIME'       THEN 11
+       WHEN 'RSRC_MGR_CPU_WAIT_TIME' THEN 12
+       ELSE 99 END,
        h.stat_name,
        h.instance_number,
        s.end_interval_time

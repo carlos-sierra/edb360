@@ -192,8 +192,8 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        end_time,
        /* "cell physical IO bytes eligible for predicate offload" / "physical read total bytes" */
        CASE WHEN prtb > 0 THEN ROUND(100 * eligible / prtb, 1) ELSE 0 END "Eligible Percent", 
-       /* ("cell physical IO bytes eligible for predicate offload" - "cell physical IO interconnect bytes")/ "cell physical IO bytes eligible for predicate offload" */
-       CASE WHEN eligible > ib THEN ROUND(100 * (eligible - ib) / eligible, 1) ELSE 0 END "IO Saved Percent", 
+       /* ("cell physical IO bytes eligible for predicate offload" - "cell physical IO interconnect bytes returned by smart scan")/ "cell physical IO bytes eligible for predicate offload" */
+       CASE WHEN eligible > ibrss THEN ROUND(100 * (eligible - ibrss) / eligible, 1) ELSE 0 END "IO Saved Percent", 
        /* "cell physical IO bytes saved by storage index" / "cell physical IO bytes eligible for predicate offload" */
        CASE WHEN eligible > 0 THEN ROUND(100 * bssi / eligible, 1) ELSE 0 END "Storage Index effic Perc", 
        0 dummy_04,

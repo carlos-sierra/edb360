@@ -5,15 +5,16 @@ PRO <body>
 PRO <h1><em>&&sqld360_conf_tool_page.SQLd360</a></em> &&sqld360_vYYNN.: SQL 360-degree view - &&section_id.. Plans Details Page &&sqld360_conf_all_pages_logo.</h1>
 PRO
 PRO <pre>
-PRO sqlid:&&sqld360_sqlid. dbname:&&database_name_short. version:&&db_version. host:&&host_name_short. license:&&license_pack. days:&&history_days. today:&&sqld360_time_stamp.
+PRO sqlid:&&sqld360_sqlid. dbname:&&database_name_short. version:&&db_version. host:&&host_hash. license:&&license_pack. days:&&history_days. today:&&sqld360_time_stamp.
 PRO </pre>
 PRO
 
 PRO <table><tr class="main">
 
 
-SET SERVEROUT ON ECHO OFF FEEDBACK OFF TIMING OFF 
+SET ECHO OFF FEEDBACK OFF TIMING OFF 
 SET SERVEROUT ON SIZE 1000000;
+SET SERVEROUT ON SIZE UNL;
 
 EXEC :repo_seq := 1;
 
@@ -54,6 +55,7 @@ SELECT TO_CHAR(:repo_seq) report_sequence FROM DUAL;
 
 SPO sqld360_plans_analysis_&&sqld360_sqlid._driver.sql
 SET SERVEROUT ON SIZE 1000000;
+SET SERVEROUT ON SIZE UNL;
 
 
 DECLARE
@@ -185,7 +187,7 @@ BEGIN
     put('                  GROUP BY NVL(id,0))');
     put('SELECT ''''{v: ''''''''''''||plandata.adapt_id||'''''''''''',f: ''''''''''''||plandata.adapt_id||'''' - ''''||operation||'''' ''''||options||NVL2(object_name,''''<br>'''','''' '''')||object_name||''''''''''''}'''' id, ');
     put('       parent_id, ''''Step ID: ''''||plandata.adapt_id||'''' (ASH Step ID: ''''||plandata.id||'''')\nASH Samples: ''''||NVL(ashdata.num_samples,0)||'''' (''''||TRUNC(100*NVL(RATIO_TO_REPORT(ashdata.num_samples) OVER (),0),2)||''''%)''''|| ');
-    put('                  NVL2(access_predicates,''''\nAccess Predicates: ''''||access_predicates,'''''''')||NVL2(filter_predicates,''''\nFilter Predicates: ''''||filter_predicates,''''''''), plandata.adapt_id id3');
+    put('                  NVL2(access_predicates,''''\n\nAccess Predicates: ''''||access_predicates,'''''''')||NVL2(filter_predicates,''''\n\nFilter Predicates: ''''||filter_predicates,''''''''), plandata.adapt_id id3');
     put('  FROM (SELECT id, adapt_id, NVL(adapt_parent_id, parent_id) parent_id, operation, options, object_name, access_predicates, filter_predicates '); 
     put('          FROM (WITH skp_steps AS (SELECT sql_id, plan_hash_value, extractvalue(value(b),''''/row/@op'''') stepid, extractvalue(value(b),''''/row/@skp'''') skp,');
     put('                                          extractvalue(value(b),''''/row/@dep'''') dep');
@@ -1524,7 +1526,7 @@ BEGIN
        put('                  GROUP BY NVL(id,0))');
        put('SELECT ''''{v: ''''''''''''||plandata.adapt_id||'''''''''''',f: ''''''''''''||plandata.adapt_id||'''' - ''''||operation||'''' ''''||options||NVL2(object_name,''''<br>'''','''' '''')||object_name||''''''''''''}'''' id, ');
        put('       parent_id, ''''Step ID: ''''||plandata.adapt_id||'''' (ASH Step ID: ''''||plandata.id||'''')\nASH Samples: ''''||NVL(ashdata.num_samples,0)||'''' (''''||TRUNC(100*NVL(RATIO_TO_REPORT(ashdata.num_samples) OVER (),0),2)||''''%)''''|| ');
-       put('                  NVL2(access_predicates,''''\nAccess Predicates: ''''||access_predicates,'''''''')||NVL2(filter_predicates,''''\nFilter Predicates: ''''||filter_predicates,''''''''), plandata.adapt_id id3');
+       put('                  NVL2(access_predicates,''''\n\nAccess Predicates: ''''||access_predicates,'''''''')||NVL2(filter_predicates,''''\n\nFilter Predicates: ''''||filter_predicates,''''''''), plandata.adapt_id id3');
        put('  FROM (SELECT id, adapt_id, NVL(adapt_parent_id, parent_id) parent_id, operation, options, object_name, access_predicates, filter_predicates '); 
        put('          FROM (WITH skp_steps AS (SELECT sql_id, plan_hash_value, extractvalue(value(b),''''/row/@op'''') stepid, extractvalue(value(b),''''/row/@skp'''') skp,');
        put('                                          extractvalue(value(b),''''/row/@dep'''') dep');
@@ -1880,6 +1882,39 @@ BEGIN
 
        put('----------------------------');
 
+       put('DEF title=''DB Time by top 64 process for SQL_EXEC_ID '||j.sql_exec_id||' of PHV '||i.plan_hash_value||'''');
+       put('DEF main_table = ''GV$ACTIVE_SESSION_HISTORY''');
+       put('DEF skip_pch=''''');
+       put('DEF slices = ''64''');
+       put('BEGIN');
+       put(' :sql_text := ''');
+       put('SELECT data.qcpx_process,');
+       put('       data.num_samples,');
+       put('       TRUNC(100*RATIO_TO_REPORT(data.num_samples) OVER (),2) percent,');
+       put('       NULL dummy_01');
+       --put('  FROM (SELECT id||'''' - ''''||operation||'''' ''''||options||'''' / ''''||object_node step_event,');
+       put('  FROM (SELECT NVL2(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'''','''',1,3)+1,INSTR(partition_stop,'''','''',1,4)-INSTR(partition_stop,'''','''',1,3)-1)), ''''PX Proc - '''', ''''QC - '''')||position||''''.''''||cpu_cost||''''.''''||io_cost  qcpx_process, ');   
+       put('               count(*) num_samples');
+       put('          FROM plan_table');
+       put('         WHERE statement_id = ''''SQLD360_ASH_DATA_MEM''''');
+       put('           AND cost =  '||i.plan_hash_value||'');
+       put('           AND NVL(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'''','''',1,3)+1,INSTR(partition_stop,'''','''',1,4)-INSTR(partition_stop,'''','''',1,3)-1)),position) = '||j.inst_id||'');
+       put('           AND NVL(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'''','''',1,4)+1,INSTR(partition_stop,'''','''',1,5)-INSTR(partition_stop,'''','''',1,4)-1)),cpu_cost) = '||j.session_id||'');
+       put('           AND NVL(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'''','''',1,5)+1,INSTR(partition_stop,'''','''',1,6)-INSTR(partition_stop,'''','''',1,5)-1)),io_cost) = '||j.session_serial#||'');
+       put('           AND timestamp BETWEEN TO_DATE('''''||j.min_sample_time||''''', ''''YYYYMMDDHH24MISS'''') AND TO_DATE('''''||j.max_sample_time||''''', ''''YYYYMMDDHH24MISS'''') ');
+       put('           AND remarks = ''''&&sqld360_sqlid.'''''); 
+       put('           AND ''''&&diagnostics_pack.'''' = ''''Y''''');
+       put('         GROUP BY NVL2(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'''','''',1,3)+1,INSTR(partition_stop,'''','''',1,4)-INSTR(partition_stop,'''','''',1,3)-1)), ''''PX Proc - '''', ''''QC - '''')||position||''''.''''||cpu_cost||''''.''''||io_cost   ');  
+       put('         ORDER BY 2 DESC) data');
+       put(' WHERE rownum <= 64');
+       put(' ORDER BY 2 DESC');
+       put(''';');
+       put('END;');
+       put('/ ');
+       put('@sql/sqld360_9a_pre_one.sql');          
+
+       put('----------------------------');
+
        put('DEF title=''PGA and TEMP usage for SQL_EXEC_ID '||j.sql_exec_id||' of PHV '||i.plan_hash_value||'''');
        put('DEF main_table = ''V$ACTIVE_SESSION_HISTORY''');
        put('DEF skip_lch=''''');
@@ -2206,7 +2241,7 @@ BEGIN
        put('                  GROUP BY NVL(id,0))');
        put('SELECT ''''{v: ''''''''''''||plandata.adapt_id||'''''''''''',f: ''''''''''''||plandata.adapt_id||'''' - ''''||operation||'''' ''''||options||NVL2(object_name,''''<br>'''','''' '''')||object_name||''''''''''''}'''' id, ');
        put('       parent_id, ''''Step ID: ''''||plandata.adapt_id||'''' (ASH Step ID: ''''||plandata.id||'''')\mASH Samples: ''''||NVL(ashdata.num_samples,0)||'''' (''''||TRUNC(100*NVL(RATIO_TO_REPORT(ashdata.num_samples) OVER (),0),2)||''''%)''''|| ');
-       put('                  NVL2(access_predicates,''''\nAccess Predicates: ''''||access_predicates,'''''''')||NVL2(filter_predicates,''''\nFilter Predicates: ''''||filter_predicates,''''''''), plandata.adapt_id id3');
+       put('                  NVL2(access_predicates,''''\n\nAccess Predicates: ''''||access_predicates,'''''''')||NVL2(filter_predicates,''''\n\nFilter Predicates: ''''||filter_predicates,''''''''), plandata.adapt_id id3');
        put('  FROM (SELECT id, adapt_id, NVL(adapt_parent_id, parent_id) parent_id, operation, options, object_name, access_predicates, filter_predicates '); 
        put('          FROM (WITH skp_steps AS (SELECT sql_id, plan_hash_value, extractvalue(value(b),''''/row/@op'''') stepid, extractvalue(value(b),''''/row/@skp'''') skp,');
        put('                                          extractvalue(value(b),''''/row/@dep'''') dep');
@@ -2561,6 +2596,39 @@ BEGIN
        put('UNDEF evt_15'); 
 
        put('----------------------------');       
+
+       put('DEF title=''DB Time by top 64 process for SQL_EXEC_ID '||j.sql_exec_id||' of PHV '||i.plan_hash_value||'''');
+       put('DEF main_table = ''DBA_HIST_ACTIVE_SESS_HISTORY''');
+       put('DEF skip_pch=''''');
+       put('DEF slices = ''64''');
+       put('BEGIN');
+       put(' :sql_text := ''');
+       put('SELECT data.qcpx_process,');
+       put('       data.num_samples,');
+       put('       TRUNC(100*RATIO_TO_REPORT(data.num_samples) OVER (),2) percent,');
+       put('       NULL dummy_01');
+       --put('  FROM (SELECT id||'''' - ''''||operation||'''' ''''||options||'''' / ''''||object_node step_event,');
+       put('  FROM (SELECT NVL2(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'''','''',1,3)+1,INSTR(partition_stop,'''','''',1,4)-INSTR(partition_stop,'''','''',1,3)-1)), ''''PX Proc - '''', ''''QC - '''')||position||''''.''''||cpu_cost||''''.''''||io_cost  qcpx_process, ');   
+       put('               count(*) num_samples');
+       put('          FROM plan_table');
+       put('         WHERE statement_id = ''''SQLD360_ASH_DATA_HIST''''');
+       put('           AND cost =  '||i.plan_hash_value||'');
+       put('           AND NVL(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'''','''',1,3)+1,INSTR(partition_stop,'''','''',1,4)-INSTR(partition_stop,'''','''',1,3)-1)),position) = '||j.inst_id||'');
+       put('           AND NVL(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'''','''',1,4)+1,INSTR(partition_stop,'''','''',1,5)-INSTR(partition_stop,'''','''',1,4)-1)),cpu_cost) = '||j.session_id||'');
+       put('           AND NVL(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'''','''',1,5)+1,INSTR(partition_stop,'''','''',1,6)-INSTR(partition_stop,'''','''',1,5)-1)),io_cost) = '||j.session_serial#||'');
+       put('           AND timestamp BETWEEN TO_DATE('''''||j.min_sample_time||''''', ''''YYYYMMDDHH24MISS'''') AND TO_DATE('''''||j.max_sample_time||''''', ''''YYYYMMDDHH24MISS'''') ');
+       put('           AND remarks = ''''&&sqld360_sqlid.'''''); 
+       put('           AND ''''&&diagnostics_pack.'''' = ''''Y''''');
+       put('         GROUP BY NVL2(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'''','''',1,3)+1,INSTR(partition_stop,'''','''',1,4)-INSTR(partition_stop,'''','''',1,3)-1)), ''''PX Proc - '''', ''''QC - '''')||position||''''.''''||cpu_cost||''''.''''||io_cost   ');  
+       put('         ORDER BY 2 DESC) data');
+       put(' WHERE rownum <= 64');
+       put(' ORDER BY 2 DESC');
+       put(''';');
+       put('END;');
+       put('/ ');
+       put('@sql/sqld360_9a_pre_one.sql'); 
+
+       put('----------------------------');
 
        put('DEF title=''PGA and TEMP usage for SQL_EXEC_ID '||j.sql_exec_id||' of PHV '||i.plan_hash_value||'''');
        put('DEF main_table = ''DBA_HIST_ACTIVE_SESS_HISTORY''');
