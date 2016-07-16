@@ -298,7 +298,18 @@ SELECT 'INSTANCE'                 escp_metric_group,
 ---------------------------------------------------------------------------------------
 
 -- DBA_HIST_ACTIVE_SESS_HISTORY CPU
-SELECT CASE h.session_state 
+SELECT /*+ 
+       FULL(h.INT$DBA_HIST_ACT_SESS_HISTORY.sn) 
+       FULL(h.INT$DBA_HIST_ACT_SESS_HISTORY.ash) 
+       FULL(h.INT$DBA_HIST_ACT_SESS_HISTORY.evt) 
+       USE_HASH(h.INT$DBA_HIST_ACT_SESS_HISTORY.sn h.INT$DBA_HIST_ACT_SESS_HISTORY.ash h.INT$DBA_HIST_ACT_SESS_HISTORY.evt)
+       FULL(h.sn) 
+       FULL(h.ash) 
+       FULL(h.evt) 
+       USE_HASH(h.sn h.ash h.evt)
+       */
+       'CPU'                      escp_metric_group,
+       CASE h.session_state 
        WHEN 'ON CPU' THEN 'CPU' 
        ELSE 'RMCPUQ' 
        END                        escp_metric_acronym,
@@ -321,64 +332,156 @@ SELECT CASE h.session_state
 /
 
 -- DBA_HIST_SGA MEM
-SELECT 'MEM'                      escp_metric_group,
+WITH 
+dba_hist_sga_sqf AS (
+SELECT /*+ 
+       MATERIALIZE 
+       NO_MERGE 
+       FULL(h.INT$DBA_HIST_SGA.sn) 
+       FULL(h.INT$DBA_HIST_SGA.sga) 
+       USE_HASH(h.INT$DBA_HIST_SGA.sn h.INT$DBA_HIST_SGA.sga)
+       FULL(h.sn) 
+       FULL(h.sga) 
+       USE_HASH(h.sn h.sga)
+       */
+       h.snap_id,
+       h.instance_number,
+       SUM(h.value) value
+  FROM dba_hist_sga h
+ WHERE h.snap_id >= &&escp_min_snap_id.
+   AND h.dbid = &&escp_this_dbid.
+ GROUP BY
+       h.snap_id,
+       h.instance_number
+),
+dba_hist_snapshot_sqf AS (
+SELECT /*+ 
+       MATERIALIZE 
+       NO_MERGE 
+       FULL(s.INT$DBA_HIST_SNAPSHOT.WRM$_SNAPSHOT)
+       FULL(s.WRM$_SNAPSHOT)
+       */
+       s.snap_id,
+       s.instance_number,
+       s.end_interval_time
+  FROM dba_hist_snapshot s
+ WHERE s.snap_id >= &&escp_min_snap_id.
+   AND s.dbid = &&escp_this_dbid.
+   AND s.end_interval_time >= SYSTIMESTAMP - &&escp_collection_days.
+)
+SELECT /*+ USE_HASH(h s) */
+       'MEM'                      escp_metric_group,
        'SGA'                      escp_metric_acronym,
        TO_CHAR(h.instance_number) escp_instance_number,
        s.end_interval_time        escp_end_date,
-       TO_CHAR(SUM(h.value))      escp_value
-  FROM dba_hist_sga      h,
-       dba_hist_snapshot s
- WHERE h.snap_id >= &&escp_min_snap_id.
-   AND h.dbid = &&escp_this_dbid.
-   AND s.snap_id = h.snap_id
-   AND s.dbid = h.dbid
+       TO_CHAR(h.value)           escp_value
+  FROM dba_hist_sga_sqf      h,
+       dba_hist_snapshot_sqf s
+ WHERE s.snap_id         = h.snap_id
    AND s.instance_number = h.instance_number
-   AND s.end_interval_time >= SYSTIMESTAMP - &&escp_collection_days.
- GROUP BY
-       h.instance_number,
-       s.end_interval_time
  ORDER BY
        h.instance_number,
        s.end_interval_time
 /
 
 -- DBA_HIST_PGASTAT MEM
-SELECT 'MEM'                      escp_metric_group,
+WITH 
+dba_hist_pgastat_sqf AS (
+SELECT /*+ 
+       MATERIALIZE 
+       NO_MERGE 
+       FULL(h.INT$DBA_HIST_PGASTAT.sn) 
+       FULL(h.INT$DBA_HIST_PGASTAT.pga) 
+       USE_HASH(h.INT$DBA_HIST_PGASTAT.sn h.INT$DBA_HIST_PGASTAT.pga)
+       FULL(h.sn) 
+       FULL(h.pga) 
+       USE_HASH(h.sn h.pga)
+       */
+       h.snap_id,
+       h.instance_number,
+       h.value
+  FROM dba_hist_pgastat h
+ WHERE h.snap_id >= &&escp_min_snap_id.
+   AND h.dbid = &&escp_this_dbid.
+   AND h.name = 'total PGA allocated'
+),
+dba_hist_snapshot_sqf AS (
+SELECT /*+ 
+       MATERIALIZE 
+       NO_MERGE 
+       FULL(s.INT$DBA_HIST_SNAPSHOT.WRM$_SNAPSHOT)
+       FULL(s.WRM$_SNAPSHOT)
+       */
+       s.snap_id,
+       s.instance_number,
+       s.end_interval_time
+  FROM dba_hist_snapshot s
+ WHERE s.snap_id >= &&escp_min_snap_id.
+   AND s.dbid = &&escp_this_dbid.
+   AND s.end_interval_time >= SYSTIMESTAMP - &&escp_collection_days.
+)
+SELECT /*+ USE_HASH(h s) */
+       'MEM'                      escp_metric_group,
        'PGA'                      escp_metric_acronym,
        TO_CHAR(h.instance_number) escp_instance_number,
        s.end_interval_time        escp_end_date,
        TO_CHAR(h.value)           escp_value
-  FROM dba_hist_pgastat  h,
-       dba_hist_snapshot s
- WHERE h.snap_id >= &&escp_min_snap_id.
-   AND h.dbid = &&escp_this_dbid.
-   AND h.name = 'total PGA allocated'
-   AND s.snap_id = h.snap_id
-   AND s.dbid = h.dbid
+  FROM dba_hist_pgastat_sqf  h,
+       dba_hist_snapshot_sqf s
+ WHERE s.snap_id         = h.snap_id
    AND s.instance_number = h.instance_number
-   AND s.end_interval_time >= SYSTIMESTAMP - &&escp_collection_days.
  ORDER BY
        h.instance_number,
        s.end_interval_time
 /
 
 -- DBA_HIST_TBSPC_SPACE_USAGE DISK
-SELECT 'DISK'                                         escp_metric_group,
+WITH 
+dba_hist_tbspc_space_usage_sqf AS (
+SELECT /*+ 
+       MATERIALIZE 
+       NO_MERGE 
+       FULL(h.INT$DBA_HIST_TBSPC_SPACE_USAGE.sn) 
+       FULL(h.INT$DBA_HIST_TBSPC_SPACE_USAGE.tb) 
+       USE_HASH(h.INT$DBA_HIST_TBSPC_SPACE_USAGE.sn h.INT$DBA_HIST_TBSPC_SPACE_USAGE.tb)
+       FULL(h.sn) 
+       FULL(h.tb) 
+       USE_HASH(h.sn h.tb)
+       */
+       h.snap_id,
+       h.tablespace_id,
+       h.tablespace_size
+  FROM dba_hist_tbspc_space_usage h
+ WHERE h.snap_id >= &&escp_min_snap_id.
+   AND h.dbid = &&escp_this_dbid.
+),
+dba_hist_snapshot_sqf AS (
+SELECT /*+ 
+       MATERIALIZE 
+       NO_MERGE 
+       FULL(s.INT$DBA_HIST_SNAPSHOT.WRM$_SNAPSHOT)
+       FULL(s.WRM$_SNAPSHOT)
+       */
+       s.snap_id,
+       s.end_interval_time
+  FROM dba_hist_snapshot s
+ WHERE s.snap_id >= &&escp_min_snap_id.
+   AND s.dbid = &&escp_this_dbid.
+   AND s.instance_number = &&escp_this_inst_num.
+   AND s.end_interval_time >= SYSTIMESTAMP - &&escp_collection_days.
+)
+SELECT /*+ USE_HASH(h s) */
+       'DISK'                                         escp_metric_group,
        SUBSTR(t.contents, 1, 4)                       escp_metric_acronym,
        NULL                                           escp_instance_number,
        s.end_interval_time                            escp_end_date,
        TO_CHAR(SUM(h.tablespace_size * t.block_size)) escp_value
-  FROM dba_hist_tbspc_space_usage h,
-       dba_hist_snapshot          s,
-       v$tablespace               v,
-       dba_tablespaces            t
- WHERE h.snap_id >= &&escp_min_snap_id.
-   AND h.dbid = &&escp_this_dbid.
-   AND s.snap_id = h.snap_id
-   AND s.dbid = h.dbid
-   AND s.instance_number = &&escp_this_inst_num.
-   AND s.end_interval_time >= SYSTIMESTAMP - &&escp_collection_days.
-   AND v.ts# = h.tablespace_id
+  FROM dba_hist_tbspc_space_usage_sqf h,
+       dba_hist_snapshot_sqf          s,
+       v$tablespace                   v,
+       dba_tablespaces                t
+ WHERE s.snap_id         = h.snap_id
+   AND v.ts#             = h.tablespace_id
    AND t.tablespace_name = v.name
  GROUP BY
        t.contents,
@@ -389,19 +492,49 @@ SELECT 'DISK'                                         escp_metric_group,
 /
 
 -- DBA_HIST_LOG DISK
-SELECT 'DISK'                            escp_metric_group,
+WITH 
+dba_hist_log_sqf AS (
+SELECT /*+ 
+       MATERIALIZE 
+       NO_MERGE 
+       FULL(h.INT$DBA_HIST_LOG.sn) 
+       FULL(h.INT$DBA_HIST_LOG.log) 
+       USE_HASH(h.INT$DBA_HIST_LOG.sn h.INT$DBA_HIST_LOG.log)
+       FULL(h.sn) 
+       FULL(h.log) 
+       USE_HASH(h.sn h.log)
+       */
+       h.snap_id,
+       h.bytes,
+       h.members
+  FROM dba_hist_log h
+ WHERE h.snap_id >= &&escp_min_snap_id.
+   AND h.dbid = &&escp_this_dbid.
+),
+dba_hist_snapshot_sqf AS (
+SELECT /*+ 
+       MATERIALIZE 
+       NO_MERGE 
+       FULL(s.INT$DBA_HIST_SNAPSHOT.WRM$_SNAPSHOT)
+       FULL(s.WRM$_SNAPSHOT)
+       */
+       s.snap_id,
+       s.end_interval_time
+  FROM dba_hist_snapshot s
+ WHERE s.snap_id >= &&escp_min_snap_id.
+   AND s.dbid = &&escp_this_dbid.
+   AND s.instance_number = &&escp_this_inst_num.
+   AND s.end_interval_time >= SYSTIMESTAMP - &&escp_collection_days.
+)
+SELECT /*+ USE_HASH(h s) */
+       'DISK'                            escp_metric_group,
        'LOG'                             escp_metric_acronym,
        NULL                              escp_instance_number,
        s.end_interval_time               escp_end_date,
        TO_CHAR(SUM(h.bytes * h.members)) escp_value
-  FROM dba_hist_log      h,
-       dba_hist_snapshot s
- WHERE h.snap_id >= &&escp_min_snap_id.
-   AND h.dbid = &&escp_this_dbid.
-   AND s.snap_id = h.snap_id
-   AND s.dbid = h.dbid
-   AND s.instance_number = &&escp_this_inst_num.
-   AND s.end_interval_time >= SYSTIMESTAMP - &&escp_collection_days.
+  FROM dba_hist_log_sqf      h,
+       dba_hist_snapshot_sqf s
+ WHERE s.snap_id = h.snap_id
  GROUP BY
        s.end_interval_time
  ORDER BY
@@ -409,7 +542,69 @@ SELECT 'DISK'                            escp_metric_group,
 /
 
 -- DBA_HIST_SYSSTAT IOPS MBPS NETW IC
-SELECT CASE h.stat_name
+WITH
+dba_hist_sysstat_sqf AS (
+SELECT /*+ 
+       MATERIALIZE 
+       NO_MERGE 
+       FULL(h.INT$DBA_HIST_SYSSTAT.sn) 
+       FULL(h.INT$DBA_HIST_SYSSTAT.s) 
+       FULL(h.INT$DBA_HIST_SYSSTAT.nm) 
+       USE_HASH(h.INT$DBA_HIST_SYSSTAT.sn h.INT$DBA_HIST_SYSSTAT.s h.INT$DBA_HIST_SYSSTAT.nm)
+       FULL(h.sn) 
+       FULL(h.s) 
+       FULL(h.nm) 
+       USE_HASH(h.sn h.s h.nm)
+       */
+       h.snap_id,
+       h.instance_number,
+       h.stat_name,
+       h.value
+  FROM dba_hist_sysstat h
+ WHERE h.snap_id >= &&escp_min_snap_id.
+   AND h.dbid = &&escp_this_dbid.
+   AND h.stat_name IN (
+       'physical read total IO requests',
+       'physical write total IO requests',
+       'redo writes',
+       'physical read total bytes',
+       'physical write total bytes',
+       'redo size',
+       'physical reads',
+       'physical reads direct',
+       'physical reads cache',
+       'physical writes',
+       'physical writes direct',
+       'physical writes from cache',
+       'bytes sent via SQL*Net to client',
+       'bytes received via SQL*Net from client',
+       'bytes sent via SQL*Net to dblink',
+       'bytes received via SQL*Net from dblink',
+       'gc cr blocks received',
+       'gc current blocks received',
+       'gc cr blocks served',
+       'gc current blocks served',
+       'gcs messages sent',
+       'ges messages sent'
+       )
+),
+dba_hist_snapshot_sqf AS (
+SELECT /*+ 
+       MATERIALIZE 
+       NO_MERGE 
+       FULL(s.INT$DBA_HIST_SNAPSHOT.WRM$_SNAPSHOT)
+       FULL(s.WRM$_SNAPSHOT)
+       */
+       s.snap_id,
+       s.instance_number,
+       s.end_interval_time
+  FROM dba_hist_snapshot s
+ WHERE s.snap_id >= &&escp_min_snap_id.
+   AND s.dbid = &&escp_this_dbid.
+   AND s.end_interval_time >= SYSTIMESTAMP - &&escp_collection_days.
+)
+SELECT /*+ USE_HASH(h s) */
+       CASE h.stat_name
        WHEN 'physical read total IO requests'        THEN 'IOPS'
        WHEN 'physical write total IO requests'       THEN 'IOPS'
        WHEN 'redo writes'                            THEN 'IOPS'
@@ -460,38 +655,10 @@ SELECT CASE h.stat_name
        TO_CHAR(h.instance_number)                    escp_instance_number,
        s.end_interval_time                           escp_end_date,
        TO_CHAR(h.value)                              escp_value
-  FROM dba_hist_sysstat  h,
-       dba_hist_snapshot s
- WHERE h.snap_id >= &&escp_min_snap_id.
-   AND h.dbid = &&escp_this_dbid.
-   AND h.stat_name IN (
-       'physical read total IO requests',
-       'physical write total IO requests',
-       'redo writes',
-       'physical read total bytes',
-       'physical write total bytes',
-       'redo size',
-       'physical reads',
-       'physical reads direct',
-       'physical reads cache',
-       'physical writes',
-       'physical writes direct',
-       'physical writes from cache',
-       'bytes sent via SQL*Net to client',
-       'bytes received via SQL*Net from client',
-       'bytes sent via SQL*Net to dblink',
-       'bytes received via SQL*Net from dblink',
-       'gc cr blocks received',
-       'gc current blocks received',
-       'gc cr blocks served',
-       'gc current blocks served',
-       'gcs messages sent',
-       'ges messages sent'
-       )
-   AND s.snap_id = h.snap_id
-   AND s.dbid = h.dbid
+  FROM dba_hist_sysstat_sqf  h,
+       dba_hist_snapshot_sqf s
+ WHERE s.snap_id         = h.snap_id
    AND s.instance_number = h.instance_number
-   AND s.end_interval_time >= SYSTIMESTAMP - &&escp_collection_days.
  ORDER BY
        CASE h.stat_name
        WHEN 'physical read total IO requests'        THEN 1.1
@@ -516,14 +683,54 @@ SELECT CASE h.stat_name
        WHEN 'gc current blocks served'               THEN 6.4
        WHEN 'gcs messages sent'                      THEN 6.5
        WHEN 'ges messages sent'                      THEN 6.6
-       ELSE 9.9 END,
-       h.stat_name,
+       ELSE 9.9 
+       END,
        h.instance_number,
        s.end_interval_time
 /
 
 -- DBA_HIST_DLM_MISC IC
-SELECT 'IC'                       escp_metric_group,
+WITH 
+dba_hist_dlm_misc_sqf AS (
+SELECT /*+ 
+       MATERIALIZE 
+       NO_MERGE 
+       FULL(h.INT$DBA_HIST_DLM_MISC.sn) 
+       FULL(h.INT$DBA_HIST_DLM_MISC.dlm) 
+       USE_HASH(h.INT$DBA_HIST_DLM_MISC.sn h.INT$DBA_HIST_DLM_MISC.dlm)
+       FULL(h.sn) 
+       FULL(h.dlm) 
+       USE_HASH(h.sn h.dlm)
+       */
+       h.snap_id,
+       h.instance_number,
+       h.name,
+       h.value
+  FROM dba_hist_dlm_misc h
+ WHERE h.snap_id >= &&escp_min_snap_id.
+   AND h.dbid = &&escp_this_dbid.
+   AND h.name IN (
+       'gcs msgs received',
+       'ges msgs received'
+       )
+),
+dba_hist_snapshot_sqf AS (
+SELECT /*+ 
+       MATERIALIZE 
+       NO_MERGE 
+       FULL(s.INT$DBA_HIST_SNAPSHOT.WRM$_SNAPSHOT)
+       FULL(s.WRM$_SNAPSHOT)
+       */
+       s.snap_id,
+       s.instance_number,
+       s.end_interval_time
+  FROM dba_hist_snapshot s
+ WHERE s.snap_id >= &&escp_min_snap_id.
+   AND s.dbid = &&escp_this_dbid.
+   AND s.end_interval_time >= SYSTIMESTAMP - &&escp_collection_days.
+)
+SELECT /*+ USE_HASH(h s) */
+       'IC'                       escp_metric_group,
        CASE h.name
        WHEN 'gcs msgs received' THEN 'GCSMR'
        WHEN 'ges msgs received' THEN 'GESMR'
@@ -531,50 +738,43 @@ SELECT 'IC'                       escp_metric_group,
        TO_CHAR(h.instance_number) escp_instance_number,
        s.end_interval_time        escp_end_date,
        TO_CHAR(h.value)           escp_value
-  FROM dba_hist_dlm_misc h,
-       dba_hist_snapshot s
- WHERE h.snap_id >= &&escp_min_snap_id.
-   AND h.dbid = &&escp_this_dbid.
-   AND h.name IN (
-       'gcs msgs received',
-       'ges msgs received'
-       )
-   AND s.snap_id = h.snap_id
-   AND s.dbid = h.dbid
+  FROM dba_hist_dlm_misc_sqf h,
+       dba_hist_snapshot_sqf s
+ WHERE s.snap_id         = h.snap_id
    AND s.instance_number = h.instance_number
-   AND s.end_interval_time >= SYSTIMESTAMP - &&escp_collection_days.
  ORDER BY
        CASE h.name
        WHEN 'gcs msgs received' THEN 1
        WHEN 'ges msgs received' THEN 2
-       ELSE 9 END,
-       h.name,
+       ELSE 9 
+       END,
        h.instance_number,
        s.end_interval_time
 /
 
 -- DBA_HIST_OSSTAT OS
-SELECT 'OS'                       escp_metric_group,
-       CASE h.stat_name
-       WHEN 'LOAD'                   THEN 'OSLOAD'
-       WHEN 'NUM_CPUS'               THEN 'OSCPUS'
-       WHEN 'NUM_CPU_CORES'          THEN 'OSCORES'
-       WHEN 'PHYSICAL_MEMORY_BYTES'  THEN 'OSMEMBYTES'
-       WHEN 'IDLE_TIME'              THEN 'OSIDLE'
-       WHEN 'BUSY_TIME'              THEN 'OSBUSY'
-       WHEN 'USER_TIME'              THEN 'OSUSER'
-       WHEN 'SYS_TIME'               THEN 'OSSYS'
-       WHEN 'IOWAIT_TIME'            THEN 'OSIOWAIT'
-       WHEN 'NICE_TIME'              THEN 'OSNICEWAIT'
-       WHEN 'OS_CPU_WAIT_TIME'       THEN 'OSCPUWAIT'
-       WHEN 'RSRC_MGR_CPU_WAIT_TIME' THEN 'RMCPUWAIT'
-       END                        escp_metric_acronym,
-       TO_CHAR(h.instance_number) escp_instance_number,
-       s.end_interval_time        escp_end_date,
-       TO_CHAR(h.value)           escp_value
-  FROM dba_hist_osstat   h,
-       dba_hist_snapshot s
- WHERE h.stat_name IN (
+WITH
+dba_hist_osstat_sqf AS (
+SELECT /*+ 
+       MATERIALIZE 
+       NO_MERGE 
+       FULL(h.INT$DBA_HIST_OSSTAT.sn) 
+       FULL(h.INT$DBA_HIST_OSSTAT.s) 
+       FULL(h.INT$DBA_HIST_OSSTAT.nm) 
+       USE_HASH(h.INT$DBA_HIST_OSSTAT.sn h.INT$DBA_HIST_OSSTAT.s h.INT$DBA_HIST_OSSTAT.nm)
+       FULL(h.sn) 
+       FULL(h.s) 
+       FULL(h.nm) 
+       USE_HASH(h.sn h.s h.nm)
+       */
+       h.snap_id,
+       h.instance_number,
+       h.stat_name,
+       h.value
+  FROM dba_hist_osstat h
+ WHERE h.snap_id >= &&escp_min_snap_id.
+   AND h.dbid = &&escp_this_dbid.
+   AND h.stat_name IN (
        'LOAD', 
        'NUM_CPUS', 
        'NUM_CPU_CORES', 
@@ -588,12 +788,45 @@ SELECT 'OS'                       escp_metric_group,
        'OS_CPU_WAIT_TIME', 
        'RSRC_MGR_CPU_WAIT_TIME'
        )
-   AND h.snap_id >= &&escp_min_snap_id.
-   AND h.dbid = &&escp_this_dbid.
-   AND s.snap_id = h.snap_id
-   AND s.dbid = h.dbid
-   AND s.instance_number = h.instance_number
+),
+dba_hist_snapshot_sqf AS (
+SELECT /*+ 
+       MATERIALIZE 
+       NO_MERGE 
+       FULL(s.INT$DBA_HIST_SNAPSHOT.WRM$_SNAPSHOT)
+       FULL(s.WRM$_SNAPSHOT)
+       */
+       s.snap_id,
+       s.instance_number,
+       s.end_interval_time
+  FROM dba_hist_snapshot s
+ WHERE s.snap_id >= &&escp_min_snap_id.
+   AND s.dbid = &&escp_this_dbid.
    AND s.end_interval_time >= SYSTIMESTAMP - &&escp_collection_days.
+)
+SELECT /*+ USE_HASH(h s) */
+      'OS'                           escp_metric_group,
+       CASE h.stat_name
+       WHEN 'LOAD'                   THEN 'OSLOAD'
+       WHEN 'NUM_CPUS'               THEN 'OSCPUS'
+       WHEN 'NUM_CPU_CORES'          THEN 'OSCORES'
+       WHEN 'PHYSICAL_MEMORY_BYTES'  THEN 'OSMEMBYTES'
+       WHEN 'IDLE_TIME'              THEN 'OSIDLE'
+       WHEN 'BUSY_TIME'              THEN 'OSBUSY'
+       WHEN 'USER_TIME'              THEN 'OSUSER'
+       WHEN 'SYS_TIME'               THEN 'OSSYS'
+       WHEN 'IOWAIT_TIME'            THEN 'OSIOWAIT'
+       WHEN 'NICE_TIME'              THEN 'OSNICEWAIT'
+       WHEN 'OS_CPU_WAIT_TIME'       THEN 'OSCPUWAIT'
+       WHEN 'RSRC_MGR_CPU_WAIT_TIME' THEN 'RMCPUWAIT'
+       END                           escp_metric_acronym,
+       TO_CHAR(h.instance_number)    escp_instance_number,
+       s.end_interval_time           escp_end_date,
+       TO_CHAR(h.value)              escp_value
+  FROM dba_hist_osstat_sqf   h,
+       dba_hist_snapshot_sqf s
+ WHERE s.snap_id         = h.snap_id
+   AND s.instance_number = h.instance_number
  ORDER BY
        CASE h.stat_name
        WHEN 'LOAD'                   THEN 01
@@ -608,8 +841,8 @@ SELECT 'OS'                       escp_metric_group,
        WHEN 'NICE_TIME'              THEN 10
        WHEN 'OS_CPU_WAIT_TIME'       THEN 11
        WHEN 'RSRC_MGR_CPU_WAIT_TIME' THEN 12
-       ELSE 99 END,
-       h.stat_name,
+       ELSE 99 
+       END,
        h.instance_number,
        s.end_interval_time
 /   

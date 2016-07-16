@@ -566,7 +566,24 @@ PRO IO Throughput
 PRO ~~~~~~~~~~~~~
 WITH
 sysstat_io AS (
-SELECT h.snap_id,
+SELECT /*+ 
+       MATERIALIZE 
+       NO_MERGE 
+       FULL(h.INT$DBA_HIST_SYSSTAT.sn) 
+       FULL(h.INT$DBA_HIST_SYSSTAT.s) 
+       FULL(h.INT$DBA_HIST_SYSSTAT.nm) 
+       USE_HASH(h.INT$DBA_HIST_SYSSTAT.sn h.INT$DBA_HIST_SYSSTAT.s h.INT$DBA_HIST_SYSSTAT.nm)
+       FULL(h.sn) 
+       FULL(h.s) 
+       FULL(h.nm) 
+       USE_HASH(h.sn h.s h.nm)
+       FULL(s.INT$DBA_HIST_SNAPSHOT.WRM$_SNAPSHOT)
+       FULL(s.WRM$_SNAPSHOT)
+       USE_HASH(h s)
+       LEADING(h.INT$DBA_HIST_SYSSTAT.nm h.INT$DBA_HIST_SYSSTAT.s h.INT$DBA_HIST_SYSSTAT.sn s.INT$DBA_HIST_SNAPSHOT.WRM$_SNAPSHOT)
+       LEADING(h.nm h.s h.sn s.WRM$_SNAPSHOT)
+       */
+       h.snap_id,
        h.dbid,
        h.instance_number,
        SUM(CASE WHEN h.stat_name = 'physical read total IO requests' THEN value ELSE 0 END) r_reqs,
@@ -576,17 +593,26 @@ SELECT h.snap_id,
   FROM dba_hist_sysstat h,
        dba_hist_snapshot s
  WHERE h.stat_name IN ('physical read total IO requests', 'physical write total IO requests', 'redo writes', 'physical read total bytes', 'physical write total bytes', 'redo size')
-   AND s.snap_id = h.snap_id
-   AND s.dbid = h.dbid
-   AND s.instance_number = h.instance_number
-   AND CAST(s.begin_interval_time AS DATE) > SYSDATE - &&collection_days.
+   AND s.snap_id(+) = h.snap_id
+   AND s.dbid(+) = h.dbid
+   AND s.instance_number(+) = h.instance_number
+   AND CAST(s.begin_interval_time(+) AS DATE) > SYSDATE - &&collection_days.
  GROUP BY
        h.snap_id,
        h.dbid,
        h.instance_number
 ),
 io_per_inst_and_snap_id AS (
-SELECT h1.dbid,
+SELECT /*+ 
+       MATERIALIZE 
+       NO_MERGE 
+       FULL(s0.INT$DBA_HIST_SNAPSHOT.WRM$_SNAPSHOT)
+       FULL(s0.WRM$_SNAPSHOT)
+       FULL(s1.INT$DBA_HIST_SNAPSHOT.WRM$_SNAPSHOT)
+       FULL(s1.WRM$_SNAPSHOT)
+       USE_HASH(h0 s0 h1 s1)
+       */
+       h1.dbid,
        h1.instance_number,
        h1.snap_id,
        (h1.r_reqs - h0.r_reqs) r_reqs,
@@ -617,7 +643,11 @@ SELECT h1.dbid,
    AND s1.startup_time = s0.startup_time
 ),
 io_per_snap_id AS (
-SELECT dbid,
+SELECT /*+ 
+       MATERIALIZE 
+       NO_MERGE 
+       */
+       dbid,
        snap_id,
        SUM(r_reqs) r_reqs,
        SUM(w_reqs) w_reqs,
@@ -632,7 +662,11 @@ SELECT dbid,
        snap_id
 ),
 io_per_inst AS (
-SELECT dbid,
+SELECT /*+ 
+       MATERIALIZE 
+       NO_MERGE 
+       */
+       dbid,
        instance_number,
        MIN(begin_interval_time) begin_interval_time,
        MAX(end_interval_time) end_interval_time,
@@ -702,7 +736,11 @@ SELECT dbid,
        instance_number
 ),
 io_per_cluster AS ( -- combined
-SELECT dbid,
+SELECT /*+ 
+       MATERIALIZE 
+       NO_MERGE 
+       */
+       dbid,
        TO_NUMBER(NULL) instance_number,
        MIN(begin_interval_time) begin_interval_time,
        MAX(end_interval_time) end_interval_time,

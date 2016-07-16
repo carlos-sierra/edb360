@@ -22,6 +22,8 @@
 ---------------------------------------------------------------------------------------
 --
 DEF MAX_DAYS = '365';
+DEF INCLUDE_IC = 'Y';
+DEF INCLUDE_NETW = 'Y';
 SET TERM OFF ECHO OFF FEED OFF VER OFF HEA OFF PAGES 0 COLSEP ', ' LIN 32767 TRIMS ON TRIM ON TI OFF TIMI OFF ARRAY 100 NUM 20 SQLBL ON BLO . RECSEP OFF;
 
 -- get host name (up to 30, stop before first '.', no special characters)
@@ -603,7 +605,23 @@ SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'db_size', 'total', 'v$
 -- disk_perf
 WITH
 sysstat_io AS (
-SELECT /*+ &&ecr_sq_fact_hints. */
+SELECT /*+ 
+       MATERIALIZE 
+       NO_MERGE 
+       FULL(h.INT$DBA_HIST_SYSSTAT.sn) 
+       FULL(h.INT$DBA_HIST_SYSSTAT.s) 
+       FULL(h.INT$DBA_HIST_SYSSTAT.nm) 
+       USE_HASH(h.INT$DBA_HIST_SYSSTAT.sn h.INT$DBA_HIST_SYSSTAT.s h.INT$DBA_HIST_SYSSTAT.nm)
+       FULL(h.sn) 
+       FULL(h.s) 
+       FULL(h.nm) 
+       USE_HASH(h.sn h.s h.nm)
+       FULL(s.INT$DBA_HIST_SNAPSHOT.WRM$_SNAPSHOT)
+       FULL(s.WRM$_SNAPSHOT)
+       USE_HASH(h s)
+       LEADING(h.INT$DBA_HIST_SYSSTAT.nm h.INT$DBA_HIST_SYSSTAT.s h.INT$DBA_HIST_SYSSTAT.sn s.INT$DBA_HIST_SNAPSHOT.WRM$_SNAPSHOT)
+       LEADING(h.nm h.s h.sn s.WRM$_SNAPSHOT)
+       */
        h.instance_number,
        h.snap_id,
        SUM(CASE WHEN h.stat_name = 'physical read total IO requests'                    THEN h.value ELSE 0 END) r_reqs,
@@ -615,16 +633,24 @@ SELECT /*+ &&ecr_sq_fact_hints. */
  WHERE h.snap_id >= TO_NUMBER(NVL('&&ecr_min_snap_id.','0'))
    AND h.dbid = &&ecr_dbid.
    AND h.stat_name IN ('physical read total IO requests', 'physical write total IO requests', 'redo writes', 'physical read total bytes', 'physical write total bytes', 'redo size')
-   AND s.snap_id = h.snap_id
-   AND s.dbid = h.dbid
-   AND s.instance_number = h.instance_number
-   AND CAST(s.begin_interval_time AS DATE) > SYSDATE - &&collection_days.
+   AND s.snap_id(+) = h.snap_id
+   AND s.dbid(+) = h.dbid
+   AND s.instance_number(+) = h.instance_number
+   AND CAST(s.begin_interval_time(+) AS DATE) > SYSDATE - &&collection_days.
  GROUP BY
        h.instance_number,
        h.snap_id
 ),
 io_per_inst_and_snap_id AS (
-SELECT /*+ &&ecr_sq_fact_hints. */
+SELECT /*+ 
+       MATERIALIZE 
+       NO_MERGE 
+       FULL(s0.INT$DBA_HIST_SNAPSHOT.WRM$_SNAPSHOT)
+       FULL(s0.WRM$_SNAPSHOT)
+       FULL(s1.INT$DBA_HIST_SNAPSHOT.WRM$_SNAPSHOT)
+       FULL(s1.WRM$_SNAPSHOT)
+       USE_HASH(h0 s0 h1 s1)
+       */
        h1.instance_number,
        h1.snap_id,
        (h1.r_reqs - h0.r_reqs) r_reqs,
@@ -1274,7 +1300,23 @@ SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'mem_ts', 'pga', end_ti
 -- disk_perf time series
 WITH
 sysstat_io AS (
-SELECT /*+ &&ecr_sq_fact_hints. */
+SELECT /*+ 
+       MATERIALIZE 
+       NO_MERGE 
+       FULL(h.INT$DBA_HIST_SYSSTAT.sn) 
+       FULL(h.INT$DBA_HIST_SYSSTAT.s) 
+       FULL(h.INT$DBA_HIST_SYSSTAT.nm) 
+       USE_HASH(h.INT$DBA_HIST_SYSSTAT.sn h.INT$DBA_HIST_SYSSTAT.s h.INT$DBA_HIST_SYSSTAT.nm)
+       FULL(h.sn) 
+       FULL(h.s) 
+       FULL(h.nm) 
+       USE_HASH(h.sn h.s h.nm)
+       FULL(s.INT$DBA_HIST_SNAPSHOT.WRM$_SNAPSHOT)
+       FULL(s.WRM$_SNAPSHOT)
+       USE_HASH(h s)
+       LEADING(h.INT$DBA_HIST_SYSSTAT.nm h.INT$DBA_HIST_SYSSTAT.s h.INT$DBA_HIST_SYSSTAT.sn s.INT$DBA_HIST_SNAPSHOT.WRM$_SNAPSHOT)
+       LEADING(h.nm h.s h.sn s.WRM$_SNAPSHOT)
+       */
        h.instance_number,
        h.snap_id,
        SUM(CASE WHEN h.stat_name = 'physical read total IO requests'                    THEN h.value ELSE 0 END) r_reqs,
@@ -1286,16 +1328,24 @@ SELECT /*+ &&ecr_sq_fact_hints. */
  WHERE h.snap_id >= TO_NUMBER(NVL('&&ecr_min_snap_id.','0'))
    AND h.dbid = &&ecr_dbid.
    AND h.stat_name IN ('physical read total IO requests', 'physical write total IO requests', 'redo writes', 'physical read total bytes', 'physical write total bytes', 'redo size')
-   AND s.snap_id = h.snap_id
-   AND s.dbid = h.dbid
-   AND s.instance_number = h.instance_number
-   AND CAST(s.begin_interval_time AS DATE) > SYSDATE - &&collection_days.
+   AND s.snap_id(+) = h.snap_id
+   AND s.dbid(+) = h.dbid
+   AND s.instance_number(+) = h.instance_number
+   AND CAST(s.begin_interval_time(+) AS DATE) > SYSDATE - &&collection_days.
  GROUP BY
        h.instance_number,
        h.snap_id
 ),
 io_per_inst_and_snap_id AS (
-SELECT /*+ &&ecr_sq_fact_hints. */
+SELECT /*+ 
+       MATERIALIZE 
+       NO_MERGE 
+       FULL(s0.INT$DBA_HIST_SNAPSHOT.WRM$_SNAPSHOT)
+       FULL(s0.WRM$_SNAPSHOT)
+       FULL(s1.INT$DBA_HIST_SNAPSHOT.WRM$_SNAPSHOT)
+       FULL(s1.WRM$_SNAPSHOT)
+       USE_HASH(h0 s0 h1 s1)
+       */
        h1.instance_number,
        TO_CHAR(TRUNC(CAST(s1.end_interval_time AS DATE), 'HH') + (1/24), '&&ecr_date_format.') end_time,
        (h1.r_reqs - h0.r_reqs) r_reqs,
@@ -1456,7 +1506,23 @@ SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'os_ts', 'physical_memo
 -- nw_perf
 WITH
 sysstat_nwtraf AS (
-SELECT /*+ &&ecr_sq_fact_hints. */
+SELECT /*+ 
+       MATERIALIZE 
+       NO_MERGE 
+       FULL(h.INT$DBA_HIST_SYSSTAT.sn) 
+       FULL(h.INT$DBA_HIST_SYSSTAT.s) 
+       FULL(h.INT$DBA_HIST_SYSSTAT.nm) 
+       USE_HASH(h.INT$DBA_HIST_SYSSTAT.sn h.INT$DBA_HIST_SYSSTAT.s h.INT$DBA_HIST_SYSSTAT.nm)
+       FULL(h.sn) 
+       FULL(h.s) 
+       FULL(h.nm) 
+       USE_HASH(h.sn h.s h.nm)
+       FULL(s.INT$DBA_HIST_SNAPSHOT.WRM$_SNAPSHOT)
+       FULL(s.WRM$_SNAPSHOT)
+       USE_HASH(h s)
+       LEADING(h.INT$DBA_HIST_SYSSTAT.nm h.INT$DBA_HIST_SYSSTAT.s h.INT$DBA_HIST_SYSSTAT.sn s.INT$DBA_HIST_SNAPSHOT.WRM$_SNAPSHOT)
+       LEADING(h.nm h.s h.sn s.WRM$_SNAPSHOT)
+       */
        h.instance_number,
        h.snap_id,
        SUM(CASE WHEN h.stat_name = 'bytes sent via SQL*Net to client'                   THEN h.value ELSE 0 END) tx_cl,
@@ -1465,19 +1531,28 @@ SELECT /*+ &&ecr_sq_fact_hints. */
        SUM(CASE WHEN h.stat_name = 'bytes received via SQL*Net from dblink'             THEN h.value ELSE 0 END) rx_dl
   FROM dba_hist_sysstat h,
        dba_hist_snapshot s
- WHERE h.snap_id >= TO_NUMBER(NVL('&&ecr_min_snap_id.','0'))
+ WHERE '&&INCLUDE_NETW.' = 'Y'
+   AND h.snap_id >= TO_NUMBER(NVL('&&ecr_min_snap_id.','0'))
    AND h.dbid = &&ecr_dbid.
    AND h.stat_name IN ('bytes sent via SQL*Net to client','bytes received via SQL*Net from client','bytes sent via SQL*Net to dblink','bytes received via SQL*Net from dblink')
-   AND s.snap_id = h.snap_id
-   AND s.dbid = h.dbid
-   AND s.instance_number = h.instance_number
-   AND CAST(s.begin_interval_time AS DATE) > SYSDATE - &&collection_days.
+   AND s.snap_id(+) = h.snap_id
+   AND s.dbid(+) = h.dbid
+   AND s.instance_number(+) = h.instance_number
+   AND CAST(s.begin_interval_time(+) AS DATE) > SYSDATE - &&collection_days.
  GROUP BY
        h.instance_number,
        h.snap_id
 ),
 nwtraf_per_inst_and_snap_id AS (
-SELECT /*+ &&ecr_sq_fact_hints. */
+SELECT /*+ 
+       MATERIALIZE 
+       NO_MERGE 
+       FULL(s0.INT$DBA_HIST_SNAPSHOT.WRM$_SNAPSHOT)
+       FULL(s0.WRM$_SNAPSHOT)
+       FULL(s1.INT$DBA_HIST_SNAPSHOT.WRM$_SNAPSHOT)
+       FULL(s1.WRM$_SNAPSHOT)
+       USE_HASH(h0 s0 h1 s1)
+       */
        h1.instance_number,
        h1.snap_id,
        (h1.tx_cl - h0.tx_cl) tx_cl,
@@ -1778,7 +1853,23 @@ SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'nw_perf', 'nw_rx_avg_b
 -- nw_perf time series
 WITH
 sysstat_nwtraf AS (
-SELECT /*+ &&ecr_sq_fact_hints. */
+SELECT /*+ 
+       MATERIALIZE 
+       NO_MERGE 
+       FULL(h.INT$DBA_HIST_SYSSTAT.sn) 
+       FULL(h.INT$DBA_HIST_SYSSTAT.s) 
+       FULL(h.INT$DBA_HIST_SYSSTAT.nm) 
+       USE_HASH(h.INT$DBA_HIST_SYSSTAT.sn h.INT$DBA_HIST_SYSSTAT.s h.INT$DBA_HIST_SYSSTAT.nm)
+       FULL(h.sn) 
+       FULL(h.s) 
+       FULL(h.nm) 
+       USE_HASH(h.sn h.s h.nm)
+       FULL(s.INT$DBA_HIST_SNAPSHOT.WRM$_SNAPSHOT)
+       FULL(s.WRM$_SNAPSHOT)
+       USE_HASH(h s)
+       LEADING(h.INT$DBA_HIST_SYSSTAT.nm h.INT$DBA_HIST_SYSSTAT.s h.INT$DBA_HIST_SYSSTAT.sn s.INT$DBA_HIST_SNAPSHOT.WRM$_SNAPSHOT)
+       LEADING(h.nm h.s h.sn s.WRM$_SNAPSHOT)
+       */
        h.instance_number,
        h.snap_id,
        SUM(CASE WHEN h.stat_name = 'bytes sent via SQL*Net to client'                   THEN h.value ELSE 0 END) tx_cl,
@@ -1787,19 +1878,28 @@ SELECT /*+ &&ecr_sq_fact_hints. */
        SUM(CASE WHEN h.stat_name = 'bytes received via SQL*Net from dblink'             THEN h.value ELSE 0 END) rx_dl
   FROM dba_hist_sysstat h,
        dba_hist_snapshot s
- WHERE h.snap_id >= TO_NUMBER(NVL('&&ecr_min_snap_id.','0'))
+ WHERE '&&INCLUDE_NETW.' = 'Y'
+   AND h.snap_id >= TO_NUMBER(NVL('&&ecr_min_snap_id.','0'))
    AND h.dbid = &&ecr_dbid.
    AND h.stat_name IN ('bytes sent via SQL*Net to client','bytes received via SQL*Net from client','bytes sent via SQL*Net to dblink','bytes received via SQL*Net from dblink')
-   AND s.snap_id = h.snap_id
-   AND s.dbid = h.dbid
-   AND s.instance_number = h.instance_number
-   AND CAST(s.begin_interval_time AS DATE) > SYSDATE - &&collection_days.
+   AND s.snap_id(+) = h.snap_id
+   AND s.dbid(+) = h.dbid
+   AND s.instance_number(+) = h.instance_number
+   AND CAST(s.begin_interval_time(+) AS DATE) > SYSDATE - &&collection_days.
  GROUP BY
        h.instance_number,
        h.snap_id
 ),
 nwtraf_per_inst_and_snap_id AS (
-SELECT /*+ &&ecr_sq_fact_hints. */
+SELECT /*+ 
+       MATERIALIZE 
+       NO_MERGE 
+       FULL(s0.INT$DBA_HIST_SNAPSHOT.WRM$_SNAPSHOT)
+       FULL(s0.WRM$_SNAPSHOT)
+       FULL(s1.INT$DBA_HIST_SNAPSHOT.WRM$_SNAPSHOT)
+       FULL(s1.WRM$_SNAPSHOT)
+       USE_HASH(h0 s0 h1 s1)
+       */
        h1.instance_number,
        TO_CHAR(TRUNC(CAST(s1.end_interval_time AS DATE), 'HH') + (1/24), '&&ecr_date_format.') end_time,
        (h1.tx_cl - h0.tx_cl) tx_cl,
@@ -1871,7 +1971,8 @@ SELECT /*+ &&ecr_sq_fact_hints. */
        dba_hist_dlm_misc d,
        dba_hist_snapshot s,
        dba_hist_parameter p
- WHERE h.snap_id >= TO_NUMBER(NVL('&&ecr_min_snap_id.','0'))
+ WHERE '&&INCLUDE_IC.' = 'Y'
+   AND h.snap_id >= TO_NUMBER(NVL('&&ecr_min_snap_id.','0'))
    AND h.dbid = &&ecr_dbid.
    AND h.stat_name IN ('gc cr blocks received','gc current blocks received','gc cr blocks served','gc current blocks served','gcs messages sent','ges messages sent')
    AND d.name IN ('gcs msgs received','ges msgs received')
@@ -2040,7 +2141,8 @@ SELECT /*+ &&ecr_sq_fact_hints. */
        dba_hist_dlm_misc d,
        dba_hist_snapshot s,
        dba_hist_parameter p
- WHERE h.snap_id >= TO_NUMBER(NVL('&&ecr_min_snap_id.','0'))
+ WHERE '&&INCLUDE_IC.' = 'Y'
+   AND h.snap_id >= TO_NUMBER(NVL('&&ecr_min_snap_id.','0'))
    AND h.dbid = &&ecr_dbid.
    AND h.stat_name IN ('gc cr blocks received','gc current blocks received','gc cr blocks served','gc current blocks served','gcs messages sent','ges messages sent')
    AND d.name IN ('gcs msgs received','ges msgs received')

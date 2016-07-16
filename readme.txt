@@ -1,4 +1,4 @@
-EDB360 v1613 (2016-07-07) by Carlos Sierra
+EDB360 v1614 (2016-07-16) by Carlos Sierra
 ~~~~~~~~~~~~
 EDB360 is a "free to use" tool to perform an initial assessment of a remote system. 
 
