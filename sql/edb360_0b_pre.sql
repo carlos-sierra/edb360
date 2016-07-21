@@ -1,5 +1,5 @@
-DEF edb360_vYYNN = 'v1614';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2016-07-16)';
+DEF edb360_vYYNN = 'v1615';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2016-07-20)';
 DEF edb360_copyright = ' (c) 2016';
 
 SET TERM OFF;
@@ -748,7 +748,7 @@ HOS zip -m &&edb360_main_filename._&&edb360_file_time. esp_output_&&esp_host_nam
 HOS zip &&edb360_main_filename._&&edb360_file_time. 00000_readme_first.txt >> &&edb360_log3..txt
 HOS zip -j &&edb360_main_filename._&&edb360_file_time. js/sorttable.js >> &&edb360_log3..txt
 HOS zip -j &&edb360_main_filename._&&edb360_file_time. js/edb360_img.jpg >> &&edb360_log3..txt
-HOS zip -j &&edb360_main_filename._&&edb360_file_time. js/edb360_all_pages_logo.jpg >> &&edb360_log3..txt
+--HOS zip -j &&edb360_main_filename._&&edb360_file_time. js/edb360_all_pages_logo.jpg >> &&edb360_log3..txt
 HOS zip -j &&edb360_main_filename._&&edb360_file_time. js/edb360_favicon.ico >> &&edb360_log3..txt
 --HOS zip -r osw_&&esp_host_name_short..zip `ps -ef | grep OSW | grep FM | awk -F 'OSW' '{print $2}' | cut -f 3 -d ' '`
 --HOS zip -mT &&edb360_main_filename._&&edb360_file_time. osw_&&esp_host_name_short..zip

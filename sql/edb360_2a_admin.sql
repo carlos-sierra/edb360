@@ -1853,6 +1853,50 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+DEF title = 'SQL consuming over 100MB of TEMP space';
+DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
+BEGIN
+  :sql_text := '
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
+       h.sql_id,
+       ROUND(MAX(h.temp_space_allocated)/POWER(10,6)) max_temp_space_mb,
+       (SELECT DBMS_LOB.SUBSTR(s.sql_text, 1000) FROM dba_hist_sqltext s WHERE s.sql_id = h.sql_id AND s.dbid = &&edb360_dbid. AND ROWNUM = 1) sql_text
+  FROM dba_hist_active_sess_history h
+ WHERE h.temp_space_allocated > 100*POWER(10,6)
+   AND h.sql_id IS NOT NULL
+   AND h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND h.dbid = &&edb360_dbid.
+ GROUP BY
+       h.sql_id 
+ ORDER BY
+       2 DESC, 1
+';
+END;
+/
+@@&&skip_10g.&&skip_11r1.edb360_9a_pre_one.sql
+
+DEF title = 'SQL with over 100MB of PGA allocated memory';
+DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
+BEGIN
+  :sql_text := '
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
+       h.sql_id,
+       ROUND(MAX(h.pga_allocated)/POWER(2,20)) max_pga_mb,
+       (SELECT DBMS_LOB.SUBSTR(s.sql_text, 1000) FROM dba_hist_sqltext s WHERE s.sql_id = h.sql_id AND s.dbid = &&edb360_dbid. AND ROWNUM = 1) sql_text
+  FROM dba_hist_active_sess_history h
+ WHERE h.pga_allocated > 100*POWER(2,20)
+   AND h.sql_id IS NOT NULL
+   AND h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND h.dbid = &&edb360_dbid.
+ GROUP BY
+       h.sql_id 
+ ORDER BY
+       2 DESC, 1
+';
+END;
+/
+@@&&skip_10g.&&skip_11r1.edb360_9a_pre_one.sql
+
 DEF title = 'Open Cursors Count per Session';
 DEF main_table = 'GV$OPEN_CURSOR';
 BEGIN
