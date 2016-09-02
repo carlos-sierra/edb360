@@ -179,7 +179,7 @@ PRO        ]);;
 PRO        
 PRO        var options = {&&stacked.
 PRO          backgroundColor: {fill: '#fcfcf0', stroke: '#336699', strokeWidth: 1},
-PRO          explorer: {actions: ['dragToZoom', 'rightClickToReset'], maxZoomIn: 0.1},
+PRO          explorer: {actions: ['dragToZoom', 'rightClickToReset'], maxZoomIn: 0.025},
 PRO          title: '&&section_id..&&report_sequence.. &&title.&&title_suffix.',
 PRO          titleTextStyle: {fontSize: 16, bold: false},
 PRO          focusTarget: 'category',
@@ -189,7 +189,7 @@ PRO          hAxis: {title: '&&haxis.', gridlines: {count: -1}},
 PRO          vAxis: {title: '&&vaxis.', &&vbaseline. gridlines: {count: -1}}
 PRO        };
 PRO
-PRO        var chart = new google.visualization.&&chartype.(document.getElementById('chart_div'));
+PRO        var chart = new google.visualization.&&chartype.(document.getElementById('line_chart'));
 PRO        chart.draw(data, options);
 PRO      }
 PRO    </script>
@@ -201,7 +201,7 @@ PRO <br />
 PRO &&abstract.
 PRO &&abstract2.
 PRO
-PRO    <div id="chart_div" style="width: 900px; height: 500px;"></div>
+PRO    <div id="line_chart" class="google-chart"></div>
 PRO
 
 -- footer

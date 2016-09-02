@@ -7,7 +7,7 @@
 DEF edb360_sections = '';
 
 -- edb360 trace
-DEF sql_trace_level = '1';
+DEF sql_trace_level = '0';
 
 -- history days (default 31)
 -- if you have an AWR retention of lets say 100 days, and want to report on 60 then pass 60
@@ -85,3 +85,6 @@ DEF edb360_conf_sqld360_top_tc = '0';
 -- If you need to modify any parameter create a new custom configuration file with a
 -- subset of the DEF above, and place on same edb360-master/sql directory; then when
 -- you execute edb360.sql, pass on second parameter the name of your configuration file
+
+-- include DBA_SEGMENTS on queries with no filter on segment_name (default Y)
+-- note: some releases of Oracle produce suboptimal plans when no segment_name is passed

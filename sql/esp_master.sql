@@ -1,6 +1,6 @@
 ----------------------------------------------------------------------------------------
 --
--- File name:   esp_master.sql
+-- File name:   esp_master.sql (2016-09-01)
 --
 -- Purpose:     Collect Database Requirements (CPU, Memory, Disk and IO Perf)
 --
@@ -72,6 +72,14 @@ SELECT TRANSLATE('&&esp_host_name_short.',
 'abcdefghijklmnopqrstuvwxyz0123456789-_ ''`~!@#$%&*()=+[]{}\|;:",.<>/?'||CHR(0)||CHR(9)||CHR(10)||CHR(13)||CHR(38),
 'abcdefghijklmnopqrstuvwxyz0123456789-_') esp_host_name_short FROM DUAL;
 
+-- get database name (up to 10, stop before first '.', no special characters)
+COL esp_dbname_short NEW_V esp_dbname_short FOR A10;
+SELECT LOWER(SUBSTR(SYS_CONTEXT('USERENV', 'DB_NAME'), 1, 10)) esp_dbname_short FROM DUAL;
+SELECT SUBSTR('&&esp_dbname_short.', 1, INSTR('&&esp_dbname_short..', '.') - 1) esp_dbname_short FROM DUAL;
+SELECT TRANSLATE('&&esp_dbname_short.',
+'abcdefghijklmnopqrstuvwxyz0123456789-_ ''`~!@#$%&*()=+[]{}\|;:",.<>/?'||CHR(0)||CHR(9)||CHR(10)||CHR(13)||CHR(38),
+'abcdefghijklmnopqrstuvwxyz0123456789-_') esp_dbname_short FROM DUAL;
+
 -- get collection date
 DEF esp_collection_yyyymmdd = '';
 COL esp_collection_yyyymmdd NEW_V esp_collection_yyyymmdd FOR A8;
@@ -86,15 +94,19 @@ SELECT TO_CHAR(SYSDATE, 'YYYYMMDD') esp_collection_yyyymmdd FROM DUAL;
 @@&&skip_statspack.sql/esp_collect_requirements_statspack.sql
 @@&&skip_statspack.sql/resources_requirements_statspack.sql
 
+-- DB Features
+@@sql/features_use.sql
+
 SET TERM ON;
 
 -- cpu info for linux, aix and solaris. expect some errors
-SET TERM OFF ECHO OFF FEED OFF VER OFF HEA OFF PAGES 0 COLSEP ', ' LIN 32767 TRIMS ON TRIM ON TI OFF TIMI OFF ARRAY 100 NUM 20 SQLBL ON BLO . RECSEP OFF DEF OFF;
+SET TERM OFF ECHO OFF FEED OFF VER OFF HEA OFF PAGES 0 COLSEP ', ' LIN 32767 TRIMS ON TRIM ON TI OFF TIMI OFF ARRAY 100 NUM 20 SQLBL ON BLO . RECSEP OFF;
 SPO hostcommands_driver.sql
 SELECT decode(  platform_id,
-                13,'HOS cat /proc/cpuinfo | grep -i name | sort | uniq >> cpuinfo_model_name_&&esp_host_name_short._&&esp_collection_yyyymmdd..txt', -- Linux x86 64-bit
-                6,'HOS lsconf | grep Processor >> cpuinfo_model_name_&&esp_host_name_short._&&esp_collection_yyyymmdd..txt', -- AIX-Based Systems (64-bit)
-                2,'HOS psrinfo -v >> cpuinfo_model_name_&&esp_host_name_short._&&esp_collection_yyyymmdd..txt' -- Solaris[tm] OE (64-bit)
+                13,'HOS cat /proc/cpuinfo | grep -i name | sort | uniq | cat - /sys/devices/virtual/dmi/id/product_name >> cpuinfo_model_name_&&esp_host_name_short._&&esp_dbname_short._&&esp_collection_yyyymmdd_hhmi..txt', -- Linux x86 64-bit
+                6,'HOS lsconf | grep Processor >> cpuinfo_model_name_&&esp_host_name_short._&&esp_dbname_short._&&esp_collection_yyyymmdd_hhmi..txt', -- AIX-Based Systems (64-bit)
+                2,'HOS psrinfo -v >> cpuinfo_model_name_&&esp_host_name_short._&&esp_dbname_short._&&esp_collection_yyyymmdd_hhmi..txt', -- Solaris[tm] OE (64-bit)
+                4,'HOS machinfo >> cpuinfo_model_name_&&esp_host_name_short._&&esp_dbname_short._&&esp_collection_yyyymmdd_hhmi..txt' -- HP-UX IA (64-bit)
         ) from v$database, product_component_version
 where 1=1
 and to_number(substr(product_component_version.version,1,2)) > 9
@@ -105,12 +117,15 @@ SET DEF ON
 set feed on echo on
 
 -- zip esp
-HOS if [ -f cpuinfo_model_name_&&esp_host_name_short._&&esp_collection_yyyymmdd..txt ]; then  zip -qm esp_output_&&esp_host_name_short._&&esp_collection_yyyymmdd..zip cpuinfo_model_name_&&esp_host_name_short._&&esp_collection_yyyymmdd..txt hostcommands_driver.sql; fi
-HOS if [ `ls escp_&&esp_host_name_short._&&esp_collection_yyyymmdd..csv 2>/dev/null | wc -l` -gt 0 ]; then zip -q  esp_output_&&esp_host_name_short._&&esp_collection_yyyymmdd..zip escp_&&esp_host_name_short._&&esp_collection_yyyymmdd..csv hostcommands_driver.sql; fi
-HOS if [ `ls esp_requirements_*_&&esp_host_name_short._&&esp_collection_yyyymmdd.*.csv 2>/dev/null | wc -l` -gt 0 ]; then zip -q  esp_output_&&esp_host_name_short._&&esp_collection_yyyymmdd..zip esp_requirements_*_&&esp_host_name_short._&&esp_collection_yyyymmdd.*.csv hostcommands_driver.sql; fi
-HOS if [ `ls res_requirements_*_&&esp_host_name_short._&&esp_collection_yyyymmdd.*.txt 2>/dev/null | wc -l` -gt 0 ]; then zip -q  esp_output_&&esp_host_name_short._&&esp_collection_yyyymmdd..zip res_requirements_*_&&esp_host_name_short._&&esp_collection_yyyymmdd.*.txt hostcommands_driver.sql; fi
+HOS zip -qmj escp_output_&&esp_host_name_short._&&esp_dbname_short._&&esp_collection_yyyymmdd_hhmi..zip hostcommands_driver.sql
+HOS zip -qmj escp_output_&&esp_host_name_short._&&esp_dbname_short._&&esp_collection_yyyymmdd_hhmi..zip cpuinfo_model_name_&&esp_host_name_short._&&esp_dbname_short._&&esp_collection_yyyymmdd._*.txt
+HOS zip -qmj escp_output_&&esp_host_name_short._&&esp_dbname_short._&&esp_collection_yyyymmdd_hhmi..zip escp_&&escp_host_name_short._&&escp_dbname_short._&&esp_collection_yyyymmdd._*.csv
+HOS zip -qmj escp_output_&&esp_host_name_short._&&esp_dbname_short._&&esp_collection_yyyymmdd_hhmi..zip esp_requirements_*_&&esp_host_name_short._&&esp_dbname_short._&&esp_collection_yyyymmdd._*.csv
+HOS zip -qmj escp_output_&&esp_host_name_short._&&esp_dbname_short._&&esp_collection_yyyymmdd_hhmi..zip res_requirements_*_&&esp_host_name_short._&&esp_dbname_short._&&esp_collection_yyyymmdd._*.txt
+HOS zip -qmj escp_output_&&esp_host_name_short._&&esp_dbname_short._&&esp_collection_yyyymmdd_hhmi..zip features_use_&&esp_host_name_short._&&esp_dbname_short._&&esp_collection_yyyymmdd._*.txt
+HOS zip -qmj escp_output_&&esp_host_name_short._&&esp_collection_yyyymmdd..zip                          escp_output_&&esp_host_name_short._&&esp_dbname_short._&&esp_collection_yyyymmdd_hhmi..zip 
 
-PRO
-PRO Generated esp_output_&&esp_host_name_short._&&esp_collection_yyyymmdd..zip
-PRO
 SET TERM ON ECHO OFF FEED ON VER ON HEA ON PAGES 14 COLSEP ' ' LIN 80 TRIMS OFF TRIM ON TI OFF TIMI OFF ARRAY 15 NUM 10 SQLBL OFF BLO ON RECSEP WR;
+PRO
+PRO Generated escp_output_&&esp_host_name_short._&&esp_dbname_short._&&esp_collection_yyyymmdd..zip
+PRO

@@ -1,6 +1,6 @@
 ----------------------------------------------------------------------------------------
 --
--- File name:   esp_collect_requirements_statspack.sql
+-- File name:   esp_collect_requirements_statspack.sql (2016-09-01)
 --
 -- Purpose:     Collect Database Requirements (CPU, Memory, Disk and IO Perf)
 --
@@ -13,7 +13,7 @@
 --              The output of this script can be used to feed a Sizing and Provisioning
 --              application.
 --
--- Example:     # cd esp_collect
+-- Example:     # cd esp_collect-master
 --              # sqlplus / as sysdba
 --              SQL> START sql/esp_master.sql
 --
@@ -33,10 +33,18 @@ SELECT TRANSLATE('&&esp_host_name_short.',
 'abcdefghijklmnopqrstuvwxyz0123456789-_ ''`~!@#$%&*()=+[]{}\|;:",.<>/?'||CHR(0)||CHR(9)||CHR(10)||CHR(13)||CHR(38),
 'abcdefghijklmnopqrstuvwxyz0123456789-_') esp_host_name_short FROM DUAL;
 
+-- get database name (up to 10, stop before first '.', no special characters)
+COL esp_dbname_short NEW_V esp_dbname_short FOR A10;
+SELECT LOWER(SUBSTR(SYS_CONTEXT('USERENV', 'DB_NAME'), 1, 10)) esp_dbname_short FROM DUAL;
+SELECT SUBSTR('&&esp_dbname_short.', 1, INSTR('&&esp_dbname_short..', '.') - 1) esp_dbname_short FROM DUAL;
+SELECT TRANSLATE('&&esp_dbname_short.',
+'abcdefghijklmnopqrstuvwxyz0123456789-_ ''`~!@#$%&*()=+[]{}\|;:",.<>/?'||CHR(0)||CHR(9)||CHR(10)||CHR(13)||CHR(38),
+'abcdefghijklmnopqrstuvwxyz0123456789-_') esp_dbname_short FROM DUAL;
+
 -- get collection date
-DEF esp_collection_yyyymmdd = '';
-COL esp_collection_yyyymmdd NEW_V esp_collection_yyyymmdd FOR A8;
-SELECT TO_CHAR(SYSDATE, 'YYYYMMDD') esp_collection_yyyymmdd FROM DUAL;
+DEF esp_collection_yyyymmdd_hhmi = '';
+COL esp_collection_yyyymmdd_hhmi NEW_V esp_collection_yyyymmdd_hhmi FOR A13;
+SELECT TO_CHAR(SYSDATE, 'YYYYMMDD_HH24MI') esp_collection_yyyymmdd_hhmi FROM DUAL;
 
 ALTER SESSION SET NLS_NUMERIC_CHARACTERS = ".,";
 ALTER SESSION SET NLS_SORT = 'BINARY';
@@ -67,17 +75,12 @@ DEF;
 SELECT 'get_current_time', TO_CHAR(SYSDATE, '&&ecr_date_format.') current_time FROM DUAL
 /
 
--- spool correction for 9i client
-DEF useappend = 'APP';
-COL useappend NEW_V useappend;
-SELECT '' useappend FROM v$instance WHERE version LIKE '9%';
-
 -- ignore on 9i
 DEF skip_on_9i = '';
 COL skip_on_9i NEW_V skip_on_9i;
 SELECT '--' skip_on_9i FROM v$instance WHERE version LIKE '9%';
 
-SPO esp_requirements_stp_&&esp_host_name_short._&&esp_collection_yyyymmdd._&&ecr_collection_key..csv &&useappend.;
+SPO esp_requirements_stp_&&esp_host_name_short._&&esp_dbname_short._&&esp_collection_yyyymmdd_hhmi..csv;
 
 -- header
 SELECT 'collection_host,collection_key,category,data_element,source,instance_number,inst_id,value' FROM DUAL

@@ -1744,6 +1744,28 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+DEF title = 'Sequences used over 20%';
+DEF main_table = 'DBA_SEQUENCES';
+BEGIN
+  :sql_text := '
+-- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
+       ROUND(100 * (s.last_number - s.min_value) / GREATEST((s.max_value - s.min_value), 1), 1) percent_used, /* requested by Mike Moehlman */
+       s.*
+from dba_sequences s
+where
+   s.sequence_owner not in &&exclusion_list.
+and s.sequence_owner not in &&exclusion_list2.
+and s.max_value > 0
+and ROUND(100 * (s.last_number - s.min_value) / GREATEST((s.max_value - s.min_value), 1), 1) > 20
+order by 
+ROUND(100 * (s.last_number - s.min_value) / GREATEST((s.max_value - s.min_value), 1), 1) DESC, /* requested by Mike Moehlman */
+s.sequence_owner, s.sequence_name
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
 DEF title = 'Sequences prone to contention';
 DEF main_table = 'DBA_SEQUENCES';
 BEGIN
@@ -1853,16 +1875,16 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
-DEF title = 'SQL consuming over 100MB of TEMP space';
+DEF title = 'SQL consuming over 10GB of TEMP space';
 DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
 BEGIN
   :sql_text := '
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        h.sql_id,
-       ROUND(MAX(h.temp_space_allocated)/POWER(10,6)) max_temp_space_mb,
+       ROUND(MAX(h.temp_space_allocated)/POWER(10,9),1) max_temp_space_gb,
        (SELECT DBMS_LOB.SUBSTR(s.sql_text, 1000) FROM dba_hist_sqltext s WHERE s.sql_id = h.sql_id AND s.dbid = &&edb360_dbid. AND ROWNUM = 1) sql_text
   FROM dba_hist_active_sess_history h
- WHERE h.temp_space_allocated > 100*POWER(10,6)
+ WHERE h.temp_space_allocated > 10*POWER(10,9)
    AND h.sql_id IS NOT NULL
    AND h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND h.dbid = &&edb360_dbid.
@@ -1875,16 +1897,16 @@ END;
 /
 @@&&skip_10g.&&skip_11r1.edb360_9a_pre_one.sql
 
-DEF title = 'SQL with over 100MB of PGA allocated memory';
+DEF title = 'SQL with over 2GB of PGA allocated memory';
 DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
 BEGIN
   :sql_text := '
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        h.sql_id,
-       ROUND(MAX(h.pga_allocated)/POWER(2,20)) max_pga_mb,
+       ROUND(MAX(h.pga_allocated)/POWER(2,30),1) max_pga_gb,
        (SELECT DBMS_LOB.SUBSTR(s.sql_text, 1000) FROM dba_hist_sqltext s WHERE s.sql_id = h.sql_id AND s.dbid = &&edb360_dbid. AND ROWNUM = 1) sql_text
   FROM dba_hist_active_sess_history h
- WHERE h.pga_allocated > 100*POWER(2,20)
+ WHERE h.pga_allocated > 2*POWER(2,30)
    AND h.sql_id IS NOT NULL
    AND h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND h.dbid = &&edb360_dbid.

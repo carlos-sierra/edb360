@@ -1,6 +1,6 @@
 ----------------------------------------------------------------------------------------
 --
--- File name:   escp_collect_awr.sql (2016-07-07)
+-- File name:   escp_collect_awr.sql (2016-09-01)
 --
 --              Enkitec Sizing and Capacity Planing eSCP
 --
@@ -53,10 +53,18 @@ SELECT TRANSLATE('&&escp_host_name_short.',
 'abcdefghijklmnopqrstuvwxyz0123456789-_ ''`~!@#$%&*()=+[]{}\|;:",.<>/?'||CHR(0)||CHR(9)||CHR(10)||CHR(13)||CHR(38),
 'abcdefghijklmnopqrstuvwxyz0123456789-_') escp_host_name_short FROM DUAL;
 
+-- get database name (up to 10, stop before first '.', no special characters)
+COL escp_dbname_short NEW_V escp_dbname_short FOR A10;
+SELECT LOWER(SUBSTR(SYS_CONTEXT('USERENV', 'DB_NAME'), 1, 10)) escp_dbname_short FROM DUAL;
+SELECT SUBSTR('&&escp_dbname_short.', 1, INSTR('&&escp_dbname_short..', '.') - 1) escp_dbname_short FROM DUAL;
+SELECT TRANSLATE('&&escp_dbname_short.',
+'abcdefghijklmnopqrstuvwxyz0123456789-_ ''`~!@#$%&*()=+[]{}\|;:",.<>/?'||CHR(0)||CHR(9)||CHR(10)||CHR(13)||CHR(38),
+'abcdefghijklmnopqrstuvwxyz0123456789-_') escp_dbname_short FROM DUAL;
+
 -- get collection date
-DEF escp_collection_yyyymmdd = '';
-COL escp_collection_yyyymmdd NEW_V escp_collection_yyyymmdd FOR A8;
-SELECT TO_CHAR(SYSDATE, 'YYYYMMDD') escp_collection_yyyymmdd FROM DUAL;
+DEF escp_collection_yyyymmdd_hhmi = '';
+COL escp_collection_yyyymmdd_hhmi NEW_V escp_collection_yyyymmdd_hhmi FOR A13;
+SELECT TO_CHAR(SYSDATE, 'YYYYMMDD_HH24MI') escp_collection_yyyymmdd_hhmi FROM DUAL;
 
 -- get collection days
 DEF escp_collection_days = '&&ESCP_MAX_DAYS.';
@@ -82,7 +90,7 @@ DEF;
 
 ---------------------------------------------------------------------------------------
 
-SPO escp_&&escp_host_name_short._&&escp_collection_yyyymmdd..csv APP;
+SPO escp_&&escp_host_name_short._&&escp_dbname_short._&&escp_collection_yyyymmdd_hhmi..csv;
 
 COL escp_metric_group    FOR A8;
 COL escp_metric_acronym  FOR A16;
