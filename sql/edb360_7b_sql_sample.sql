@@ -88,6 +88,7 @@ DECLARE
                    sql_id, COUNT(*) child_cursors,
                    RANK() OVER (ORDER BY COUNT(*) DESC NULLS LAST) AS sql_rank
               FROM gv$sql_shared_cursor
+             WHERE sql_id NOT IN (SELECT sql_id FROM top_sql)
              GROUP BY
                    sql_id
             HAVING COUNT(*) > 100
@@ -115,6 +116,8 @@ DECLARE
                AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
                AND dbid = &&edb360_dbid.
                AND '&&edb360_bypass.' IS NULL
+               AND sql_id NOT IN (SELECT sql_id FROM top_sql)
+               AND sql_id NOT IN (SELECT sql_id FROM top_not_shared)
              GROUP BY
                    force_matching_signature,
                    dbid
@@ -333,10 +336,10 @@ BEGIN
       put_line('-- prepares execution of sqld360');
       IF sql_rec.rank_num <= &&edb360_conf_sqld360_top_tc. THEN
         --put_line('INSERT INTO plan_table (statement_id, operation, options) VALUES (''SQLD360_SQLID'', '''||sql_rec.sql_id||''', ''&&call_sqld360_bitmask_tc.'');');
-        put_line('INSERT INTO plan_table (statement_id, operation, options) SELECT ''SQLD360_SQLID'', '''||sql_rec.sql_id||''', ''&&call_sqld360_bitmask_tc.'' FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  <  :edb360_max_seconds;');
+        put_line('INSERT INTO plan_table (id, statement_id, operation, options) SELECT '||sql_rec.rank_num||', ''SQLD360_SQLID'', '''||sql_rec.sql_id||''', ''&&call_sqld360_bitmask_tc.'' FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  <  :edb360_max_seconds;');
       ELSE
         --put_line('INSERT INTO plan_table (statement_id, operation, options) VALUES (''SQLD360_SQLID'', '''||sql_rec.sql_id||''', ''&&call_sqld360_bitmask.'');');
-        put_line('INSERT INTO plan_table (statement_id, operation, options) SELECT ''SQLD360_SQLID'', '''||sql_rec.sql_id||''', ''&&call_sqld360_bitmask.'' FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  <  :edb360_max_seconds;');
+        put_line('INSERT INTO plan_table (id, statement_id, operation, options) SELECT '||sql_rec.rank_num||', ''SQLD360_SQLID'', '''||sql_rec.sql_id||''', ''&&call_sqld360_bitmask.'' FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  <  :edb360_max_seconds;');
       END IF;
       --put_line('DELETE plan_table WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NOT NULL AND statement_id = ''SQLD360_SQLID'' AND operation = '''||sql_rec.sql_id||''';');
       /* remains on original cursor loop above

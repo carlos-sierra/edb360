@@ -238,6 +238,20 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+DEF title = 'Registry SQL Patch';
+DEF main_table = 'DBA_REGISTRY_SQLPATCH';
+BEGIN
+  :sql_text := '
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
+       *
+  FROM dba_registry_sqlpatch
+ ORDER BY
+       1
+';
+END;
+/
+@@&&skip_10g.&&skip_11g.edb360_9a_pre_one.sql
+
 DEF title = 'Registry History';
 DEF main_table = 'DBA_REGISTRY_HISTORY';
 BEGIN

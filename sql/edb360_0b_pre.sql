@@ -1,5 +1,5 @@
-DEF edb360_vYYNN = 'v1616';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2016-09-01)';
+DEF edb360_vYYNN = 'v1617';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2016-09-17)';
 DEF edb360_copyright = ' (c) 2016';
 
 SET TERM OFF;
@@ -348,7 +348,7 @@ BEGIN
 END;
 /
 -- esp collection. note: skip if executing for one section
-@&&skip_diagnostics.&&edb360_sections.sql/esp_master.sql
+@ &&skip_diagnostics.&&edb360_sections.sql/esp_master.sql
 SET TERM OFF; 
 
 -- nls (2nd time as esp may change them)
@@ -436,12 +436,14 @@ COL edb360_skip_text NEW_V edb360_skip_text;
 COL edb360_skip_csv  NEW_V edb360_skip_csv;
 COL edb360_skip_line NEW_V edb360_skip_line;
 COL edb360_skip_pie  NEW_V edb360_skip_pie;
-SELECT CASE '&&edb360_conf_incl_html.' WHEN 'N' THEN '--' END edb360_skip_html FROM DUAL;
-SELECT CASE '&&edb360_conf_incl_xml.'  WHEN 'N' THEN '--' END edb360_skip_xml  FROM DUAL;
-SELECT CASE '&&edb360_conf_incl_text.' WHEN 'N' THEN '--' END edb360_skip_text FROM DUAL;
-SELECT CASE '&&edb360_conf_incl_csv.'  WHEN 'N' THEN '--' END edb360_skip_csv  FROM DUAL;
-SELECT CASE '&&edb360_conf_incl_line.' WHEN 'N' THEN '--' END edb360_skip_line FROM DUAL;
-SELECT CASE '&&edb360_conf_incl_pie.'  WHEN 'N' THEN '--' END edb360_skip_pie  FROM DUAL;
+COL edb360_skip_metadata  NEW_V edb360_skip_metadata;
+SELECT CASE '&&edb360_conf_incl_html.'     WHEN 'N' THEN '--' END edb360_skip_html     FROM DUAL;
+SELECT CASE '&&edb360_conf_incl_xml.'      WHEN 'N' THEN '--' END edb360_skip_xml      FROM DUAL;
+SELECT CASE '&&edb360_conf_incl_text.'     WHEN 'N' THEN '--' END edb360_skip_text     FROM DUAL;
+SELECT CASE '&&edb360_conf_incl_csv.'      WHEN 'N' THEN '--' END edb360_skip_csv      FROM DUAL;
+SELECT CASE '&&edb360_conf_incl_line.'     WHEN 'N' THEN '--' END edb360_skip_line     FROM DUAL;
+SELECT CASE '&&edb360_conf_incl_pie.'      WHEN 'N' THEN '--' END edb360_skip_pie      FROM DUAL;
+SELECT CASE '&&edb360_conf_incl_metadata.' WHEN 'N' THEN '--' END edb360_skip_metadata FROM DUAL;
 
 -- inclusion of some diagnostics from memory (not from history)
 COL edb360_skip_ash_mem NEW_V edb360_skip_ash_mem;
