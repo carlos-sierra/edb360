@@ -13,21 +13,37 @@ DEF stacked = 'isStacked: true,';
 DEF vaxis = 'Average Active Sessions - AAS (stacked)';
 DEF vbaseline = '';
 
-DEF tit_01 = '';
-DEF tit_02 = 'On CPU';
-DEF tit_03 = 'User I/O';
-DEF tit_04 = 'System I/O';
-DEF tit_05 = 'Cluster';
-DEF tit_06 = 'Commit';
-DEF tit_07 = 'Concurrency';
-DEF tit_08 = 'Application';
-DEF tit_09 = 'Administrative';
-DEF tit_10 = 'Configuration';
-DEF tit_11 = 'Network';
-DEF tit_12 = 'Queueing';
-DEF tit_13 = 'Scheduler';
-DEF tit_14 = 'Idle';
-DEF tit_15 = 'Other';
+DEF tit_01 = 'On CPU';
+DEF tit_02 = 'User I/O';
+DEF tit_03 = 'System I/O';
+DEF tit_04 = 'Cluster';
+DEF tit_05 = 'Commit';
+DEF tit_06 = 'Concurrency';
+DEF tit_07 = 'Application';
+DEF tit_08 = 'Administrative';
+DEF tit_09 = 'Configuration';
+DEF tit_10 = 'Network';
+DEF tit_11 = 'Queueing';
+DEF tit_12 = 'Scheduler';
+DEF tit_13 = 'Other';
+DEF tit_14 = '';
+DEF tit_15 = '';
+
+DEF series_01 = 'color :''#34CF27''';
+DEF series_02 = 'color :''#0252D7''';
+DEF series_03 = 'color :''#1E96DD''';
+DEF series_04 = 'color :''#CEC3B5''';
+DEF series_05 = 'color :''#EA6A05''';
+DEF series_06 = 'color :''#871C12''';
+DEF series_07 = 'color :''#C42A05''';
+DEF series_08 = 'color :''#75763E''';
+DEF series_09 = 'color :''#594611''';
+DEF series_10 = 'color :''#989779''';
+DEF series_11 = 'color :''#C6BAA5''';
+DEF series_12 = 'color :''#9FFA9D''';
+DEF series_13 = 'color :''#F571A0''';
+DEF series_14 = 'color :''#000000''';
+DEF series_15 = 'color :''#ff0000''';
 
 COL aas_total FOR 999990.000;
 COL aas_on_cpu FOR 999990.000;
@@ -51,7 +67,7 @@ SELECT /*+ &&ds_hint. FULL(h.ash) FULL(h.evt) FULL(h.sn) */
        MIN(snap_id) snap_id,
        TO_CHAR(TRUNC(sample_time, ''HH''), ''YYYY-MM-DD HH24:MI'')          begin_time,
        TO_CHAR(TRUNC(sample_time, ''HH'') + (1/24), ''YYYY-MM-DD HH24:MI'') end_time,
-       ROUND(10 * COUNT(*) / 3600, 3)                                                      aas_total,
+       --ROUND(10 * COUNT(*) / 3600, 3)                                                      aas_total,
        ROUND(SUM(CASE session_state WHEN ''ON CPU''         THEN 10 ELSE 0 END) / 3600, 3) aas_on_cpu,
        ROUND(SUM(CASE wait_class    WHEN ''User I/O''       THEN 10 ELSE 0 END) / 3600, 3) aas_user_io,
        ROUND(SUM(CASE wait_class    WHEN ''System I/O''     THEN 10 ELSE 0 END) / 3600, 3) aas_system_io,
@@ -64,8 +80,10 @@ SELECT /*+ &&ds_hint. FULL(h.ash) FULL(h.evt) FULL(h.sn) */
        ROUND(SUM(CASE wait_class    WHEN ''Network''        THEN 10 ELSE 0 END) / 3600, 3) aas_network,
        ROUND(SUM(CASE wait_class    WHEN ''Queueing''       THEN 10 ELSE 0 END) / 3600, 3) aas_queueing,
        ROUND(SUM(CASE wait_class    WHEN ''Scheduler''      THEN 10 ELSE 0 END) / 3600, 3) aas_scheduler,
-       ROUND(SUM(CASE wait_class    WHEN ''Idle''           THEN 10 ELSE 0 END) / 3600, 3) aas_idle,
-       ROUND(SUM(CASE wait_class    WHEN  ''Other''         THEN 10 ELSE 0 END) / 3600, 3) aas_other
+       --ROUND(SUM(CASE wait_class    WHEN ''Idle''           THEN 10 ELSE 0 END) / 3600, 3) aas_idle,
+       ROUND(SUM(CASE wait_class    WHEN  ''Other''         THEN 10 ELSE 0 END) / 3600, 3) aas_other,
+       0 dummy_14,
+       0 dummy_15
   FROM dba_hist_active_sess_history h
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
@@ -139,6 +157,22 @@ SELECT NULL skip_all FROM gv$instance WHERE instance_number = 8;
 DEF title = 'AAS per Wait Class for Instance 8';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '8');
 @@&&skip_all.edb360_9a_pre_one.sql
+
+DEF series_01 = ''
+DEF series_02 = ''
+DEF series_03 = ''
+DEF series_04 = ''
+DEF series_05 = ''
+DEF series_06 = ''
+DEF series_07 = ''
+DEF series_08 = ''
+DEF series_09 = ''
+DEF series_10 = ''
+DEF series_11 = ''
+DEF series_12 = ''
+DEF series_13 = ''
+DEF series_14 = ''
+DEF series_15 = ''
 
 SET SERVEROUT ON;
 SET SERVEROUT ON SIZE 1000000;

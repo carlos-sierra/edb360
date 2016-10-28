@@ -14,13 +14,13 @@ ALTER SESSION SET SQL_TRACE = FALSE;
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -- touch file to update timestamp
-SPO 00000_readme_first.txt APP
-PRO
-PRO end of setup
-PRO
-PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-PRO
-SPO OFF;
+--SPO 00000_readme_first.txt APP
+--PRO
+--PRO end of setup
+--PRO
+--PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--PRO
+--SPO OFF;
 
 -- cleanup
 SET HEA ON; 

@@ -62,6 +62,7 @@ DEF edb360_conf_incl_text = 'N';
 DEF edb360_conf_incl_csv  = 'N';
 DEF edb360_conf_incl_line = 'Y';
 DEF edb360_conf_incl_pie  = 'Y';
+DEF edb360_conf_incl_bar  = 'Y';
 
 -- excluding awr reports substantially reduces usability with minimal performance gain
 DEF edb360_conf_incl_awr_rpt = 'Y';

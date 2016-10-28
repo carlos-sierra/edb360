@@ -72,6 +72,7 @@ SELECT prev_sql_id edb360_prev_sql_id, TO_CHAR(prev_child_number) edb360_prev_ch
 @@&&edb360_bypass.&&skip_csv.&&edb360_skip_csv.edb360_9d_one_csv.sql
 @@&&edb360_bypass.&&skip_lch.&&edb360_skip_line.edb360_9e_one_line_chart.sql
 @@&&edb360_bypass.&&skip_pch.&&edb360_skip_pie.edb360_9f_one_pie_chart.sql
+@@&&edb360_bypass.&&skip_bch.&&edb360_skip_bar.edb360_9h_one_bar_chart.sql
 HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_log2..txt >> &&edb360_log3..txt
 HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_log3..txt
 
@@ -115,6 +116,7 @@ DEF skip_text = '';
 DEF skip_csv = '';
 DEF skip_lch = '--skip--';
 DEF skip_pch = '--skip--';
+DEF skip_bch = '--skip--';
 DEF title_suffix = '';
 DEF haxis = '&&db_version. dbmod:&&edb360_dbmod. host:&&host_hash. (avg cpu_count: &&avg_cpu_count.)';
 

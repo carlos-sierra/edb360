@@ -186,6 +186,9 @@ PRO          focusTarget: 'category',
 PRO          legend: {position: 'right', textStyle: {fontSize: 12}},
 PRO          tooltip: {textStyle: {fontSize: 10}},
 PRO          hAxis: {title: '&&haxis.', gridlines: {count: -1}},
+PRO          series: { 0: { &&series_01.}, 1: { &&series_02.},  2: { &&series_03.},  3: { &&series_04.},  4: { &&series_05.},  5: { &&series_06.},  6: { &&series_07.}, 7: {&&series_08.},
+PRO                    8: { &&series_09.}, 9: { &&series_10.}, 10: { &&series_11.}, 11: { &&series_12.}, 12: { &&series_13.}, 13: { &&series_14.}, 14: { &&series_15.}
+PRO          },
 PRO          vAxis: {title: '&&vaxis.', &&vbaseline. gridlines: {count: -1}}
 PRO        };
 PRO
@@ -230,7 +233,7 @@ SPO &&edb360_log2..txt APP;
 SELECT TO_CHAR(SYSDATE, '&&edb360_date_format.')||' , '||
        TO_CHAR((:get_time_t1 - :get_time_t0)/100, '999999990.00')||' , rows:'||
        --:row_count||' , &&section_id., &&main_table., &&edb360_prev_sql_id., -1, &&title_no_spaces., html , &&one_spool_filename._line_chart.html'
-       '&&row_num., &&section_id., &&main_table., &&edb360_prev_sql_id., -1, &&title_no_spaces., html , &&one_spool_filename._line_chart.html'
+       '&&row_num., &&section_id., &&main_table., &&edb360_prev_sql_id., -1, &&title_no_spaces., line , &&one_spool_filename._line_chart.html'
   FROM DUAL
 /
 SPO OFF;

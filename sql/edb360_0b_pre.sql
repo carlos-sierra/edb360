@@ -1,5 +1,5 @@
-DEF edb360_vYYNN = 'v1617';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2016-09-17)';
+DEF edb360_vYYNN = 'v1618';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2016-10-27)';
 DEF edb360_copyright = ' (c) 2016';
 
 SET TERM OFF;
@@ -436,6 +436,7 @@ COL edb360_skip_text NEW_V edb360_skip_text;
 COL edb360_skip_csv  NEW_V edb360_skip_csv;
 COL edb360_skip_line NEW_V edb360_skip_line;
 COL edb360_skip_pie  NEW_V edb360_skip_pie;
+COL edb360_skip_bar  NEW_V edb360_skip_bar;
 COL edb360_skip_metadata  NEW_V edb360_skip_metadata;
 SELECT CASE '&&edb360_conf_incl_html.'     WHEN 'N' THEN '--' END edb360_skip_html     FROM DUAL;
 SELECT CASE '&&edb360_conf_incl_xml.'      WHEN 'N' THEN '--' END edb360_skip_xml      FROM DUAL;
@@ -443,6 +444,7 @@ SELECT CASE '&&edb360_conf_incl_text.'     WHEN 'N' THEN '--' END edb360_skip_te
 SELECT CASE '&&edb360_conf_incl_csv.'      WHEN 'N' THEN '--' END edb360_skip_csv      FROM DUAL;
 SELECT CASE '&&edb360_conf_incl_line.'     WHEN 'N' THEN '--' END edb360_skip_line     FROM DUAL;
 SELECT CASE '&&edb360_conf_incl_pie.'      WHEN 'N' THEN '--' END edb360_skip_pie      FROM DUAL;
+SELECT CASE '&&edb360_conf_incl_bar.'      WHEN 'N' THEN '--' END edb360_skip_bar      FROM DUAL;
 SELECT CASE '&&edb360_conf_incl_metadata.' WHEN 'N' THEN '--' END edb360_skip_metadata FROM DUAL;
 
 -- inclusion of some diagnostics from memory (not from history)
@@ -471,6 +473,7 @@ DEF skip_text = '';
 DEF skip_csv = '';
 DEF skip_lch = 'Y';
 DEF skip_pch = 'Y';
+DEF skip_bch = 'Y';
 DEF skip_all = '';
 DEF abstract = '';
 DEF abstract2 = '';
@@ -547,6 +550,7 @@ COL skip_text NEW_V skip_text;
 COL skip_csv NEW_V skip_csv;
 COL skip_lch NEW_V skip_lch;
 COL skip_pch NEW_V skip_pch;
+COL skip_bch NEW_V skip_bch;
 COL skip_all NEW_V skip_all;
 COL dummy_01 NOPRI;
 COL dummy_02 NOPRI;
@@ -589,6 +593,53 @@ COL skip_sqlmon_exec NEW_V skip_sqlmon_exec;
 COL edb360_sql_text_100 NEW_V edb360_sql_text_100;
 DEF exact_matching_signature = '';
 DEF force_matching_signature = '';
+—- this gives you two level of “indirection”, aka it goes into PL/SQL that dumps a script that is later on executed 
+—- I use this for bar charts on sqld360
+DEF wait_class_colors = 'CASE wait_class WHEN ''''''''CPU'''''''' THEN ''''''''34CF27'''''''' WHEN ''''''''Scheduler'''''''' THEN ''''''''9FFA9D'''''''' WHEN ''''''''User I/O'''''''' THEN ''''''''0252D7'''''''' WHEN ''''''''System I/O'''''''' THEN ''''''''1E96DD'''''''' ';
+DEF wait_class_colors2 = ' WHEN ''''''''Concurrency'''''''' THEN ''''''''871C12'''''''' WHEN ''''''''Application'''''''' THEN ''''''''C42A05'''''''' WHEN ''''''''Commit'''''''' THEN ''''''''EA6A05'''''''' WHEN ''''''''Configuration'''''''' THEN ''''''''594611''''''''  ';
+DEF wait_class_colors3 = ' WHEN ''''''''Administrative'''''''' THEN ''''''''75763E''''''''  WHEN ''''''''Network'''''''' THEN ''''''''989779'''''''' WHEN ''''''''Other'''''''' THEN ''''''''F571A0'''''''' ';
+DEF wait_class_colors4 = ' WHEN ''''''''Cluster'''''''' THEN ''''''''CEC3B5'''''''' WHEN ''''''''Queueing'''''''' THEN ''''''''C6BAA5'''''''' ELSE ''''''''000000'''''''' END';
+—- I use this for bar charts on edb360
+DEF wait_class_colors = " CASE wait_class WHEN ''ON CPU'' THEN ''34CF27'' WHEN ''Scheduler'' THEN ''9FFA9D'' WHEN ''User I/O'' THEN ''0252D7'' WHEN ''System I/O'' THEN ''1E96DD'' ";
+DEF wait_class_colors2 = " WHEN ''Concurrency'' THEN ''871C12'' WHEN ''Application'' THEN ''C42A05'' WHEN ''Commit'' THEN ''EA6A05'' WHEN ''Configuration'' THEN ''594611''  ";
+DEF wait_class_colors3 = " WHEN ''Administrative'' THEN ''75763E''  WHEN ''Network'' THEN ''989779'' WHEN ''Other'' THEN ''F571A0'' ";
+DEF wait_class_colors4 = " WHEN ''Cluster'' THEN ''CEC3B5'' WHEN ''Queueing'' THEN ''C6BAA5'' ELSE ''000000'' END ";
+—-this one gives you one level of indirection indirection AND it builds the string in the way the line charts needs it (color: ‘#FFFFFF’) 
+DEF wait_class_colors_s = 'CASE wait_class WHEN ''''CPU'''' THEN ''''color: ''''''''#34CF27'''''''''''' WHEN ''''Scheduler'''' THEN ''''color: ''''''''#9FFA9D'''''''''''' WHEN ''''User I/O'''' THEN ''''color: ''''''''#0252D7'''''''''''' WHEN ''''System I/O'''' THEN ''''color: ''''''''#1E96DD'''''''''''' ';
+DEF wait_class_colors2_s = ' WHEN ''''Concurrency'''' THEN ''''color: ''''''''#871C12'''''''''''' WHEN ''''Application'''' THEN ''''color: ''''''''#C42A05'''''''''''' WHEN ''''Commit'''' THEN ''''color: ''''''''#EA6A05'''''''''''' WHEN ''''Configuration'''' THEN ''''color: ''''''''#594611''''''''''''  ';
+DEF wait_class_colors3_s = ' WHEN ''''Administrative'''' THEN ''''color: ''''''''#75763E''''''''''''  WHEN ''''Network'''' THEN ''''color: ''''''''#989779'''''''''''' WHEN ''''Other'''' THEN ''''color: ''''''''#F571A0'''''''''''' ';
+DEF wait_class_colors4_s = ' WHEN ''''Cluster'''' THEN ''''color: ''''''''#CEC3B5'''''''''''' WHEN ''''Queueing'''' THEN ''''color: ''''''''#C6BAA5'''''''''''' ELSE ''''color: ''''''''#000000'''''''''''' END';
+--
+COL series_01 NEW_V series_01; 
+COL series_02 NEW_V series_02; 
+COL series_03 NEW_V series_03; 
+COL series_04 NEW_V series_04; 
+COL series_05 NEW_V series_05; 
+COL series_06 NEW_V series_06; 
+COL series_07 NEW_V series_07; 
+COL series_08 NEW_V series_08; 
+COL series_09 NEW_V series_09; 
+COL series_10 NEW_V series_10; 
+COL series_11 NEW_V series_11; 
+COL series_12 NEW_V series_12; 
+COL series_13 NEW_V series_13; 
+COL series_14 NEW_V series_14; 
+COL series_15 NEW_V series_15; 
+DEF series_01 = ''
+DEF series_02 = ''
+DEF series_03 = ''
+DEF series_04 = ''
+DEF series_05 = ''
+DEF series_06 = ''
+DEF series_07 = ''
+DEF series_08 = ''
+DEF series_09 = ''
+DEF series_10 = ''
+DEF series_11 = ''
+DEF series_12 = ''
+DEF series_13 = ''
+DEF series_14 = ''
+DEF series_15 = ''
 
 -- get udump directory path
 COL edb360_udump_path NEW_V edb360_udump_path FOR A500;

@@ -3,7 +3,7 @@ DEF ash_validation = '--skip--';
 
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-SPO 00000_readme_first.txt
+SPO 00000_readme_first.txt APP
 @@&&ash_validation.edb360_0h_ash_validation.sql
 --@@edb360_0i_awr_info.sql
 SPO 00000_readme_first.txt APP

@@ -48,7 +48,7 @@ SET HEA OFF;
 SPO &&edb360_log2..txt APP;
 SELECT TO_CHAR(SYSDATE, '&&edb360_date_format.')||' , '||
        TO_CHAR((:get_time_t1 - :get_time_t0)/100, '999999990.00')||' , rows:'||
-       '&&row_num., &&section_id., &&main_table., &&edb360_prev_sql_id., &&edb360_prev_child_number., &&title_no_spaces., html , &&one_spool_filename..csv'
+       '&&row_num., &&section_id., &&main_table., &&edb360_prev_sql_id., &&edb360_prev_child_number., &&title_no_spaces., csv , &&one_spool_filename..csv'
   FROM DUAL
 /
 SPO OFF;

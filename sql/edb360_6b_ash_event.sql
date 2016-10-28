@@ -30,15 +30,15 @@ SELECT h.timed_class,
        NULL dummy_01
   FROM hist h,
        total t
- WHERE h.samples >= t.samples / 1000 AND rn <= 14
+ WHERE h.samples >= t.samples / 1000 AND rn <= 9
  UNION ALL
-SELECT ''Others'',
+SELECT ''All others'',
        NVL(SUM(h.samples), 0) samples,
        NVL(ROUND(100 * SUM(h.samples) / AVG(t.samples), 1), 0) percent,
        NULL dummy_01
   FROM hist h,
        total t
- WHERE h.samples < t.samples / 1000 OR rn > 14
+ WHERE h.samples < t.samples / 1000 OR rn > 9
  ORDER BY 2 DESC NULLS LAST
 ';
 END;
@@ -135,15 +135,15 @@ SELECT h.timed_class,
        NULL dummy_01
   FROM hist h,
        total t
- WHERE h.samples >= t.samples / 1000 AND rn <= 14
+ WHERE h.samples >= t.samples / 1000 AND rn <= 9
  UNION ALL
-SELECT ''Others'',
+SELECT ''All others'',
        NVL(SUM(h.samples), 0) samples,
        NVL(ROUND(100 * SUM(h.samples) / AVG(t.samples), 1), 0) percent,
        NULL dummy_01
   FROM hist h,
        total t
- WHERE h.samples < t.samples / 1000 OR rn > 14
+ WHERE h.samples < t.samples / 1000 OR rn > 9
  ORDER BY 2 DESC NULLS LAST
 ';
 END;
