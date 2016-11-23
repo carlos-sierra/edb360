@@ -109,7 +109,7 @@ EXEC :get_time_t1 := DBMS_UTILITY.get_time;
 SET HEA OFF;
 SPO &&edb360_log2..txt APP;
 SELECT TO_CHAR(SYSDATE, '&&edb360_date_format.')||' , '||
-       TO_CHAR((:get_time_t1 - :get_time_t0)/100, '999999990.00')||' , rows:'||
+       TO_CHAR((:get_time_t1 - :get_time_t0)/100, '999,999,990.00')||'s , rows:'||
        --:row_count||' , &&section_id., &&main_table., &&edb360_prev_sql_id., -1, &&title_no_spaces., html , &&one_spool_filename._pie_chart.html'
        '&&row_num., &&section_id., &&main_table., &&edb360_prev_sql_id., -1, &&title_no_spaces., pie , &&one_spool_filename._pie_chart.html'
   FROM DUAL

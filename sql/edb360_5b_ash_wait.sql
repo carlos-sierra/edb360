@@ -41,7 +41,8 @@ DEF vbaseline = '';
 
 BEGIN
   :sql_text_backup := '
-SELECT /*+ &&ds_hint. */
+SELECT /*+ &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
+       /* &&section_id..&&report_sequence. */
        MIN(snap_id) snap_id,
        TO_CHAR(TRUNC(sample_time, ''HH''), ''YYYY-MM-DD HH24:MI'')          begin_time,
        TO_CHAR(TRUNC(sample_time, ''HH'') + (1/24), ''YYYY-MM-DD HH24:MI'') end_time,
@@ -60,7 +61,7 @@ SELECT /*+ &&ds_hint. */
        0 dummy_13,
        0 dummy_14,
        0 dummy_15
-  FROM dba_hist_active_sess_history
+  FROM dba_hist_active_sess_history h
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
    AND @filter_predicate@

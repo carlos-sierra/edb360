@@ -165,6 +165,20 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+DEF title = 'SQL Workarea Histogram';
+DEF main_table = 'GV$SQL_WORKAREA_HISTOGRAM';
+BEGIN
+  :sql_text := '
+-- requested by Dimas Chbane
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
+       *
+  FROM gv$sql_workarea_histogram
+
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
 DEF title = 'Memory Resize Operations';
 DEF main_table = 'GV$MEMORY_RESIZE_OPS';
 BEGIN

@@ -675,7 +675,8 @@ BEGIN
 -- provided by David Kurtz
 WITH
 hist AS (
-SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
+       /* &&section_id..&&report_sequence. */
        h.sql_id,
        h.sql_plan_hash_value,
        h.dbid,

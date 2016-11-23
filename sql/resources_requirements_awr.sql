@@ -244,7 +244,17 @@ PRO CPU from ASH AWR
 PRO ~~~~~~~~~~~~~~~~
 WITH 
 cpu_per_inst_and_sample AS (
-SELECT h.snap_id,
+SELECT /*+ 
+       FULL(h.INT$DBA_HIST_ACT_SESS_HISTORY.sn) 
+       FULL(h.INT$DBA_HIST_ACT_SESS_HISTORY.ash) 
+       FULL(h.INT$DBA_HIST_ACT_SESS_HISTORY.evt) 
+       USE_HASH(h.INT$DBA_HIST_ACT_SESS_HISTORY.sn h.INT$DBA_HIST_ACT_SESS_HISTORY.ash h.INT$DBA_HIST_ACT_SESS_HISTORY.evt)
+       FULL(h.sn) 
+       FULL(h.ash) 
+       FULL(h.evt) 
+       USE_HASH(h.sn h.ash h.evt)
+       */
+       h.snap_id,
        h.dbid,
        h.instance_number,
        h.sample_id,

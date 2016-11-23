@@ -128,7 +128,16 @@ SELECT DISTINCT '&&ecr_collection_host.', '&&ecr_collection_key', 'id', 'instanc
 -- cpu
 WITH
 cpu_per_inst_and_sample AS (
-SELECT /*+ &&ecr_sq_fact_hints. */
+SELECT /*+ &&ecr_sq_fact_hints.
+       FULL(h.INT$DBA_HIST_ACT_SESS_HISTORY.sn) 
+       FULL(h.INT$DBA_HIST_ACT_SESS_HISTORY.ash) 
+       FULL(h.INT$DBA_HIST_ACT_SESS_HISTORY.evt) 
+       USE_HASH(h.INT$DBA_HIST_ACT_SESS_HISTORY.sn h.INT$DBA_HIST_ACT_SESS_HISTORY.ash h.INT$DBA_HIST_ACT_SESS_HISTORY.evt)
+       FULL(h.sn) 
+       FULL(h.ash) 
+       FULL(h.evt) 
+       USE_HASH(h.sn h.ash h.evt)
+       */
        h.instance_number,
        h.snap_id,
        h.sample_id,
@@ -1184,7 +1193,16 @@ SELECT '&&ecr_collection_host.', '&&ecr_collection_key', 'osstat', stat_name, 'g
 -- cpu time series
 WITH
 cpu_per_inst_and_sample AS (
-SELECT /*+ &&ecr_sq_fact_hints. */
+SELECT /*+ &&ecr_sq_fact_hints.
+       FULL(h.INT$DBA_HIST_ACT_SESS_HISTORY.sn) 
+       FULL(h.INT$DBA_HIST_ACT_SESS_HISTORY.ash) 
+       FULL(h.INT$DBA_HIST_ACT_SESS_HISTORY.evt) 
+       USE_HASH(h.INT$DBA_HIST_ACT_SESS_HISTORY.sn h.INT$DBA_HIST_ACT_SESS_HISTORY.ash h.INT$DBA_HIST_ACT_SESS_HISTORY.evt)
+       FULL(h.sn) 
+       FULL(h.ash) 
+       FULL(h.evt) 
+       USE_HASH(h.sn h.ash h.evt)
+       */
        h.instance_number,
        h.snap_id,
        h.sample_id,

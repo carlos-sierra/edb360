@@ -158,7 +158,8 @@ BEGIN
   :sql_text := '
 WITH 
 cpu_per_inst_and_sample AS (
-SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
+       /* &&section_id..&&report_sequence. */
        h.snap_id,
        h.dbid,
        h.instance_number,
@@ -322,7 +323,8 @@ BEGIN
   :sql_text_backup := '
 WITH 
 cpu_per_inst_and_sample AS (
-SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
+       /* &&section_id..&&report_sequence. */
        instance_number,
        snap_id,
        sample_id,
@@ -330,7 +332,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
        SUM(CASE session_state WHEN ''ON CPU'' THEN 1 ELSE 0 END) on_cpu,
        SUM(CASE event WHEN ''resmgr:cpu quantum'' THEN 1 ELSE 0 END) resmgr,
        COUNT(*) on_cpu_and_resmgr
-  FROM dba_hist_active_sess_history
+  FROM dba_hist_active_sess_history h
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
    AND instance_number = @instance_number@
@@ -495,13 +497,14 @@ BEGIN
   :sql_text_backup := '
 WITH 
 cpu_per_inst_and_sample AS (
-SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
+       /* &&section_id..&&report_sequence. */
        instance_number,
        snap_id,
        sample_id,
        MIN(sample_time) sample_time,
        COUNT(*) on_cpu
-  FROM dba_hist_active_sess_history
+  FROM dba_hist_active_sess_history h
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
    AND instance_number = @instance_number@

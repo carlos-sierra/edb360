@@ -10,7 +10,8 @@ SPO OFF;
 DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
 BEGIN
   :sql_text_backup := '
-SELECT /*+ &&ds_hint. */
+SELECT /*+ &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
+       /* &&section_id..&&report_sequence. */
        MIN(snap_id) snap_id,
        TO_CHAR(TRUNC(sample_time, ''HH''), ''YYYY-MM-DD HH24:MI'') begin_time,
        TO_CHAR(TRUNC(sample_time, ''HH'') + (1/24), ''YYYY-MM-DD HH24:MI'') end_time,
@@ -44,7 +45,7 @@ SELECT /*+ &&ds_hint. */
        ROUND(SUM(CASE sql_id WHEN ''@sql_id_12@'' THEN 10 ELSE 0 END) / 3600, 3) "@sql_id_12@",
        ROUND(SUM(CASE sql_id WHEN ''@sql_id_13@'' THEN 10 ELSE 0 END) / 3600, 3) "@sql_id_13@",
        ROUND(SUM(CASE sql_id WHEN ''@sql_id_14@'' THEN 10 ELSE 0 END) / 3600, 3) "@sql_id_14@"
-  FROM dba_hist_active_sess_history
+  FROM dba_hist_active_sess_history h
  WHERE @filter_predicate@
    AND sql_id IS NOT NULL
    AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.

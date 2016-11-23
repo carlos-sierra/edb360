@@ -58,10 +58,20 @@ HOS rm dba_tab_columns.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SPO dba_hist_active_sess_history.txt;
-SELECT * FROM dba_hist_active_sess_history 
-WHERE dbid = &&edb360_dbid. 
-AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
-AND sql_id IN (SELECT operation FROM plan_table WHERE statement_id = 'SQLD360_SQLID');
+SELECT /*+ &&ds_hint.
+       FULL(h.INT$DBA_HIST_ACT_SESS_HISTORY.sn) 
+       FULL(h.INT$DBA_HIST_ACT_SESS_HISTORY.ash) 
+       FULL(h.INT$DBA_HIST_ACT_SESS_HISTORY.evt) 
+       USE_HASH(h.INT$DBA_HIST_ACT_SESS_HISTORY.sn h.INT$DBA_HIST_ACT_SESS_HISTORY.ash h.INT$DBA_HIST_ACT_SESS_HISTORY.evt)
+       FULL(h.sn) 
+       FULL(h.ash) 
+       FULL(h.evt) 
+       USE_HASH(h.sn h.ash h.evt)
+       */
+    * FROM dba_hist_active_sess_history h
+WHERE h.dbid = &&edb360_dbid. 
+AND h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+AND h.sql_id IN (SELECT operation FROM plan_table WHERE statement_id = 'SQLD360_SQLID');
 SPO OFF;
 HOS gzip dba_hist_active_sess_history.txt
 HOS tar -rf &&edb360_tar_filename..tar dba_hist_active_sess_history.txt.gz

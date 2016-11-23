@@ -1,4 +1,5 @@
 # edb360 collector
+#!/bin/sh
 echo "Start edb360."
 type nawk 1>/dev/null 2>&1 && AWK=nawk || AWK=awk
 for INST in $(ps axo cmd | $AWK '$0~/^ora_pmon_/ {gsub(/^ora_pmon_/,"",$0); print $0}'); do

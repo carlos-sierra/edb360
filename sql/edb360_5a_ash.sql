@@ -63,7 +63,8 @@ COL aas_user_io FOR 999990.000;
 
 BEGIN
   :sql_text_backup := '
-SELECT /*+ &&ds_hint. FULL(h.ash) FULL(h.evt) FULL(h.sn) */
+SELECT /*+ &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
+       /* &&section_id..&&report_sequence. */
        MIN(snap_id) snap_id,
        TO_CHAR(TRUNC(sample_time, ''HH''), ''YYYY-MM-DD HH24:MI'')          begin_time,
        TO_CHAR(TRUNC(sample_time, ''HH'') + (1/24), ''YYYY-MM-DD HH24:MI'') end_time,
@@ -205,7 +206,8 @@ DEF vbaseline = '';
 
 BEGIN
   :sql_text_backup := '
-SELECT /*+ &&ds_hint. FULL(h.ash) FULL(h.evt) FULL(h.sn) */
+SELECT /*+ &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
+       /* &&section_id..&&report_sequence. */
        MIN(snap_id) snap_id,
        TO_CHAR(TRUNC(sample_time, ''HH''), ''YYYY-MM-DD HH24:MI'')          begin_time,
        TO_CHAR(TRUNC(sample_time, ''HH'') + (1/24), ''YYYY-MM-DD HH24:MI'') end_time,

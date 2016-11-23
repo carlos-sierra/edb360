@@ -47,7 +47,7 @@ EXEC :get_time_t1 := DBMS_UTILITY.get_time;
 SET HEA OFF;
 SPO &&edb360_log2..txt APP;
 SELECT TO_CHAR(SYSDATE, '&&edb360_date_format.')||' , '||
-       TO_CHAR((:get_time_t1 - :get_time_t0)/100, '999999990.00')||' , rows:'||
+       TO_CHAR((:get_time_t1 - :get_time_t0)/100, '999,999,990.00')||'s , rows:'||
        '&&row_num., &&section_id., &&main_table., &&edb360_prev_sql_id., &&edb360_prev_child_number., &&title_no_spaces., xml , &&one_spool_filename..xml'
   FROM DUAL
 /

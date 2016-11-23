@@ -2,6 +2,7 @@
 VAR edb360_main_time0 NUMBER;
 EXEC :edb360_main_time0 := DBMS_UTILITY.GET_TIME;
 
+SET TERM ON;
 SPO 00000_readme_first.txt
 -- initial validation
 PRO If eDB360 disconnects right after this message it means the user executing it
@@ -29,7 +30,8 @@ END;
 /
 WHENEVER SQLERROR CONTINUE;
 
--- parameters
+-- parameters (reset readme)
+SPO 00000_readme_first.txt
 PRO
 PRO Parameter 1: 
 PRO If your Database is licensed to use the Oracle Tuning pack please enter T.
@@ -48,6 +50,24 @@ BEGIN
 END;
 /
 WHENEVER SQLERROR CONTINUE;
+SET TERM OFF;
+COL diagnostics_pack NEW_V diagnostics_pack FOR A1;
+SELECT CASE WHEN '&&license_pack.' IN ('T', 'D') THEN 'Y' ELSE 'N' END diagnostics_pack FROM DUAL;
+COL skip_diagnostics NEW_V skip_diagnostics FOR A1;
+SELECT CASE WHEN '&&license_pack.' IN ('T', 'D') THEN NULL ELSE 'Y' END skip_diagnostics FROM DUAL;
+COL tuning_pack NEW_V tuning_pack FOR A1;
+SELECT CASE WHEN '&&license_pack.' = 'T' THEN 'Y' ELSE 'N' END tuning_pack FROM DUAL;
+COL skip_tuning NEW_V skip_tuning FOR A1;
+SELECT CASE WHEN '&&license_pack.' = 'T' THEN NULL ELSE 'Y' END skip_tuning FROM DUAL;
+SET TERM ON;
+SELECT 'Be aware value "N" reduces output content substantially. Avoid "N" if possible.' warning FROM dual WHERE '&&license_pack.' = 'N';
+BEGIN
+  IF '&&license_pack.' = 'N' THEN
+    DBMS_LOCK.SLEEP(10); -- sleep few seconds
+  END IF;
+END;
+/
+
 PRO
 PRO Parameter 2:
 PRO Name of an optional custom configuration file executed right after 
@@ -57,17 +77,27 @@ PRO is not validated. Example: custom_config_01.sql
 PRO If no custom configuration file is needed, simply hit the "return" key.
 PRO
 PRO Custom configuration filename? (optional)
-COL custom_config_filename NEW_V custom_config_filename;
+COL custom_config_filename NEW_V custom_config_filename NOPRI;
 SELECT NVL(TRIM('&2.'), 'NULL') custom_config_filename FROM DUAL;
-HOS ls -lat sql/&&custom_config_filename.
-HOS more sql/&&custom_config_filename.
-SET TERM OFF;
+
+SPO OFF;
 
 -- ash verification
-DEF edb360_date_format = 'YYYY-MM-DD"T"HH24:MI:SS';
-@@&&ash_validation.edb360_0h_ash_validation.sql
-@@edb360_0i_awr_info.sql
-SPO 00000_readme_first.txt APP
+DEF edb360_estimated_hrs = '0';
+@@&&ash_validation.&&skip_diagnostics.verify_stats_wr_sys.sql
+@@&&ash_validation.&&skip_diagnostics.awr_ash_pre_check.sql
+
+SET HEA OFF TERM OFF;
+SPO edb360_pause.sql
+SELECT 'PAUSE *** eDB360 may take over 8 hours to execute, hit "return" to continue, or control-c to quit. ' FROM DUAL WHERE &&edb360_estimated_hrs. > 8;
+SPO OFF;
+SET HEA ON TERM ON;
+@edb360_pause.sql
+HOS rm edb360_pause.sql
+
+-- reset readme
+SET TERM OFF;
+SPO 00000_readme_first.txt
 PRO
 PRO Open and read 00001_edb360_<dbname>_index.html
 PRO
@@ -75,6 +105,8 @@ PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 PRO
 PRO initial log:
 PRO
+SELECT 'Tool Execution Hours so far: '||ROUND((DBMS_UTILITY.GET_TIME - :edb360_main_time0) / 100 / 3600, 3) tool_exec_hours FROM DUAL
+/
 DEF
 @@edb360_00_config.sql
 PRO
@@ -246,6 +278,8 @@ SPO &&edb360_log..txt APP;
 PRO
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 PRO
+SELECT 'Tool Execution Hours so far: '||ROUND((DBMS_UTILITY.GET_TIME - :edb360_main_time0) / 100 / 3600, 3) tool_exec_hours FROM DUAL
+/
 DEF;
 PRO Parameters
 COL sid FOR A40;
@@ -269,6 +303,8 @@ SHOW PARAMETERS;
 PRO
 SELECT ROUND((DBMS_UTILITY.GET_TIME - :edb360_time0) / 100 / 3600, 3) elapsed_hours FROM DUAL;
 PRO
+SELECT 'Tool Execution Hours so far: '||ROUND((DBMS_UTILITY.GET_TIME - :edb360_main_time0) / 100 / 3600, 3) tool_exec_hours FROM DUAL
+/
 PRO end log
 SPO OFF;
 

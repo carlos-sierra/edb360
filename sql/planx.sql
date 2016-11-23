@@ -400,7 +400,16 @@ PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 DEF x_days = '7';
 WITH
 events AS (
-SELECT /*+ MATERIALIZE FULL(h.ash) FULL(h.evt) FULL(h.sn) */
+SELECT /*+ 
+       FULL(h.INT$DBA_HIST_ACT_SESS_HISTORY.sn) 
+       FULL(h.INT$DBA_HIST_ACT_SESS_HISTORY.ash) 
+       FULL(h.INT$DBA_HIST_ACT_SESS_HISTORY.evt) 
+       USE_HASH(h.INT$DBA_HIST_ACT_SESS_HISTORY.sn h.INT$DBA_HIST_ACT_SESS_HISTORY.ash h.INT$DBA_HIST_ACT_SESS_HISTORY.evt)
+       FULL(h.sn) 
+       FULL(h.ash) 
+       FULL(h.evt) 
+       USE_HASH(h.sn h.ash h.evt)
+       */
        CASE h.session_state WHEN 'ON CPU' THEN h.session_state ELSE h.wait_class||' "'||h.event||'"' END timed_event,
        COUNT(*) samples
   FROM dba_hist_active_sess_history h
@@ -504,7 +513,16 @@ PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 DEF x_days = '7';
 WITH
 events AS (
-SELECT /*+ MATERIALIZE FULL(h.ash) FULL(h.evt) FULL(h.sn) */
+SELECT /*+ 
+       FULL(h.INT$DBA_HIST_ACT_SESS_HISTORY.sn) 
+       FULL(h.INT$DBA_HIST_ACT_SESS_HISTORY.ash) 
+       FULL(h.INT$DBA_HIST_ACT_SESS_HISTORY.evt) 
+       USE_HASH(h.INT$DBA_HIST_ACT_SESS_HISTORY.sn h.INT$DBA_HIST_ACT_SESS_HISTORY.ash h.INT$DBA_HIST_ACT_SESS_HISTORY.evt)
+       FULL(h.sn) 
+       FULL(h.ash) 
+       FULL(h.evt) 
+       USE_HASH(h.sn h.ash h.evt)
+       */
        h.sql_plan_hash_value plan_hash_value,
        NVL(h.sql_plan_line_id, 0) line_id,
        SUBSTR(h.sql_plan_operation||' '||h.sql_plan_options, 1, 50) operation,
@@ -628,7 +646,16 @@ PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 DEF x_days = '7';
 WITH
 events AS (
-SELECT /*+ MATERIALIZE FULL(h.ash) FULL(h.evt) FULL(h.sn) */
+SELECT /*+ 
+       FULL(h.INT$DBA_HIST_ACT_SESS_HISTORY.sn) 
+       FULL(h.INT$DBA_HIST_ACT_SESS_HISTORY.ash) 
+       FULL(h.INT$DBA_HIST_ACT_SESS_HISTORY.evt) 
+       USE_HASH(h.INT$DBA_HIST_ACT_SESS_HISTORY.sn h.INT$DBA_HIST_ACT_SESS_HISTORY.ash h.INT$DBA_HIST_ACT_SESS_HISTORY.evt)
+       FULL(h.sn) 
+       FULL(h.ash) 
+       FULL(h.evt) 
+       USE_HASH(h.sn h.ash h.evt)
+       */
        h.sql_plan_hash_value plan_hash_value,
        NVL(h.sql_plan_line_id, 0) line_id,
        SUBSTR(h.sql_plan_operation||' '||h.sql_plan_options, 1, 50) operation,
@@ -728,8 +755,17 @@ BEGIN
   	       AND h.current_obj# >= 0
   	       AND o.object_id(+) = h.current_obj#
   	     UNION
-  	    SELECT /*+ FULL(h.ash) FULL(h.evt) FULL(h.sn) */
-  	           CASE h.current_obj# WHEN 0 THEN 'SYS' ELSE o.owner END owner, 
+  	    SELECT /*+ 
+               FULL(h.INT$DBA_HIST_ACT_SESS_HISTORY.sn) 
+               FULL(h.INT$DBA_HIST_ACT_SESS_HISTORY.ash) 
+               FULL(h.INT$DBA_HIST_ACT_SESS_HISTORY.evt) 
+               USE_HASH(h.INT$DBA_HIST_ACT_SESS_HISTORY.sn h.INT$DBA_HIST_ACT_SESS_HISTORY.ash h.INT$DBA_HIST_ACT_SESS_HISTORY.evt)
+               FULL(h.sn) 
+               FULL(h.ash) 
+               FULL(h.evt) 
+               USE_HASH(h.sn h.ash h.evt)
+               */
+       CASE h.current_obj# WHEN 0 THEN 'SYS' ELSE o.owner END owner, 
   	           CASE h.current_obj# WHEN 0 THEN 'UNDO' ELSE o.object_name END name
   	      FROM dba_hist_active_sess_history h,
   	           dba_objects o
