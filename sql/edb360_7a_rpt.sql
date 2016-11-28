@@ -14,7 +14,7 @@ PRO Please wait ...
 SET TERM OFF; 
 -- watchdog
 COL edb360_bypass NEW_V edb360_bypass;
-SELECT '--bypass--' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds
+SELECT '--timeout--' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds
 /
 COL hh_mm_ss NEW_V hh_mm_ss NOPRI FOR A8;
 SPO 99910_&&common_edb360_prefix._rpt_driver.sql;
@@ -326,7 +326,7 @@ BEGIN
       -- awr all modes
       IF '&&edb360_conf_incl_awr_rpt.' = 'Y' AND l_instances > 1 AND '&&db_version.' >= '11.2' THEN
         put_line('COL edb360_bypass NEW_V edb360_bypass;');
-        put_line('SELECT ''--bypass--'' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
+        put_line('SELECT ''--timeout--'' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
         l_standard_filename := 'awrrpt_rac_'||j.bid||'_'||j.eid||'_'||j.rep;
         l_spool_filename := '&&common_edb360_prefix._'||l_standard_filename;
         put_line('COL hh_mm_ss NEW_V hh_mm_ss NOPRI FOR A8;');
@@ -377,7 +377,7 @@ BEGIN
       -- addm all nodes
       IF '&&edb360_conf_incl_addm_rpt.' = 'Y' AND l_instances > 1 THEN
         put_line('COL edb360_bypass NEW_V edb360_bypass;');
-        put_line('SELECT ''--bypass--'' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
+        put_line('SELECT ''--timeout--'' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
         put_line('VAR l_task_name VARCHAR2(30);');
         put_line('BEGIN');
         put_line('  :l_task_name := ''ADDM_''||TO_CHAR(SYSDATE, ''YYYYMMDD_HH24MISS'');');
@@ -422,7 +422,7 @@ BEGIN
       -- ash all nodes
       IF '&&edb360_conf_incl_ash_rpt.' = 'Y' AND l_instances > 1 AND '&&db_version.' >= '11.2' THEN
         put_line('COL edb360_bypass NEW_V edb360_bypass;');
-        put_line('SELECT ''--bypass--'' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
+        put_line('SELECT ''--timeout--'' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
         l_standard_filename := 'ashrpt_rac_'||j.bid||'_'||j.eid||'_'||j.rep;
         l_spool_filename := '&&common_edb360_prefix._'||l_standard_filename;
         put_line('COL hh_mm_ss NEW_V hh_mm_ss NOPRI FOR A8;');
@@ -762,7 +762,7 @@ BEGIN
       -- awr one node
       IF '&&edb360_conf_incl_awr_rpt.' = 'Y' THEN 
         put_line('COL edb360_bypass NEW_V edb360_bypass;');
-        put_line('SELECT ''--bypass--'' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
+        put_line('SELECT ''--timeout--'' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
         l_standard_filename := 'awrrpt_'||i.instance_number||'_'||j.bid||'_'||j.eid||'_'||j.rep;
         l_spool_filename := '&&common_edb360_prefix._'||l_standard_filename;
         put_line('COL hh_mm_ss NEW_V hh_mm_ss NOPRI FOR A8;');
@@ -813,7 +813,7 @@ BEGIN
       -- addm one node
       IF '&&edb360_conf_incl_addm_rpt.' = 'Y' THEN 
         put_line('COL edb360_bypass NEW_V edb360_bypass;');
-        put_line('SELECT ''--bypass--'' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
+        put_line('SELECT ''--timeout--'' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
         put_line('VAR l_task_name VARCHAR2(30);');
         put_line('BEGIN');
         put_line('  :l_task_name := ''ADDM_''||TO_CHAR(SYSDATE, ''YYYYMMDD_HH24MISS'');');
@@ -861,7 +861,7 @@ BEGIN
       -- ash one node
       IF '&&edb360_conf_incl_ash_rpt.' = 'Y' THEN 
         put_line('COL edb360_bypass NEW_V edb360_bypass;');
-        put_line('SELECT ''--bypass--'' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
+        put_line('SELECT ''--timeout--'' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
         l_standard_filename := 'ashrpt_'||i.instance_number||'_'||j.bid||'_'||j.eid||'_'||j.rep;
         l_spool_filename := '&&common_edb360_prefix._'||l_standard_filename;
         put_line('COL hh_mm_ss NEW_V hh_mm_ss NOPRI FOR A8;');

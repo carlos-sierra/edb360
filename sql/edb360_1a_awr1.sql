@@ -1,11 +1,5 @@
-DEF ash_validation = '';
 DEF ash_validation = '--skip--';
 
-PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-SPO 00000_readme_first.txt
-@@&&ash_validation.edb360_0h_ash_validation.sql
---@@edb360_0i_awr_info.sql
 SPO 00000_readme_first.txt APP
 PRO
 PRO Open and read 00001_edb360_<dbname>_index.html
@@ -105,7 +99,8 @@ BEGIN
   :sql_text_backup := '
 WITH 
 cpu_per_inst_and_sample AS (
-SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
+       /* &&section_id..&&report_sequence. */
        instance_number,
        snap_id,
        sample_id,
@@ -113,7 +108,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
        SUM(CASE session_state WHEN ''ON CPU'' THEN 1 ELSE 0 END) on_cpu,
        SUM(CASE event WHEN ''resmgr:cpu quantum'' THEN 1 ELSE 0 END) resmgr,
        COUNT(*) on_cpu_and_resmgr
-  FROM dba_hist_active_sess_history
+  FROM dba_hist_active_sess_history h
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
    AND instance_number = @instance_number@
@@ -290,7 +285,8 @@ DEF vbaseline = '';
 
 BEGIN
   :sql_text_backup := '
-SELECT /*+ &&ds_hint. */
+SELECT /*+ &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
+       /* &&section_id..&&report_sequence. */
        MIN(snap_id) snap_id,
        TO_CHAR(TRUNC(sample_time, ''HH''), ''YYYY-MM-DD HH24:MI'')          begin_time,
        TO_CHAR(TRUNC(sample_time, ''HH'') + (1/24), ''YYYY-MM-DD HH24:MI'') end_time,
@@ -309,7 +305,7 @@ SELECT /*+ &&ds_hint. */
        0 dummy_13,
        0 dummy_14,
        0 dummy_15
-  FROM dba_hist_active_sess_history
+  FROM dba_hist_active_sess_history h
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
    AND @filter_predicate@
@@ -397,7 +393,8 @@ COL event_name_24 NEW_V event_name_24;
 
 WITH
 ranked AS (
-SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
+       /* &&section_id..&&report_sequence. */
        h.wait_class,
        event event_name,
        COUNT(*) samples,
@@ -471,14 +468,15 @@ BEGIN
   :sql_text_backup2 := '
 WITH
 hist AS (
-SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
+       /* &&section_id..&&report_sequence. */
        sql_id,
        dbid,
        program,
        module,
        ROW_NUMBER () OVER (ORDER BY COUNT(*) DESC) rn,
        COUNT(*) samples
-  FROM dba_hist_active_sess_history
+  FROM dba_hist_active_sess_history h
  WHERE sql_id||program||module IS NOT NULL
    AND @filter_predicate@
    AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.

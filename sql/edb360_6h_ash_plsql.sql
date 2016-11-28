@@ -12,7 +12,8 @@ BEGIN
   :sql_text_backup := '
 WITH
 events AS (
-SELECT /*+ &&sq_fact_hints. &&ds_hint. slow on ppts20 */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
+       /* &&section_id..&&report_sequence. */ /* slow on ppts20 */
        ROW_NUMBER () OVER (ORDER BY COUNT(*) DESC) rn,
        COUNT(*) samples,
        e.owner plsql_entry_owner,

@@ -7,7 +7,7 @@
 DEF edb360_sections = '';
 
 -- edb360 trace
-DEF sql_trace_level = '0';
+DEF sql_trace_level = '1';
 
 -- history days (default 31)
 -- if you have an AWR retention of lets say 100 days, and want to report on 60 then pass 60
@@ -53,6 +53,9 @@ DEF edb360_conf_incl_segments = 'Y';
 -- note: some releases of Oracle take very long to generate metadata
 DEF edb360_conf_incl_metadata = 'Y';
 
+-- include eadam for top SQL (default Y)
+DEF edb360_conf_incl_eadam = 'Y';
+
 /**************************** not recommended to modify *********************************/
 
 -- excluding report types reduce usability while providing marginal performance gain
@@ -62,6 +65,7 @@ DEF edb360_conf_incl_text = 'N';
 DEF edb360_conf_incl_csv  = 'N';
 DEF edb360_conf_incl_line = 'Y';
 DEF edb360_conf_incl_pie  = 'Y';
+DEF edb360_conf_incl_bar  = 'Y';
 
 -- excluding awr reports substantially reduces usability with minimal performance gain
 DEF edb360_conf_incl_awr_rpt = 'Y';

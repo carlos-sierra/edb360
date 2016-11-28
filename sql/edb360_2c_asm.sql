@@ -119,6 +119,18 @@ END;
 /
 @@&&skip_10g.edb360_9a_pre_one.sql
 
+DEF title = 'ASM File';
+DEF main_table = 'V$ASM_FILE';
+BEGIN
+  :sql_text := '
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
+       *
+  FROM v$asm_file
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
 -- special addition from MOS 1551288.1
 -- add seq to spool_filename
 EXEC :file_seq := :file_seq + 1;

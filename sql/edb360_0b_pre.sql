@@ -1,5 +1,5 @@
-DEF edb360_vYYNN = 'v1617';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2016-09-17)';
+DEF edb360_vYYNN = 'v1620';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2016-11-23)';
 DEF edb360_copyright = ' (c) 2016';
 
 SET TERM OFF;
@@ -7,27 +7,11 @@ SET TERM OFF;
 VAR edb360_time0 NUMBER;
 VAR edb360_max_seconds NUMBER;
 EXEC :edb360_time0 := DBMS_UTILITY.GET_TIME;
+SELECT 'Tool Execution Hours so far: '||ROUND((DBMS_UTILITY.GET_TIME - :edb360_main_time0) / 100 / 3600, 3) tool_exec_hours FROM DUAL
+/
 EXEC :edb360_max_seconds := &&edb360_conf_max_hours. * 3600;
 COL edb360_bypass NEW_V edb360_bypass;
 SELECT '' edb360_bypass FROM DUAL;
---
-COL diagnostics_pack NEW_V diagnostics_pack FOR A1;
-SELECT CASE WHEN '&&license_pack.' IN ('T', 'D') THEN 'Y' ELSE 'N' END diagnostics_pack FROM DUAL;
-COL skip_diagnostics NEW_V skip_diagnostics FOR A1;
-SELECT CASE WHEN '&&license_pack.' IN ('T', 'D') THEN NULL ELSE 'Y' END skip_diagnostics FROM DUAL;
-COL tuning_pack NEW_V tuning_pack FOR A1;
-SELECT CASE WHEN '&&license_pack.' = 'T' THEN 'Y' ELSE 'N' END tuning_pack FROM DUAL;
-COL skip_tuning NEW_V skip_tuning FOR A1;
-SELECT CASE WHEN '&&license_pack.' = 'T' THEN NULL ELSE 'Y' END skip_tuning FROM DUAL;
-SET TERM ON;
-SELECT 'Be aware value "N" reduces output content substantially. Avoid "N" if possible.' warning FROM dual WHERE '&&license_pack.' = 'N';
-BEGIN
-  IF '&&license_pack.' = 'N' THEN
-    DBMS_LOCK.SLEEP(10); -- sleep few seconds
-  END IF;
-END;
-/
-SET TERM OFF;
 
 -- snaps
 SELECT startup_time, dbid, instance_number, COUNT(*) snaps,
@@ -293,9 +277,8 @@ DEF edb360_main_filename = '&&common_edb360_prefix._&&host_hash.';
 DEF edb360_tracefile_identifier = '&&common_edb360_prefix.';
 DEF edb360_tar_filename = '00008_&&edb360_main_filename._&&edb360_file_time.';
 
--- custom configuration file
-HOS ls -lat sql/&&custom_config_filename. >> &&edb360_log3..txt
-HOS more sql/&&custom_config_filename. >> &&edb360_log3..txt
+-- mont info
+HOS dcli -g ~/dbs_group -l oracle mount >> &&edb360_log3..txt
 
 -- Exadata
 ALTER SESSION SET "_serial_direct_read" = ALWAYS;
@@ -320,7 +303,7 @@ ALTER SESSION SET optimizer_index_cost_adj = 100;
 ALTER SESSION SET "_always_semi_join" = CHOOSE;
 ALTER SESSION SET "_and_pruning_enabled" = TRUE;
 ALTER SESSION SET "_subquery_pruning_enabled" = TRUE;
--- workaround 19567916
+-- workaround bug 19567916
 ALTER SESSION SET "_optimizer_aggr_groupby_elim" = FALSE;
 -- workaround nigeria
 ALTER SESSION SET "_gby_hash_aggregation_enabled" = TRUE;
@@ -348,7 +331,7 @@ BEGIN
 END;
 /
 -- esp collection. note: skip if executing for one section
-@ &&skip_diagnostics.&&edb360_sections.sql/esp_master.sql
+@&&skip_diagnostics.&&edb360_sections.sql/esp_master.sql
 SET TERM OFF; 
 
 -- nls (2nd time as esp may change them)
@@ -436,6 +419,7 @@ COL edb360_skip_text NEW_V edb360_skip_text;
 COL edb360_skip_csv  NEW_V edb360_skip_csv;
 COL edb360_skip_line NEW_V edb360_skip_line;
 COL edb360_skip_pie  NEW_V edb360_skip_pie;
+COL edb360_skip_bar  NEW_V edb360_skip_bar;
 COL edb360_skip_metadata  NEW_V edb360_skip_metadata;
 SELECT CASE '&&edb360_conf_incl_html.'     WHEN 'N' THEN '--' END edb360_skip_html     FROM DUAL;
 SELECT CASE '&&edb360_conf_incl_xml.'      WHEN 'N' THEN '--' END edb360_skip_xml      FROM DUAL;
@@ -443,6 +427,7 @@ SELECT CASE '&&edb360_conf_incl_text.'     WHEN 'N' THEN '--' END edb360_skip_te
 SELECT CASE '&&edb360_conf_incl_csv.'      WHEN 'N' THEN '--' END edb360_skip_csv      FROM DUAL;
 SELECT CASE '&&edb360_conf_incl_line.'     WHEN 'N' THEN '--' END edb360_skip_line     FROM DUAL;
 SELECT CASE '&&edb360_conf_incl_pie.'      WHEN 'N' THEN '--' END edb360_skip_pie      FROM DUAL;
+SELECT CASE '&&edb360_conf_incl_bar.'      WHEN 'N' THEN '--' END edb360_skip_bar      FROM DUAL;
 SELECT CASE '&&edb360_conf_incl_metadata.' WHEN 'N' THEN '--' END edb360_skip_metadata FROM DUAL;
 
 -- inclusion of some diagnostics from memory (not from history)
@@ -455,9 +440,12 @@ SELECT CASE '&&edb360_conf_incl_sql_mon.' WHEN 'N' THEN '--' END edb360_skip_sql
 SELECT CASE '&&edb360_conf_incl_stat_mem.' WHEN 'N' THEN '--' END edb360_skip_stat_mem FROM DUAL;
 SELECT CASE '&&edb360_conf_incl_px_mem.' WHEN 'N' THEN '--' END edb360_skip_px_mem FROM DUAL;
 
-DEF top_level_hints = 'NO_MERGE';
-DEF sq_fact_hints = 'MATERIALIZE NO_MERGE';
-DEF ds_hint = 'DYNAMIC_SAMPLING(4)';
+DEF top_level_hints = ' NO_MERGE ';
+DEF sq_fact_hints = ' MATERIALIZE NO_MERGE ';
+DEF ds_hint = ' DYNAMIC_SAMPLING(4) ';
+DEF ash_hints1 = ' FULL(h.ash) FULL(h.evt) FULL(h.sn) USE_HASH(h.sn h.ash h.evt) ';
+DEF ash_hints2 = ' FULL(h.INT$DBA_HIST_ACT_SESS_HISTORY.sn) FULL(h.INT$DBA_HIST_ACT_SESS_HISTORY.ash) FULL(h.INT$DBA_HIST_ACT_SESS_HISTORY.evt) ';
+DEF ash_hints3 = ' USE_HASH(h.INT$DBA_HIST_ACT_SESS_HISTORY.sn h.INT$DBA_HIST_ACT_SESS_HISTORY.ash h.INT$DBA_HIST_ACT_SESS_HISTORY.evt) ';
 DEF def_max_rows = '10000';
 DEF max_rows = '1e4';
 DEF exclusion_list = "(''ANONYMOUS'',''APEX_030200'',''APEX_040000'',''APEX_SSO'',''APPQOSSYS'',''CTXSYS'',''DBSNMP'',''DIP'',''EXFSYS'',''FLOWS_FILES'',''MDSYS'',''OLAPSYS'',''ORACLE_OCM'',''ORDDATA'',''ORDPLUGINS'',''ORDSYS'',''OUTLN'',''OWBSYS'')";
@@ -471,6 +459,7 @@ DEF skip_text = '';
 DEF skip_csv = '';
 DEF skip_lch = 'Y';
 DEF skip_pch = 'Y';
+DEF skip_bch = 'Y';
 DEF skip_all = '';
 DEF abstract = '';
 DEF abstract2 = '';
@@ -547,6 +536,7 @@ COL skip_text NEW_V skip_text;
 COL skip_csv NEW_V skip_csv;
 COL skip_lch NEW_V skip_lch;
 COL skip_pch NEW_V skip_pch;
+COL skip_bch NEW_V skip_bch;
 COL skip_all NEW_V skip_all;
 COL dummy_01 NOPRI;
 COL dummy_02 NOPRI;
@@ -589,6 +579,53 @@ COL skip_sqlmon_exec NEW_V skip_sqlmon_exec;
 COL edb360_sql_text_100 NEW_V edb360_sql_text_100;
 DEF exact_matching_signature = '';
 DEF force_matching_signature = '';
+—- this gives you two level of “indirection”, aka it goes into PL/SQL that dumps a script that is later on executed 
+—- I use this for bar charts on sqld360
+DEF wait_class_colors = 'CASE wait_class WHEN ''''''''CPU'''''''' THEN ''''''''34CF27'''''''' WHEN ''''''''Scheduler'''''''' THEN ''''''''9FFA9D'''''''' WHEN ''''''''User I/O'''''''' THEN ''''''''0252D7'''''''' WHEN ''''''''System I/O'''''''' THEN ''''''''1E96DD'''''''' ';
+DEF wait_class_colors2 = ' WHEN ''''''''Concurrency'''''''' THEN ''''''''871C12'''''''' WHEN ''''''''Application'''''''' THEN ''''''''C42A05'''''''' WHEN ''''''''Commit'''''''' THEN ''''''''EA6A05'''''''' WHEN ''''''''Configuration'''''''' THEN ''''''''594611''''''''  ';
+DEF wait_class_colors3 = ' WHEN ''''''''Administrative'''''''' THEN ''''''''75763E''''''''  WHEN ''''''''Network'''''''' THEN ''''''''989779'''''''' WHEN ''''''''Other'''''''' THEN ''''''''F571A0'''''''' ';
+DEF wait_class_colors4 = ' WHEN ''''''''Cluster'''''''' THEN ''''''''CEC3B5'''''''' WHEN ''''''''Queueing'''''''' THEN ''''''''C6BAA5'''''''' ELSE ''''''''000000'''''''' END';
+—- I use this for bar charts on edb360
+DEF wait_class_colors = " CASE wait_class WHEN ''ON CPU'' THEN ''34CF27'' WHEN ''Scheduler'' THEN ''9FFA9D'' WHEN ''User I/O'' THEN ''0252D7'' WHEN ''System I/O'' THEN ''1E96DD'' ";
+DEF wait_class_colors2 = " WHEN ''Concurrency'' THEN ''871C12'' WHEN ''Application'' THEN ''C42A05'' WHEN ''Commit'' THEN ''EA6A05'' WHEN ''Configuration'' THEN ''594611''  ";
+DEF wait_class_colors3 = " WHEN ''Administrative'' THEN ''75763E''  WHEN ''Network'' THEN ''989779'' WHEN ''Other'' THEN ''F571A0'' ";
+DEF wait_class_colors4 = " WHEN ''Cluster'' THEN ''CEC3B5'' WHEN ''Queueing'' THEN ''C6BAA5'' ELSE ''000000'' END ";
+—-this one gives you one level of indirection indirection AND it builds the string in the way the line charts needs it (color: ‘#FFFFFF’) 
+DEF wait_class_colors_s = 'CASE wait_class WHEN ''''CPU'''' THEN ''''color: ''''''''#34CF27'''''''''''' WHEN ''''Scheduler'''' THEN ''''color: ''''''''#9FFA9D'''''''''''' WHEN ''''User I/O'''' THEN ''''color: ''''''''#0252D7'''''''''''' WHEN ''''System I/O'''' THEN ''''color: ''''''''#1E96DD'''''''''''' ';
+DEF wait_class_colors2_s = ' WHEN ''''Concurrency'''' THEN ''''color: ''''''''#871C12'''''''''''' WHEN ''''Application'''' THEN ''''color: ''''''''#C42A05'''''''''''' WHEN ''''Commit'''' THEN ''''color: ''''''''#EA6A05'''''''''''' WHEN ''''Configuration'''' THEN ''''color: ''''''''#594611''''''''''''  ';
+DEF wait_class_colors3_s = ' WHEN ''''Administrative'''' THEN ''''color: ''''''''#75763E''''''''''''  WHEN ''''Network'''' THEN ''''color: ''''''''#989779'''''''''''' WHEN ''''Other'''' THEN ''''color: ''''''''#F571A0'''''''''''' ';
+DEF wait_class_colors4_s = ' WHEN ''''Cluster'''' THEN ''''color: ''''''''#CEC3B5'''''''''''' WHEN ''''Queueing'''' THEN ''''color: ''''''''#C6BAA5'''''''''''' ELSE ''''color: ''''''''#000000'''''''''''' END';
+--
+COL series_01 NEW_V series_01; 
+COL series_02 NEW_V series_02; 
+COL series_03 NEW_V series_03; 
+COL series_04 NEW_V series_04; 
+COL series_05 NEW_V series_05; 
+COL series_06 NEW_V series_06; 
+COL series_07 NEW_V series_07; 
+COL series_08 NEW_V series_08; 
+COL series_09 NEW_V series_09; 
+COL series_10 NEW_V series_10; 
+COL series_11 NEW_V series_11; 
+COL series_12 NEW_V series_12; 
+COL series_13 NEW_V series_13; 
+COL series_14 NEW_V series_14; 
+COL series_15 NEW_V series_15; 
+DEF series_01 = ''
+DEF series_02 = ''
+DEF series_03 = ''
+DEF series_04 = ''
+DEF series_05 = ''
+DEF series_06 = ''
+DEF series_07 = ''
+DEF series_08 = ''
+DEF series_09 = ''
+DEF series_10 = ''
+DEF series_11 = ''
+DEF series_12 = ''
+DEF series_13 = ''
+DEF series_14 = ''
+DEF series_15 = ''
 
 -- get udump directory path
 COL edb360_udump_path NEW_V edb360_udump_path FOR A500;
@@ -620,12 +657,16 @@ PRO
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 PRO
 DEF
+SELECT 'Tool Execution Hours so far: '||ROUND((DBMS_UTILITY.GET_TIME - :edb360_main_time0) / 100 / 3600, 3) tool_exec_hours FROM DUAL
+/
 SPO OFF;
 
 -- log header
 SPO &&edb360_log..txt;
 PRO begin log
 PRO
+SELECT 'Tool Execution Hours so far: '||ROUND((DBMS_UTILITY.GET_TIME - :edb360_main_time0) / 100 / 3600, 3) tool_exec_hours FROM DUAL
+/
 HOS ps -ef 
 DEF;
 PRO Parameters
@@ -647,71 +688,8 @@ COL value CLE;
 COL display_value CLE;
 COL update_comment CLE;
 SHOW PARAMETERS;
-SET TI ON;
-SET TIMI ON;
-SET TERM ON;
-PRO Getting SYS.WR_$% Tables
-PRO Please wait ...
-SET TERM OFF; 
-SELECT table_name, blocks, num_rows, last_analyzed
-  FROM dba_tables
- WHERE owner = 'SYS'
-   AND table_name LIKE 'WR_$%'
- ORDER BY
-       table_name;
-SET TERM ON;
-PRO Getting SYS.WR_$% Table Partitions
-PRO Please wait ...
-SET TERM OFF; 
-SELECT table_name, partition_name, blocks, num_rows, last_analyzed
-  FROM dba_tab_partitions
- WHERE table_owner = 'SYS'
-   AND table_name LIKE 'WR_$%'
- ORDER BY
-       table_name, partition_name;
-SET TERM ON;
-PRO Getting SYS.WR_$% Tables and Partitions
-PRO Please wait ...
-SET TERM OFF; 
-SELECT table_name, partition_name, inserts, updates, deletes, timestamp, truncated
-  FROM dba_tab_modifications
- WHERE table_owner = 'SYS'
-   AND table_name LIKE 'WR_$%'
- ORDER BY
-       table_name, partition_name;
-SET TERM ON;
-PRO Getting SYS.WR_$% Indexes
-PRO Please wait ...
-SET TERM OFF; 
-SELECT table_name, index_name, leaf_blocks, num_rows, last_analyzed
-  FROM dba_indexes
- WHERE table_owner = 'SYS'
-   AND table_name LIKE 'WR_$%'
- ORDER BY
-       table_name, index_name;
-SET TERM ON;
-PRO Getting SYS.WR_$% Index Partitions
-PRO Please wait ...
-SET TERM OFF; 
-SELECT index_name, partition_name, leaf_blocks, num_rows, last_analyzed
-  FROM dba_ind_partitions
- WHERE index_owner = 'SYS'
-   AND index_name LIKE 'WR_$%'
- ORDER BY
-       index_name, partition_name;
-SET TERM ON;
-PRO Getting SYS.WR_$% Segments
-PRO Please wait ...
---SET TERM OFF; 
-COL seg_part_name FOR A61;
-SELECT segment_name||' '||partition_name seg_part_name, segment_type, blocks
-  FROM dba_segments
- WHERE owner = 'SYS'
-   AND segment_name LIKE 'WR_$%'
- ORDER BY
-       segment_name, partition_name;
-SET TI OFF; 
-SET TIMI OFF; 
+SELECT 'Tool Execution Hours so far: '||ROUND((DBMS_UTILITY.GET_TIME - :edb360_main_time0) / 100 / 3600, 3) tool_exec_hours FROM DUAL
+/
 SPO OFF;
 
 -- processes
@@ -733,13 +711,16 @@ PRO </pre>
 PRO
 SPO OFF;
 
+-- ash
+HOS zip -m &&edb360_main_filename._&&edb360_file_time. awr_ash_pre_check_*.txt >> &&edb360_log3..txt
+HOS zip -m &&edb360_main_filename._&&edb360_file_time. verify_stats_wr_sys_*.txt >> &&edb360_log3..txt
 -- osw
 --HOS zip -r osw_&&esp_host_name_short..zip `ps -ef | grep OSW | grep FM | awk -F 'OSW' '{print $2}' | cut -f 3 -d ' '`
 --HOS zip -mT &&edb360_main_filename._&&edb360_file_time. osw_&&esp_host_name_short..zip
 -- zip esp into main
 HOS zip -m &&edb360_main_filename._&&edb360_file_time. escp_output_&&esp_host_name_short._&&esp_collection_yyyymmdd..zip >> &&edb360_log3..txt
 -- zip other files
-HOS zip &&edb360_main_filename._&&edb360_file_time. 00000_readme_first.txt >> &&edb360_log3..txt
+HOS zip -m &&edb360_main_filename._&&edb360_file_time. 00000_readme_first.txt >> &&edb360_log3..txt
 HOS zip -j &&edb360_main_filename._&&edb360_file_time. js/sorttable.js >> &&edb360_log3..txt
 HOS zip -j &&edb360_main_filename._&&edb360_file_time. js/edb360_img.jpg >> &&edb360_log3..txt
 HOS zip -j &&edb360_main_filename._&&edb360_file_time. js/edb360_favicon.ico >> &&edb360_log3..txt

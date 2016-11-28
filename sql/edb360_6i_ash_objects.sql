@@ -12,11 +12,12 @@ BEGIN
   :sql_text_backup := '
 WITH
 hist AS (
-SELECT /*+ &&sq_fact_hints. &&ds_hint. slow on ppts20 */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
+       /* &&section_id..&&report_sequence. */ /* slow on ppts20 */
        current_obj#,
        ROW_NUMBER () OVER (ORDER BY COUNT(*) DESC) rn,
        COUNT(*) samples
-  FROM dba_hist_active_sess_history
+  FROM dba_hist_active_sess_history h
  WHERE @filter_predicate@
    AND current_obj# >= 0
    AND wait_class IN (''Application'', ''Cluster'', ''Concurrency'', ''System I/O'', ''User I/O'')

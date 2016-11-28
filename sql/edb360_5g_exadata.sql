@@ -13,9 +13,10 @@ BEGIN
   :sql_text := '
 WITH
 ash AS (
-SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
+       /* &&section_id..&&report_sequence. */
        current_obj#, COUNT(*) samples
-  FROM dba_hist_active_sess_history
+  FROM dba_hist_active_sess_history h
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
    AND event = ''cell single block physical read''

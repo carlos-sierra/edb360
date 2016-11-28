@@ -118,14 +118,15 @@ BEGIN
   :sql_text_backup := '
 WITH
 hist AS (
-SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
+       /* &&section_id..&&report_sequence. */
        force_matching_signature,
        dbid,
        ROW_NUMBER () OVER (ORDER BY COUNT(*) DESC) rn,
        COUNT(DISTINCT sql_id) distinct_sql_id,
        MIN(sql_id) sample_sql_id,
        COUNT(*) samples
-  FROM dba_hist_active_sess_history
+  FROM dba_hist_active_sess_history h
  WHERE @filter_predicate@
    AND sql_id IS NOT NULL
    AND force_matching_signature IS NOT NULL

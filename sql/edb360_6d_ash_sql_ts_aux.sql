@@ -8,11 +8,12 @@ DEF title_suffix = '&&between_times.';
 
 WITH
 hist AS (
-SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
+       /* &&section_id..&&report_sequence. */
        sql_id,
        ROW_NUMBER () OVER (ORDER BY COUNT(*) DESC NULLS LAST) rn,
        COUNT(*) samples
-  FROM dba_hist_active_sess_history
+  FROM dba_hist_active_sess_history h
  WHERE &&filter_predicate.
    AND sql_id IS NOT NULL
    AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.

@@ -256,56 +256,58 @@ BEGIN
   :sql_text := '
 WITH
 w AS (
-SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
-       dbid,
-       sql_id,
-       event,
-       blocking_session,
-       blocking_session_serial#,
-       TRUNC(sample_time, ''HH'') sample_hh,
-       MIN(sample_time) min_sample_time,
-       MAX(sample_time) max_sample_time,
+SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
+       /* &&section_id..&&report_sequence. */
+       h.dbid,
+       h.sql_id,
+       h.event,
+       h.blocking_session,
+       h.blocking_session_serial#,
+       TRUNC(h.sample_time, ''HH'') sample_hh,
+       MIN(h.sample_time) min_sample_time,
+       MAX(h.sample_time) max_sample_time,
        COUNT(*) samples,
        RANK() OVER (ORDER BY COUNT(*) DESC NULLS LAST) AS w_rank
-  FROM dba_hist_active_sess_history
- WHERE sql_id IS NOT NULL
-   AND blocking_session IS NOT NULL
-   AND session_state = ''WAITING''
-   AND blocking_session_status IN (''VALID'', ''GLOBAL'')
-   AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
-   AND dbid = &&edb360_dbid.
+  FROM dba_hist_active_sess_history h
+ WHERE h.sql_id IS NOT NULL
+   AND h.blocking_session IS NOT NULL
+   AND h.session_state = ''WAITING''
+   AND h.blocking_session_status IN (''VALID'', ''GLOBAL'')
+   AND h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND h.dbid = &&edb360_dbid.
  GROUP BY
-       dbid,
-       sql_id,
-       event,
-       blocking_session,
-       blocking_session_serial#,
-       TRUNC(sample_time, ''HH'')
+       h.dbid,
+       h.sql_id,
+       h.event,
+       h.blocking_session,
+       h.blocking_session_serial#,
+       TRUNC(h.sample_time, ''HH'')
 ),
 b AS (
-SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
+       /* &&section_id..&&report_sequence. */
        w.dbid,
        w.sql_id w_sql_id,
        w.event w_event,
        RANK() OVER (ORDER BY COUNT(*) DESC NULLS LAST) AS b_rank,
-       b.sql_id b_sql_id,
+       h.sql_id b_sql_id,
        COUNT(*) b_samples
        FROM w, 
-            dba_hist_active_sess_history b
+            dba_hist_active_sess_history h
  WHERE w.w_rank < 101
-   AND b.dbid = w.dbid   
-   AND b.session_id = w.blocking_session
-   AND b.session_serial# = w.blocking_session_serial#
-   AND TRUNC(b.sample_time, ''HH'') = w.sample_hh
-   AND b.sample_time BETWEEN w.min_sample_time AND w.max_sample_time
-   AND b.sql_id IS NOT NULL
-   AND b.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
-   AND b.dbid = &&edb360_dbid.
+   AND h.dbid = w.dbid   
+   AND h.session_id = w.blocking_session
+   AND h.session_serial# = w.blocking_session_serial#
+   AND TRUNC(h.sample_time, ''HH'') = w.sample_hh
+   AND h.sample_time BETWEEN w.min_sample_time AND w.max_sample_time
+   AND h.sql_id IS NOT NULL
+   AND h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND h.dbid = &&edb360_dbid.
  GROUP BY
        w.dbid,
        w.sql_id,
        w.event,
-       b.sql_id
+       h.sql_id
 ),
 w2 AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
@@ -368,7 +370,9 @@ BEGIN
   :sql_text := '
 -- developed by David Kurtz
 WITH w AS ( --waiting sessions
-	SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */ dbid, instance_number
+	SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
+	       /* &&section_id..&&report_sequence. */ 
+	dbid, instance_number
         ,       snap_id
 	,       sample_id, sample_time
         ,       session_type wait_session_type
@@ -384,13 +388,16 @@ WITH w AS ( --waiting sessions
         ,       NVL(event,''CPU+CPU wait'')  wait_event
         ,       xid    wait_xid
         ,       blocking_inst_id, blocking_session, blocking_session_serial#
-        FROM       dba_Hist_active_Sess_history
+        FROM       dba_hist_active_Sess_history h
         WHERE   blocking_session_status = ''VALID'' --holding a lock
 --add dbid/date/snap_id criteria here
    AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
 ), x as (
-SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */       w.*
+SELECT /*+ &&sq_fact_hints. */ 
+       /* &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
+       /* &&section_id..&&report_sequence. */       
+        w.*
 ,       h.sample_id hold_sample_id
 ,       h.sample_time hold_Sample_time
 ,       h.session_Type hold_session_type
@@ -406,7 +413,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */       w.*
 ,       h.xid hold_xid
 ,       CASE WHEN w.blocking_inst_id != w.instance_number THEN ''CI'' END AS ci --cross-instance
 FROM    w
-        LEFT OUTER JOIN dba_Hist_active_Sess_History h --holding session
+        LEFT OUTER JOIN dba_hist_active_Sess_History h --holding session
         ON  h.dbid = w.dbid
         AND h.instance_number = w.blocking_inst_id
         AND h.snap_id = w.snap_id
@@ -440,7 +447,9 @@ BEGIN
   :sql_text := '
 -- developed by David Kurtz
 WITH w AS ( --waiting sessions
-	SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */ dbid, instance_number
+	SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
+	       /* &&section_id..&&report_sequence. */ 
+	dbid, instance_number
         ,       snap_id
 	,       sample_id, sample_time
         ,       session_type wait_session_type
@@ -456,13 +465,16 @@ WITH w AS ( --waiting sessions
         ,       NVL(event,''CPU+CPU wait'')  wait_event
         ,       xid    wait_xid
         ,       blocking_inst_id, blocking_session, blocking_session_serial#
-        FROM       dba_Hist_active_Sess_history
+        FROM       dba_Hist_active_Sess_history h
         WHERE   blocking_session_status = ''VALID'' --holding a lock
 --add dbid/date/snap_id criteria here
    AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
 ), x as (
-SELECT        w.*
+SELECT  /*+ &&sq_fact_hints. */ 
+        /* &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
+        /* &&section_id..&&report_sequence. */
+      w.*
 ,       h.sample_id hold_sample_id
 ,       h.sample_time hold_Sample_time
 ,       h.session_Type hold_session_type
@@ -902,10 +914,11 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
    AND owner NOT IN &&exclusion_list2.
 ),
 ash AS (
-SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
+       /* &&section_id..&&report_sequence. */
        current_obj#,
        MAX(CAST(sample_time AS DATE)) sample_date
-  FROM dba_hist_active_sess_history
+  FROM dba_hist_active_sess_history h
  WHERE current_obj# > 0
    AND sql_plan_operation LIKE ''%TABLE%''
    AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
@@ -1025,9 +1038,10 @@ SELECT /*+ &&sq_fact_hints. * /
 ),
 */
 ash_awr AS (
-SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
+       /* &&section_id..&&report_sequence. */
        DISTINCT current_obj# 
-  FROM dba_hist_active_sess_history
+  FROM dba_hist_active_sess_history h
  WHERE sql_plan_operation = ''INDEX''
    AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
@@ -1879,7 +1893,8 @@ DEF title = 'SQL consuming over 10GB of TEMP space';
 DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
 BEGIN
   :sql_text := '
-SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
+       /* &&section_id..&&report_sequence. */
        h.sql_id,
        ROUND(MAX(h.temp_space_allocated)/POWER(10,9),1) max_temp_space_gb,
        (SELECT DBMS_LOB.SUBSTR(s.sql_text, 1000) FROM dba_hist_sqltext s WHERE s.sql_id = h.sql_id AND s.dbid = &&edb360_dbid. AND ROWNUM = 1) sql_text
@@ -1901,7 +1916,8 @@ DEF title = 'SQL with over 2GB of PGA allocated memory';
 DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
 BEGIN
   :sql_text := '
-SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
+SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
+       /* &&section_id..&&report_sequence. */
        h.sql_id,
        ROUND(MAX(h.pga_allocated)/POWER(2,30),1) max_pga_gb,
        (SELECT DBMS_LOB.SUBSTR(s.sql_text, 1000) FROM dba_hist_sqltext s WHERE s.sql_id = h.sql_id AND s.dbid = &&edb360_dbid. AND ROWNUM = 1) sql_text

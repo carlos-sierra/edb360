@@ -33,7 +33,7 @@ DEF files_prefix = '';
 
 -- watchdog
 COL edb360_bypass NEW_V edb360_bypass;
-SELECT '--bypass--' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds
+SELECT '--timeout--' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds
 /
 
 COL hh_mm_ss NEW_V hh_mm_ss NOPRI FOR A8;
@@ -43,7 +43,8 @@ DECLARE
   l_count NUMBER := 0;
   CURSOR sql_cur IS
               WITH ranked_sql AS (
-            SELECT /*+ &&sq_fact_hints. &&ds_hint. FULL(h.ash) FULL(h.evt) FULL(h.sn) &&section_id..&&report_sequence. */
+            SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
+                   /* &&section_id..&&report_sequence. */
                    dbid,
                    sql_id,
                    MAX(user_id) user_id,
@@ -103,14 +104,15 @@ DECLARE
              WHERE ns.sql_rank <= &&edb360_conf_top_cur.
             ),
             by_signature AS (
-            SELECT /*+ &&sq_fact_hints. &&ds_hint. &&section_id..&&report_sequence. */
+            SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
+                   /* &&section_id..&&report_sequence. */
                    force_matching_signature,
                    dbid,
                    ROW_NUMBER () OVER (ORDER BY COUNT(*) DESC) rn,
                    COUNT(DISTINCT sql_id) distinct_sql_id,
                    MIN(sql_id) sample_sql_id,
                    COUNT(*) samples
-              FROM dba_hist_active_sess_history
+              FROM dba_hist_active_sess_history h
              WHERE sql_id IS NOT NULL
                AND force_matching_signature IS NOT NULL
                AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
@@ -239,7 +241,7 @@ BEGIN
     put_line('SELECT TO_CHAR(:repo_seq) report_sequence FROM DUAL;');
     IF sql_rec.rank_num <= &&edb360_conf_planx_top. AND sql_rec.sql_id != '0ckwjf2su2rpx' /* Beckman */ THEN
       put_line('COL edb360_bypass NEW_V edb360_bypass;');
-      put_line('SELECT ''--bypass--'' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
+      put_line('SELECT ''--timeout--'' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
       update_log('PLANX rank:'||sql_rec.rank_num||' SQL_ID:'||sql_rec.sql_id||' TOP_type:'||sql_rec.top_type);
       put_line('@@'||CHR(38)||CHR(38)||'edb360_bypass.sql/planx.sql &&diagnostics_pack. '||sql_rec.sql_id);
       put_line('-- update main report2');
@@ -252,7 +254,7 @@ BEGIN
     END IF;
     IF sql_rec.rank_num <= &&edb360_conf_sqlmon_top. AND '&&skip_10g.' IS NULL AND '&&skip_diagnostics.' IS NULL AND '&&skip_tuning.' IS NULL THEN
       put_line('COL edb360_bypass NEW_V edb360_bypass;');
-      put_line('SELECT ''--bypass--'' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
+      put_line('SELECT ''--timeout--'' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
       update_log('SQLMON rank:'||sql_rec.rank_num||' SQL_ID:'||sql_rec.sql_id||' TOP_type:'||sql_rec.top_type);
       put_line('@@'||CHR(38)||CHR(38)||'edb360_bypass.sql/sqlmon.sql &&tuning_pack. '||sql_rec.sql_id);
       put_line('-- update main report3');
@@ -265,7 +267,7 @@ BEGIN
     END IF;
     IF sql_rec.rank_num <= &&edb360_conf_sqlash_top. AND '&&skip_diagnostics.' IS NULL THEN
       put_line('COL edb360_bypass NEW_V edb360_bypass;');
-      put_line('SELECT ''--bypass--'' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
+      put_line('SELECT ''--timeout--'' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
       update_log('SQLASH rank:'||sql_rec.rank_num||' SQL_ID:'||sql_rec.sql_id||' TOP_type:'||sql_rec.top_type);
       put_line('@@'||CHR(38)||CHR(38)||'edb360_bypass.sql/sqlash.sql &&diagnostics_pack. '||sql_rec.sql_id);
       put_line('-- update main report4');
@@ -278,7 +280,7 @@ BEGIN
     END IF;
     IF sql_rec.rank_num <= &&edb360_conf_sqlhc_top. THEN
       put_line('COL edb360_bypass NEW_V edb360_bypass;');
-      put_line('SELECT ''--bypass--'' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
+      put_line('SELECT ''--timeout--'' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
       update_log('SQLHC rank:'||sql_rec.rank_num||' SQL_ID:'||sql_rec.sql_id||' TOP_type:'||sql_rec.top_type);
       put_line('@@'||CHR(38)||CHR(38)||'edb360_bypass.sql/sqlhc.sql &&license_pack. '||sql_rec.sql_id);
       put_line('-- update main report5');
@@ -292,7 +294,7 @@ BEGIN
     IF sql_rec.rank_num <= &&edb360_conf_sqld360_top. THEN
       /* moved down into its own cursor loop (to avoid planx hanging 
       put_line('COL edb360_bypass NEW_V edb360_bypass;');
-      put_line('SELECT ''--bypass--'' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
+      put_line('SELECT ''--timeout--'' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
       update_log('SQLD360');
       put_line('-- prepares execution of sqld360');
       IF sql_rec.rank_num <= &&edb360_conf_sqld360_top_tc. THEN
@@ -331,7 +333,7 @@ BEGIN
     l_count := l_count + 1;
     IF sql_rec.rank_num <= &&edb360_conf_sqld360_top. THEN
       --put_line('COL edb360_bypass NEW_V edb360_bypass;');
-      --put_line('SELECT ''--bypass--'' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
+      --put_line('SELECT ''--timeout--'' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
       update_log('SQLD360 rank:'||sql_rec.rank_num||' SQL_ID:'||sql_rec.sql_id||' TOP_type:'||sql_rec.top_type);
       put_line('-- prepares execution of sqld360');
       IF sql_rec.rank_num <= &&edb360_conf_sqld360_top_tc. THEN
@@ -363,14 +365,23 @@ BEGIN
     put_line('SPO OFF;');
     put_line('HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_log..txt >> &&edb360_log3..txt');
     put_line('HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_log3..txt');
-    put_line('-- eadam (ash) for top sql');
-    put_line('COL edb360_bypass NEW_V edb360_bypass;');
-    put_line('SELECT ''--bypass--'' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
-    put_line('EXEC DBMS_APPLICATION_INFO.SET_MODULE(''&&edb360_prefix.'',''eadam'');');
-    put_line('@@sql/'||CHR(38)||CHR(38)||'edb360_bypass.&&skip_diagnostics.&&edb360_7c.eadam.sql');
+    IF '&&skip_diagnostics.' IS NULL AND '&&edb360_conf_incl_eadam.' = 'Y' THEN
+      put_line('-- eadam (ash) for top sql');
+      put_line('COL edb360_bypass NEW_V edb360_bypass;');
+      put_line('SELECT ''--timeout--'' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
+      put_line('EXEC DBMS_APPLICATION_INFO.SET_MODULE(''&&edb360_prefix.'',''eadam'');');
+      put_line('@@sql/'||CHR(38)||CHR(38)||'edb360_bypass.&&skip_diagnostics.&&edb360_7c.eadam.sql');
+    END IF;
+    put_line('-- seconds left on eDB360 before calling SQLd360');
+    put_line('VAR edb360_secs2go NUMBER;');
+    put_line('EXEC :edb360_secs2go := 0;');
+    put_line('EXEC :edb360_secs2go := :edb360_max_seconds - ROUND((DBMS_UTILITY.GET_TIME - :edb360_time0) / 100);');
+    put_line('DEF edb360_secs2go = ''0'';');
+    put_line('COL edb360_secs2go NEW_V edb360_secs2go FOR A8;');
+    put_line('SELECT TO_CHAR(:edb360_secs2go) edb360_secs2go FROM DUAL;');
     put_line('-- sqld360');
     put_line('COL edb360_bypass NEW_V edb360_bypass;');
-    put_line('SELECT ''--bypass--'' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
+    put_line('SELECT ''--timeout--'' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
     put_line('EXEC DBMS_APPLICATION_INFO.SET_MODULE(''&&edb360_prefix.'',''sqld360'');');
     put_line('@@sql/'||CHR(38)||CHR(38)||'edb360_bypass.sqld360.sql');
   END IF;

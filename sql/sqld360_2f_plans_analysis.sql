@@ -131,7 +131,7 @@ BEGIN
     put('           AND plan_hash_value ='||i.plan_hash_value);
     put('           AND ''&&diagnostics_pack.'' = ''Y'');');
 
-    put('DEF bubbleSeries = ''series: {''''CPU'''': {color: ''''#00E600''''}, ''''I/O'''': {color: ''''#0000FF''''}, ''''Concurrency'''': {color: ''''#820000''''}, ''''Cluster'''': {color: ''''#C07F3F''''}, ''''Other'''': {color: ''''#FFFF00''''}, ''''Multiple'''': {color: ''''#CCFFFF''''}},''');
+    --put('DEF bubbleSeries = ''series: {''''CPU'''': {color: ''''#00E600''''}, ''''I/O'''': {color: ''''#0000FF''''}, ''''Concurrency'''': {color: ''''#820000''''}, ''''Cluster'''': {color: ''''#C07F3F''''}, ''''Other'''': {color: ''''#FFFF00''''}, ''''Multiple'''': {color: ''''#CCFFFF''''}},''');
 
     put('----------------------------');
 
@@ -272,6 +272,113 @@ BEGIN
     put('END;');
     put('/ ');
     put('@sql/sqld360_9a_pre_one.sql');
+
+    put('----------------------------');
+
+    put('DEF title = ''Plan from Memory for PHV '||i.plan_hash_value||'''');
+    put('DEF main_table = ''GV$SQL_PLAN_STATISTICS_ALL''');
+    put('@sql/sqld360_0s_pre_nondef');
+    put('SET DEF @');
+    put('SPO @@one_spool_filename..txt;');
+    put('PRO @@title.@@title_suffix. (@@main_table.) ');
+    put('PRO @@abstract.');
+    put('PRO @@abstract2.');
+
+    put('COL inst_child FOR A21;');
+    put('BREAK ON inst_child SKIP 2;');
+    put('SET PAGES 0;');
+
+    put('WITH v AS (');
+    put('SELECT /*+ MATERIALIZE */');
+    put('       DISTINCT sql_id, inst_id, child_number');
+    put('  FROM gv$sql');
+    put(' WHERE sql_id = ''&&sqld360_sqlid.''');
+    put('   AND plan_hash_Value = '||i.plan_hash_value);
+    put('   AND loaded_versions > 0');
+    put(' ORDER BY 1, 2, 3 )');
+    put('SELECT /*+ ORDERED USE_NL(t) */');
+    put('       RPAD(''Inst: ''||v.inst_id, 9)||'' ''||RPAD(''Child: ''||v.child_number, 11) inst_child,'); 
+    put('       t.plan_table_output');
+    put('  FROM v, TABLE(DBMS_XPLAN.DISPLAY(''gv$sql_plan_statistics_all'', NULL, ''ADVANCED ALLSTATS LAST'','); 
+    put('       ''inst_id = ''||v.inst_id||'' AND sql_id = ''''''||v.sql_id||'''''' AND plan_hash_value = '|| i.plan_hash_value||' AND child_number = ''||v.child_number)) t');
+    put('/');
+
+    put('SET TERM ON');
+    put('-- get current time');
+    put('SPO &&sqld360_log..txt APP;');
+    put('COL current_time NEW_V current_time FOR A15;');
+    put('SELECT ''Completed: '' x, TO_CHAR(SYSDATE, ''HH24:MI:SS'') current_time FROM DUAL;');
+    put('SET TERM OFF');
+    put('HOS zip -q &&sqld360_main_filename._&&sqld360_file_time. &&sqld360_log..txt');
+
+    put('-- update main report');
+    put('SPO &&sqld360_main_report..html APP;');
+    put('PRO <li title="@@main_table.">@@title.');
+    put('PRO <a href="@@one_spool_filename..txt">text</a>');
+    put('SPO OFF;');
+    put('HOS zip -mq &&sqld360_main_filename._&&sqld360_file_time. @@one_spool_filename..txt');
+    put('HOS zip -q &&sqld360_main_filename._&&sqld360_file_time. &&sqld360_main_report..html');
+    put('-- update main report');
+    put('SPO &&sqld360_main_report..html APP;');
+    put('PRO </li>');
+    put('SPO OFF;');
+    put('HOS zip -q &&sqld360_main_filename._&&sqld360_file_time. &&sqld360_main_report..html');
+    put('SET DEF &');
+
+    put('----------------------------');
+
+    put('DEF title = ''Plan from History for PHV '||i.plan_hash_value||'''');
+    put('DEF main_table = ''DBA_HIST_SQL_PLAN''');
+    put('@sql/sqld360_0s_pre_nondef');
+    put('SET DEF @');
+    put('SPO @@one_spool_filename..txt;');
+    put('PRO @@title.@@title_suffix. (@@main_table.) ');
+    put('PRO @@abstract.');
+    put('PRO @@abstract2.');
+
+    put('COL inst_child FOR A21;');
+    put('BREAK ON inst_child SKIP 2;');
+    put('SET PAGES 0;');
+
+    put('WITH v AS (');
+    put('SELECT /*+ MATERIALIZE */ ');
+    put('       DISTINCT sql_id, plan_hash_value, dbid');
+    put('  FROM dba_hist_sql_plan ');
+    put(' WHERE ''&&diagnostics_pack.'' = ''Y'' ');
+    put('   AND dbid = ''&&sqld360_dbid.''  ');
+    put('   AND sql_id = ''&&sqld360_sqlid.'' ');
+    put('   AND plan_hash_Value = '||i.plan_hash_value);
+    put(' ORDER BY 1, 2, 3 )');
+    put('SELECT /*+ ORDERED USE_NL(t) */ t.plan_table_output');
+    put('  FROM v, TABLE(DBMS_XPLAN.DISPLAY_AWR(v.sql_id, v.plan_hash_value, v.dbid, ''ADVANCED'')) t;');
+
+    put('SET TERM ON');
+    put('-- get current time');
+    put('SPO &&sqld360_log..txt APP;');
+    put('COL current_time NEW_V current_time FOR A15;');
+    put('SELECT ''Completed: '' x, TO_CHAR(SYSDATE, ''HH24:MI:SS'') current_time FROM DUAL;');
+    put('SET TERM OFF');
+    put('HOS zip -q &&sqld360_main_filename._&&sqld360_file_time. &&sqld360_log..txt');
+
+    put('-- update main report');
+    put('SPO &&sqld360_main_report..html APP;');
+    put('PRO <li title="@@main_table.">@@title.');
+    put('PRO <a href="@@one_spool_filename..txt">text</a>');
+    put('SPO OFF;');
+    put('HOS zip -mq &&sqld360_main_filename._&&sqld360_file_time. @@one_spool_filename..txt');
+    put('HOS zip -q &&sqld360_main_filename._&&sqld360_file_time. &&sqld360_main_report..html');
+    put('-- update main report');
+    put('SPO &&sqld360_main_report..html APP;');
+    put('PRO </li>');
+    put('SPO OFF;');
+    put('HOS zip -q &&sqld360_main_filename._&&sqld360_file_time. &&sqld360_main_report..html');  
+    put('SET DEF &');
+
+    put('----------------------------');
+
+    -- this is to take care of the sequencing for the file after calling raw text spooling
+    put('EXEC repo_seq := repo_seq + 2;');
+    put('SELECT TO_CHAR(:repo_seq) report_sequence FROM DUAL;');
 
     put('----------------------------');
 
@@ -869,21 +976,23 @@ BEGIN
 
     put('DEF title=''Top 15 Wait events for PHV '||i.plan_hash_value||'''');
     put('DEF main_table = ''DBA_HIST_ACTIVE_SESS_HISTORY''');
-    put('DEF skip_pch=''''');
-    put('DEF slices = ''15''');
+    put('DEF skip_bch=''''');
+    --put('DEF slices = ''15''');
     put('BEGIN');
     put(' :sql_text := ''');
     put('SELECT cpu_or_event,');
     put('       num_samples,');
-    put('       TRUNC(100*RATIO_TO_REPORT(num_samples) OVER (),2) percent,');
-    put('       NULL dummy_01');
-    put('  FROM (SELECT object_node cpu_or_event,');
+    put('       &&wait_class_colors.&&wait_class_colors2.&&wait_class_colors3.&&wait_class_colors4. style,');
+    --put('       TRUNC(100*RATIO_TO_REPORT(num_samples) OVER (),2) percent,');
+    put('       cpu_or_event||'''' - Total number of samples: ''''||num_samples||'''' Percentage: ''''||TRUNC(100*RATIO_TO_REPORT(num_samples) OVER (),2) tooltip ');
+    --put('       NULL dummy_01');
+    put('  FROM (SELECT object_node cpu_or_event, other_tag wait_class,');
     put('               count(*) num_samples');
     put('          FROM plan_table');
     put('         WHERE cost =  '||i.plan_hash_value||'');
     put('           AND remarks = ''''&&sqld360_sqlid.'''''); 
     put('           AND ''''&&diagnostics_pack.'''' = ''''Y''''');
-    put('         GROUP BY object_node'); 
+    put('         GROUP BY object_node, other_tag'); 
     put('         ORDER BY 2 DESC)');
     put(' WHERE rownum <= 15');
     put(' ORDER BY 2 DESC');
@@ -896,8 +1005,8 @@ BEGIN
 
     put('DEF title=''Top 15 Objects accessed by PHV '||i.plan_hash_value||'''');
     put('DEF main_table = ''DBA_HIST_ACTIVE_SESS_HISTORY''');
-    put('DEF skip_pch=''''');
-    put('DEF slices = ''15''');
+    put('DEF skip_bch=''''');
+    --put('DEF slices = ''15''');
     put('BEGIN');
     put(' :sql_text := ''');
 --    put('SELECT obj#,');
@@ -943,22 +1052,26 @@ BEGIN
 --    put('         ORDER BY 2 DESC)');
 --    put(' WHERE rownum <= 15');
 
-    put('SELECT data.obj#||');
-    put('       CASE WHEN data.obj# = 0 THEN ''''UNDO''''  ');
-    put('            ELSE (SELECT TRIM(''''.'''' FROM '''' ''''||o.owner||''''.''''||o.object_name||''''.''''||o.subobject_name) FROM dba_objects o WHERE o.object_id = data.obj# AND ROWNUM = 1)'); 
-    put('       END data_object,');
+    put('SELECT data_object,');
     put('       num_samples,');
-    put('       TRUNC(100*RATIO_TO_REPORT(num_samples) OVER (),2) percent,');
-    put('       NULL dummy_01');
-    put('  FROM (SELECT a.object_instance obj#,');
-    put('               count(*) num_samples');
-    put('          FROM plan_table a');
-    put('         WHERE a.cost =  '||i.plan_hash_value||'');
-    put('           AND a.remarks = ''''&&sqld360_sqlid.'''''); 
-    put('           AND ''''&&diagnostics_pack.'''' = ''''Y''''');
-    put('           AND a.other_tag IN (''''Application'''',''''Cluster'''', ''''Concurrency'''', ''''User I/O'''', ''''System I/O'''')');
-    put('         GROUP BY a.object_instance'); 
-    put('         ORDER BY 2 DESC) data');
+    put('       NULL style,');
+    put('       data_object||'''' - Total number of samples: ''''||num_samples||'''' Percentage: ''''||TRUNC(100*RATIO_TO_REPORT(num_samples) OVER (),2) tooltip ');
+    put('  FROM (SELECT data.obj#||');
+    put('               CASE WHEN data.obj# = 0 THEN ''''UNDO''''  ');
+    put('                    ELSE (SELECT TRIM(''''.'''' FROM '''' ''''||o.owner||''''.''''||o.object_name||''''.''''||o.subobject_name) FROM dba_objects o WHERE o.object_id = data.obj# AND ROWNUM = 1)'); 
+    put('               END data_object,');
+    put('               num_samples');
+    --put('               TRUNC(100*RATIO_TO_REPORT(num_samples) OVER (),2) percent,');
+    --put('               NULL dummy_01');
+    put('          FROM (SELECT a.object_instance obj#,');
+    put('                       count(*) num_samples');
+    put('                  FROM plan_table a');
+    put('                 WHERE a.cost =  '||i.plan_hash_value||'');
+    put('                   AND a.remarks = ''''&&sqld360_sqlid.'''''); 
+    put('                   AND ''''&&diagnostics_pack.'''' = ''''Y''''');
+    put('                   AND a.other_tag IN (''''Application'''',''''Cluster'''', ''''Concurrency'''', ''''User I/O'''', ''''System I/O'''')');
+    put('                 GROUP BY a.object_instance'); 
+    put('                 ORDER BY 2 DESC) data)');
     put(' WHERE rownum <= 15');
     put(' ORDER BY 2 DESC');
     put(''';');
@@ -970,14 +1083,16 @@ BEGIN
 
     put('DEF title=''Top 15 Plan Steps for PHV '||i.plan_hash_value||'''');
     put('DEF main_table = ''DBA_HIST_ACTIVE_SESS_HISTORY''');
-    put('DEF skip_pch=''''');
-    put('DEF slices = ''15''');
+    put('DEF skip_bch=''''');
+    --put('DEF slices = ''15''');
     put('BEGIN');
     put(' :sql_text := ''');
     put('SELECT operation,');
     put('       num_samples,');
-    put('       TRUNC(100*RATIO_TO_REPORT(num_samples) OVER (),2) percent,');
-    put('       NULL dummy_01');
+    put('       NULL style,');
+    --put('       TRUNC(100*RATIO_TO_REPORT(num_samples) OVER (),2) percent,');
+    put('       operation||'''' - Total number of samples: ''''||num_samples||'''' Percentage: ''''||TRUNC(100*RATIO_TO_REPORT(num_samples) OVER (),2) tooltip ');
+    --put('       NULL dummy_01');
     put('  FROM (SELECT id||'''' - ''''||operation||'''' ''''||options operation,');
     put('               count(*) num_samples');
     put('          FROM plan_table');
@@ -997,26 +1112,30 @@ BEGIN
 
     put('DEF title=''Top 15 Step/Event for PHV '||i.plan_hash_value||'''');
     put('DEF main_table = ''DBA_HIST_ACTIVE_SESS_HISTORY''');
-    put('DEF skip_pch=''''');
-    put('DEF slices = ''15''');
+    put('DEF skip_bch=''''');
+    --put('DEF slices = ''15''');
     put('BEGIN');
     put(' :sql_text := ''');
-    put('SELECT data.step||'''' ''''||CASE WHEN data.obj# = 0 THEN ''''UNDO''''  ');
-    put('            ELSE (SELECT TRIM(''''.'''' FROM '''' ''''||o.owner||''''.''''||o.object_name||''''.''''||o.subobject_name) FROM dba_objects o WHERE o.object_id = data.obj# AND ROWNUM = 1)'); 
-    put('       END||'''' / ''''||data.event  step_event,');
-    put('       data.num_samples,');
-    put('       TRUNC(100*RATIO_TO_REPORT(data.num_samples) OVER (),2) percent,');
-    put('       NULL dummy_01');
+    put('SELECT step_event,');
+    put('       num_samples,');
+    put('       &&wait_class_colors.&&wait_class_colors2.&&wait_class_colors3.&&wait_class_colors4. style,');
+    put('       step_event||'''' - Total number of samples: ''''||num_samples||'''' Percentage: ''''||TRUNC(100*RATIO_TO_REPORT(num_samples) OVER (),2) tooltip ');
+    put('  FROM (SELECT data.step||'''' ''''||CASE WHEN data.obj# = 0 THEN ''''UNDO''''  ');
+    put('                 ELSE (SELECT TRIM(''''.'''' FROM '''' ''''||o.owner||''''.''''||o.object_name||''''.''''||o.subobject_name) FROM dba_objects o WHERE o.object_id = data.obj# AND ROWNUM = 1)'); 
+    put('               END||'''' / ''''||data.event  step_event,');
+    put('               data.num_samples, data.wait_class');
+    --put('       TRUNC(100*RATIO_TO_REPORT(num_samples) OVER (),2) percent,');
+    --put('       NULL dummy_01');
     --put('  FROM (SELECT id||'''' - ''''||operation||'''' ''''||options||'''' / ''''||object_node step_event,');
-    put('  FROM (SELECT id||'''' - ''''||operation||'''' ''''||options step, object_instance obj#, object_node event,');    
-    put('               count(*) num_samples');
-    put('          FROM plan_table');
-    put('         WHERE cost =  '||i.plan_hash_value||'');
-    put('           AND remarks = ''''&&sqld360_sqlid.'''''); 
-    put('           AND ''''&&diagnostics_pack.'''' = ''''Y''''');
-    --put('         GROUP BY id||'''' - ''''||operation||'''' ''''||options||'''' / ''''||object_node'); 
-    put('         GROUP BY id||'''' - ''''||operation||'''' ''''||options, object_instance, object_node'); 
-    put('         ORDER BY 4 DESC) data');
+    put('          FROM (SELECT id||'''' - ''''||operation||'''' ''''||options step, object_instance obj#, object_node event, other_tag wait_class,');    
+    put('                       count(*) num_samples');
+    put('                  FROM plan_table');
+    put('                 WHERE cost =  '||i.plan_hash_value||'');
+    put('                   AND remarks = ''''&&sqld360_sqlid.'''''); 
+    put('                   AND ''''&&diagnostics_pack.'''' = ''''Y''''');
+    --put('                 GROUP BY id||'''' - ''''||operation||'''' ''''||options||'''' / ''''||object_node'); 
+    put('                 GROUP BY id||'''' - ''''||operation||'''' ''''||options, object_instance, object_node, other_tag'); 
+    put('                 ORDER BY 4 DESC) data)');
     put(' WHERE rownum <= 15');
     put(' ORDER BY 2 DESC');
     put(''';');
@@ -1068,7 +1187,24 @@ BEGIN
     put('COL tit_12 NEW_V tit_12'); 
     put('COL tit_13 NEW_V tit_13'); 
     put('COL tit_14 NEW_V tit_14'); 
-    put('COL tit_15 NEW_V tit_15'); 
+    put('COL tit_15 NEW_V tit_15');
+
+    -- this is to determine series color
+    put('COL series_01 NEW_V series_01'); 
+    put('COL series_02 NEW_V series_02'); 
+    put('COL series_03 NEW_V series_03'); 
+    put('COL series_04 NEW_V series_04'); 
+    put('COL series_05 NEW_V series_05'); 
+    put('COL series_06 NEW_V series_06'); 
+    put('COL series_07 NEW_V series_07'); 
+    put('COL series_08 NEW_V series_08'); 
+    put('COL series_09 NEW_V series_09'); 
+    put('COL series_10 NEW_V series_10'); 
+    put('COL series_11 NEW_V series_11'); 
+    put('COL series_12 NEW_V series_12'); 
+    put('COL series_13 NEW_V series_13'); 
+    put('COL series_14 NEW_V series_14'); 
+    put('COL series_15 NEW_V series_15'); 
 
     put('SELECT MAX(CASE WHEN ranking = 1  THEN cpu_or_event ELSE '''' END) evt_01,');
     put('       MAX(CASE WHEN ranking = 2  THEN cpu_or_event ELSE '''' END) evt_02,');              
@@ -1084,14 +1220,31 @@ BEGIN
     put('       MAX(CASE WHEN ranking = 12 THEN cpu_or_event ELSE '''' END) evt_12,');
     put('       MAX(CASE WHEN ranking = 13 THEN cpu_or_event ELSE '''' END) evt_13,');
     put('       MAX(CASE WHEN ranking = 14 THEN cpu_or_event ELSE '''' END) evt_14,');
-    put('       MAX(CASE WHEN ranking = 15 THEN cpu_or_event ELSE '''' END) evt_15 ');
-    put('  FROM (SELECT 1 fake, object_node cpu_or_event,');
+    put('       MAX(CASE WHEN ranking = 15 THEN cpu_or_event ELSE '''' END) evt_15,');  -- added coma here
+    -- this is to determine series color
+    put('       MAX(CASE WHEN ranking = 1  THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_01,');
+    put('       MAX(CASE WHEN ranking = 2  THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_02,');              
+    put('       MAX(CASE WHEN ranking = 3  THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_03,'); 
+    put('       MAX(CASE WHEN ranking = 4  THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_04,'); 
+    put('       MAX(CASE WHEN ranking = 5  THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_05,'); 
+    put('       MAX(CASE WHEN ranking = 6  THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_06,'); 
+    put('       MAX(CASE WHEN ranking = 7  THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_07,'); 
+    put('       MAX(CASE WHEN ranking = 8  THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_08,'); 
+    put('       MAX(CASE WHEN ranking = 9  THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_09,'); 
+    put('       MAX(CASE WHEN ranking = 10 THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_10,');
+    put('       MAX(CASE WHEN ranking = 11 THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_11,');
+    put('       MAX(CASE WHEN ranking = 12 THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_12,');
+    put('       MAX(CASE WHEN ranking = 13 THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_13,');
+    put('       MAX(CASE WHEN ranking = 14 THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_14,');
+    put('       MAX(CASE WHEN ranking = 15 THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_15 ');
+    --
+    put('  FROM (SELECT 1 fake, object_node cpu_or_event, other_tag wait_class,');  -- added wait_class
     put('               ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) ranking');
     put('          FROM plan_table'); 
     put('         WHERE statement_id = ''SQLD360_ASH_DATA_MEM''');
     put('           AND cost = '||i.plan_hash_value);
     put('           AND remarks = ''&&sqld360_sqlid.''');
-    put('         GROUP BY object_node) ash,');
+    put('         GROUP BY object_node, other_tag) ash,');  -- added other_tag
     put('       (SELECT 1 fake FROM dual) b'); -- this is in case there is no row in ASH
     put(' WHERE ash.fake(+) = b.fake');
     put('   AND ranking <= 15');
@@ -1226,6 +1379,24 @@ BEGIN
     put('UNDEF evt_14'); 
     put('UNDEF evt_15');    
 
+    -- to play with colors
+    put('DEF series_01 = '''' '); 
+    put('DEF series_02 = '''' '); 
+    put('DEF series_03 = '''' '); 
+    put('DEF series_04 = '''' '); 
+    put('DEF series_05 = '''' '); 
+    put('DEF series_06 = '''' '); 
+    put('DEF series_07 = '''' '); 
+    put('DEF series_08 = '''' '); 
+    put('DEF series_09 = '''' '); 
+    put('DEF series_10 = '''' '); 
+    put('DEF series_11 = '''' '); 
+    put('DEF series_12 = '''' '); 
+    put('DEF series_13 = '''' '); 
+    put('DEF series_14 = '''' '); 
+    put('DEF series_15 = '''' ');
+
+
     put('----------------------------');
 
     put('DEF title=''Top 15 Wait events over historical time for PHV '||i.plan_hash_value||'''');
@@ -1272,6 +1443,23 @@ BEGIN
     put('COL tit_14 NEW_V tit_14'); 
     put('COL tit_15 NEW_V tit_15'); 
 
+    -- this is to determine series color
+    put('COL series_01 NEW_V series_01'); 
+    put('COL series_02 NEW_V series_02'); 
+    put('COL series_03 NEW_V series_03'); 
+    put('COL series_04 NEW_V series_04'); 
+    put('COL series_05 NEW_V series_05'); 
+    put('COL series_06 NEW_V series_06'); 
+    put('COL series_07 NEW_V series_07'); 
+    put('COL series_08 NEW_V series_08'); 
+    put('COL series_09 NEW_V series_09'); 
+    put('COL series_10 NEW_V series_10'); 
+    put('COL series_11 NEW_V series_11'); 
+    put('COL series_12 NEW_V series_12'); 
+    put('COL series_13 NEW_V series_13'); 
+    put('COL series_14 NEW_V series_14'); 
+    put('COL series_15 NEW_V series_15');     
+
     put('SELECT MAX(CASE WHEN ranking = 1  THEN cpu_or_event ELSE '''' END) evt_01,');
     put('       MAX(CASE WHEN ranking = 2  THEN cpu_or_event ELSE '''' END) evt_02,');              
     put('       MAX(CASE WHEN ranking = 3  THEN cpu_or_event ELSE '''' END) evt_03,'); 
@@ -1286,14 +1474,31 @@ BEGIN
     put('       MAX(CASE WHEN ranking = 12 THEN cpu_or_event ELSE '''' END) evt_12,');
     put('       MAX(CASE WHEN ranking = 13 THEN cpu_or_event ELSE '''' END) evt_13,');
     put('       MAX(CASE WHEN ranking = 14 THEN cpu_or_event ELSE '''' END) evt_14,');
-    put('       MAX(CASE WHEN ranking = 15 THEN cpu_or_event ELSE '''' END) evt_15 ');
-    put('  FROM (SELECT 1 fake, object_node cpu_or_event,');
+    put('       MAX(CASE WHEN ranking = 15 THEN cpu_or_event ELSE '''' END) evt_15,');
+    -- this is to determine series color
+    put('       MAX(CASE WHEN ranking = 1  THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_01,');
+    put('       MAX(CASE WHEN ranking = 2  THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_02,');              
+    put('       MAX(CASE WHEN ranking = 3  THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_03,'); 
+    put('       MAX(CASE WHEN ranking = 4  THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_04,'); 
+    put('       MAX(CASE WHEN ranking = 5  THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_05,'); 
+    put('       MAX(CASE WHEN ranking = 6  THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_06,'); 
+    put('       MAX(CASE WHEN ranking = 7  THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_07,'); 
+    put('       MAX(CASE WHEN ranking = 8  THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_08,'); 
+    put('       MAX(CASE WHEN ranking = 9  THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_09,'); 
+    put('       MAX(CASE WHEN ranking = 10 THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_10,');
+    put('       MAX(CASE WHEN ranking = 11 THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_11,');
+    put('       MAX(CASE WHEN ranking = 12 THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_12,');
+    put('       MAX(CASE WHEN ranking = 13 THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_13,');
+    put('       MAX(CASE WHEN ranking = 14 THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_14,');
+    put('       MAX(CASE WHEN ranking = 15 THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_15 ');
+    --
+    put('  FROM (SELECT 1 fake, object_node cpu_or_event, other_tag wait_class,');
     put('               ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) ranking');
     put('          FROM plan_table'); 
     put('         WHERE statement_id = ''SQLD360_ASH_DATA_HIST''');
     put('           AND cost = '||i.plan_hash_value);
     put('           AND remarks = ''&&sqld360_sqlid.''');
-    put('         GROUP BY object_node) ash,');
+    put('         GROUP BY object_node, other_tag) ash,');
     put('       (SELECT 1 fake FROM dual) b'); -- this is in case there is no row in ASH
     put(' WHERE ash.fake(+) = b.fake');
     put('   AND ranking <= 15');
@@ -1429,6 +1634,24 @@ BEGIN
     put('UNDEF evt_13'); 
     put('UNDEF evt_14'); 
     put('UNDEF evt_15'); 
+
+    -- to play with colors
+    put('DEF series_01 = '''' '); 
+    put('DEF series_02 = '''' '); 
+    put('DEF series_03 = '''' '); 
+    put('DEF series_04 = '''' '); 
+    put('DEF series_05 = '''' '); 
+    put('DEF series_06 = '''' '); 
+    put('DEF series_07 = '''' '); 
+    put('DEF series_08 = '''' '); 
+    put('DEF series_09 = '''' '); 
+    put('DEF series_10 = '''' '); 
+    put('DEF series_11 = '''' '); 
+    put('DEF series_12 = '''' '); 
+    put('DEF series_13 = '''' '); 
+    put('DEF series_14 = '''' '); 
+    put('DEF series_15 = '''' ');
+
 
     put('----------------------------');
 
@@ -1656,7 +1879,7 @@ BEGIN
        put('  FROM (SELECT end_time, plan_line_id, category, num_samples, rtr_category, ROW_NUMBER() OVER (PARTITION BY end_time, plan_line_id ORDER BY rtr_category DESC) rn_category');
        put('          FROM (SELECT end_time, plan_line_id, category, SUM(num_samples) OVER (PARTITION BY end_time, plan_line_id) num_samples, RATIO_TO_REPORT(num_samples) OVER (PARTITION BY end_time, plan_line_id) rtr_category');
        put('                  FROM (SELECT timestamp end_time, NVL(id,0) plan_line_id, ');
-       put('                               CASE WHEN other_tag IS NULL THEN ''''CPU'''' WHEN other_tag LIKE ''''%I/O'''' THEN ''''I/O'''' WHEN other_tag = ''''Concurrency'''' THEN ''''Concurrency'''' WHEN other_tag = ''''Cluster'''' THEN ''''Cluster'''' ELSE ''''Other'''' END category,'); 
+       put('                               CASE WHEN other_tag = ''''CPU'''' THEN ''''CPU'''' WHEN other_tag LIKE ''''%I/O'''' THEN ''''I/O'''' WHEN other_tag = ''''Concurrency'''' THEN ''''Concurrency'''' WHEN other_tag = ''''Cluster'''' THEN ''''Cluster'''' ELSE ''''Other'''' END category,'); 
        put('                               COUNT(*) num_samples'); 
        put('                          FROM plan_table');
        put('                         WHERE statement_id = ''''SQLD360_ASH_DATA_MEM''''');
@@ -1668,7 +1891,7 @@ BEGIN
        put('                           AND remarks = ''''&&sqld360_sqlid.'''''); 
        put('                           --AND partition_id IS NOT NULL');
        put('                           AND ''''&&diagnostics_pack.'''' = ''''Y''''');
-       put('                         GROUP BY timestamp, NVL(id,0), CASE WHEN other_tag IS NULL THEN ''''CPU'''' WHEN other_tag LIKE ''''%I/O'''' THEN ''''I/O'''' WHEN other_tag = ''''Concurrency'''' THEN ''''Concurrency'''' WHEN other_tag = ''''Cluster'''' THEN ''''Cluster'''' ELSE ''''Other'''' END)');
+       put('                         GROUP BY timestamp, NVL(id,0), CASE WHEN other_tag = ''''CPU'''' THEN ''''CPU'''' WHEN other_tag LIKE ''''%I/O'''' THEN ''''I/O'''' WHEN other_tag = ''''Concurrency'''' THEN ''''Concurrency'''' WHEN other_tag = ''''Cluster'''' THEN ''''Cluster'''' ELSE ''''Other'''' END)');
        put('                 )');
        put('        )');
        put(' WHERE rn_category = 1');
@@ -1682,31 +1905,34 @@ BEGIN
 
        put('DEF title=''Top 15 Step/Event for SQL_EXEC_ID '||j.sql_exec_id||' of PHV '||i.plan_hash_value||'''');
        put('DEF main_table = ''GV$ACTIVE_SESSION_HISTORY''');
-       put('DEF skip_pch=''''');
-       put('DEF slices = ''15''');
+       put('DEF skip_bch=''''');
+       --put('DEF slices = ''15''');
        put('BEGIN');
        put(' :sql_text := ''');
-       put('SELECT data.step||'''' ''''||CASE WHEN data.obj# = 0 THEN ''''UNDO''''  ');
-       put('            ELSE (SELECT TRIM(''''.'''' FROM '''' ''''||o.owner||''''.''''||o.object_name||''''.''''||o.subobject_name) FROM dba_objects o WHERE o.object_id = data.obj# AND ROWNUM = 1)'); 
-       put('       END||'''' / ''''||data.event  step_event,');
-       put('       data.num_samples,');
-       put('       TRUNC(100*RATIO_TO_REPORT(data.num_samples) OVER (),2) percent,');
-       put('       NULL dummy_01');
-       --put('  FROM (SELECT id||'''' - ''''||operation||'''' ''''||options||'''' / ''''||object_node step_event,');
-       put('  FROM (SELECT id||'''' - ''''||operation||'''' ''''||options step, object_instance obj#, object_node event,'); 
-       put('               count(*) num_samples');
-       put('          FROM plan_table');
-       put('         WHERE statement_id = ''''SQLD360_ASH_DATA_MEM''''');
-       put('           AND cost =  '||i.plan_hash_value||'');
-       put('           AND NVL(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'''','''',1,3)+1,INSTR(partition_stop,'''','''',1,4)-INSTR(partition_stop,'''','''',1,3)-1)),position) = '||j.inst_id||'');
-       put('           AND NVL(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'''','''',1,4)+1,INSTR(partition_stop,'''','''',1,5)-INSTR(partition_stop,'''','''',1,4)-1)),cpu_cost) = '||j.session_id||'');
-       put('           AND NVL(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'''','''',1,5)+1,INSTR(partition_stop,'''','''',1,6)-INSTR(partition_stop,'''','''',1,5)-1)),io_cost) = '||j.session_serial#||'');
-       put('           AND timestamp BETWEEN TO_DATE('''''||j.min_sample_time||''''', ''''YYYYMMDDHH24MISS'''') AND TO_DATE('''''||j.max_sample_time||''''', ''''YYYYMMDDHH24MISS'''') ');
-       put('           AND remarks = ''''&&sqld360_sqlid.'''''); 
-       put('           AND ''''&&diagnostics_pack.'''' = ''''Y''''');
-       --put('         GROUP BY id||'''' - ''''||operation||'''' ''''||options||'''' / ''''||object_node');
-       put('         GROUP BY id||'''' - ''''||operation||'''' ''''||options, object_instance, object_node');  
-       put('         ORDER BY 4 DESC) data');
+       put('SELECT step_event,');
+       put('       num_samples,');
+       put('       &&wait_class_colors.&&wait_class_colors2.&&wait_class_colors3.&&wait_class_colors4. style,');
+       put('       step_event||'''' - Total number of samples: ''''||num_samples||'''' Percentage: ''''||TRUNC(100*RATIO_TO_REPORT(num_samples) OVER (),2) tooltip ');
+       put('  FROM (SELECT data.step||'''' ''''||CASE WHEN data.obj# = 0 THEN ''''UNDO''''  ');
+       put('                    ELSE (SELECT TRIM(''''.'''' FROM '''' ''''||o.owner||''''.''''||o.object_name||''''.''''||o.subobject_name) FROM dba_objects o WHERE o.object_id = data.obj# AND ROWNUM = 1)'); 
+       put('               END||'''' / ''''||data.event  step_event,');
+       put('               data.num_samples, data.wait_class');
+       --put('               TRUNC(100*RATIO_TO_REPORT(num_samples) OVER (),2) percent,');
+       --put('          FROM (SELECT id||'''' - ''''||operation||'''' ''''||options||'''' / ''''||object_node step_event,');
+       put('          FROM (SELECT id||'''' - ''''||operation||'''' ''''||options step, object_instance obj#, object_node event, other_tag wait_class,'); 
+       put('                       count(*) num_samples');
+       put('                  FROM plan_table');
+       put('                 WHERE statement_id = ''''SQLD360_ASH_DATA_MEM''''');
+       put('                   AND cost =  '||i.plan_hash_value||'');
+       put('                   AND NVL(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'''','''',1,3)+1,INSTR(partition_stop,'''','''',1,4)-INSTR(partition_stop,'''','''',1,3)-1)),position) = '||j.inst_id||'');
+       put('                   AND NVL(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'''','''',1,4)+1,INSTR(partition_stop,'''','''',1,5)-INSTR(partition_stop,'''','''',1,4)-1)),cpu_cost) = '||j.session_id||'');
+       put('                   AND NVL(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'''','''',1,5)+1,INSTR(partition_stop,'''','''',1,6)-INSTR(partition_stop,'''','''',1,5)-1)),io_cost) = '||j.session_serial#||'');
+       put('                   AND timestamp BETWEEN TO_DATE('''''||j.min_sample_time||''''', ''''YYYYMMDDHH24MISS'''') AND TO_DATE('''''||j.max_sample_time||''''', ''''YYYYMMDDHH24MISS'''') ');
+       put('                   AND remarks = ''''&&sqld360_sqlid.'''''); 
+       put('                   AND ''''&&diagnostics_pack.'''' = ''''Y''''');
+       --put('                 GROUP BY id||'''' - ''''||operation||'''' ''''||options||'''' / ''''||object_node');
+       put('                 GROUP BY id||'''' - ''''||operation||'''' ''''||options, object_instance, object_node, other_tag');  
+       put('                 ORDER BY 4 DESC) data)');
        put(' WHERE rownum <= 15');
        put(' ORDER BY 2 DESC');
        put(''';');
@@ -1756,6 +1982,23 @@ BEGIN
        put('COL tit_14 NEW_V tit_14'); 
        put('COL tit_15 NEW_V tit_15'); 
 
+       -- this is to determine series color
+       put('COL series_01 NEW_V series_01'); 
+       put('COL series_02 NEW_V series_02'); 
+       put('COL series_03 NEW_V series_03'); 
+       put('COL series_04 NEW_V series_04'); 
+       put('COL series_05 NEW_V series_05'); 
+       put('COL series_06 NEW_V series_06'); 
+       put('COL series_07 NEW_V series_07'); 
+       put('COL series_08 NEW_V series_08'); 
+       put('COL series_09 NEW_V series_09'); 
+       put('COL series_10 NEW_V series_10'); 
+       put('COL series_11 NEW_V series_11'); 
+       put('COL series_12 NEW_V series_12'); 
+       put('COL series_13 NEW_V series_13'); 
+       put('COL series_14 NEW_V series_14'); 
+       put('COL series_15 NEW_V series_15');
+
        put('SELECT MAX(CASE WHEN ranking = 1  THEN cpu_or_event ELSE '''' END) evt_01,');
        put('       MAX(CASE WHEN ranking = 2  THEN cpu_or_event ELSE '''' END) evt_02,');              
        put('       MAX(CASE WHEN ranking = 3  THEN cpu_or_event ELSE '''' END) evt_03,'); 
@@ -1770,8 +2013,25 @@ BEGIN
        put('       MAX(CASE WHEN ranking = 12 THEN cpu_or_event ELSE '''' END) evt_12,');
        put('       MAX(CASE WHEN ranking = 13 THEN cpu_or_event ELSE '''' END) evt_13,');
        put('       MAX(CASE WHEN ranking = 14 THEN cpu_or_event ELSE '''' END) evt_14,');
-       put('       MAX(CASE WHEN ranking = 15 THEN cpu_or_event ELSE '''' END) evt_15 ');
-       put('  FROM (SELECT 1 fake, object_node cpu_or_event,');
+       put('       MAX(CASE WHEN ranking = 15 THEN cpu_or_event ELSE '''' END) evt_15,');
+       -- this is to determine series color
+       put('       MAX(CASE WHEN ranking = 1  THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_01,');
+       put('       MAX(CASE WHEN ranking = 2  THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_02,');              
+       put('       MAX(CASE WHEN ranking = 3  THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_03,'); 
+       put('       MAX(CASE WHEN ranking = 4  THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_04,'); 
+       put('       MAX(CASE WHEN ranking = 5  THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_05,'); 
+       put('       MAX(CASE WHEN ranking = 6  THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_06,'); 
+       put('       MAX(CASE WHEN ranking = 7  THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_07,'); 
+       put('       MAX(CASE WHEN ranking = 8  THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_08,'); 
+       put('       MAX(CASE WHEN ranking = 9  THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_09,'); 
+       put('       MAX(CASE WHEN ranking = 10 THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_10,');
+       put('       MAX(CASE WHEN ranking = 11 THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_11,');
+       put('       MAX(CASE WHEN ranking = 12 THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_12,');
+       put('       MAX(CASE WHEN ranking = 13 THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_13,');
+       put('       MAX(CASE WHEN ranking = 14 THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_14,');
+       put('       MAX(CASE WHEN ranking = 15 THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_15 ');
+       --
+       put('  FROM (SELECT 1 fake, object_node cpu_or_event, other_tag wait_class,');
        put('               ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) ranking');
        put('          FROM plan_table'); 
        put('         WHERE statement_id = ''SQLD360_ASH_DATA_MEM''');
@@ -1781,7 +2041,7 @@ BEGIN
        put('           AND NVL(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'','',1,5)+1,INSTR(partition_stop,'','',1,6)-INSTR(partition_stop,'','',1,5)-1)),io_cost) = '||j.session_serial#||'');
        put('           AND timestamp BETWEEN TO_DATE('''||j.min_sample_time||''', ''YYYYMMDDHH24MISS'') AND TO_DATE('''||j.max_sample_time||''', ''YYYYMMDDHH24MISS'') ');
        put('           AND remarks = ''&&sqld360_sqlid.''');
-       put('         GROUP BY object_node) ash,');
+       put('         GROUP BY object_node, other_tag) ash,');
        put('       (SELECT 1 fake FROM dual) b'); -- this is in case there is no row in ASH
        put(' WHERE ash.fake(+) = b.fake');
        put('   AND ranking <= 15');
@@ -1916,18 +2176,37 @@ BEGIN
        put('UNDEF evt_14'); 
        put('UNDEF evt_15'); 
 
+       -- to play with colors
+       put('DEF series_01 = '''' '); 
+       put('DEF series_02 = '''' '); 
+       put('DEF series_03 = '''' '); 
+       put('DEF series_04 = '''' '); 
+       put('DEF series_05 = '''' '); 
+       put('DEF series_06 = '''' '); 
+       put('DEF series_07 = '''' '); 
+       put('DEF series_08 = '''' '); 
+       put('DEF series_09 = '''' '); 
+       put('DEF series_10 = '''' '); 
+       put('DEF series_11 = '''' '); 
+       put('DEF series_12 = '''' '); 
+       put('DEF series_13 = '''' '); 
+       put('DEF series_14 = '''' '); 
+       put('DEF series_15 = '''' ');
+
        put('----------------------------');
 
        put('DEF title=''DB Time by top 64 process for SQL_EXEC_ID '||j.sql_exec_id||' of PHV '||i.plan_hash_value||'''');
        put('DEF main_table = ''GV$ACTIVE_SESSION_HISTORY''');
-       put('DEF skip_pch=''''');
-       put('DEF slices = ''64''');
+       put('DEF skip_bch=''''');
+       --put('DEF slices = ''64''');
        put('BEGIN');
        put(' :sql_text := ''');
        put('SELECT data.qcpx_process,');
        put('       data.num_samples,');
-       put('       TRUNC(100*RATIO_TO_REPORT(data.num_samples) OVER (),2) percent,');
-       put('       NULL dummy_01');
+       put('       NULL style,');
+       --put('       TRUNC(100*RATIO_TO_REPORT(data.num_samples) OVER (),2) percent,');
+       put('       data.qcpx_process||'''' - Total number of samples: ''''||data.num_samples||'''' Percentage: ''''||TRUNC(100*RATIO_TO_REPORT(data.num_samples) OVER (),2) tooltip ');
+       --put('       NULL dummy_01');
        --put('  FROM (SELECT id||'''' - ''''||operation||'''' ''''||options||'''' / ''''||object_node step_event,');
        put('  FROM (SELECT NVL2(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'''','''',1,3)+1,INSTR(partition_stop,'''','''',1,4)-INSTR(partition_stop,'''','''',1,3)-1)), ''''PX Proc - '''', ''''QC - '''')||position||''''.''''||cpu_cost||''''.''''||io_cost  qcpx_process, ');   
        put('               count(*) num_samples');
@@ -2450,7 +2729,7 @@ BEGIN
        put('  FROM (SELECT end_time, plan_line_id, category, num_samples, rtr_category, ROW_NUMBER() OVER (PARTITION BY end_time, plan_line_id ORDER BY rtr_category DESC) rn_category');
        put('          FROM (SELECT end_time, plan_line_id, category, SUM(num_samples) OVER (PARTITION BY end_time, plan_line_id) num_samples, RATIO_TO_REPORT(num_samples) OVER (PARTITION BY end_time, plan_line_id) rtr_category');
        put('                  FROM (SELECT timestamp end_time, NVL(id,0) plan_line_id, ');
-       put('                               CASE WHEN other_tag IS NULL THEN ''''CPU'''' WHEN other_tag LIKE ''''%I/O'''' THEN ''''I/O'''' WHEN other_tag = ''''Concurrency'''' THEN ''''Concurrency'''' WHEN other_tag = ''''Cluster'''' THEN ''''Cluster'''' ELSE ''''Other'''' END category,'); 
+       put('                               CASE WHEN other_tag = ''''CPU'''' THEN ''''CPU'''' WHEN other_tag LIKE ''''%I/O'''' THEN ''''I/O'''' WHEN other_tag = ''''Concurrency'''' THEN ''''Concurrency'''' WHEN other_tag = ''''Cluster'''' THEN ''''Cluster'''' ELSE ''''Other'''' END category,'); 
        put('                               COUNT(*) num_samples'); 
        put('                          FROM plan_table');
        put('                         WHERE statement_id = ''''SQLD360_ASH_DATA_HIST''''');
@@ -2462,7 +2741,7 @@ BEGIN
        put('                           AND remarks = ''''&&sqld360_sqlid.'''''); 
        put('                           --AND partition_id IS NOT NULL');
        put('                           AND ''''&&diagnostics_pack.'''' = ''''Y''''');
-       put('                         GROUP BY timestamp, NVL(id,0), CASE WHEN other_tag IS NULL THEN ''''CPU'''' WHEN other_tag LIKE ''''%I/O'''' THEN ''''I/O'''' WHEN other_tag = ''''Concurrency'''' THEN ''''Concurrency'''' WHEN other_tag = ''''Cluster'''' THEN ''''Cluster'''' ELSE ''''Other'''' END)');
+       put('                         GROUP BY timestamp, NVL(id,0), CASE WHEN other_tag = ''''CPU'''' THEN ''''CPU'''' WHEN other_tag LIKE ''''%I/O'''' THEN ''''I/O'''' WHEN other_tag = ''''Concurrency'''' THEN ''''Concurrency'''' WHEN other_tag = ''''Cluster'''' THEN ''''Cluster'''' ELSE ''''Other'''' END)');
        put('                 )');
        put('        )');
        put(' WHERE rn_category = 1');
@@ -2476,31 +2755,33 @@ BEGIN
 
        put('DEF title=''Top 15 Step/Event for SQL_EXEC_ID '||j.sql_exec_id||' of PHV '||i.plan_hash_value||'''');
        put('DEF main_table = ''DBA_HIST_ACTIVE_SESS_HISTORY''');
-       put('DEF skip_pch=''''');
-       put('DEF slices = ''15''');
+       put('DEF skip_bch=''''');
+       --put('DEF slices = ''15''');
        put('BEGIN');
        put(' :sql_text := ''');
-       put('SELECT data.step||'''' ''''||CASE WHEN data.obj# = 0 THEN ''''UNDO''''  ');
-       put('            ELSE (SELECT TRIM(''''.'''' FROM '''' ''''||o.owner||''''.''''||o.object_name||''''.''''||o.subobject_name) FROM dba_objects o WHERE o.object_id = data.obj# AND ROWNUM = 1)'); 
-       put('       END||'''' / ''''||data.event  step_event,');
-       put('       data.num_samples,');
-       put('       TRUNC(100*RATIO_TO_REPORT(data.num_samples) OVER (),2) percent,');
-       put('       NULL dummy_01');
+       put('SELECT step_event,');
+       put('       num_samples,');
+       put('       &&wait_class_colors.&&wait_class_colors2.&&wait_class_colors3.&&wait_class_colors4. style,');
+       put('       step_event||'''' - Total number of samples: ''''||num_samples||'''' Percentage: ''''||TRUNC(100*RATIO_TO_REPORT(num_samples) OVER (),2) tooltip ');
+       put('  FROM (SELECT data.step||'''' ''''||CASE WHEN data.obj# = 0 THEN ''''UNDO''''  ');
+       put('                    ELSE (SELECT TRIM(''''.'''' FROM '''' ''''||o.owner||''''.''''||o.object_name||''''.''''||o.subobject_name) FROM dba_objects o WHERE o.object_id = data.obj# AND ROWNUM = 1)'); 
+       put('               END||'''' / ''''||data.event  step_event,');
+       put('               data.num_samples, data.wait_class');
        --put('  FROM (SELECT id||'''' - ''''||operation||'''' ''''||options||'''' / ''''||object_node step_event,');
-       put('  FROM (SELECT id||'''' - ''''||operation||'''' ''''||options step, object_instance obj#, object_node event,'); 
-       put('               count(*) num_samples');
-       put('          FROM plan_table');
-       put('         WHERE statement_id = ''''SQLD360_ASH_DATA_HIST''''');
-       put('           AND cost =  '||i.plan_hash_value||'');
-       put('           AND NVL(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'''','''',1,3)+1,INSTR(partition_stop,'''','''',1,4)-INSTR(partition_stop,'''','''',1,3)-1)),position) = '||j.inst_id||'');
-       put('           AND NVL(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'''','''',1,4)+1,INSTR(partition_stop,'''','''',1,5)-INSTR(partition_stop,'''','''',1,4)-1)),cpu_cost) = '||j.session_id||'');
-       put('           AND NVL(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'''','''',1,5)+1,INSTR(partition_stop,'''','''',1,6)-INSTR(partition_stop,'''','''',1,5)-1)),io_cost) = '||j.session_serial#||'');
-       put('           AND timestamp BETWEEN TO_DATE('''''||j.min_sample_time||''''', ''''YYYYMMDDHH24MISS'''') AND TO_DATE('''''||j.max_sample_time||''''', ''''YYYYMMDDHH24MISS'''') ');
-       put('           AND remarks = ''''&&sqld360_sqlid.'''''); 
-       put('           AND ''''&&diagnostics_pack.'''' = ''''Y''''');
-       --put('         GROUP BY id||'''' - ''''||operation||'''' ''''||options||'''' / ''''||object_node'); 
-       put('         GROUP BY id||'''' - ''''||operation||'''' ''''||options, object_instance, object_node'); 
-       put('         ORDER BY 4 DESC) data');
+       put('          FROM (SELECT id||'''' - ''''||operation||'''' ''''||options step, object_instance obj#, object_node event, other_tag wait_class,'); 
+       put('                       count(*) num_samples');
+       put('                  FROM plan_table');
+       put('                 WHERE statement_id = ''''SQLD360_ASH_DATA_HIST''''');
+       put('                   AND cost =  '||i.plan_hash_value||'');
+       put('                   AND NVL(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'''','''',1,3)+1,INSTR(partition_stop,'''','''',1,4)-INSTR(partition_stop,'''','''',1,3)-1)),position) = '||j.inst_id||'');
+       put('                   AND NVL(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'''','''',1,4)+1,INSTR(partition_stop,'''','''',1,5)-INSTR(partition_stop,'''','''',1,4)-1)),cpu_cost) = '||j.session_id||'');
+       put('                   AND NVL(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'''','''',1,5)+1,INSTR(partition_stop,'''','''',1,6)-INSTR(partition_stop,'''','''',1,5)-1)),io_cost) = '||j.session_serial#||'');
+       put('                   AND timestamp BETWEEN TO_DATE('''''||j.min_sample_time||''''', ''''YYYYMMDDHH24MISS'''') AND TO_DATE('''''||j.max_sample_time||''''', ''''YYYYMMDDHH24MISS'''') ');
+       put('                   AND remarks = ''''&&sqld360_sqlid.'''''); 
+       put('                   AND ''''&&diagnostics_pack.'''' = ''''Y''''');
+       --put('                 GROUP BY id||'''' - ''''||operation||'''' ''''||options||'''' / ''''||object_node'); 
+       put('                 GROUP BY id||'''' - ''''||operation||'''' ''''||options, object_instance, object_node, other_tag'); 
+       put('                 ORDER BY 4 DESC) data)');
        put(' WHERE rownum <= 15');
        put(' ORDER BY 2 DESC');
        put(''';');
@@ -2550,6 +2831,23 @@ BEGIN
        put('COL tit_14 NEW_V tit_14'); 
        put('COL tit_15 NEW_V tit_15'); 
 
+       -- this is to determine series color
+       put('COL series_01 NEW_V series_01'); 
+       put('COL series_02 NEW_V series_02'); 
+       put('COL series_03 NEW_V series_03'); 
+       put('COL series_04 NEW_V series_04'); 
+       put('COL series_05 NEW_V series_05'); 
+       put('COL series_06 NEW_V series_06'); 
+       put('COL series_07 NEW_V series_07'); 
+       put('COL series_08 NEW_V series_08'); 
+       put('COL series_09 NEW_V series_09'); 
+       put('COL series_10 NEW_V series_10'); 
+       put('COL series_11 NEW_V series_11'); 
+       put('COL series_12 NEW_V series_12'); 
+       put('COL series_13 NEW_V series_13'); 
+       put('COL series_14 NEW_V series_14'); 
+       put('COL series_15 NEW_V series_15');
+
        put('SELECT MAX(CASE WHEN ranking = 1  THEN cpu_or_event ELSE '''' END) evt_01,');
        put('       MAX(CASE WHEN ranking = 2  THEN cpu_or_event ELSE '''' END) evt_02,');              
        put('       MAX(CASE WHEN ranking = 3  THEN cpu_or_event ELSE '''' END) evt_03,'); 
@@ -2564,8 +2862,25 @@ BEGIN
        put('       MAX(CASE WHEN ranking = 12 THEN cpu_or_event ELSE '''' END) evt_12,');
        put('       MAX(CASE WHEN ranking = 13 THEN cpu_or_event ELSE '''' END) evt_13,');
        put('       MAX(CASE WHEN ranking = 14 THEN cpu_or_event ELSE '''' END) evt_14,');
-       put('       MAX(CASE WHEN ranking = 15 THEN cpu_or_event ELSE '''' END) evt_15 ');
-       put('  FROM (SELECT 1 fake, object_node cpu_or_event,');
+       put('       MAX(CASE WHEN ranking = 15 THEN cpu_or_event ELSE '''' END) evt_15,');
+       -- this is to determine series color
+       put('       MAX(CASE WHEN ranking = 1  THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_01,');
+       put('       MAX(CASE WHEN ranking = 2  THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_02,');              
+       put('       MAX(CASE WHEN ranking = 3  THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_03,'); 
+       put('       MAX(CASE WHEN ranking = 4  THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_04,'); 
+       put('       MAX(CASE WHEN ranking = 5  THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_05,'); 
+       put('       MAX(CASE WHEN ranking = 6  THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_06,'); 
+       put('       MAX(CASE WHEN ranking = 7  THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_07,'); 
+       put('       MAX(CASE WHEN ranking = 8  THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_08,'); 
+       put('       MAX(CASE WHEN ranking = 9  THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_09,'); 
+       put('       MAX(CASE WHEN ranking = 10 THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_10,');
+       put('       MAX(CASE WHEN ranking = 11 THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_11,');
+       put('       MAX(CASE WHEN ranking = 12 THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_12,');
+       put('       MAX(CASE WHEN ranking = 13 THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_13,');
+       put('       MAX(CASE WHEN ranking = 14 THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_14,');
+       put('       MAX(CASE WHEN ranking = 15 THEN &&wait_class_colors_s.&&wait_class_colors2_s.&&wait_class_colors3_s.&&wait_class_colors4_s. END) series_15 ');
+       --
+       put('  FROM (SELECT 1 fake, object_node cpu_or_event, other_tag wait_class,');
        put('               ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) ranking');
        put('          FROM plan_table'); 
        put('         WHERE statement_id = ''SQLD360_ASH_DATA_HIST''');
@@ -2575,7 +2890,7 @@ BEGIN
        put('           AND NVL(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'','',1,5)+1,INSTR(partition_stop,'','',1,6)-INSTR(partition_stop,'','',1,5)-1)),io_cost) = '||j.session_serial#||'');
        put('           AND timestamp BETWEEN TO_DATE('''||j.min_sample_time||''', ''YYYYMMDDHH24MISS'') AND TO_DATE('''||j.max_sample_time||''', ''YYYYMMDDHH24MISS'') ');
        put('           AND remarks = ''&&sqld360_sqlid.''');
-       put('         GROUP BY object_node) ash,');
+       put('         GROUP BY object_node, other_tag) ash,');
        put('       (SELECT 1 fake FROM dual) b'); -- this is in case there is no row in ASH
        put(' WHERE ash.fake(+) = b.fake');
        put('   AND ranking <= 15');
@@ -2710,18 +3025,37 @@ BEGIN
        put('UNDEF evt_14'); 
        put('UNDEF evt_15'); 
 
+       -- to play with colors
+       put('DEF series_01 = '''' '); 
+       put('DEF series_02 = '''' '); 
+       put('DEF series_03 = '''' '); 
+       put('DEF series_04 = '''' '); 
+       put('DEF series_05 = '''' '); 
+       put('DEF series_06 = '''' '); 
+       put('DEF series_07 = '''' '); 
+       put('DEF series_08 = '''' '); 
+       put('DEF series_09 = '''' '); 
+       put('DEF series_10 = '''' '); 
+       put('DEF series_11 = '''' '); 
+       put('DEF series_12 = '''' '); 
+       put('DEF series_13 = '''' '); 
+       put('DEF series_14 = '''' '); 
+       put('DEF series_15 = '''' ');
+
        put('----------------------------');       
 
        put('DEF title=''DB Time by top 64 process for SQL_EXEC_ID '||j.sql_exec_id||' of PHV '||i.plan_hash_value||'''');
        put('DEF main_table = ''DBA_HIST_ACTIVE_SESS_HISTORY''');
-       put('DEF skip_pch=''''');
-       put('DEF slices = ''64''');
+       put('DEF skip_bch=''''');
+       --put('DEF slices = ''64''');
        put('BEGIN');
        put(' :sql_text := ''');
        put('SELECT data.qcpx_process,');
        put('       data.num_samples,');
-       put('       TRUNC(100*RATIO_TO_REPORT(data.num_samples) OVER (),2) percent,');
-       put('       NULL dummy_01');
+       put('       NULL style,');
+       --put('       TRUNC(100*RATIO_TO_REPORT(data.num_samples) OVER (),2) percent,');
+       put('       data.qcpx_process||'''' - Total number of samples: ''''||data.num_samples||'''' Percentage: ''''||TRUNC(100*RATIO_TO_REPORT(data.num_samples) OVER (),2) tooltip ');
+       --put('       NULL dummy_01');
        --put('  FROM (SELECT id||'''' - ''''||operation||'''' ''''||options||'''' / ''''||object_node step_event,');
        put('  FROM (SELECT NVL2(TO_NUMBER(SUBSTR(partition_stop,INSTR(partition_stop,'''','''',1,3)+1,INSTR(partition_stop,'''','''',1,4)-INSTR(partition_stop,'''','''',1,3)-1)), ''''PX Proc - '''', ''''QC - '''')||position||''''.''''||cpu_cost||''''.''''||io_cost  qcpx_process, ');   
        put('               count(*) num_samples');
