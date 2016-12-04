@@ -39,6 +39,7 @@ DECLARE
   cur SYS_REFCURSOR;
   l_bar VARCHAR2(1000);
   l_value NUMBER;
+  l_others NUMBER := 100;
   l_style VARCHAR2(1000);
   l_tooltip VARCHAR2(1000);
   l_sql_text VARCHAR2(32767);
@@ -50,9 +51,17 @@ BEGIN
   LOOP
     FETCH cur INTO l_bar, l_value, l_style, l_tooltip;
     EXIT WHEN cur%NOTFOUND;
-    DBMS_OUTPUT.PUT_LINE(',['''||l_bar||''', '||l_value||', '''||l_style||''', '''||l_tooltip||''']');
+    IF l_value >= 3 THEN
+      DBMS_OUTPUT.PUT_LINE(',['''||l_bar||''', '||l_value||', '''||l_style||''', '''||l_tooltip||''']');
+      l_others := l_others - l_value;
+    END IF;
   END LOOP;
   CLOSE cur;
+  l_bar := 'All other Timed Clases ('||l_others||'%)';
+  l_value := l_others;
+  l_style := 'D3D3D3'; -- light gray
+  l_tooltip := '('||l_others||'% of DB Time)';
+  DBMS_OUTPUT.PUT_LINE(',['''||l_bar||''', '||l_value||', '''||l_style||''', '''||l_tooltip||''']');
 END;
 /
 SET SERVEROUT OFF;

@@ -373,9 +373,13 @@ BEGIN
       put_line('@@sql/'||CHR(38)||CHR(38)||'edb360_bypass.&&skip_diagnostics.&&edb360_7c.eadam.sql');
     END IF;
     put_line('-- seconds left on eDB360 before calling SQLd360');
+    put_line('SPO &&edb360_log..txt APP;');
+    put_line('PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
+    put_line('PRO -- seconds left on eDB360 before calling SQLd360');
     put_line('VAR edb360_secs2go NUMBER;');
     put_line('EXEC :edb360_secs2go := 0;');
     put_line('EXEC :edb360_secs2go := :edb360_max_seconds - ROUND((DBMS_UTILITY.GET_TIME - :edb360_time0) / 100);');
+    put_line('PRINT :edb360_secs2go;');
     put_line('DEF edb360_secs2go = ''0'';');
     put_line('COL edb360_secs2go NEW_V edb360_secs2go FOR A8;');
     put_line('SELECT TO_CHAR(:edb360_secs2go) edb360_secs2go FROM DUAL;');
@@ -383,6 +387,7 @@ BEGIN
     put_line('COL edb360_bypass NEW_V edb360_bypass;');
     put_line('SELECT ''--timeout--'' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
     put_line('EXEC DBMS_APPLICATION_INFO.SET_MODULE(''&&edb360_prefix.'',''sqld360'');');
+    put_line('SPO OFF;');
     put_line('@@sql/'||CHR(38)||CHR(38)||'edb360_bypass.sqld360.sql');
   END IF;
 END;
@@ -465,7 +470,7 @@ SET TERM OFF;
 @@&&edb360_0g.tkprof.sql
 SET SERVEROUT OFF HEAD ON PAGES &&def_max_rows.;
 HOS zip -m &&edb360_main_filename._&&edb360_file_time. 99930_&&common_edb360_prefix._top_sql_driver.sql 99950_&&common_edb360_prefix._top_sql_driver.sql sqld360_driver.sql >> &&edb360_log3..txt
-SET HEA ON LIN 32767 NEWP NONE PAGES &&def_max_rows. LONG 32000 LONGC 2000 WRA ON TRIMS ON TRIM ON TI OFF TIMI OFF ARRAY 1000 NUM 20 SQLBL ON BLO . RECSEP OFF;
+SET HEA ON LIN 32767 NEWP NONE PAGES &&def_max_rows. LONG 32000000 LONGC 2000 WRA ON TRIMS ON TRIM ON TI OFF TIMI OFF ARRAY 1000 NUM 20 SQLBL ON BLO . RECSEP OFF;
 --COL row_num NEW_V row_num HEA '#' PRI;
 
 SPO &&edb360_main_report..html APP;

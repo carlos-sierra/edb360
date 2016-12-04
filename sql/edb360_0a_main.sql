@@ -2,8 +2,11 @@
 VAR edb360_main_time0 NUMBER;
 EXEC :edb360_main_time0 := DBMS_UTILITY.GET_TIME;
 
+COL my_sid NEW_V my_sid;
+SELECT TO_CHAR(sid) my_sid FROM v$mystat WHERE ROWNUM = 1;
+
 SET TERM ON;
-SPO 00000_readme_first.txt
+SPO 00000_readme_first_&&my_sid..txt
 -- initial validation
 PRO If eDB360 disconnects right after this message it means the user executing it
 PRO owns a table called PLAN_TABLE that is not the Oracle seeded GTT plan table
@@ -31,7 +34,7 @@ END;
 WHENEVER SQLERROR CONTINUE;
 
 -- parameters (reset readme)
-SPO 00000_readme_first.txt
+SPO 00000_readme_first_&&my_sid..txt
 PRO
 PRO Parameter 1: 
 PRO If your Database is licensed to use the Oracle Tuning pack please enter T.
@@ -97,7 +100,7 @@ HOS rm edb360_pause.sql
 
 -- reset readme
 SET TERM OFF;
-SPO 00000_readme_first.txt
+SPO 00000_readme_first_&&my_sid..txt
 PRO
 PRO Open and read 00001_edb360_<dbname>_index.html
 PRO

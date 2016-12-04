@@ -135,6 +135,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
    AND s1.instance_number = s0.instance_number
    AND s1.startup_time = s0.startup_time
    AND s1.begin_interval_time > (s0.begin_interval_time + (1 / (24 * 60))) /* filter out snaps apart < 1 min */
+   AND (h1.db_time - h0.db_time) > 0 /* eliminates occasional negative spikes */
 ),
 sys_time_model_denorm_4 AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */

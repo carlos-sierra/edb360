@@ -34,7 +34,7 @@ SELECT h.wait_class||'' (''||ROUND(100 * h.samples / t.samples, 1)||''%)'' bucke
        h.samples||'' 1s-samples (''||ROUND(100 * h.samples / t.samples, 1)||''% of DB Time)'' tooltip
   FROM hist h,
        total t
- WHERE ROUND(100 * h.samples / t.samples, 1) > 5 /* only if > 5% */
+ --WHERE ROUND(100 * h.samples / t.samples, 1) >= 3 /* only if >= 3% */
  ORDER BY 2 DESC NULLS LAST
 ';
 END;
@@ -137,7 +137,7 @@ SELECT h.wait_class||'' (''||ROUND(100 * h.samples / t.samples, 1)||''%)'' bucke
        h.samples||'' 10s-samples (''||ROUND(100 * h.samples / t.samples, 1)||''% of DB Time)'' tooltip
   FROM hist h,
        total t
- WHERE ROUND(100 * h.samples / t.samples, 1) > 5 /* only if > 5% */
+ --WHERE ROUND(100 * h.samples / t.samples, 1) >= 3 /* only if >= 3% */
  ORDER BY 2 DESC NULLS LAST
 ';
 END;

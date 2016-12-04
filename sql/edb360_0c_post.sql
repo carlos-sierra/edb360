@@ -38,38 +38,63 @@ SET BLO ON;
 SET RECSEP WR;
 UNDEF 1
 
--- alert log (few methods) note: prefix of&&edb360_sections.is to bypass copy when requesting only some section(s)
+-- alert log (few methods) note: prefix of &&edb360_sections. is to bypass copy when requesting only some section(s)
 COL db_name_upper NEW_V db_name_upper;
 COL db_name_lower NEW_V db_name_lower;
 COL instance_name_upper NEW_V instance_name_upper;
 COL instance_name_lower NEW_V instance_name_lower;
 COL background_dump_dest NEW_V background_dump_dest;
+COL diagnostic_dest NEW_V diagnostic_dest;
 SELECT UPPER(SYS_CONTEXT('USERENV', 'DB_NAME')) db_name_upper FROM DUAL;
 SELECT LOWER(SYS_CONTEXT('USERENV', 'DB_NAME')) db_name_lower FROM DUAL;
 SELECT UPPER(SYS_CONTEXT('USERENV', 'INSTANCE_NAME')) instance_name_upper FROM DUAL;
 SELECT LOWER(SYS_CONTEXT('USERENV', 'INSTANCE_NAME')) instance_name_lower FROM DUAL;
 SELECT value background_dump_dest FROM v$parameter WHERE name = 'background_dump_dest';
-HOS&&edb360_sections.cp &&background_dump_dest./alert_&&db_name_upper.*.log . >> &&edb360_log3..txt
-HOS&&edb360_sections.cp &&background_dump_dest./alert_&&db_name_lower.*.log . >> &&edb360_log3..txt
-HOS&&edb360_sections.cp &&background_dump_dest./alert_&&instance_name_upper.*.log . >> &&edb360_log3..txt
-HOS&&edb360_sections.cp &&background_dump_dest./alert_&&instance_name_lower.*.log . >> &&edb360_log3..txt
-HOS&&edb360_sections.cp &&background_dump_dest./alert_&&_connect_identifier..log . >> &&edb360_log3..txt
-HOS&&edb360_sections.rename alert_ 00006_&&common_edb360_prefix._alert_ alert_*.log >> &&edb360_log3..txt
+SELECT value diagnostic_dest FROM v$parameter WHERE name = 'diagnostic_dest';
+-- pre 12c 
+HOS&&edb360_sections. cp &&background_dump_dest./alert_&&db_name_upper.*.log . >> &&edb360_log3..txt
+HOS&&edb360_sections. cp &&background_dump_dest./alert_&&db_name_lower.*.log . >> &&edb360_log3..txt
+HOS&&edb360_sections. cp &&background_dump_dest./alert_&&instance_name_upper.*.log . >> &&edb360_log3..txt
+HOS&&edb360_sections. cp &&background_dump_dest./alert_&&instance_name_lower.*.log . >> &&edb360_log3..txt
+HOS&&edb360_sections. cp &&background_dump_dest./alert_&&_connect_identifier..log . >> &&edb360_log3..txt
+--12c
+HOS&&edb360_sections. cp &&diagnostic_dest./diag/rdbms/&&db_name_upper./&&instance_name_upper./trace/alert_&&db_name_upper..log . >> &&edb360_log3..txt
+HOS&&edb360_sections. cp &&diagnostic_dest./diag/rdbms/&&db_name_upper./&&instance_name_upper./trace/alert_&&db_name_lower..log . >> &&edb360_log3..txt
+HOS&&edb360_sections. cp &&diagnostic_dest./diag/rdbms/&&db_name_upper./&&instance_name_upper./trace/alert_&&instance_name_upper..log . >> &&edb360_log3..txt
+HOS&&edb360_sections. cp &&diagnostic_dest./diag/rdbms/&&db_name_upper./&&instance_name_upper./trace/alert_&&instance_name_lower..log . >> &&edb360_log3..txt
+HOS&&edb360_sections. cp &&diagnostic_dest./diag/rdbms/&&db_name_upper./&&instance_name_upper./trace/alert_&&_connect_identifier..log . >> &&edb360_log3..txt
+HOS&&edb360_sections. cp &&diagnostic_dest./diag/rdbms/&&db_name_upper./&&instance_name_lower./trace/alert_&&db_name_upper..log . >> &&edb360_log3..txt
+HOS&&edb360_sections. cp &&diagnostic_dest./diag/rdbms/&&db_name_upper./&&instance_name_lower./trace/alert_&&db_name_lower..log . >> &&edb360_log3..txt
+HOS&&edb360_sections. cp &&diagnostic_dest./diag/rdbms/&&db_name_upper./&&instance_name_lower./trace/alert_&&instance_name_upper..log . >> &&edb360_log3..txt
+HOS&&edb360_sections. cp &&diagnostic_dest./diag/rdbms/&&db_name_upper./&&instance_name_lower./trace/alert_&&instance_name_lower..log . >> &&edb360_log3..txt
+HOS&&edb360_sections. cp &&diagnostic_dest./diag/rdbms/&&db_name_upper./&&instance_name_lower./trace/alert_&&_connect_identifier..log . >> &&edb360_log3..txt
+HOS&&edb360_sections. cp &&diagnostic_dest./diag/rdbms/&&db_name_lower./&&instance_name_upper./trace/alert_&&db_name_upper..log . >> &&edb360_log3..txt
+HOS&&edb360_sections. cp &&diagnostic_dest./diag/rdbms/&&db_name_lower./&&instance_name_upper./trace/alert_&&db_name_lower..log . >> &&edb360_log3..txt
+HOS&&edb360_sections. cp &&diagnostic_dest./diag/rdbms/&&db_name_lower./&&instance_name_upper./trace/alert_&&instance_name_upper..log . >> &&edb360_log3..txt
+HOS&&edb360_sections. cp &&diagnostic_dest./diag/rdbms/&&db_name_lower./&&instance_name_upper./trace/alert_&&instance_name_lower..log . >> &&edb360_log3..txt
+HOS&&edb360_sections. cp &&diagnostic_dest./diag/rdbms/&&db_name_lower./&&instance_name_upper./trace/alert_&&_connect_identifier..log . >> &&edb360_log3..txt
+HOS&&edb360_sections. cp &&diagnostic_dest./diag/rdbms/&&db_name_lower./&&instance_name_lower./trace/alert_&&db_name_upper..log . >> &&edb360_log3..txt
+HOS&&edb360_sections. cp &&diagnostic_dest./diag/rdbms/&&db_name_lower./&&instance_name_lower./trace/alert_&&db_name_lower..log . >> &&edb360_log3..txt
+HOS&&edb360_sections. cp &&diagnostic_dest./diag/rdbms/&&db_name_lower./&&instance_name_lower./trace/alert_&&instance_name_upper..log . >> &&edb360_log3..txt
+HOS&&edb360_sections. cp &&diagnostic_dest./diag/rdbms/&&db_name_lower./&&instance_name_lower./trace/alert_&&instance_name_lower..log . >> &&edb360_log3..txt
+HOS&&edb360_sections. cp &&diagnostic_dest./diag/rdbms/&&db_name_lower./&&instance_name_lower./trace/alert_&&_connect_identifier..log . >> &&edb360_log3..txt
+-- rename
+HOS&&edb360_sections. rename alert_ 00006_&&common_edb360_prefix._alert_ alert_*.log >> &&edb360_log3..txt
 
 -- listener log (last 100K + counts per hour) note: prefix of&&edb360_sections.is to bypass lsnr when requesting only some section(s)
-HOS&&edb360_sections.lsnrctl show trc_directory | grep trc_directory | awk '{print "HOS cat "$6"/listener.log | fgrep \"establish\" | awk '\''{ print $1\",\"$2 }'\'' | awk -F: '\''{ print \",\"$1 }'\'' | uniq -c > listener_logons.csv"} END {print "HOS sed -i '\''1s/^/COUNT ,DATE,HOUR\\n/'\'' listener_logons.csv"}' > listener_log_driver.sql
-HOS&&edb360_sections.lsnrctl show trc_directory | grep trc_directory | awk 'BEGIN {b = "HOS tail -100000000c "; e = " > listener_tail.log"} {print b, $6"/listener.log", e } END {print "HOS zip -m listener_log.zip listener_logons.csv listener_tail.log listener_log_driver.sql"}' >> listener_log_driver.sql
+HOS&&edb360_sections. lsnrctl show trc_directory | grep trc_directory | awk '{print "HOS cat "$6"/listener.log | fgrep \"establish\" | awk '\''{ print $1\",\"$2 }'\'' | awk -F: '\''{ print \",\"$1 }'\'' | uniq -c > listener_logons.csv"} END {print "HOS sed -i '\''1s/^/COUNT ,DATE,HOUR\\n/'\'' listener_logons.csv"}' > listener_log_driver.sql
+HOS&&edb360_sections. lsnrctl show trc_directory | grep trc_directory | awk 'BEGIN {b = "HOS tail -100000000c "; e = " > listener_tail.log"} {print b, $6"/listener.log", e } END {print "HOS zip -m listener_log.zip listener_logons.csv listener_tail.log listener_log_driver.sql"}' >> listener_log_driver.sql
 @&&edb360_sections.listener_log_driver.sql
-HOS&&edb360_sections.zip -m &&edb360_main_filename._&&edb360_file_time. listener_log.zip >> &&edb360_log3..txt
+HOS&&edb360_sections. zip -m &&edb360_main_filename._&&edb360_file_time. listener_log.zip >> &&edb360_log3..txt
 HOS rm listener_log_driver.sql
 
 -- zip 
 HOS zip -m &&edb360_main_filename._&&edb360_file_time. &&common_edb360_prefix._query.sql >> &&edb360_log3..txt
 HOS zip -d &&edb360_main_filename._&&edb360_file_time. &&common_edb360_prefix._query.sql >> &&edb360_log3..txt
 -- prefix&&edb360_sections.is to bypass alert and opatch when a section is requested
-HOS&&edb360_sections.zip -m &&edb360_main_filename._&&edb360_file_time. 00006_&&common_edb360_prefix._alert_*.log >> &&edb360_log3..txt
-HOS&&edb360_sections.zip -j 00007_&&common_edb360_prefix._opatch $ORACLE_HOME/cfgtoollogs/opatch/opatch* >> &&edb360_log3..txt
-HOS&&edb360_sections.zip -m &&edb360_main_filename._&&edb360_file_time. 00007_&&common_edb360_prefix._opatch.zip >> &&edb360_log3..txt
+HOS&&edb360_sections. zip -m &&edb360_main_filename._&&edb360_file_time. 00006_&&common_edb360_prefix._alert_*.log >> &&edb360_log3..txt
+HOS&&edb360_sections. zip -j 00007_&&common_edb360_prefix._opatch $ORACLE_HOME/cfgtoollogs/opatch/opatch* >> &&edb360_log3..txt
+HOS&&edb360_sections. zip -m &&edb360_main_filename._&&edb360_file_time. 00007_&&common_edb360_prefix._opatch.zip >> &&edb360_log3..txt
 HOS zip -m &&edb360_main_filename._&&edb360_file_time. &&edb360_log2..txt >> &&edb360_log3..txt
 --HOS zip -m &&edb360_main_filename._&&edb360_file_time. awrinfo.txt >> &&edb360_log3..txt
 HOS zip -m &&edb360_main_filename._&&edb360_file_time. &&edb360_tkprof._sort.txt >> &&edb360_log3..txt
@@ -84,4 +109,4 @@ SET TERM ON;
 DEF _md_top_schemas = '';
 DEF _md_tool = '';
 --@@&&edb360_sections.&&edb360_skip_metadata.get_top_N_schemas.sql
---HOS&&edb360_sections.&&edb360_skip_metadata.zip -m &&edb360_main_filename._&&edb360_file_time. TOP_&&_md_top_schemas._&&_md_tool..zip
+--HOS&&edb360_sections. &&edb360_skip_metadata.zip -m &&edb360_main_filename._&&edb360_file_time. TOP_&&_md_top_schemas._&&_md_tool..zip

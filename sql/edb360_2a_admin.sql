@@ -1835,7 +1835,7 @@ BEGIN
 WITH
 lit AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
-       force_matching_signature, COUNT(*) cnt, MIN(sql_id) min_sql_id, MAX(SQL_ID) max_sql_id
+       force_matching_signature, COUNT(*) cnt, MIN(sql_id) min_sql_id, MAX(sql_id) max_sql_id
   FROM gv$sql
  WHERE force_matching_signature > 0
    AND UPPER(sql_text) NOT LIKE ''%EDB360%''
@@ -1846,6 +1846,8 @@ HAVING COUNT(*) > 99
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        DISTINCT lit.cnt, s.force_matching_signature, s.parsing_schema_name owner,
        CASE WHEN o.object_name IS NOT NULL THEN o.object_name||''(''||s.program_line#||'')'' END source,
+       lit.min_sql_id,
+       lit.max_sql_id,
        s.sql_text
   FROM lit, gv$sql s, dba_objects o
  WHERE s.force_matching_signature = lit.force_matching_signature
@@ -1866,7 +1868,7 @@ BEGIN
 WITH
 lit AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
-       force_matching_signature, COUNT(*) cnt, MIN(sql_id) min_sql_id, MAX(SQL_ID) max_sql_id
+       force_matching_signature, COUNT(*) cnt, MIN(sql_id) min_sql_id, MAX(sql_id) max_sql_id
   FROM gv$sql
  WHERE force_matching_signature > 0
    AND UPPER(sql_text) NOT LIKE ''%EDB360%''
@@ -1877,6 +1879,8 @@ HAVING COUNT(*) > 99
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        DISTINCT s.parsing_schema_name owner, lit.cnt, s.force_matching_signature,
        CASE WHEN o.object_name IS NOT NULL THEN o.object_name||''(''||s.program_line#||'')'' END source,
+       lit.min_sql_id,
+       lit.max_sql_id,
        s.sql_text
   FROM lit, gv$sql s, dba_objects o
  WHERE s.force_matching_signature = lit.force_matching_signature
@@ -2035,6 +2039,8 @@ BEGIN
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
    FORCE_MATCHING_SIGNATURE,
    duplicate_count cnt,
+   min_sql_id,
+   max_sql_id,
    distinct_phv phv_cnt,
    executions,
    buffer_gets,
@@ -2052,6 +2058,8 @@ from
   (select
       FORCE_MATCHING_SIGNATURE,
       count(*) duplicate_count,
+      min(sql_id) min_sql_id,
+      max(sql_id) max_sql_id,
       count(distinct plan_hash_value) distinct_phv,
       sum(executions) executions,
       sum(buffer_gets) buffer_gets,
@@ -2095,6 +2103,8 @@ BEGIN
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
    FORCE_MATCHING_SIGNATURE,
    duplicate_count,
+   min_sql_id,
+   max_sql_id,
    executions,
    buffer_gets,
    buffer_gets_per_exec,
@@ -2111,6 +2121,8 @@ from
   (select
       FORCE_MATCHING_SIGNATURE,
       count(*) duplicate_count,
+      min(sql_id) min_sql_id,
+      max(sql_id) max_sql_id,
       sum(executions) executions,
       sum(buffer_gets) buffer_gets,
       ROUND(sum(buffer_gets)/greatest(sum(executions),1)) buffer_gets_per_exec,

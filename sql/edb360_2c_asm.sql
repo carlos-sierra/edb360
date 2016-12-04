@@ -134,7 +134,7 @@ END;
 -- special addition from MOS 1551288.1
 -- add seq to spool_filename
 EXEC :file_seq := :file_seq + 1;
-SELECT '&&common_edb360_prefix._&&section_id._'||LPAD(:file_seq, 5, '0')||'_failure_diskgroup_space_reserve_requirements' one_spool_filename FROM DUAL;
+SELECT LPAD(:file_seq, 5, '0')||'_&&common_edb360_prefix._&&section_id._&&report_sequence._failure_diskgroup_space_reserve_requirements' one_spool_filename FROM DUAL;
 SPO &&one_spool_filename..txt
 @@ck_free_17.sql
 SPO OFF

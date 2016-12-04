@@ -413,7 +413,7 @@ END;
 -- special contribution from David Mann
 -- http://ba6.us/?q=ArchivedLogRedoInGB_HeatMap
 EXEC :file_seq := :file_seq + 1;
-SELECT '&&common_edb360_prefix._&&section_id._'||LPAD(:file_seq, 5, '0')||'_archived_redo_log_heat_map' one_spool_filename FROM DUAL;
+SELECT LPAD(:file_seq, 5, '0')||'_&&common_edb360_prefix._&&section_id._&&report_sequence._archived_redo_log_heat_map' one_spool_filename FROM DUAL;
 SET SERVEROUT ON
 SET SERVEROUT ON SIZE 1000000;
 SET SERVEROUT ON SIZE UNL;

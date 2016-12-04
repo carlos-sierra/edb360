@@ -156,6 +156,33 @@ END;
 /
 @@&&skip_10g.edb360_9a_pre_one.sql       
 
+DEF title = 'SQL Plan Directives';
+DEF main_table = 'DBA_SQL_PLAN_DIRECTIVES';
+BEGIN
+  :sql_text := '
+SELECT *
+  FROM dba_sql_plan_directives
+ ORDER BY
+       1
+';
+END;
+/
+@@&&skip_10g.&&skip_11g.edb360_9a_pre_one.sql       
+
+DEF title = 'SQL Plan Directives - Objects';
+DEF main_table = 'DBA_SQL_PLAN_DIR_OBJECTS';
+BEGIN
+  :sql_text := '
+SELECT *
+  FROM dba_sql_plan_dir_objects
+ ORDER BY
+       1,2,3,4
+';
+END;
+/
+@@&&skip_10g.&&skip_11g.edb360_9a_pre_one.sql       
+
+
 SPO &&edb360_main_report..html APP;
 PRO </ol>
 SPO OFF;

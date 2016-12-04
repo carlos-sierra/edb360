@@ -1,6 +1,16 @@
 Changelog
 =========
 
+v1621 (2016-12-03)
+=====
+1. Added Auto Tune Report
+2. Added SQL Plan Directives
+3. Enhanced AWR ASH pre-check
+4. Added "All other Timed Clases" to 6a ASH bar char
+5. Readme filename is now unique (for multi-threaded executions)
+6. Add min sql_id to 2a SQL using Literals or many children (by COUNT) (GV$SQL)
+7. Get alert log from diagnostic_dest on 12c
+
 v1620 (2016-11-23)
 =====
 1. SQLd360 stops executing when it consumed all the time allocated by eDB360 (the *next* SQL ID will be ignored, the current one is let to complete)

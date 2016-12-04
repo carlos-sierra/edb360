@@ -1,33 +1,42 @@
-EDB360 v1620 (2016-11-23) by Carlos Sierra
+edb360 v1621 (2016-12-03) by Carlos Sierra
 ~~~~~~~~~~~~
-EDB360 is a "free to use" tool to perform an initial assessment of a remote system. 
+edb360 is a "free to use" tool to perform an initial assessment of a remote system. 
 
-It gives a glance of a database state. It also helps to document any findings.
+It gives a glance of an Oracle database state. It also helps to document any findings.
 
-EDB360 installs nothing on the database. 
+eDB360 works on Oracle 10g to 12c databases. eDB360 works on Linus and UNIX systems. 
+For Windows systems you may want to install first UNIX Utilities (UnxUtils) and a zip 
+program, else a few OS commands may not properly work.
+
+edb360 installs nothing on the database. 
 
 For better results execute connected as DBA or user with access to data dictionary.
 
-EDB360 takes a few hours to execute. 
+edb360 takes up to 24 hours to execute. 
 
-Output ZIP file can be large (over 100 MBs), so you may want to place and execute EDB360
+Output ZIP file can be large (over 100 MBs), so you may want to place and execute edb360
 from a system directory with at least 1 GB of free space. 
 
-Best time to execute EDB360 is close to the end of a working day and let it execute
-overnight.
+Best time to execute edb360 is overnight or over a weekend.
+
+Before executing edb360 please perform a pre-check of ASH on AWR by reviewing output of 
+included script edb360-master/sql/awr_ash_pre_check.sql.
 
 ****************************************************************************************
 
 Steps
 ~~~~~
-1. Unzip edb360.zip, navigate to the root edb360-master directory, and connect as DBA, 
-   or any user with Data Dictionary access:
+1. Unzip edb360-master.zip, navigate to the root edb360-master directory, and connect as 
+   DBA, or any user with access to the Data Dictionary:
 
    $ unzip edb360-master.zip
    $ cd edb360-master
-   $ sqlplus dba_user/dba_pwd
+   $ sqlplus <dba_user>/<dba_pwd>
 
-2. Execute edb360.sql passing two parameters.
+2. Execute sql/awr_ash_pre_check.sql and review output, specially last page. Then decide
+   if continuing with edb360 (step 3 below) or remediate first findings reported.
+
+3. Execute edb360.sql passing two parameters either inline or when asked.
 
    Parameter 1: Oracle License Pack (required)
    
@@ -37,11 +46,15 @@ Steps
    
    Parameter 2: Custom edb360 configuration filename (optional)
 
+   note: This parameter is for advanced users, thus a NULL value is common.
+
+   Execution sample:
+
    SQL> @edb360.sql T NULL
    
-3. Unzip output edb360_<NNNNNN>_<NNNNNN>_YYYYMMDD_HH24MI.zip into a directory on your PC
+4. Unzip output edb360_<NNNNNN>_<NNNNNN>_YYYYMMDD_HH24MI.zip into a directory on your PC
 
-4. Open and review main html file 00001_edb360_<NNNNNN>_index.html using a browser
+5. Open and review main html file 00001_edb360_<NNNNNN>_index.html using a browser
 
 ****************************************************************************************
 
@@ -67,7 +80,7 @@ Notes
 
    select retention from DBA_HIST_WR_CONTROL;
 
-5. eDB360 needs the following grants
+5. edb360 needs the following grants when executed as user xxx
 
    grant select any dictionary to xxx;
    grant advisor to xxx;
@@ -78,39 +91,27 @@ Notes
 
 Troubleshooting
 ~~~~~~~~~~~~~~~
-edb360 takes a few hours to execute on a large database. On smaller ones or on Exadata it
-may take less than 1hr. In rare cases it may take up to 24 hours or even more. 
+edb360 takes up to 24 hours to execute on a large database. On smaller ones or on Exadata
+it may take a few hours or less. In rare cases it may require even more than 24 hrs.
+
 If you think edb360 takes too long on your database, the first suspect is usually the 
-state of the CBO stats on Tables behind AWR. 
+state of the CBO stats on Tables behind AWR. Validate with sql/awr_ash_pre_check.sql.
+
 Troubleshooting steps below are for improving performance of edb360 based on known issues.
 
 Steps:
 
-1. Review files 00002_edb360_NNNNNN_log.txt, 00003_edb360_NNNNNN_log2.txt, 
-   00004_edb360_NNNNNN_log3.txt and 00005_edb360_NNNNNN_tkprof_sort.txt. 
-   First log shows the state of the statistics for AWR Tables. If stats are old then 
-   gather them fresh with script edb360-master/sql/gather_stats_wr_sys.sql
-   
-2. If number of rows on WRH$_ACTIVE_SESSION_HISTORY as per 00002_edb360_NNNNNN_log.txt is
-   several millions, then you may not be purging data periodically. 
-   There are some known bugs and some blog posts on this regard. Review MOS 387914.1.
-   Execute query below to validate ASH age:
+1. Refer to https://carlos-sierra.net/2016/11/23/edb360-takes-long-to-execute/
 
-       SELECT TRUNC(sample_time, 'MM'), COUNT(*)
-         FROM dba_hist_active_sess_history
-        GROUP BY TRUNC(sample_time, 'MM')
-        ORDER BY TRUNC(sample_time, 'MM')
-       /
-
-3. If edb360 version (first line on this readme) is older than 1 month, download and use
+2. If edb360 version (first line on this readme) is older than 1 month, download and use
    latest version: https://github.com/carlos-sierra/edb360/archive/master.zip
 
-4. If after going through steps 1-3 above, edb360 still takes longer than a few hours, 
-   feel free to email author carlos.sierra.usa@gmail.com and provide 4 files from step 1.
+3. If after going through steps above, edb360 still takes longer than a few hours, feel 
+   free to email author carlos.sierra.usa@gmail.com and provide files from step 1.
 
 ****************************************************************************************
    
-    EDB360 - Enkitec's Oracle Database 360-degree View
+    edb360 - Enkitec's Oracle Database 360-degree View
     Copyright (C) 2016  Carlos Sierra
 
     This program is free software: you can redistribute it and/or modify

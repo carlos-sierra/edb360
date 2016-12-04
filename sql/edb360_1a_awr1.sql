@@ -1,6 +1,6 @@
 DEF ash_validation = '--skip--';
 
-SPO 00000_readme_first.txt APP
+SPO 00000_readme_first_&&my_sid..txt
 PRO
 PRO Open and read 00001_edb360_<dbname>_index.html
 PRO

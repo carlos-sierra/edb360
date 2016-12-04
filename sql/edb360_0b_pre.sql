@@ -1,5 +1,5 @@
-DEF edb360_vYYNN = 'v1620';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2016-11-23)';
+DEF edb360_vYYNN = 'v1621';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2016-12-03)';
 DEF edb360_copyright = ' (c) 2016';
 
 SET TERM OFF;
@@ -641,7 +641,7 @@ SET HEA ON;
 SET LIN 32767; 
 SET NEWP NONE; 
 SET PAGES &&def_max_rows.; 
-SET LONG 32000; 
+SET LONG 32000000; 
 SET LONGC 2000; 
 SET WRA ON; 
 SET TRIMS ON; 
@@ -720,7 +720,7 @@ HOS zip -m &&edb360_main_filename._&&edb360_file_time. verify_stats_wr_sys_*.txt
 -- zip esp into main
 HOS zip -m &&edb360_main_filename._&&edb360_file_time. escp_output_&&esp_host_name_short._&&esp_collection_yyyymmdd..zip >> &&edb360_log3..txt
 -- zip other files
-HOS zip -m &&edb360_main_filename._&&edb360_file_time. 00000_readme_first.txt >> &&edb360_log3..txt
+HOS zip -m &&edb360_main_filename._&&edb360_file_time. 00000_readme_first_&&my_sid..txt >> &&edb360_log3..txt
 HOS zip -j &&edb360_main_filename._&&edb360_file_time. js/sorttable.js >> &&edb360_log3..txt
 HOS zip -j &&edb360_main_filename._&&edb360_file_time. js/edb360_img.jpg >> &&edb360_log3..txt
 HOS zip -j &&edb360_main_filename._&&edb360_file_time. js/edb360_favicon.ico >> &&edb360_log3..txt
