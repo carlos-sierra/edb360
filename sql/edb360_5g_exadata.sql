@@ -39,7 +39,7 @@ SELECT a.samples,
 ';
 END;
 /
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_10g.edb360_9a_pre_one.sql
 
 COL db_time_secs HEA "DB Time|Secs";
 COL io_time_secs HEA "IO Time|Secs";
@@ -92,10 +92,10 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
    AND dbid = &&edb360_dbid.
    AND wait_class IN (''User I/O'', ''System I/O'', ''Commit'')
  GROUP BY
+       snap_id,
        dbid,
        instance_number,
-       wait_class,
-       snap_id
+       wait_class
 ),
 system_event AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
@@ -169,12 +169,13 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
    AND w3.event_name = ''log file parallel write''
    AND w3.time_waited_micro >= 0
 ),
-by_inst_and_hh AS (
+by_inst_and_snap AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
-       MIN(t.snap_id) snap_id,
-       t.dbid,
+       t.snap_id,
        t.instance_number,
-       TRUNC(CAST(s.end_interval_time AS DATE), ''HH'') end_time,
+       --s.begin_interval_time,
+       --s.end_interval_time,
+       --ROUND((CAST(s.end_interval_time AS DATE) - CAST(s.begin_interval_time AS DATE)) * 24 * 60 * 60) interval_secs,
        SUM(db_time) db_time,
        SUM(u_io_time) u_io_time,
        SUM(dbfsr_time) dbfsr_time,
@@ -190,15 +191,17 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
    AND s.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND s.dbid = &&edb360_dbid.
  GROUP BY
-       t.dbid,
+       t.snap_id,
        t.instance_number,
-       TRUNC(CAST(s.end_interval_time AS DATE), ''HH'')
+       s.begin_interval_time,
+       s.end_interval_time
 ),
-by_hh AS (
+by_snap AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
-       MIN(snap_id) snap_id,
-       dbid,
-       end_time,
+       snap_id,
+       --MIN(begin_interval_time) begin_interval_time,
+       --MIN(end_interval_time) end_interval_time,
+       --ROUND((CAST(MIN(end_interval_time) AS DATE) - CAST(MIN(begin_interval_time) AS DATE)) * 24 * 60 * 60) interval_secs,
        NVL(SUM(db_time), 0) db_time,
        NVL(SUM(u_io_time), 0) u_io_time,
        NVL(SUM(dbfsr_time), 0) dbfsr_time,
@@ -209,10 +212,9 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        NVL(SUM(u_io_time), 0) +
        NVL(SUM(s_io_time), 0) +
        NVL(SUM(commt_time), 0) io_time
-  FROM by_inst_and_hh
+  FROM by_inst_and_snap
  GROUP BY
-       dbid,
-       end_time
+       snap_id
 )
 SELECT ROUND(SUM(db_time) / 1e6, 2) db_time_secs,
        ROUND(SUM(io_time) / 1e6, 2) io_time_secs,
@@ -234,7 +236,7 @@ SELECT ROUND(SUM(db_time) / 1e6, 2) db_time_secs,
        ROUND(100 * SUM(s_io_time) / SUM(io_time), 2) s_io_perc_iot,
        ROUND(100 * SUM(lfpw_time) / SUM(io_time), 2) lfpw_perc_iot,
        ROUND(100 * SUM(commt_time) / SUM(io_time), 2) commt_perc_iot
-  FROM by_hh
+  FROM by_snap
 ';
 END;
 /
@@ -290,10 +292,10 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
    AND dbid = &&edb360_dbid.
    AND wait_class IN (''User I/O'', ''System I/O'', ''Commit'')
  GROUP BY
+       snap_id,
        dbid,
        instance_number,
-       wait_class,
-       snap_id
+       wait_class
 ),
 system_event AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
@@ -367,12 +369,39 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
    AND w3.event_name = ''log file parallel write''
    AND w3.time_waited_micro >= 0
 ),
-by_inst_and_hh AS (
+by_inst_and_snap AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
-       MIN(t.snap_id) snap_id,
-       t.dbid,
+       t.snap_id,
        t.instance_number,
-       TRUNC(CAST(s.end_interval_time AS DATE), ''HH'') end_time,
+       s.begin_interval_time,
+       s.end_interval_time,
+       --ROUND((CAST(s.end_interval_time AS DATE) - CAST(s.begin_interval_time AS DATE)) * 24 * 60 * 60) interval_secs,
+       SUM(db_time) db_time,
+       SUM(u_io_time) u_io_time,
+       SUM(dbfsr_time) dbfsr_time,
+       SUM(dpr_time) dpr_time,
+       SUM(s_io_time) s_io_time,
+       SUM(commt_time) commt_time,
+       SUM(lfpw_time) lfpw_time
+  FROM time_components t,
+       dba_hist_snapshot s
+ WHERE s.snap_id = t.snap_id
+   AND s.dbid = t.dbid
+   AND s.instance_number = t.instance_number
+   AND s.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND s.dbid = &&edb360_dbid.
+ GROUP BY
+       t.snap_id,
+       t.instance_number,
+       s.begin_interval_time,
+       s.end_interval_time
+),
+by_snap AS (
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
+       snap_id,
+       MIN(begin_interval_time) begin_interval_time,
+       MIN(end_interval_time) end_interval_time,
+       --ROUND((CAST(MIN(end_interval_time) AS DATE) - CAST(MIN(begin_interval_time) AS DATE)) * 24 * 60 * 60) interval_secs,
        NVL(SUM(db_time), 0) db_time,
        NVL(SUM(u_io_time), 0) u_io_time,
        NVL(SUM(dbfsr_time), 0) dbfsr_time,
@@ -383,39 +412,13 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        NVL(SUM(u_io_time), 0) +
        NVL(SUM(s_io_time), 0) +
        NVL(SUM(commt_time), 0) io_time
-  FROM time_components t,
-       dba_hist_snapshot s
- WHERE s.snap_id = t.snap_id
-   AND s.dbid = t.dbid
-   AND s.instance_number = t.instance_number
-   AND CAST(s.begin_interval_time AS DATE) > SYSDATE - &&collection_days.
+  FROM by_inst_and_snap
  GROUP BY
-       t.dbid,
-       t.instance_number,
-       TRUNC(CAST(s.end_interval_time AS DATE), ''HH'')
-),
-by_hh AS (
-SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
-       MIN(snap_id) snap_id,
-       dbid,
-       end_time,
-       SUM(db_time) db_time,
-       SUM(u_io_time) u_io_time,
-       SUM(dbfsr_time) dbfsr_time,
-       SUM(dpr_time) dpr_time,
-       SUM(s_io_time) s_io_time,
-       SUM(commt_time) commt_time,
-       SUM(lfpw_time) lfpw_time,
-       SUM(io_time) io_time
-  FROM by_inst_and_hh
- GROUP BY
-       dbid,
-       end_time
+       snap_id
 )
 SELECT snap_id,
-       --dbid,
-       TO_CHAR(end_time - (1/24), ''YYYY-MM-DD HH24:MI'') begin_time,
-       TO_CHAR(end_time, ''YYYY-MM-DD HH24:MI'') end_time,
+       TO_CHAR(MIN(begin_interval_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
+       TO_CHAR(MIN(end_interval_time), ''YYYY-MM-DD HH24:MI:SS'') end_time,
        ROUND(db_time / 1e6, 2) db_time_secs,
        ROUND(io_time / 1e6, 2) io_time_secs,
        ROUND(u_io_time / 1e6, 2) u_io_secs,
@@ -431,11 +434,9 @@ SELECT snap_id,
        0 dummy_13,
        0 dummy_14,
        0 dummy_15
-  FROM by_hh
+  FROM by_snap
  ORDER BY
-       snap_id,
-       dbid,
-       end_time
+       snap_id
 ';
 END;
 /
@@ -468,7 +469,7 @@ ORDER BY
 ';
 END;
 /
-@@edb360_9a_pre_one.sql
+@@&&skip_10g.edb360_9a_pre_one.sql
 
 COL cv_cellname       HEAD CELLNAME         FOR A20
 COL cv_cellversion    HEAD CELLSRV_VERSION  FOR A20
@@ -536,7 +537,7 @@ ORDER BY
 ';
 END;
 /
-@@edb360_9a_pre_one.sql
+@@&&skip_10g.edb360_9a_pre_one.sql
 
 COL cv_cellname       HEAD CELLNAME         FOR A20
 COL cv_cellversion    HEAD CELLSRV_VERSION  FOR A20
@@ -588,7 +589,7 @@ ORDER BY
 ';
 END;
 /
-@@edb360_9a_pre_one.sql
+@@&&skip_10g.edb360_9a_pre_one.sql
 
 COL cv_cellname       HEAD CELL_NAME        FOR A20
 COL cv_cell_path      HEAD CELL_PATH        FOR A20
@@ -620,7 +621,7 @@ ORDER BY
 ';
 END;
 /
-@@edb360_9a_pre_one.sql
+@@&&skip_10g.edb360_9a_pre_one.sql
 
 COL cellname            HEAD CELLNAME       FOR A20
 COL celldisk_name       HEAD CELLDISK       FOR A30
@@ -782,7 +783,7 @@ ORDER BY
 ';
 END;
 /
-@@edb360_9a_pre_one.sql
+@@&&skip_10g.edb360_9a_pre_one.sql
 CLEAR BREAKS
 
 COL cellname            HEAD CELLNAME       FOR A20
@@ -938,7 +939,7 @@ ORDER BY
 ';
 END;
 /
-@@edb360_9a_pre_one.sql
+@@&&skip_10g.edb360_9a_pre_one.sql
 CLEAR BREAKS
 
 SPO &&edb360_main_report..html APP;

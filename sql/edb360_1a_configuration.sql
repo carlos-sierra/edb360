@@ -185,8 +185,8 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        version,			
        db_name,			
        instance_name,		
-       host_name,			
-       platform_name	
+       host_name			
+       --platform_name not avail on 10g
   FROM dba_hist_database_instance
  ORDER BY
        dbid,				
@@ -254,6 +254,7 @@ END;
 
 DEF title = 'Registry History';
 DEF main_table = 'DBA_REGISTRY_HISTORY';
+DEF abstract = 'Review MOS 1360790.1<br />';
 BEGIN
   :sql_text := '
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
@@ -327,136 +328,6 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
 END;
 /
 @@edb360_9a_pre_one.sql
-
-BEGIN
- :sql_text_backup := '
-WITH
-by_instance_and_hh AS (
-SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
-       r.instance_number,	
-       TRUNC(CAST(s.begin_interval_time AS DATE), ''HH'') begin_time,
-       MAX(r.snap_id) snap_id,
-       MAX(r.current_utilization) current_utilization,
-       MAX(r.max_utilization) max_utilization
-       --NVL(MAX(TO_NUMBER(TRANSLATE(r.initial_allocation, ''0123456789.'', ''0123456789.''))), 0) initial_allocation,
-       --NVL(MAX(TO_NUMBER(TRANSLATE(r.limit_value, ''0123456789.'', ''0123456789.''))), 0) limit_value
-  FROM dba_hist_resource_limit r,
-       dba_hist_snapshot s
- WHERE s.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
-   AND s.dbid = &&edb360_dbid.
-   AND r.snap_id = s.snap_id
-   AND r.dbid = s.dbid
-   AND r.instance_number = s.instance_number
-   AND r.resource_name = ''@resource_name@''
- GROUP BY
-       r.instance_number,
-       TRUNC(CAST(s.begin_interval_time AS DATE), ''HH'')
-)
-SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
-       MAX(snap_id) snap_id,
-       TO_CHAR(begin_time, ''YYYY-MM-DD HH24:MI'') begin_time,
-       TO_CHAR(begin_time + (1/24), ''YYYY-MM-DD HH24:MI'') end_time,
-       SUM(current_utilization) current_utilization,
-       SUM(max_utilization) max_utilization,
-       0 dummy_03,
-       0 dummy_04,
-       0 dummy_05,
-       0 dummy_06,
-       0 dummy_07,
-       0 dummy_08,
-       0 dummy_09,
-       0 dummy_10,
-       0 dummy_11,
-       0 dummy_12,
-       0 dummy_13,
-       0 dummy_14,
-       0 dummy_15
-  FROM by_instance_and_hh
- GROUP BY
-       begin_time
- ORDER BY
-       begin_time
-';
-END;				
-/
-
-DEF chartype = 'LineChart';
-DEF vbaseline = ''; 
-DEF stacked = '';
-DEF skip_lch = '';
-DEF title = 'Processes Time Series';
-DEF main_table = 'DBA_HIST_RESOURCE_LIMIT';
-DEF vaxis = 'Processes';
-DEF tit_01 = 'Current Utilization';
-DEF tit_02 = 'Max Utilization';
-DEF tit_03 = '';
-DEF tit_04 = '';
-DEF tit_05 = '';
-DEF tit_06 = '';
-DEF tit_07 = '';
-DEF tit_08 = '';
-DEF tit_09 = '';
-DEF tit_10 = '';
-DEF tit_11 = '';
-DEF tit_12 = '';
-DEF tit_13 = '';
-DEF tit_14 = '';
-DEF tit_15 = '';
-
-EXEC :sql_text := REPLACE(:sql_text_backup, '@resource_name@', 'processes');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
-
-DEF chartype = 'LineChart';
-DEF vbaseline = ''; 
-DEF stacked = '';
-DEF skip_lch = '';
-DEF title = 'Sessions Time Series';
-DEF main_table = 'DBA_HIST_RESOURCE_LIMIT';
-DEF vaxis = 'Sessions';
-DEF tit_01 = 'Current Utilization';
-DEF tit_02 = 'Max Utilization';
-DEF tit_03 = '';
-DEF tit_04 = '';
-DEF tit_05 = '';
-DEF tit_06 = '';
-DEF tit_07 = '';
-DEF tit_08 = '';
-DEF tit_09 = '';
-DEF tit_10 = '';
-DEF tit_11 = '';
-DEF tit_12 = '';
-DEF tit_13 = '';
-DEF tit_14 = '';
-DEF tit_15 = '';
-
-EXEC :sql_text := REPLACE(:sql_text_backup, '@resource_name@', 'sessions');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
-
-DEF chartype = 'LineChart';
-DEF vbaseline = ''; 
-DEF stacked = '';
-DEF skip_lch = '';
-DEF title = 'Parallel Max Servers Time Series';
-DEF main_table = 'DBA_HIST_RESOURCE_LIMIT';
-DEF vaxis = 'Parallel max servers';
-DEF tit_01 = 'Current Utilization';
-DEF tit_02 = 'Max Utilization';
-DEF tit_03 = '';
-DEF tit_04 = '';
-DEF tit_05 = '';
-DEF tit_06 = '';
-DEF tit_07 = '';
-DEF tit_08 = '';
-DEF tit_09 = '';
-DEF tit_10 = '';
-DEF tit_11 = '';
-DEF tit_12 = '';
-DEF tit_13 = '';
-DEF tit_14 = '';
-DEF tit_15 = '';
-
-EXEC :sql_text := REPLACE(:sql_text_backup, '@resource_name@', 'parallel_max_servers');
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF title = 'HWM Statistics';
 DEF main_table = 'DBA_HIGH_WATER_MARK_STATISTICS';
@@ -631,8 +502,8 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
    AND dbid = &&edb360_dbid.
 )
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
-       TO_CHAR(s.begin_interval_time, ''YYYY-MM-DD HH24:MI'') begin_time,
-       TO_CHAR(s.end_interval_time, ''YYYY-MM-DD HH24:MI'') end_time,
+       TO_CHAR(s.begin_interval_time, ''YYYY-MM-DD HH24:MI:SS'') begin_time,
+       TO_CHAR(s.end_interval_time, ''YYYY-MM-DD HH24:MI:SS'') end_time,
        p.snap_id,
        --p.dbid,
        p.instance_number,
@@ -656,6 +527,97 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
 END;
 /
 @@&&skip_diagnostics.edb360_9a_pre_one.sql
+
+COL spfile_value FOR A12;
+COL spfile_sid FOR A10;
+DEF title = 'Memory Configuration';
+DEF main_table = 'GV$SYSTEM_PARAMETER2';
+DEF foot = 'Recommended GB to be filled out during HC.';
+BEGIN
+  :sql_text := '
+WITH
+system_parameter AS (
+SELECT inst_id,
+       name,
+       value
+  FROM gv$system_parameter2
+ WHERE name IN
+( ''memory_max_target''
+, ''memory_target''
+, ''pga_aggregate_target''
+, ''sga_max_size''
+, ''sga_target''
+, ''db_cache_size''
+, ''shared_pool_size''
+, ''shared_pool_reserved_size''
+, ''large_pool_size''
+, ''java_pool_size''
+, ''streams_pool_size''
+, ''result_cache_max_size''
+, ''db_keep_cache_size''
+, ''db_recycle_cache_size''
+, ''db_32k_cache_size''
+, ''db_16k_cache_size''
+, ''db_8k_cache_size''
+, ''db_4k_cache_size''
+, ''db_2k_cache_size''
+)),
+spparameter_inst AS (
+SELECT i.inst_id,
+       p.name,
+       p.display_value
+  FROM v$spparameter p,
+       gv$instance i
+ WHERE p.isspecified = ''TRUE''
+   AND p.sid <> ''*''
+   AND i.instance_name = p.sid
+),
+spparameter_all AS (
+SELECT p.name,
+       p.display_value
+  FROM v$spparameter p
+ WHERE p.isspecified = ''TRUE''
+   AND p.sid = ''*''
+)
+SELECT s.name,
+       s.inst_id,
+       CASE WHEN i.name IS NOT NULL THEN TO_CHAR(i.inst_id) ELSE (CASE WHEN a.name IS NOT NULL THEN ''*'' END) END spfile_sid,
+       NVL(i.display_value, a.display_value) spfile_value,
+       CASE s.value WHEN ''0'' THEN ''0'' ELSE TRIM(TO_CHAR(ROUND(TO_NUMBER(s.value)/POWER(2,30),3),''9990.000''))||''G'' END current_gb,
+       NULL recommended_gb
+  FROM system_parameter s,
+       spparameter_inst i,
+       spparameter_all  a
+ WHERE i.inst_id(+) = s.inst_id
+   AND i.name(+)    = s.name
+   AND a.name(+)    = s.name
+ ORDER BY
+       CASE s.name
+       WHEN ''memory_max_target''         THEN  1
+       WHEN ''memory_target''             THEN  2
+       WHEN ''pga_aggregate_target''      THEN  3
+       WHEN ''sga_max_size''              THEN  4
+       WHEN ''sga_target''                THEN  5
+       WHEN ''db_cache_size''             THEN  6
+       WHEN ''shared_pool_size''          THEN  7
+       WHEN ''shared_pool_reserved_size'' THEN  8
+       WHEN ''large_pool_size''           THEN  9
+       WHEN ''java_pool_size''            THEN 10
+       WHEN ''streams_pool_size''         THEN 11
+       WHEN ''result_cache_max_size''     THEN 12
+       WHEN ''db_keep_cache_size''        THEN 13
+       WHEN ''db_recycle_cache_size''     THEN 14
+       WHEN ''db_32k_cache_size''         THEN 15
+       WHEN ''db_16k_cache_size''         THEN 16
+       WHEN ''db_8k_cache_size''          THEN 17
+       WHEN ''db_4k_cache_size''          THEN 18
+       WHEN ''db_2k_cache_size''          THEN 19
+       END,
+       s.inst_id
+';
+END;
+/
+@@edb360_9a_pre_one.sql
 
 DEF title = 'SQLTXPLAIN Version';
 DEF main_table = 'SQLTXPLAIN.SQLI$_PARAMETER';

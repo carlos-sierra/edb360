@@ -19,6 +19,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
        h.dbid,
        h.instance_number,
        h.name,
+       s.begin_interval_time,
        s.end_interval_time,
        s.startup_time - LAG(s.startup_time) OVER (PARTITION BY h.dbid, h.instance_number, h.name ORDER BY h.snap_id) startup_time_interval,
        h.bytes_sent - LAG(h.bytes_sent) OVER (PARTITION BY h.dbid, h.instance_number, h.name ORDER BY h.snap_id) bytes_sent,
@@ -35,25 +36,26 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
 ),
 per_instance AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
-       MAX(snap_id) snap_id,
-       dbid,
+       snap_id,
+       begin_interval_time,
+       end_interval_time,
        instance_number,
-       TRUNC(end_interval_time, ''HH'') end_time,
-       ROUND(SUM(bytes_received) / POWER(10,6) / 3600, 2) mbps_received,
-       ROUND(SUM(bytes_sent) / POWER(10,6) / 3600, 2) mbps_sent
+       ROUND(SUM(bytes_received) / POWER(10,6) / ROUND((CAST(end_interval_time AS DATE) - CAST(begin_interval_time AS DATE)) * 24 * 60 * 60), 2) mbps_received,
+       ROUND(SUM(bytes_sent) / POWER(10,6) / ROUND((CAST(end_interval_time AS DATE) - CAST(begin_interval_time AS DATE)) * 24 * 60 * 60), 2) mbps_sent
   FROM ic_client_stats
   WHERE startup_time_interval = TO_DSINTERVAL(''+00 00:00:00.000000'') -- include only snaps from same startup
     AND bytes_received >= 0
     AND bytes_sent >= 0
  GROUP BY
-       dbid,
-       instance_number,
-       TRUNC(end_interval_time, ''HH'')
+       snap_id,
+       begin_interval_time,
+       end_interval_time,
+       instance_number
 )
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
-       TO_CHAR(end_time - (1/24), ''YYYY-MM-DD HH24:MI'') begin_time,
-       TO_CHAR(end_time, ''YYYY-MM-DD HH24:MI'') end_time,
+       TO_CHAR(MIN(begin_interval_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
+       TO_CHAR(MIN(end_interval_time), ''YYYY-MM-DD HH24:MI:SS'') end_time,
        SUM(mbps_sent) + SUM(mbps_received) mbps_total,
        SUM(mbps_sent) mbps_sent,
        SUM(mbps_received) mbps_received,
@@ -71,15 +73,12 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        0 dummy_15
   FROM per_instance
  GROUP BY       
-       snap_id,
-       end_time
+       snap_id
  ORDER BY       
-       snap_id,
-       end_time
+       snap_id
 ';
 END;
 /
-
 DEF main_table = 'DBA_HIST_IC_CLIENT_STATS';
 DEF vaxis = 'IC Client Statistics (MBPS)';
 DEF tit_01 = 'MBPS Total';
@@ -170,6 +169,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
        h.dbid,
        h.instance_number,
        h.if_name,
+       s.begin_interval_time,
        s.end_interval_time,
        s.startup_time - LAG(s.startup_time) OVER (PARTITION BY h.dbid, h.instance_number, h.if_name ORDER BY h.snap_id) startup_time_interval,
        h.bytes_received - LAG(h.bytes_received) OVER (PARTITION BY h.dbid, h.instance_number, h.if_name ORDER BY h.snap_id) bytes_received,
@@ -196,11 +196,11 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
 ),
 per_instance AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
-       MAX(snap_id) snap_id,
-       dbid,
+       snap_id,
+       begin_interval_time,
+       end_interval_time,
        instance_number,
        if_name,
-       TRUNC(end_interval_time, ''HH'') end_time,
        SUM(bytes_received) bytes_received,
        SUM(packets_received) packets_received,
        SUM(receive_errors) receive_errors,
@@ -228,15 +228,17 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
     AND send_buf_or >= 0
     AND send_carrier_lost >= 0
  GROUP BY
-       dbid,
+       snap_id,
+       begin_interval_time,
+       end_interval_time,
        instance_number,
-       if_name,
-       TRUNC(end_interval_time, ''HH'')
+       if_name
 ),
 per_cluster AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
-       end_time,
+       begin_interval_time,
+       end_interval_time,
        SUM(bytes_received) bytes_received,
        SUM(packets_received) packets_received,
        SUM(receive_errors) receive_errors,
@@ -252,12 +254,13 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
   FROM per_instance
  GROUP BY
        snap_id,
-       end_time
+       begin_interval_time,
+       end_interval_time
 )
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        snap_id
-       ,TO_CHAR(end_time - (1/24), ''YYYY-MM-DD HH24:MI'') begin_time
-       ,TO_CHAR(end_time, ''YYYY-MM-DD HH24:MI'') end_time
+       ,TO_CHAR(MIN(begin_interval_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time
+       ,TO_CHAR(MIN(end_interval_time), ''YYYY-MM-DD HH24:MI:SS'') end_time
        #column01#
        #column02#
        #column03#
@@ -275,12 +278,10 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        ,0 dummy_15
   FROM per_cluster
  ORDER BY       
-       snap_id,
-       end_time
+       snap_id
 ';
 END;
 /
-
 DEF main_table = 'DBA_HIST_IC_DEVICE_STATS';
 DEF vaxis = 'IC Device Statistics';
 DEF tit_01 = 'Packets Received';
@@ -378,8 +379,8 @@ DEF skip_lch = 'Y';
 BEGIN
   :sql_text_backup := '
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
-       TO_CHAR(s.begin_interval_time, ''YYYY-MM-DD HH24:MI'') begin_time,
-       TO_CHAR(s.end_interval_time, ''YYYY-MM-DD HH24:MI'') end_time,
+       TO_CHAR(s.begin_interval_time, ''YYYY-MM-DD HH24:MI:SS'') begin_time,
+       TO_CHAR(s.end_interval_time, ''YYYY-MM-DD HH24:MI:SS'') end_time,
        h.if_name,
        h.bytes_received - LAG(h.bytes_received) OVER (PARTITION BY h.dbid, h.instance_number, h.if_name ORDER BY h.snap_id) bytes_received,
        h.packets_received - LAG(h.packets_received) OVER (PARTITION BY h.dbid, h.instance_number, h.if_name ORDER BY h.snap_id) packets_received,
@@ -403,12 +404,11 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
    AND s.instance_number = h.instance_number
    AND s.end_interval_time - s.begin_interval_time > TO_DSINTERVAL(''+00 00:01:00.000000'') -- exclude snaps less than 1m appart
  ORDER BY
-       s.end_interval_time DESC,
+       s.snap_id DESC,
        h.if_name
 ';
 END;
 /
-
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 1;
 DEF title = 'IC Device Statistics details for Instance 1';

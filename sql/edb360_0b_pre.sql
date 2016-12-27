@@ -1,5 +1,5 @@
-DEF edb360_vYYNN = 'v1621';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2016-12-03)';
+DEF edb360_vYYNN = 'v1622';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2016-12-27)';
 DEF edb360_copyright = ' (c) 2016';
 
 SET TERM OFF;
@@ -114,6 +114,8 @@ COL edb360_3f NEW_V edb360_3f;
 COL edb360_3g NEW_V edb360_3g;
 COL edb360_3h NEW_V edb360_3h;
 COL edb360_3i NEW_V edb360_3i;
+COL edb360_3j NEW_V edb360_3j;
+COL edb360_3k NEW_V edb360_3k;
 COL edb360_4a NEW_V edb360_4a;
 COL edb360_4b NEW_V edb360_4b;
 COL edb360_4c NEW_V edb360_4c;
@@ -167,6 +169,8 @@ SELECT CASE WHEN '3f' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3
 SELECT CASE WHEN '3g' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3g_' ELSE '--' END edb360_3g FROM DUAL;
 SELECT CASE WHEN '3h' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3h_' ELSE '--' END edb360_3h FROM DUAL;
 SELECT CASE WHEN '3i' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3i_' ELSE '--' END edb360_3i FROM DUAL;
+SELECT CASE WHEN '3j' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3j_' ELSE '--' END edb360_3j FROM DUAL;
+SELECT CASE WHEN '3k' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3k_' ELSE '--' END edb360_3k FROM DUAL;
 SELECT CASE WHEN '4a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4a_' ELSE '--' END edb360_4a FROM DUAL;
 SELECT CASE WHEN '4b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4b_' ELSE '--' END edb360_4b FROM DUAL;
 SELECT CASE WHEN '4c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4c_' ELSE '--' END edb360_4c FROM DUAL;
@@ -360,12 +364,28 @@ COL skip_11r1 NEW_V skip_11r1;
 SELECT '--' skip_11r1 FROM v$instance WHERE version LIKE '11.1%';
 
 -- get average number of CPUs
-COL avg_cpu_count NEW_V avg_cpu_count FOR A3;
-SELECT ROUND(AVG(TO_NUMBER(value))) avg_cpu_count FROM gv$system_parameter2 WHERE name = 'cpu_count';
+COL avg_cpu_count NEW_V avg_cpu_count FOR A6;
+SELECT TO_CHAR(ROUND(AVG(TO_NUMBER(value)),1)) avg_cpu_count FROM gv$system_parameter2 WHERE name = 'cpu_count';
 
 -- get total number of CPUs
 COL sum_cpu_count NEW_V sum_cpu_count FOR A3;
-SELECT SUM(TO_NUMBER(value)) sum_cpu_count FROM gv$system_parameter2 WHERE name = 'cpu_count';
+SELECT TO_CHAR(SUM(TO_NUMBER(value))) sum_cpu_count FROM gv$system_parameter2 WHERE name = 'cpu_count';
+
+-- get average number of Cores
+COL avg_core_count NEW_V avg_core_count FOR A5;
+SELECT TO_CHAR(ROUND(AVG(TO_NUMBER(value)),1)) avg_core_count FROM gv$osstat WHERE stat_name = 'NUM_CPU_CORES';
+
+-- get average number of Threads
+COL avg_thread_count NEW_V avg_thread_count FOR A6;
+SELECT TO_CHAR(ROUND(AVG(TO_NUMBER(value)),1)) avg_thread_count FROM gv$osstat WHERE stat_name = 'NUM_CPUS';
+
+-- get number of Hosts
+COL hosts_count NEW_V hosts_count FOR A2;
+SELECT TO_CHAR(COUNT(DISTINCT inst_id)) hosts_count FROM gv$osstat WHERE stat_name = 'NUM_CPU_CORES';
+
+-- get cores_threads_hosts
+COL cores_threads_hosts NEW_V cores_threads_hosts;
+SELECT CASE TO_NUMBER('&&hosts_count.') WHEN 1 THEN 'cores:&&avg_core_count. threads:&&avg_thread_count.' ELSE 'cores:&&avg_core_count.(avg) threads:&&avg_thread_count.(avg) hosts:&&hosts_count.' END cores_threads_hosts FROM DUAL;
 
 -- get block_size
 COL database_block_size NEW_V database_block_size;
@@ -468,7 +488,8 @@ DEF foot = '';
 COL sql_text FOR A100;
 DEF chartype = '';
 DEF stacked = '';
-DEF haxis = '&&db_version. dbmod:&&edb360_dbmod. host:&&host_hash. (avg cpu_count: &&avg_cpu_count.)';
+--DEF haxis = '&&db_version. dbmod:&&edb360_dbmod. host:&&host_hash. (avg cpu_count: &&avg_cpu_count.)';
+DEF haxis = '&&db_version. &&cores_threads_hosts.';
 DEF vaxis = '';
 DEF vbaseline = '';
 COL tit_01 NEW_V tit_01;
@@ -697,16 +718,19 @@ SET TERM ON;
 HOS ps -ef >> &&edb360_log3..txt
 
 -- main header
+COL report_dbname NEW_V report_dbname;
+SELECT CASE '&&edb360_conf_incl_dbname.' WHEN 'Y' THEN 'Database:&&database_name_short..' END report_dbname FROM DUAL
+/
 SPO &&edb360_main_report..html;
 @@edb360_0d_html_header.sql
 PRO </head>
 PRO <body>
 
-PRO <h1><em>&&edb360_conf_tool_page.eDB360</a></em> &&edb360_vYYNN.: 360-degree comprehensive report on an Oracle database &&edb360_conf_all_pages_logo.</h1>
+PRO <h1><em>&&edb360_conf_tool_page.eDB360</a></em> &&edb360_vYYNN.: 360-degree comprehensive report on an Oracle database &&db_version. &&edb360_conf_all_pages_logo.</h1>
 PRO
 PRO <pre>
 --PRO version:&&db_version. dbmod:&&edb360_dbmod. host:&&host_hash. license:&&license_pack. days:&&history_days. This report covers the time interval between &&edb360_date_from. and &&edb360_date_to. Timestamp: &&edb360_time_stamp.
-PRO License:&&license_pack.. This report covers the time interval between &&edb360_date_from. and &&edb360_date_to.. Days:&&history_days.. Timestamp:&&edb360_time_stamp..
+PRO &&report_dbname. License:&&license_pack.. This report covers the time interval between &&edb360_date_from. and &&edb360_date_to.. Days:&&history_days.. Timestamp:&&edb360_time_stamp..
 PRO </pre>
 PRO
 SPO OFF;

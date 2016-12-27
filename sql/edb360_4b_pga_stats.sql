@@ -12,20 +12,21 @@ DEF chartype = 'LineChart';
 DEF stacked = '';
 DEF vaxis = 'PGA Statistics in GBs';
 DEF vbaseline = '';
-DEF tit_01 = 'PGA memory freed back to OS';
-DEF tit_02 = 'aggregate PGA auto target';
-DEF tit_03 = 'aggregate PGA target parameter';
-DEF tit_04 = 'bytes processed (in TB)';
-DEF tit_05 = 'extra bytes read/written (in TB)';
-DEF tit_06 = 'global memory bound';
-DEF tit_07 = 'maximum PGA allocated';
-DEF tit_08 = 'maximum PGA used for auto workareas';
-DEF tit_09 = 'maximum PGA used for manual workareas';
-DEF tit_10 = 'total PGA allocated';
-DEF tit_11 = 'total PGA inuse';
-DEF tit_12 = 'total PGA used for auto workareas';
-DEF tit_13 = 'total PGA used for manual workareas';
-DEF tit_14 = 'total freeable PGA memory';
+--DEF tit_01 = 'PGA memory freed back to OS';
+DEF tit_01 = 'aggregate PGA auto target';
+DEF tit_02 = 'aggregate PGA target parameter';
+DEF tit_03 = 'bytes processed (in TB)';
+DEF tit_04 = 'extra bytes read/written (in TB)';
+DEF tit_05 = 'global memory bound';
+DEF tit_06 = 'maximum PGA allocated';
+DEF tit_07 = 'maximum PGA used for auto workareas';
+DEF tit_08 = 'maximum PGA used for manual workareas';
+DEF tit_09 = 'total PGA allocated';
+DEF tit_10 = 'total PGA inuse';
+DEF tit_11 = 'total PGA used for auto workareas';
+DEF tit_12 = 'total PGA used for manual workareas';
+DEF tit_13 = 'total freeable PGA memory';
+DEF tit_14 = '';
 DEF tit_15 = '';
 BEGIN
   :sql_text_backup := '
@@ -140,9 +141,9 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
    AND min.startup_time = s1.startup_time
 )
 SELECT snap_id,
-       TO_CHAR(MIN(begin_interval_time), ''YYYY-MM-DD HH24:MI'') begin_time,
-       TO_CHAR(MIN(end_interval_time), ''YYYY-MM-DD HH24:MI'') end_time,
-       ROUND(SUM(pga_mem_freed_to_os) / POWER(2,30), 3) pga_mem_freed_to_os,
+       TO_CHAR(MIN(begin_interval_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
+       TO_CHAR(MIN(end_interval_time), ''YYYY-MM-DD HH24:MI:SS'') end_time,
+       --ROUND(SUM(pga_mem_freed_to_os) / POWER(2,30), 3) pga_mem_freed_to_os,
        ROUND(SUM(aggr_pga_auto_target) / POWER(2,30), 3) aggr_pga_auto_target,
        ROUND(SUM(aggr_pga_target_param) / POWER(2,30), 3) aggr_pga_target_param,
        ROUND(SUM(bytes_processed) / POWER(2,40), 3) bytes_processed,
@@ -156,6 +157,7 @@ SELECT snap_id,
        ROUND(SUM(tot_pga_used_aut_wa) / POWER(2,30), 3) tot_pga_used_aut_wa,
        ROUND(SUM(tot_pga_used_man_wa) / POWER(2,30), 3) tot_pga_used_man_wa,
        ROUND(SUM(tot_freeable_pga_mem) / POWER(2,30), 3) tot_freeable_pga_mem,
+       0 dummy_14,
        0 dummy_15
   FROM pgastat_delta
  GROUP BY

@@ -55,7 +55,7 @@ END;
 --@@edb360_9a_pre_one.sql too slow! possibly bug 1532624.1
 
 DEF title = 'SQL Monitor Recent Executions Detail';
-DEF abstract = 'Aggregated by SQL_ID and SQL Execution. Sorted by SQL_ID and Execution Start Time.';
+DEF abstract = 'Aggregated by SQL_ID and SQL Execution. Sorted by SQL_ID and Execution Start Time.<br />';
 DEF main_table = 'GV$SQL_MONITOR';
 BEGIN
   :sql_text := '
@@ -114,7 +114,7 @@ END;
 @@&&skip_tuning.&&skip_10g.&&edb360_skip_sql_mon.edb360_9a_pre_one.sql
 
 DEF title = 'SQL Monitor Recent Executions Summary';
-DEF abstract = 'Aggregated by SQL_ID and sorted by Total Elapsed Time.';
+DEF abstract = 'Aggregated by SQL_ID and sorted by Total Elapsed Time.<br />';
 DEF main_table = 'GV$SQL_MONITOR';
 BEGIN
   :sql_text := '
@@ -233,7 +233,7 @@ END;
 @@&&skip_tuning.&&skip_10g.&&edb360_skip_sql_mon.edb360_9a_pre_one.sql
 
 DEF title = 'SQL Monitor Recent Executions DONE (ERROR)';
-DEF abstract = 'Aggregated by SQL_ID and Error.';
+DEF abstract = 'Aggregated by SQL_ID and Error.<br />';
 DEF main_table = 'GV$SQL_MONITOR';
 BEGIN
   :sql_text := '
@@ -289,7 +289,7 @@ END;
 @@&&skip_tuning.&&skip_10g.&&edb360_skip_sql_mon.edb360_9a_pre_one.sql
 
 DEF title = 'SQL with changing Elapsed Time per Execution (list)';
-DEF abstract = 'SQL Statements with "Elapsed Time per Execution" changing over time.';
+DEF abstract = 'SQL Statements with "Elapsed Time per Execution" changing over time.<br />';
 DEF main_table = 'DBA_HIST_SQLSTAT';
 DEF days_of_history_accessed = '31';
 DEF captured_at_least_x_times = '10';
@@ -398,7 +398,7 @@ END;
 @@&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF title = 'SQL with changing Elapsed Time per Execution (time series)';
-DEF abstract = 'SQL Statements with "Elapsed Time per Execution" changing over time.';
+DEF abstract = 'SQL Statements with "Elapsed Time per Execution" changing over time.<br />';
 DEF main_table = 'DBA_HIST_SQLSTAT';
 DEF days_of_history_accessed = '31';
 DEF captured_at_least_x_times = '10';
@@ -511,7 +511,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
          r.rank_num
        , h.sql_id
        , h.instance_number instance_number_x
-       , TO_CHAR(CAST(s.end_interval_time AS DATE), ''YYYY-MM-DD HH24:MI'') end_time_x
+       , TO_CHAR(CAST(s.end_interval_time AS DATE), ''YYYY-MM-DD HH24:MI:SS'') end_time_x
        , h.plan_hash_value plan_hash_value_x
        , h.executions_total executions_total_x
        , ROUND(h.rows_processed_total / h.executions_total) rows_per_exec
@@ -558,7 +558,7 @@ END;
 @@&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF title = 'SQL with multiple Execution Plans';
-DEF abstract = 'SQL Statements with multiple Execution Plans performing significantly different';
+DEF abstract = 'SQL Statements with multiple Execution Plans performing significantly different<br />';
 DEF main_table = 'DBA_HIST_SQLSTAT';
 DEF days_of_history_accessed = '31';
 DEF max_num_rows_x = '20';
@@ -669,7 +669,7 @@ END;
 
 DEF title = 'Top Plans';
 DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
-DEF abstract = 'Top Plans and their corresponding Top SQL in terms of ASH History';
+DEF abstract = 'Top Plans and their corresponding Top SQL in terms of ASH History<br />';
 BEGIN
   :sql_text := '
 -- provided by David Kurtz
@@ -685,6 +685,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
  WHERE h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND h.dbid = &&edb360_dbid.
    AND h.sql_id IS NOT NULL
+   AND h.sql_plan_hash_value > 0
 GROUP BY
        h.sql_id,
        h.sql_plan_hash_value,

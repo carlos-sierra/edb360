@@ -121,7 +121,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
 ';
 END;
 /
-@@edb360_9a_pre_one.sql
+@@&&skip_10g.edb360_9a_pre_one.sql
 
 DEF title = 'Memory Target Advice';
 DEF main_table = 'GV$MEMORY_TARGET_ADVICE';
@@ -135,7 +135,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
 ';
 END;
 /
-@@edb360_9a_pre_one.sql
+@@&&skip_10g.edb360_9a_pre_one.sql
 
 DEF title = 'SGA Target Advice';
 DEF main_table = 'GV$SGA_TARGET_ADVICE';
@@ -194,7 +194,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
 ';
 END;
 /
-@@edb360_9a_pre_one.sql
+@@&&skip_10g.edb360_9a_pre_one.sql
 
 DEF title = 'Memory Current Resize Operations';
 DEF main_table = 'GV$MEMORY_CURRENT_RESIZE_OPS';
@@ -211,7 +211,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
 ';
 END;
 /
-@@edb360_9a_pre_one.sql
+@@&&skip_10g.edb360_9a_pre_one.sql
 
 DEF title = 'Memory Resize Operations Hist';
 DEF main_table = 'DBA_HIST_MEMORY_RESIZE_OPS';
@@ -230,7 +230,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
 ';
 END;
 /
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_10g.edb360_9a_pre_one.sql
 
 DEF title = 'Memory Target Advice Hist';
 DEF main_table = 'DBA_HIST_MEMORY_TARGET_ADVICE';
@@ -250,7 +250,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
 ';
 END;
 /
-@@&&skip_diagnostics.edb360_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_10g.edb360_9a_pre_one.sql
 
 SPO &&edb360_main_report..html APP;
 PRO </ol>

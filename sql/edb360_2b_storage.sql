@@ -637,7 +637,7 @@ DEF main_table = 'DBA_SEGMENTS';
 BEGIN
   :sql_text := '
 -- requested by David Kurtz
-SELECT  /*+ LEADING(T) USE_NL(S) */
+SELECT  /* LEADING(T) USE_NL(S) */ -- removed hint as per Luis Calvo
         t.owner, t.table_name, t.tablespace_name, t.num_rows, t.blocks hwm_blocks, t.last_analyzed, s.blocks seg_blocks
 FROM    dba_tables t
 ,       dba_segments s
@@ -658,14 +658,14 @@ ORDER BY 1,2
 ';
 END;
 /
-@@edb360_9a_pre_one.sql
+@@&&skip_10g.edb360_9a_pre_one.sql
 
 DEF title = 'Partitions with one extent and no rows';
 DEF main_table = 'DBA_SEGMENTS';
 BEGIN
   :sql_text := '
 -- requested by David Kurtz
-SELECT  /*+ LEADING(T) USE_NL(S) */
+SELECT  /* LEADING(T) USE_NL(S) */ -- removed hint as per Luis Calvo
         t.table_owner, t.table_name, t.partition_name, t.tablespace_name, t.num_rows, t.blocks hwm_blocks, t.last_analyzed, s.blocks seg_blocks
 FROM    dba_tab_partitions t
 ,       dba_segments s
@@ -686,14 +686,14 @@ ORDER BY 1,2,3
 ';
 END;
 /
-@@edb360_9a_pre_one.sql
+@@&&skip_10g.edb360_9a_pre_one.sql
 
 DEF title = 'Subpartitions with one extent and no rows';
 DEF main_table = 'DBA_SEGMENTS';
 BEGIN
   :sql_text := '
 -- requested by David Kurtz
-SELECT  /*+ LEADING(T) USE_NL(S) */
+SELECT  /* LEADING(T) USE_NL(S) */ -- removed hint as per Luis Calvo
         t.table_owner, t.table_name, t.partition_name, t.subpartition_name, t.tablespace_name, t.num_rows, t.blocks hwm_blocks, t.last_analyzed, s.blocks seg_blocks
 FROM    dba_tab_subpartitions t
 ,       dba_segments s
@@ -714,7 +714,7 @@ ORDER BY 1,2,3,4
 ';
 END;
 /
-@@edb360_9a_pre_one.sql
+@@&&skip_10g.edb360_9a_pre_one.sql
 
 DEF title = 'Tables and their indexes larger than 1 GB';
 DEF main_table = 'DBA_SEGMENTS';
@@ -973,7 +973,7 @@ BEGIN
   :sql_text := '
 -- requested by Dimas Chbane
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
-       ROUND(SUM(r.space * t.block_size) / POWER(10,6)) gb_space,
+       ROUND(SUM(r.space * t.block_size) / POWER(10,6)) mb_space,
        r.owner
   FROM dba_recyclebin r,
        dba_tablespaces t
@@ -1005,7 +1005,7 @@ from
    dba_tablespaces
 where
    dba_tablespaces.tablespace_name = dba_tables.tablespace_name and
-   (blocks * block_size / POWER(10,6)) >= 10 and
+   (blocks * block_size / POWER(10,6)) >= 100 and -- actual_mb 
    abs(round(blocks * block_size / POWER(10,6)) - round(num_rows * avg_row_len * (1+(pct_free/100)) * decode (compression,''ENABLED'',0.50,1.00) / POWER(10,6))) / 
       (round(blocks * block_size / POWER(10,6))) >= 0.25 and
    owner not in &&exclusion_list. and
@@ -1019,7 +1019,7 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Indexes with actual size greater than estimated';
-DEF abstract = 'Actual and Estimated sizes for Indexes.';
+DEF abstract = 'Actual and Estimated sizes for Indexes.<br />';
 DEF main_table = 'DBA_INDEXES';
 VAR random1 VARCHAR2(30);
 VAR random2 VARCHAR2(30);

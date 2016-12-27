@@ -22,11 +22,11 @@ END;
 DEF main_table = 'DBA_HIST_OSSTAT';
 DEF chartype = 'LineChart';
 DEF stacked = '';
-DEF vaxis = 'OS Avg Load, Num of CPUs and Num of CPU Cores';
+DEF vaxis = 'OS Avg Load and Num of CPU Cores';
 DEF vbaseline = '';
 DEF tit_01 = 'Average Load';
-DEF tit_02 = 'Number of CPUs';
-DEF tit_03 = 'Number of CPU Cores';
+DEF tit_02 = 'Number of CPU Cores';
+DEF tit_03 = '';
 DEF tit_04 = '';
 DEF tit_05 = '';
 DEF tit_06 = '';
@@ -40,6 +40,7 @@ DEF tit_13 = '';
 DEF tit_14 = '';
 DEF tit_15 = '';
 COL load FOR 999990.00;
+
 BEGIN
   :sql_text_backup := '
 WITH 
@@ -48,7 +49,6 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        s.snap_id,
        s.instance_number,
        SUM(CASE s.stat_name WHEN ''LOAD''          THEN value ELSE 0 END) load,
-       SUM(CASE s.stat_name WHEN ''NUM_CPUS''      THEN value ELSE 0 END) num_cpus,
        SUM(CASE s.stat_name WHEN ''NUM_CPU_CORES'' THEN value ELSE 0 END) num_cpu_cores
   FROM dba_hist_osstat s
  WHERE s.stat_name IN (''LOAD'', ''NUM_CPUS'', ''NUM_CPU_CORES'')
@@ -61,30 +61,32 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
 ),
 osstat_denorm_2 AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
-       MIN(h.snap_id) snap_id,
+       h.snap_id,
        h.instance_number,
-       TRUNC(CAST(s.end_interval_time AS DATE), ''HH'') begin_time,
+       s.begin_interval_time,
+       s.end_interval_time,
        MAX(load) load,
-       MAX(num_cpus) num_cpus,
        MAX(num_cpu_cores) num_cpu_cores
   FROM osstat_denorm h,
        dba_hist_snapshot s
  WHERE s.snap_id = h.snap_id
    AND s.instance_number = h.instance_number
-   AND (CAST(s.end_interval_time AS DATE) - CAST(s.begin_interval_time AS DATE)) * 86400 > 60 -- ignore snaps too close
    AND s.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND s.dbid = &&edb360_dbid.
    AND s.instance_number = @instance_number@
+   AND (CAST(s.end_interval_time AS DATE) - CAST(s.begin_interval_time AS DATE)) * 24 * 60 > 1 -- ignore snaps closer than 1m appart
  GROUP BY
+       h.snap_id,
        h.instance_number,
-       TRUNC(CAST(s.end_interval_time AS DATE), ''HH'')
+       s.begin_interval_time,
+       s.end_interval_time
 )
-SELECT MIN(snap_id) snap_id,
-       TO_CHAR(begin_time, ''YYYY-MM-DD HH24:MI'') begin_time,
-       TO_CHAR(begin_time + (1/24), ''YYYY-MM-DD HH24:MI'') end_time,
+SELECT snap_id,
+       TO_CHAR(MIN(begin_interval_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
+       TO_CHAR(MIN(end_interval_time), ''YYYY-MM-DD HH24:MI:SS'') end_time,
        ROUND(SUM(load), 2) load,
-       SUM(num_cpus) num_cpus,
        SUM(num_cpu_cores) num_cpu_cores,
+       0 dummy_03,
        0 dummy_04,
        0 dummy_05,
        0 dummy_06,
@@ -99,72 +101,72 @@ SELECT MIN(snap_id) snap_id,
        0 dummy_15
   FROM osstat_denorm_2
  GROUP BY
-       begin_time
+       snap_id
  ORDER BY
-       begin_time
+       snap_id
 ';
 END;
 /
 
 DEF skip_lch = '';
 DEF skip_all = '&&is_single_instance.';
-DEF title = 'Load and CPUs for Cluster';
+DEF title = 'Load and Cores for Cluster';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', 's.instance_number');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 1;
-DEF title = 'Load and CPUs for Instance 1';
+DEF title = 'Load and Cores for Instance 1';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '1');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 2;
-DEF title = 'Load and CPUs for Instance 2';
+DEF title = 'Load and Cores for Instance 2';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '2');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 3;
-DEF title = 'Load and CPUs for Instance 3';
+DEF title = 'Load and Cores for Instance 3';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '3');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 4;
-DEF title = 'Load and CPUs for Instance 4';
+DEF title = 'Load and Cores for Instance 4';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '4');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 5;
-DEF title = 'Load and CPUs for Instance 5';
+DEF title = 'Load and Cores for Instance 5';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '5');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 6;
-DEF title = 'Load and CPUs for Instance 6';
+DEF title = 'Load and Cores for Instance 6';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '6');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 7;
-DEF title = 'Load and CPUs for Instance 7';
+DEF title = 'Load and Cores for Instance 7';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '7');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 8;
-DEF title = 'Load and CPUs for Instance 8';
+DEF title = 'Load and Cores for Instance 8';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '8');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
@@ -267,8 +269,8 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
    AND s1.begin_interval_time > (s0.begin_interval_time + (1 / (24 * 60))) /* filter out snaps apart < 1 min */
 )
 SELECT snap_id,
-       TO_CHAR(MIN(begin_interval_time), ''YYYY-MM-DD HH24:MI'') begin_time,
-       TO_CHAR(MIN(end_interval_time), ''YYYY-MM-DD HH24:MI'') end_time,
+       TO_CHAR(MIN(begin_interval_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
+       TO_CHAR(MIN(end_interval_time), ''YYYY-MM-DD HH24:MI:SS'') end_time,
        SUM(num_cpus) num_cpus,
        ROUND(SUM(load), 1) load,
        ROUND(100 * SUM(idle_time_secs / num_cpus) / SUM(interval_secs), 1) idle_time_perc,
@@ -368,7 +370,8 @@ DEF tit_08 = '';
 DEF tit_09 = '';
 DEF tit_10 = '';
 DEF vaxis = 'Load';
-DEF vbaseline = 'baseline:&&sum_cpu_count.,';
+--DEF vbaseline = 'baseline:&&sum_cpu_count.,';
+DEF vbaseline = '';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', 'instance_number');
 @@edb360_9a_pre_one.sql
 
@@ -484,8 +487,8 @@ osstat_inst AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        instance_number,
        snap_id,
-       TO_CHAR(begin_interval_time, ''YYYY-MM-DD HH24:MI'') begin_time,
-       TO_CHAR(end_interval_time, ''YYYY-MM-DD HH24:MI'') end_time,
+       TO_CHAR(begin_interval_time, ''YYYY-MM-DD HH24:MI:SS'') begin_time,
+       TO_CHAR(end_interval_time, ''YYYY-MM-DD HH24:MI:SS'') end_time,
        num_cpus,
        ROUND(load, 1) load,
        ROUND(100 * idle_time_secs / num_cpus / interval_secs, 1) idle_time_perc,
@@ -585,7 +588,8 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name@', 'iowait_time');
 DEF skip_lch = '';
 DEF title = 'CPU Load per Instance';
 DEF vaxis = 'Load';
-DEF vbaseline = 'baseline:&&avg_cpu_count.,';
+--DEF vbaseline = 'baseline:&&avg_cpu_count.,';
+DEF vbaseline = '';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name@_perc', 'load');
 EXEC :sql_text := REPLACE(:sql_text, '@stat_name@', 'load');
 @@&&skip_diagnostics.edb360_9a_pre_one.sql

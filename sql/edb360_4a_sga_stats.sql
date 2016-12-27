@@ -90,8 +90,8 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
    AND s1.begin_interval_time > (s0.begin_interval_time + (1 / (24 * 60))) /* filter out snaps apart < 1 min */
 )
 SELECT snap_id,
-       TO_CHAR(MIN(begin_interval_time), ''YYYY-MM-DD HH24:MI'') begin_time,
-       TO_CHAR(MIN(end_interval_time), ''YYYY-MM-DD HH24:MI'') end_time,
+       TO_CHAR(MIN(begin_interval_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
+       TO_CHAR(MIN(end_interval_time), ''YYYY-MM-DD HH24:MI:SS'') end_time,
        ROUND(SUM(sga_total) / POWER(2,30), 3) sga_total,
        ROUND(SUM(fixed_sga) / POWER(2,30), 3) fixed_sga,
        ROUND(SUM(buffer_cache) / POWER(2,30), 3) buffer_cache,
@@ -119,6 +119,7 @@ END;
 DEF skip_lch = '';
 DEF skip_all = '&&is_single_instance.';
 DEF title = 'SGA Statistics for Cluster';
+DEF foot = 'Does not include Free SGA Memory Available.'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', 'instance_number');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
@@ -126,6 +127,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 1;
 DEF title = 'SGA Statistics for Instance 1';
+DEF foot = 'Does not include Free SGA Memory Available.'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '1');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
@@ -133,6 +135,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 2;
 DEF title = 'SGA Statistics for Instance 2';
+DEF foot = 'Does not include Free SGA Memory Available.'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '2');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
@@ -140,6 +143,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 3;
 DEF title = 'SGA Statistics for Instance 3';
+DEF foot = 'Does not include Free SGA Memory Available.'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '3');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
@@ -147,6 +151,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 4;
 DEF title = 'SGA Statistics for Instance 4';
+DEF foot = 'Does not include Free SGA Memory Available.'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '4');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
@@ -154,6 +159,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 5;
 DEF title = 'SGA Statistics for Instance 5';
+DEF foot = 'Does not include Free SGA Memory Available.'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '5');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
@@ -168,6 +174,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 7;
 DEF title = 'SGA Statistics for Instance 7';
+DEF foot = 'Does not include Free SGA Memory Available.'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '7');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
@@ -175,6 +182,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 8;
 DEF title = 'SGA Statistics for Instance 8';
+DEF foot = 'Does not include Free SGA Memory Available.'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '8');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 

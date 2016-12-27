@@ -22,7 +22,7 @@ BEGIN
       DBMS_OUTPUT.PUT_LINE('COL inst_'||LPAD(i, 2, '0')||' NOPRI;');
       DBMS_OUTPUT.PUT_LINE('DEF tit_'||LPAD(i, 2, '0')||' = '''';');
     ELSE
-      DBMS_OUTPUT.PUT_LINE('COL inst_'||LPAD(i, 2, '0')||' HEA ''Inst '||i||''' FOR 999990.0 PRI;');
+      DBMS_OUTPUT.PUT_LINE('COL inst_'||LPAD(i, 2, '0')||' HEA ''Inst '||i||''' FOR 999990.000 PRI;');
       DBMS_OUTPUT.PUT_LINE('DEF tit_'||LPAD(i, 2, '0')||' = ''Inst '||i||''';');
     END IF;
   END LOOP;
@@ -43,17 +43,18 @@ BEGIN
   :sql_text_backup := '
 SELECT /*+ &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
        /* &&section_id..&&report_sequence. */
-       MIN(snap_id) snap_id,
-       TO_CHAR(TRUNC(sample_time, ''HH''), ''YYYY-MM-DD HH24:MI'')          begin_time,
-       TO_CHAR(TRUNC(sample_time, ''HH'') + (1/24), ''YYYY-MM-DD HH24:MI'') end_time,
-       ROUND(SUM(CASE instance_number WHEN 1 THEN 10 ELSE 0 END) / 3600, 3) inst_01,
-       ROUND(SUM(CASE instance_number WHEN 2 THEN 10 ELSE 0 END) / 3600, 3) inst_02,
-       ROUND(SUM(CASE instance_number WHEN 3 THEN 10 ELSE 0 END) / 3600, 3) inst_03,
-       ROUND(SUM(CASE instance_number WHEN 4 THEN 10 ELSE 0 END) / 3600, 3) inst_04,
-       ROUND(SUM(CASE instance_number WHEN 5 THEN 10 ELSE 0 END) / 3600, 3) inst_05,
-       ROUND(SUM(CASE instance_number WHEN 6 THEN 10 ELSE 0 END) / 3600, 3) inst_06,
-       ROUND(SUM(CASE instance_number WHEN 7 THEN 10 ELSE 0 END) / 3600, 3) inst_07,
-       ROUND(SUM(CASE instance_number WHEN 8 THEN 10 ELSE 0 END) / 3600, 3) inst_08,
+       snap_id,
+       --TO_CHAR(LAG(MAX(sample_time)) OVER (ORDER BY snap_id), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
+       TO_CHAR(MIN(sample_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
+       TO_CHAR(MAX(sample_time), ''YYYY-MM-DD HH24:MI:SS'') end_time,
+       ROUND(SUM(CASE instance_number WHEN 1 THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), 1) * 24 * 3600), 3) inst_01,
+       ROUND(SUM(CASE instance_number WHEN 2 THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), 1) * 24 * 3600), 3) inst_02,
+       ROUND(SUM(CASE instance_number WHEN 3 THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), 1) * 24 * 3600), 3) inst_03,
+       ROUND(SUM(CASE instance_number WHEN 4 THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), 1) * 24 * 3600), 3) inst_04,
+       ROUND(SUM(CASE instance_number WHEN 5 THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), 1) * 24 * 3600), 3) inst_05,
+       ROUND(SUM(CASE instance_number WHEN 6 THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), 1) * 24 * 3600), 3) inst_06,
+       ROUND(SUM(CASE instance_number WHEN 7 THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), 1) * 24 * 3600), 3) inst_07,
+       ROUND(SUM(CASE instance_number WHEN 8 THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), 1) * 24 * 3600), 3) inst_08,
        0 dummy_09,
        0 dummy_10,
        0 dummy_11,
@@ -66,9 +67,9 @@ SELECT /*+ &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */
    AND dbid = &&edb360_dbid.
    AND @filter_predicate@
  GROUP BY
-       TRUNC(sample_time, ''HH'')
+       snap_id
  ORDER BY
-       TRUNC(sample_time, ''HH'')
+       snap_id
 ';
 END;
 /
@@ -87,7 +88,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on Cluster per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''Cluster''');
-@@edb360_9a_pre_one.sql
+@@&&is_single_instance.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on Commit per Instance';

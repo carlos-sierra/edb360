@@ -1,6 +1,24 @@
 Changelog
 =========
 
+v1622 (2016-12-27)
+=====
+1. Active Session History (ASH) - Top Signature includes now min and max SQL_ID
+2. Granularity from hourly to per snap on all columns
+3. Haxis shows now cores, threads and hosts
+4. Adding num_rows and blocks to tables cached, on keep and on recycle (section 2a)
+5. Adding seconds average and median to 3h. JDBC Idle connections for more than N hours and to JDBC Idle connections per JVM and Program
+6. Pie charts include now percent on legend. Affects column 6 and section 5c
+7. Added memory configuration at the bottom of 1a
+8. Pie charts have now a hole
+9. skip SQL that would error on 10g
+10. Refresh of sections 4f and 4g to include all waits and not just I/O waits
+11. Database name can now be shown on index page as per edb360_conf_incl_dbname
+12. Removed CBO Hints on 3 queries from David Kurtz on section 2b as per request from Luis Calvo
+13. Added a 2nd version of redundant index as per request from David Kurtz
+14. Removed PGA memory freed back to OS from 4b PGA stats
+15. Added v$process and v$process_memory to 3h
+
 v1621 (2016-12-03)
 =====
 1. Added Auto Tune Report

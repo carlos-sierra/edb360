@@ -25,7 +25,7 @@ COL hours FOR 9990.0 HEA "Hours|Hist";
 
 DEF title = 'CPU Demand Percentiles (MEM)';
 DEF main_table = 'GV$ACTIVE_SESSION_HISTORY';
-DEF abstract = 'Number of Sessions on CPU or RESMGR. Includes Max (Peak), Percentiles, Median and Average.'
+DEF abstract = 'Number of Sessions on CPU or RESMGR. Includes Max (Peak), Percentiles, Median and Average.<br />'
 BEGIN
   :sql_text := '
 WITH 
@@ -126,8 +126,8 @@ SELECT order_by,
        on_cpu,
        on_cpu_and_resmgr,
        resmgr_cpu_quantum,
-       TO_CHAR(CAST(min_sample_time AS DATE), ''YYYY-MM-DD HH24:MI'') min_sample_time,
-       TO_CHAR(CAST(max_sample_time AS DATE), ''YYYY-MM-DD HH24:MI'') max_sample_time,
+       TO_CHAR(CAST(min_sample_time AS DATE), ''YYYY-MM-DD HH24:MI:SS'') min_sample_time,
+       TO_CHAR(CAST(max_sample_time AS DATE), ''YYYY-MM-DD HH24:MI:SS'') max_sample_time,
        samples,
        ROUND((CAST(max_sample_time AS DATE) - CAST(min_sample_time AS DATE)) * 24, 1) hours
   FROM cpu_per_inst_and_perc
@@ -138,8 +138,8 @@ SELECT order_by,
        on_cpu,
        on_cpu_and_resmgr,
        resmgr_cpu_quantum,
-       TO_CHAR(CAST(min_sample_time AS DATE), ''YYYY-MM-DD HH24:MI'') min_sample_time,
-       TO_CHAR(CAST(max_sample_time AS DATE), ''YYYY-MM-DD HH24:MI'') max_sample_time,
+       TO_CHAR(CAST(min_sample_time AS DATE), ''YYYY-MM-DD HH24:MI:SS'') min_sample_time,
+       TO_CHAR(CAST(max_sample_time AS DATE), ''YYYY-MM-DD HH24:MI:SS'') max_sample_time,
        samples,
        ROUND((CAST(max_sample_time AS DATE) - CAST(min_sample_time AS DATE)) * 24, 1) hours
   FROM cpu_per_db_and_perc
@@ -153,7 +153,7 @@ END;
 
 DEF title = 'CPU Demand Percentiles (AWR)';
 DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
-DEF abstract = 'Number of Sessions on CPU or RESMGR. Includes Max (Peak), Percentiles, Median and Average.'
+DEF abstract = 'Number of Sessions on CPU or RESMGR. Includes Max (Peak), Percentiles, Median and Average.<br />'
 BEGIN
   :sql_text := '
 WITH 
@@ -270,8 +270,8 @@ SELECT dbid,
        on_cpu,
        on_cpu_and_resmgr,
        resmgr_cpu_quantum,
-       TO_CHAR(CAST(begin_interval_time AS DATE), ''YYYY-MM-DD HH24:MI'') begin_interval_time,
-       TO_CHAR(CAST(end_interval_time AS DATE), ''YYYY-MM-DD HH24:MI'') end_interval_time,
+       TO_CHAR(CAST(begin_interval_time AS DATE), ''YYYY-MM-DD HH24:MI:SS'') begin_interval_time,
+       TO_CHAR(CAST(end_interval_time AS DATE), ''YYYY-MM-DD HH24:MI:SS'') end_interval_time,
        snap_shots,
        ROUND(CAST(end_interval_time AS DATE) - CAST(begin_interval_time AS DATE), 1) days,
        ROUND(snap_shots / (CAST(end_interval_time AS DATE) - CAST(begin_interval_time AS DATE)), 1) avg_snaps_per_day
@@ -284,8 +284,8 @@ SELECT dbid,
        on_cpu,
        on_cpu_and_resmgr,
        resmgr_cpu_quantum,
-       TO_CHAR(CAST(begin_interval_time AS DATE), ''YYYY-MM-DD HH24:MI'') begin_interval_time,
-       TO_CHAR(CAST(end_interval_time AS DATE), ''YYYY-MM-DD HH24:MI'') end_interval_time,
+       TO_CHAR(CAST(begin_interval_time AS DATE), ''YYYY-MM-DD HH24:MI:SS'') begin_interval_time,
+       TO_CHAR(CAST(end_interval_time AS DATE), ''YYYY-MM-DD HH24:MI:SS'') end_interval_time,
        snap_shots,
        ROUND(CAST(end_interval_time AS DATE) - CAST(begin_interval_time AS DATE), 1) days,
        ROUND(snap_shots / (CAST(end_interval_time AS DATE) - CAST(begin_interval_time AS DATE)), 1) avg_snaps_per_day
@@ -325,9 +325,8 @@ WITH
 cpu_per_inst_and_sample AS (
 SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
        /* &&section_id..&&report_sequence. */
-       instance_number,
        snap_id,
-       sample_id,
+       instance_number,
        MIN(sample_time) sample_time,
        SUM(CASE session_state WHEN ''ON CPU'' THEN 1 ELSE 0 END) on_cpu,
        SUM(CASE event WHEN ''resmgr:cpu quantum'' THEN 1 ELSE 0 END) resmgr,
@@ -338,27 +337,27 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
    AND instance_number = @instance_number@
    AND (session_state = ''ON CPU'' OR event = ''resmgr:cpu quantum'')
  GROUP BY
-       instance_number,
        snap_id,
+       instance_number,
        sample_id
 ),
 cpu_per_inst_and_hour AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
-       MIN(snap_id) snap_id,
+       snap_id,
        instance_number, 
-       TRUNC(CAST(sample_time AS DATE), ''HH'') begin_time, 
-       TRUNC(CAST(sample_time AS DATE), ''HH'') + (1/24) end_time, 
+       MIN(sample_time) min_sample_time, 
+       MAX(sample_time) max_sample_time, 
        MAX(on_cpu) on_cpu,
        MAX(resmgr) resmgr,
        MAX(on_cpu_and_resmgr) on_cpu_and_resmgr
   FROM cpu_per_inst_and_sample
  GROUP BY
-       instance_number,
-       TRUNC(CAST(sample_time AS DATE), ''HH'')
+       snap_id,
+       instance_number
 )
-SELECT MIN(snap_id) snap_id,
-       TO_CHAR(begin_time, ''YYYY-MM-DD HH24:MI'') begin_time,
-       TO_CHAR(end_time, ''YYYY-MM-DD HH24:MI'') end_time,
+SELECT snap_id,
+       TO_CHAR(MIN(min_sample_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
+       TO_CHAR(MAX(max_sample_time), ''YYYY-MM-DD HH24:MI:SS'') end_time,
        SUM(on_cpu_and_resmgr) on_cpu_and_resmgr,
        SUM(on_cpu) on_cpu,
        SUM(resmgr) resmgr,
@@ -376,31 +375,31 @@ SELECT MIN(snap_id) snap_id,
        0 dummy_15
   FROM cpu_per_inst_and_hour
  GROUP BY
-       begin_time,
-       end_time
+       snap_id
  ORDER BY
-       end_time
+       snap_id
 ';
 END;
 /
-
-DEF vbaseline = 'baseline:&&sum_cpu_count.,'; 
+--DEF vbaseline = 'baseline:&&sum_cpu_count.,'; 
+DEF vbaseline = ''; 
 
 DEF skip_lch = '';
 DEF skip_all = '&&is_single_instance.';
 DEF title = 'CPU Demand Series (Peak) for Cluster';
-DEF abstract = 'Number of Sessions demanding CPU. Based on peak demand per hour.'
+DEF abstract = 'Number of Sessions demanding CPU. Based on peak demand per hour.<br />'
 DEF foot = 'Sessions "ON CPU" or "ON CPU" + "resmgr:cpu quantum"'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', 'instance_number');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
-DEF vbaseline = 'baseline:&&avg_cpu_count.,';
+--DEF vbaseline = 'baseline:&&avg_cpu_count.,';
+DEF vbaseline = '';
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 1;
 DEF title = 'CPU Demand Series (Peak) for Instance 1';
-DEF abstract = 'Number of Sessions demanding CPU. Based on peak demand per hour.'
+DEF abstract = 'Number of Sessions demanding CPU. Based on peak demand per hour.<br />'
 DEF foot = 'Sessions "ON CPU" or "ON CPU" + "resmgr:cpu quantum"'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '1');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
@@ -409,7 +408,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 2;
 DEF title = 'CPU Demand Series (Peak) for Instance 2';
-DEF abstract = 'Number of Sessions demanding CPU. Based on peak demand per hour.'
+DEF abstract = 'Number of Sessions demanding CPU. Based on peak demand per hour.<br />'
 DEF foot = 'Sessions "ON CPU" or "ON CPU" + "resmgr:cpu quantum"'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '2');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
@@ -418,7 +417,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 3;
 DEF title = 'CPU Demand Series (Peak) for Instance 3';
-DEF abstract = 'Number of Sessions demanding CPU. Based on peak demand per hour.'
+DEF abstract = 'Number of Sessions demanding CPU. Based on peak demand per hour.<br />'
 DEF foot = 'Sessions "ON CPU" or "ON CPU" + "resmgr:cpu quantum"'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '3');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
@@ -427,7 +426,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 4;
 DEF title = 'CPU Demand Series (Peak) for Instance 4';
-DEF abstract = 'Number of Sessions demanding CPU. Based on peak demand per hour.'
+DEF abstract = 'Number of Sessions demanding CPU. Based on peak demand per hour.<br />'
 DEF foot = 'Sessions "ON CPU" or "ON CPU" + "resmgr:cpu quantum"'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '4');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
@@ -436,7 +435,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 5;
 DEF title = 'CPU Demand Series (Peak) for Instance 5';
-DEF abstract = 'Number of Sessions demanding CPU. Based on peak demand per hour.'
+DEF abstract = 'Number of Sessions demanding CPU. Based on peak demand per hour.<br />'
 DEF foot = 'Sessions "ON CPU" or "ON CPU" + "resmgr:cpu quantum"'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '5');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
@@ -445,7 +444,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 6;
 DEF title = 'CPU Demand Series (Peak) for Instance 6';
-DEF abstract = 'Number of Sessions demanding CPU. Based on peak demand per hour.'
+DEF abstract = 'Number of Sessions demanding CPU. Based on peak demand per hour.<br />'
 DEF foot = 'Sessions "ON CPU" or "ON CPU" + "resmgr:cpu quantum"'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '6');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
@@ -454,7 +453,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 7;
 DEF title = 'CPU Demand Series (Peak) for Instance 7';
-DEF abstract = 'Number of Sessions demanding CPU. Based on peak demand per hour.'
+DEF abstract = 'Number of Sessions demanding CPU. Based on peak demand per hour.<br />'
 DEF foot = 'Sessions "ON CPU" or "ON CPU" + "resmgr:cpu quantum"'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '7');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
@@ -463,7 +462,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 8;
 DEF title = 'CPU Demand Series (Peak) for Instance 8';
-DEF abstract = 'Number of Sessions demanding CPU. Based on peak demand per hour.'
+DEF abstract = 'Number of Sessions demanding CPU. Based on peak demand per hour.<br />'
 DEF foot = 'Sessions "ON CPU" or "ON CPU" + "resmgr:cpu quantum"'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '8');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
@@ -499,9 +498,8 @@ WITH
 cpu_per_inst_and_sample AS (
 SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
        /* &&section_id..&&report_sequence. */
-       instance_number,
        snap_id,
-       sample_id,
+       instance_number,
        MIN(sample_time) sample_time,
        COUNT(*) on_cpu
   FROM dba_hist_active_sess_history h
@@ -510,16 +508,16 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
    AND instance_number = @instance_number@
    AND session_state = ''ON CPU''
  GROUP BY
-       instance_number,
        snap_id,
+       instance_number,
        sample_id
 ),
 cpu_per_inst_and_hour AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
-       MIN(snap_id) snap_id,
+       snap_id,
        instance_number, 
-       TRUNC(CAST(sample_time AS DATE), ''HH'')             begin_time, 
-       TRUNC(CAST(sample_time AS DATE), ''HH'') + (1/24)    end_time, 
+       MIN(sample_time) min_sample_time, 
+       MAX(sample_time) max_sample_time, 
        MAX(on_cpu)                                          on_cpu_max,
        PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY on_cpu) on_cpu_99p,
        PERCENTILE_DISC(0.97) WITHIN GROUP (ORDER BY on_cpu) on_cpu_97p,
@@ -530,12 +528,12 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        ROUND(AVG(on_cpu), 1)                                on_cpu_avg
   FROM cpu_per_inst_and_sample
  GROUP BY
-       instance_number,
-       TRUNC(CAST(sample_time AS DATE), ''HH'')
+       snap_id,
+       instance_number
 )
-SELECT MIN(snap_id) snap_id,
-       TO_CHAR(begin_time, ''YYYY-MM-DD HH24:MI'') begin_time,
-       TO_CHAR(end_time, ''YYYY-MM-DD HH24:MI'') end_time,
+SELECT snap_id,
+       TO_CHAR(MIN(min_sample_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
+       TO_CHAR(MAX(max_sample_time), ''YYYY-MM-DD HH24:MI:SS'') end_time,
        SUM(on_cpu_max) on_cpu_max,
        SUM(on_cpu_99p) on_cpu_99p,
        SUM(on_cpu_97p) on_cpu_97p,
@@ -553,31 +551,31 @@ SELECT MIN(snap_id) snap_id,
        0 dummy_15
   FROM cpu_per_inst_and_hour
  GROUP BY
-       begin_time,
-       end_time
+       snap_id
  ORDER BY
-       end_time
+       snap_id
 ';
 END;
 /
-
-DEF vbaseline = 'baseline:&&sum_cpu_count.,'; 
+--DEF vbaseline = 'baseline:&&sum_cpu_count.,'; 
+DEF vbaseline = ''; 
 
 DEF skip_lch = '';
 DEF skip_all = '&&is_single_instance.';
 DEF title = 'CPU Demand Series (Percentile) for Cluster';
-DEF abstract = 'Number of Sessions demanding CPU. Based on percentiles per hour as per Active Session History (ASH).'
+DEF abstract = 'Number of Sessions demanding CPU. Based on percentiles per hour as per Active Session History (ASH).<br />'
 DEF foot = 'Sessions "ON CPU"'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', 'instance_number');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
-DEF vbaseline = 'baseline:&&avg_cpu_count.,';
+--DEF vbaseline = 'baseline:&&avg_cpu_count.,';
+DEF vbaseline = '';
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 1;
 DEF title = 'CPU Demand Series (Percentile) for Instance 1';
-DEF abstract = 'Number of Sessions demanding CPU. Based on percentiles per hour as per Active Session History (ASH).'
+DEF abstract = 'Number of Sessions demanding CPU. Based on percentiles per hour as per Active Session History (ASH).<br />'
 DEF foot = 'Sessions "ON CPU"'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '1');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
@@ -586,7 +584,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 2;
 DEF title = 'CPU Demand Series (Percentile) for Instance 2';
-DEF abstract = 'Number of Sessions demanding CPU. Based on percentiles per hour as per Active Session History (ASH).'
+DEF abstract = 'Number of Sessions demanding CPU. Based on percentiles per hour as per Active Session History (ASH).<br />'
 DEF foot = 'Sessions "ON CPU"'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '2');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
@@ -595,7 +593,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 3;
 DEF title = 'CPU Demand Series (Percentile) for Instance 3';
-DEF abstract = 'Number of Sessions demanding CPU. Based on percentiles per hour as per Active Session History (ASH).'
+DEF abstract = 'Number of Sessions demanding CPU. Based on percentiles per hour as per Active Session History (ASH).<br />'
 DEF foot = 'Sessions "ON CPU"'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '3');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
@@ -604,7 +602,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 4;
 DEF title = 'CPU Demand Series (Percentile) for Instance 4';
-DEF abstract = 'Number of Sessions demanding CPU. Based on percentiles per hour as per Active Session History (ASH).'
+DEF abstract = 'Number of Sessions demanding CPU. Based on percentiles per hour as per Active Session History (ASH).<br />'
 DEF foot = 'Sessions "ON CPU"'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '4');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
@@ -613,7 +611,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 5;
 DEF title = 'CPU Demand Series (Percentile) for Instance 5';
-DEF abstract = 'Number of Sessions demanding CPU. Based on percentiles per hour as per Active Session History (ASH).'
+DEF abstract = 'Number of Sessions demanding CPU. Based on percentiles per hour as per Active Session History (ASH).<br />'
 DEF foot = 'Sessions "ON CPU"'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '5');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
@@ -622,7 +620,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 6;
 DEF title = 'CPU Demand Series (Percentile) for Instance 6';
-DEF abstract = 'Number of Sessions demanding CPU. Based on percentiles per hour as per Active Session History (ASH).'
+DEF abstract = 'Number of Sessions demanding CPU. Based on percentiles per hour as per Active Session History (ASH).<br />'
 DEF foot = 'Sessions "ON CPU"'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '6');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
@@ -631,7 +629,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 7;
 DEF title = 'CPU Demand Series (Percentile) for Instance 7';
-DEF abstract = 'Number of Sessions demanding CPU. Based on percentiles per hour as per Active Session History (ASH).'
+DEF abstract = 'Number of Sessions demanding CPU. Based on percentiles per hour as per Active Session History (ASH).<br />'
 DEF foot = 'Sessions "ON CPU"'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '7');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
@@ -640,12 +638,13 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 8;
 DEF title = 'CPU Demand Series (Percentile) for Instance 8';
-DEF abstract = 'Number of Sessions demanding CPU. Based on percentiles per hour as per Active Session History (ASH).'
+DEF abstract = 'Number of Sessions demanding CPU. Based on percentiles per hour as per Active Session History (ASH).<br />'
 DEF foot = 'Sessions "ON CPU"'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '8');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
-DEF vbaseline = 'baseline:&&sum_cpu_count.,'; 
+--DEF vbaseline = 'baseline:&&sum_cpu_count.,'; 
+DEF vbaseline = ''; 
 
 /*****************************************************************************************/
 
@@ -766,8 +765,8 @@ SELECT dbid,
        ROUND(mem_bytes / POWER(2,30), 1) mem_gb,
        ROUND(sga_bytes / POWER(2,30), 1) sga_gb,
        ROUND(pga_bytes / POWER(2,30), 1) pga_gb,
-       TO_CHAR(CAST(begin_interval_time AS DATE), ''YYYY-MM-DD HH24:MI'') begin_interval_time,
-       TO_CHAR(CAST(end_interval_time AS DATE), ''YYYY-MM-DD HH24:MI'') end_interval_time,
+       TO_CHAR(CAST(begin_interval_time AS DATE), ''YYYY-MM-DD HH24:MI:SS'') begin_interval_time,
+       TO_CHAR(CAST(end_interval_time AS DATE), ''YYYY-MM-DD HH24:MI:SS'') end_interval_time,
        snap_shots,
        ROUND(CAST(end_interval_time AS DATE) - CAST(begin_interval_time AS DATE), 1) days,
        ROUND(snap_shots / (CAST(end_interval_time AS DATE) - CAST(begin_interval_time AS DATE)), 1) avg_snaps_per_day
@@ -780,8 +779,8 @@ SELECT dbid,
        ROUND(mem_bytes / POWER(2,30), 1) mem_gb,
        ROUND(sga_bytes / POWER(2,30), 1) sga_gb,
        ROUND(pga_bytes / POWER(2,30), 1) pga_gb,
-       TO_CHAR(CAST(begin_interval_time AS DATE), ''YYYY-MM-DD HH24:MI'') begin_interval_time,
-       TO_CHAR(CAST(end_interval_time AS DATE), ''YYYY-MM-DD HH24:MI'') end_interval_time,
+       TO_CHAR(CAST(begin_interval_time AS DATE), ''YYYY-MM-DD HH24:MI:SS'') begin_interval_time,
+       TO_CHAR(CAST(end_interval_time AS DATE), ''YYYY-MM-DD HH24:MI:SS'') end_interval_time,
        snap_shots,
        ROUND(CAST(end_interval_time AS DATE) - CAST(begin_interval_time AS DATE), 1) days,
        ROUND(snap_shots / (CAST(end_interval_time AS DATE) - CAST(begin_interval_time AS DATE)), 1) avg_snaps_per_day
@@ -798,8 +797,8 @@ END;
 DEF title = 'Memory Size (MEM)';
 DEF main_table = 'GV$SYSTEM_PARAMETER2';
 DEF abstract = 'Consolidated view of Memory requirements.'
-DEF abstract2 = 'It considers AMM if setup, else ASMM if setup, else no memory management settings (individual pools size).'
-DEF foot = 'Consider "Giga Bytes (GB)" column for sizing. Instance Number -1 means aggregated values (SUM) while -2 means over all instances (combined).'
+DEF abstract2 = 'It considers AMM if setup, else ASMM if setup, else no memory management settings (individual pools size).<br />'
+DEF foot = 'Consider "Giga Bytes (GB)" column for sizing. Instance Number -1 means aggregated values (SUM) while -2 means over all instances (combined).<br />'
 BEGIN
   :sql_text := '
 WITH
@@ -981,8 +980,8 @@ END;
 
 DEF title = 'Memory Size (AWR)';
 DEF main_table = 'DBA_HIST_PARAMETER';
-DEF abstract = 'Consolidated view of Memory requirements.'
-DEF abstract2 = 'It considers AMM if setup, else ASMM if setup, else no memory management settings (individual pools size).'
+DEF abstract = 'Consolidated view of Memory requirements.<br />'
+DEF abstract2 = 'It considers AMM if setup, else ASMM if setup, else no memory management settings (individual pools size).<br />'
 DEF foot = 'Consider "Giga Bytes (GB)" column for sizing. Instance Number -1 means aggregated values (SUM) while -2 means over all instances (combined).'
 BEGIN
   :sql_text := '
@@ -1292,8 +1291,6 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snp.instance_number,
        snp.begin_interval_time,
        snp.end_interval_time,
-       TO_CHAR(TRUNC(CAST(snp.begin_interval_time AS DATE), ''HH''), ''YYYY-MM-DD HH24:MI'') begin_time,
-       TO_CHAR(TRUNC(CAST(snp.begin_interval_time AS DATE), ''HH'') + (1/24), ''YYYY-MM-DD HH24:MI'') end_time,
        sga.bytes sga_bytes,
        pga.bytes pga_bytes,
        (sga.bytes + pga.bytes) mem_bytes
@@ -1309,40 +1306,34 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
 ),
 hourly_inst AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
-       MIN(snap_id) snap_id,
-       dbid,
+       snap_id,
        instance_number,
-       begin_time,
-       end_time,
+       begin_interval_time,
+       end_interval_time,
        MAX(sga_bytes) sga_bytes,
        MAX(pga_bytes) pga_bytes,
-       MAX(mem_bytes) mem_bytes,
-       MIN(begin_interval_time) begin_interval_time,
-       MAX(end_interval_time) end_interval_time
+       MAX(mem_bytes) mem_bytes
   FROM mem
  GROUP BY
-       dbid,
+       snap_id,
        instance_number,
-       begin_time,
-       end_time
+       begin_interval_time,
+       end_interval_time
 ),
 hourly AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
-       MIN(snap_id) snap_id,
-       begin_time,
-       end_time,
+       snap_id,
+       TO_CHAR(MIN(begin_interval_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
+       TO_CHAR(MIN(end_interval_time), ''YYYY-MM-DD HH24:MI:SS'') end_time,
        ROUND(SUM(sga_bytes) / POWER(2,30), 3) sga_gb,
        ROUND(SUM(pga_bytes) / POWER(2,30), 3) pga_gb,
        ROUND(SUM(mem_bytes) / POWER(2,30), 3) mem_gb,
        SUM(sga_bytes) sga_bytes,
        SUM(pga_bytes) pga_bytes,
-       SUM(mem_bytes) mem_bytes,
-       MIN(begin_interval_time) begin_interval_time,
-       MAX(end_interval_time) end_interval_time
+       SUM(mem_bytes) mem_bytes
   FROM hourly_inst
  GROUP BY
-       begin_time,
-       end_time
+       snap_id
 )
 SELECT snap_id,
        begin_time,
@@ -1364,11 +1355,10 @@ SELECT snap_id,
        0 dummy_15
   FROM hourly
  ORDER BY
-       end_time
+       snap_id
 ';
 END;
 /
-
 DEF skip_lch = '';
 DEF skip_all = '&&is_single_instance.';
 DEF title = 'Memory Size Series for Cluster';
@@ -1440,7 +1430,7 @@ DEF skip_pch = 'Y';
 
 DEF title = 'Database Size on Disk';
 DEF main_table = 'GV$DATABASE';
-DEF abstract = 'Displays Space on Disk including datafiles, tempfiles, log and control files.'
+DEF abstract = 'Displays Space on Disk including datafiles, tempfiles, log and control files.<br />'
 DEF foot = 'Consider "Tera Bytes (TB)" column for sizing.'
 COL gb FOR 999990.000;
 BEGIN
@@ -1533,7 +1523,8 @@ WITH
 ts_per_snap_id AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        us.snap_id,
-       TRUNC(CAST(sn.end_interval_time AS DATE), ''HH'') + (1/24) end_time,
+       MIN(sn.begin_interval_time) begin_interval_time,
+       MIN(sn.end_interval_time) end_interval_time,
        SUM(us.tablespace_size * ts.block_size) all_tablespaces_bytes,
        SUM(CASE ts.contents WHEN ''PERMANENT'' THEN us.tablespace_size * ts.block_size ELSE 0 END) perm_tablespaces_bytes,
        SUM(CASE ts.contents WHEN ''UNDO''      THEN us.tablespace_size * ts.block_size ELSE 0 END) undo_tablespaces_bytes,
@@ -1550,12 +1541,11 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
    AND vt.ts# = us.tablespace_id
    AND ts.tablespace_name = vt.name
  GROUP BY
-       us.snap_id,
-       sn.end_interval_time
+       us.snap_id
 )
-SELECT MAX(snap_id) snap_id,
-       TO_CHAR(end_time - (1/24), ''YYYY-MM-DD HH24:MI'') begin_time,
-       TO_CHAR(end_time, ''YYYY-MM-DD HH24:MI'') end_time,
+SELECT snap_id,
+       TO_CHAR(MIN(begin_interval_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
+       TO_CHAR(MIN(end_interval_time), ''YYYY-MM-DD HH24:MI:SS'') end_time,
        ROUND(MAX(all_tablespaces_bytes) / POWER(10,9), 3),
        ROUND(MAX(perm_tablespaces_bytes) / POWER(10,9), 3),
        ROUND(MAX(undo_tablespaces_bytes) / POWER(10,9), 3),
@@ -1573,9 +1563,9 @@ SELECT MAX(snap_id) snap_id,
        0 dummy_15
   FROM ts_per_snap_id
  GROUP BY
-       end_time
+       snap_id
  ORDER BY
-       end_time
+       snap_id
 ';
 END;
 /
@@ -1594,7 +1584,7 @@ DEF skip_pch = 'Y';
 
 DEF title = 'IOPS and MBPS Percentiles';
 DEF main_table = 'DBA_HIST_SYSSTAT';
-DEF abstract = 'I/O Operations per Second (IOPS) and I/O Mega Bytes per Second (MBPS). Includes Peak (max), percentiles and average for read (R), write (W) and read+write (RW) operations.'
+DEF abstract = 'I/O Operations per Second (IOPS) and I/O Mega Bytes per Second (MBPS). Includes Peak (max), percentiles and average for read (R), write (W) and read+write (RW) operations.<br />'
 DEF foot = 'Consider Peak or high Percentile for sizing. Instance Number -1 means aggregated values (SUM) while -2 means over all instances (combined).'
 BEGIN
   :sql_text := '
@@ -1847,8 +1837,8 @@ SELECT dbid,
        rw_mbps,
        r_mbps,
        w_mbps,
-       TO_CHAR(CAST(begin_interval_time AS DATE), ''YYYY-MM-DD HH24:MI'') begin_interval_time,
-       TO_CHAR(CAST(end_interval_time AS DATE), ''YYYY-MM-DD HH24:MI'') end_interval_time,
+       TO_CHAR(CAST(begin_interval_time AS DATE), ''YYYY-MM-DD HH24:MI:SS'') begin_interval_time,
+       TO_CHAR(CAST(end_interval_time AS DATE), ''YYYY-MM-DD HH24:MI:SS'') end_interval_time,
        snap_shots,
        ROUND(CAST(end_interval_time AS DATE) - CAST(begin_interval_time AS DATE), 1) days,
        ROUND(snap_shots / (CAST(end_interval_time AS DATE) - CAST(begin_interval_time AS DATE)), 1) avg_snaps_per_day
@@ -1903,7 +1893,8 @@ io_per_inst_and_snap_id AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        s1.snap_id,
        h1.instance_number,
-       TRUNC(CAST(s1.end_interval_time AS DATE), ''HH'') begin_time,
+       s1.begin_interval_time,
+       s1.end_interval_time,
        (h1.r_reqs - h0.r_reqs) r_reqs,
        (h1.w_reqs - h0.w_reqs) w_reqs,
        (h1.r_bytes - h0.r_bytes) r_bytes,
@@ -1927,10 +1918,10 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
 ),
 io_per_inst_and_hr AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
-       MIN(snap_id) snap_id,
+       snap_id,
        instance_number,
-       TO_CHAR(begin_time, ''YYYY-MM-DD HH24:MI'') begin_time,
-       TO_CHAR(begin_time + (1/24), ''YYYY-MM-DD HH24:MI'') end_time,
+       MIN(begin_interval_time) begin_interval_time,
+       MIN(end_interval_time) end_interval_time,
        ROUND(MAX((r_reqs + w_reqs) / elapsed_sec)) rw_iops,
        ROUND(MAX(r_reqs / elapsed_sec)) r_iops,
        ROUND(MAX(w_reqs / elapsed_sec)) w_iops,
@@ -1939,12 +1930,12 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        ROUND(MAX(w_bytes / POWER(10,6) / elapsed_sec), 3) w_mbps
   FROM io_per_inst_and_snap_id
  GROUP BY
-       instance_number,
-       begin_time
+       snap_id,
+       instance_number
 )
-SELECT MIN(snap_id) snap_id,
-       begin_time,
-       end_time,
+SELECT snap_id,
+       TO_CHAR(MIN(begin_interval_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
+       TO_CHAR(MIN(end_interval_time), ''YYYY-MM-DD HH24:MI:SS'') end_time,
        SUM(@column1@) @column1@,
        SUM(@column2@) @column2@,
        SUM(@column3@) @column3@,
@@ -1962,10 +1953,9 @@ SELECT MIN(snap_id) snap_id,
        0 dummy_15
   FROM io_per_inst_and_hr
  GROUP BY
-       begin_time,
-       end_time
+       snap_id
  ORDER BY
-       end_time
+       snap_id
 ';
 END;
 /
@@ -1977,7 +1967,7 @@ DEF vaxis = 'IOPS (RW, R and W)';
 
 DEF skip_lch = '';
 DEF skip_all = '&&is_single_instance.';
-DEF abstract = 'Read (R), Write (W) and Read-Write (RW) I/O Operations per Second (IOPS).'
+DEF abstract = 'Read (R), Write (W) and Read-Write (RW) I/O Operations per Second (IOPS).<br />'
 DEF title = 'IOPS Series for Cluster';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', 'instance_number');
 EXEC :sql_text := REPLACE(:sql_text, '@column1@', 'rw_iops');
@@ -1987,7 +1977,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@column3@', 'w_iops');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Read (R), Write (W) and Read-Write (RW) I/O Operations per Second (IOPS).'
+DEF abstract = 'Read (R), Write (W) and Read-Write (RW) I/O Operations per Second (IOPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 1;
 DEF title = 'IOPS Series for Instance 1';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '1');
@@ -1998,7 +1988,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@column3@', 'w_iops');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Read (R), Write (W) and Read-Write (RW) I/O Operations per Second (IOPS).'
+DEF abstract = 'Read (R), Write (W) and Read-Write (RW) I/O Operations per Second (IOPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 2;
 DEF title = 'IOPS Series for Instance 2';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '2');
@@ -2009,7 +1999,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@column3@', 'w_iops');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Read (R), Write (W) and Read-Write (RW) I/O Operations per Second (IOPS).'
+DEF abstract = 'Read (R), Write (W) and Read-Write (RW) I/O Operations per Second (IOPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 3;
 DEF title = 'IOPS Series for Instance 3';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '3');
@@ -2020,7 +2010,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@column3@', 'w_iops');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Read (R), Write (W) and Read-Write (RW) I/O Operations per Second (IOPS).'
+DEF abstract = 'Read (R), Write (W) and Read-Write (RW) I/O Operations per Second (IOPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 4;
 DEF title = 'IOPS Series for Instance 4';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '4');
@@ -2031,7 +2021,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@column3@', 'w_iops');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Read (R), Write (W) and Read-Write (RW) I/O Operations per Second (IOPS).'
+DEF abstract = 'Read (R), Write (W) and Read-Write (RW) I/O Operations per Second (IOPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 5;
 DEF title = 'IOPS Series for Instance 5';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '5');
@@ -2042,7 +2032,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@column3@', 'w_iops');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Read (R), Write (W) and Read-Write (RW) I/O Operations per Second (IOPS).'
+DEF abstract = 'Read (R), Write (W) and Read-Write (RW) I/O Operations per Second (IOPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 6;
 DEF title = 'IOPS Series for Instance 6';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '6');
@@ -2053,7 +2043,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@column3@', 'w_iops');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Read (R), Write (W) and Read-Write (RW) I/O Operations per Second (IOPS).'
+DEF abstract = 'Read (R), Write (W) and Read-Write (RW) I/O Operations per Second (IOPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 7;
 DEF title = 'IOPS Series for Instance 7';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '7');
@@ -2064,7 +2054,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@column3@', 'w_iops');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Read (R), Write (W) and Read-Write (RW) I/O Operations per Second (IOPS).'
+DEF abstract = 'Read (R), Write (W) and Read-Write (RW) I/O Operations per Second (IOPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 8;
 DEF title = 'IOPS Series for Instance 8';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '8');
@@ -2080,7 +2070,7 @@ DEF vaxis = 'MBPS (RW, R and W)';
 
 DEF skip_lch = '';
 DEF skip_all = '&&is_single_instance.';
-DEF abstract = 'Read (R), Write (W) and Read-Write (RW) Mega Bytes per Second (MBPS).'
+DEF abstract = 'Read (R), Write (W) and Read-Write (RW) Mega Bytes per Second (MBPS).<br />'
 DEF title = 'MBPS Series for Cluster';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', 'instance_number');
 EXEC :sql_text := REPLACE(:sql_text, '@column1@', 'rw_mbps');
@@ -2090,7 +2080,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@column3@', 'w_mbps');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Read (R), Write (W) and Read-Write (RW) Mega Bytes per Second (MBPS).'
+DEF abstract = 'Read (R), Write (W) and Read-Write (RW) Mega Bytes per Second (MBPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 1;
 DEF title = 'MBPS Series for Instance 1';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '1');
@@ -2101,7 +2091,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@column3@', 'w_mbps');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Read (R), Write (W) and Read-Write (RW) Mega Bytes per Second (MBPS).'
+DEF abstract = 'Read (R), Write (W) and Read-Write (RW) Mega Bytes per Second (MBPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 2;
 DEF title = 'MBPS Series for Instance 2';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '2');
@@ -2112,7 +2102,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@column3@', 'w_mbps');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Read (R), Write (W) and Read-Write (RW) Mega Bytes per Second (MBPS).'
+DEF abstract = 'Read (R), Write (W) and Read-Write (RW) Mega Bytes per Second (MBPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 3;
 DEF title = 'MBPS Series for Instance 3';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '3');
@@ -2123,7 +2113,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@column3@', 'w_mbps');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Read (R), Write (W) and Read-Write (RW) Mega Bytes per Second (MBPS).'
+DEF abstract = 'Read (R), Write (W) and Read-Write (RW) Mega Bytes per Second (MBPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 4;
 DEF title = 'MBPS Series for Instance 4';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '4');
@@ -2134,7 +2124,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@column3@', 'w_mbps');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Read (R), Write (W) and Read-Write (RW) Mega Bytes per Second (MBPS).'
+DEF abstract = 'Read (R), Write (W) and Read-Write (RW) Mega Bytes per Second (MBPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 5;
 DEF title = 'MBPS Series for Instance 5';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '5');
@@ -2145,7 +2135,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@column3@', 'w_mbps');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Read (R), Write (W) and Read-Write (RW) Mega Bytes per Second (MBPS).'
+DEF abstract = 'Read (R), Write (W) and Read-Write (RW) Mega Bytes per Second (MBPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 6;
 DEF title = 'MBPS Series for Instance 6';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '6');
@@ -2156,7 +2146,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@column3@', 'w_mbps');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Read (R), Write (W) and Read-Write (RW) Mega Bytes per Second (MBPS).'
+DEF abstract = 'Read (R), Write (W) and Read-Write (RW) Mega Bytes per Second (MBPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 7;
 DEF title = 'MBPS Series for Instance 7';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '7');
@@ -2167,7 +2157,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@column3@', 'w_mbps');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Read (R), Write (W) and Read-Write (RW) Mega Bytes per Second (MBPS).'
+DEF abstract = 'Read (R), Write (W) and Read-Write (RW) Mega Bytes per Second (MBPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 8;
 DEF title = 'MBPS Series for Instance 8';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '8');
@@ -2263,7 +2253,8 @@ io_per_inst_and_snap_id AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        s1.snap_id,
        h1.instance_number,
-       TRUNC(CAST(s1.end_interval_time AS DATE), ''HH'') begin_time,
+       s1.begin_interval_time,
+       s1.end_interval_time,
        (h1.r_appl_bytes - h0.r_appl_bytes) r_appl_bytes,
        (h1.r_flash_cache_hits - h0.r_flash_cache_hits) r_flash_cache_hits,
        (h1.r_IO_requests - h0.r_IO_requests) r_IO_requests,
@@ -2320,10 +2311,10 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
 ),
 io_per_inst_and_hr AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
-       MIN(snap_id) snap_id,
+       snap_id,
        instance_number,
-       TO_CHAR(begin_time, ''YYYY-MM-DD HH24:MI'') begin_time,
-       TO_CHAR(begin_time + (1/24), ''YYYY-MM-DD HH24:MI'') end_time,
+       MIN(begin_interval_time) begin_interval_time,
+       MIN(end_interval_time) end_interval_time,
        ROUND(MAX(reads / elapsed_sec)) reads_ps,
        ROUND(MAX(writes / elapsed_sec)) writes_ps,
        ROUND(MAX(r_flash_cache_hits / elapsed_sec)) r_flash_cache_hits_ps,
@@ -2367,12 +2358,12 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        ROUND(MAX(w_bytes / POWER(10,6) / elapsed_sec), 3) w_mbps
   FROM io_per_inst_and_snap_id
  GROUP BY
-       instance_number,
-       begin_time
+       snap_id,
+       instance_number
 )
-SELECT MIN(snap_id) snap_id,
-       begin_time,
-       end_time,
+SELECT snap_id,
+       TO_CHAR(MIN(begin_interval_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
+       TO_CHAR(MIN(end_interval_time), ''YYYY-MM-DD HH24:MI:SS'') end_time,
        #column01#
        #column02#
        #column03#
@@ -2390,10 +2381,9 @@ SELECT MIN(snap_id) snap_id,
        #column15#
   FROM io_per_inst_and_hr
  GROUP BY
-       begin_time,
-       end_time
+       snap_id
  ORDER BY
-       end_time
+       snap_id
 ';
 END;
 /
@@ -2433,14 +2423,14 @@ EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column15#', '0 dummy_15')
 
 DEF skip_lch = '';
 DEF skip_all = '&&is_single_instance.';
-DEF abstract = 'Read I/O Operations per Second (R-IOPS).'
+DEF abstract = 'Read I/O Operations per Second (R-IOPS).<br />'
 DEF title = 'R-IOPS Series for Cluster';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', 'instance_number');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Read I/O Operations per Second (R-IOPS).'
+DEF abstract = 'Read I/O Operations per Second (R-IOPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 1;
 DEF title = 'R-IOPS Series for Instance 1';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '1');
@@ -2448,7 +2438,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '1');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Read I/O Operations per Second (R-IOPS).'
+DEF abstract = 'Read I/O Operations per Second (R-IOPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 2;
 DEF title = 'R-IOPS Series for Instance 2';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '2');
@@ -2456,7 +2446,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '2');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Read I/O Operations per Second (R-IOPS).'
+DEF abstract = 'Read I/O Operations per Second (R-IOPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 3;
 DEF title = 'R-IOPS Series for Instance 3';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '3');
@@ -2464,7 +2454,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '3');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Read I/O Operations per Second (R-IOPS).'
+DEF abstract = 'Read I/O Operations per Second (R-IOPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 4;
 DEF title = 'R-IOPS Series for Instance 4';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '4');
@@ -2472,7 +2462,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '4');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Read I/O Operations per Second (R-IOPS).'
+DEF abstract = 'Read I/O Operations per Second (R-IOPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 5;
 DEF title = 'R-IOPS Series for Instance 5';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '5');
@@ -2480,7 +2470,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '5');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Read I/O Operations per Second (R-IOPS).'
+DEF abstract = 'Read I/O Operations per Second (R-IOPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 6;
 DEF title = 'R-IOPS Series for Instance 6';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '6');
@@ -2488,7 +2478,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '6');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Read I/O Operations per Second (R-IOPS).'
+DEF abstract = 'Read I/O Operations per Second (R-IOPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 7;
 DEF title = 'R-IOPS Series for Instance 7';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '7');
@@ -2496,7 +2486,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '7');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Read I/O Operations per Second (R-IOPS).'
+DEF abstract = 'Read I/O Operations per Second (R-IOPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 8;
 DEF title = 'R-IOPS Series for Instance 8';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '8');
@@ -2537,14 +2527,14 @@ EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column15#', '0 dummy_15')
 
 DEF skip_lch = '';
 DEF skip_all = '&&is_single_instance.';
-DEF abstract = 'Reads per Second.'
+DEF abstract = 'Reads per Second.<br />'
 DEF title = 'Reads (per second) Series for Cluster';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', 'instance_number');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Reads per Second.'
+DEF abstract = 'Reads per Second.<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 1;
 DEF title = 'Reads (per second) Series for Instance 1';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '1');
@@ -2552,7 +2542,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '1');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Reads per Second.'
+DEF abstract = 'Reads per Second.<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 2;
 DEF title = 'Reads (per second) Series for Instance 2';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '2');
@@ -2560,7 +2550,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '2');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Reads per Second.'
+DEF abstract = 'Reads per Second.<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 3;
 DEF title = 'Reads (per second) Series for Instance 3';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '3');
@@ -2568,7 +2558,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '3');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Reads per Second.'
+DEF abstract = 'Reads per Second.<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 4;
 DEF title = 'Reads (per second) Series for Instance 4';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '4');
@@ -2576,7 +2566,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '4');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Reads per Second.'
+DEF abstract = 'Reads per Second.<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 5;
 DEF title = 'Reads (per second) Series for Instance 5';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '5');
@@ -2584,7 +2574,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '5');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Reads per Second.'
+DEF abstract = 'Reads per Second.<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 6;
 DEF title = 'Reads (per second) Series for Instance 6';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '6');
@@ -2592,7 +2582,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '6');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Reads per Second.'
+DEF abstract = 'Reads per Second.<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 7;
 DEF title = 'Reads (per second) Series for Instance 7';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '7');
@@ -2600,7 +2590,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '7');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Reads per Second.'
+DEF abstract = 'Reads per Second.<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 8;
 DEF title = 'Reads (per second) Series for Instance 8';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '8');
@@ -2641,14 +2631,14 @@ EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column15#', '0 dummy_15')
 
 DEF skip_lch = '';
 DEF skip_all = '&&is_single_instance.';
-DEF abstract = 'Read Megabytes per Second (R-MBPS).'
+DEF abstract = 'Read Megabytes per Second (R-MBPS).<br />'
 DEF title = 'R-MBPS Series for Cluster';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', 'instance_number');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Read Megabytes per Second (R-MBPS).'
+DEF abstract = 'Read Megabytes per Second (R-MBPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 1;
 DEF title = 'R-MBPS Series for Instance 1';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '1');
@@ -2656,7 +2646,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '1');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Read Megabytes per Second (R-MBPS).'
+DEF abstract = 'Read Megabytes per Second (R-MBPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 2;
 DEF title = 'R-MBPS Series for Instance 2';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '2');
@@ -2664,7 +2654,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '2');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Read Megabytes per Second (R-MBPS).'
+DEF abstract = 'Read Megabytes per Second (R-MBPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 3;
 DEF title = 'R-MBPS Series for Instance 3';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '3');
@@ -2672,7 +2662,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '3');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Read Megabytes per Second (R-MBPS).'
+DEF abstract = 'Read Megabytes per Second (R-MBPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 4;
 DEF title = 'R-MBPS Series for Instance 4';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '4');
@@ -2680,7 +2670,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '4');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Read Megabytes per Second (R-MBPS).'
+DEF abstract = 'Read Megabytes per Second (R-MBPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 5;
 DEF title = 'R-MBPS Series for Instance 5';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '5');
@@ -2688,7 +2678,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '5');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Read Megabytes per Second (R-MBPS).'
+DEF abstract = 'Read Megabytes per Second (R-MBPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 6;
 DEF title = 'R-MBPS Series for Instance 6';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '6');
@@ -2696,7 +2686,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '6');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Read Megabytes per Second (R-MBPS).'
+DEF abstract = 'Read Megabytes per Second (R-MBPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 7;
 DEF title = 'R-MBPS Series for Instance 7';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '7');
@@ -2704,7 +2694,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '7');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Read Megabytes per Second (R-MBPS).'
+DEF abstract = 'Read Megabytes per Second (R-MBPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 8;
 DEF title = 'R-MBPS Series for Instance 8';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '8');
@@ -2745,14 +2735,14 @@ EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column15#', '0 dummy_15')
 
 DEF skip_lch = '';
 DEF skip_all = '&&is_single_instance.';
-DEF abstract = 'Write I/O Operations per Second (W-IOPS).'
+DEF abstract = 'Write I/O Operations per Second (W-IOPS).<br />'
 DEF title = 'W-IOPS Series for Cluster';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', 'instance_number');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Write I/O Operations per Second (W-IOPS).'
+DEF abstract = 'Write I/O Operations per Second (W-IOPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 1;
 DEF title = 'W-IOPS Series for Instance 1';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '1');
@@ -2760,7 +2750,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '1');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Write I/O Operations per Second (W-IOPS).'
+DEF abstract = 'Write I/O Operations per Second (W-IOPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 2;
 DEF title = 'W-IOPS Series for Instance 2';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '2');
@@ -2768,7 +2758,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '2');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Write I/O Operations per Second (W-IOPS).'
+DEF abstract = 'Write I/O Operations per Second (W-IOPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 3;
 DEF title = 'W-IOPS Series for Instance 3';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '3');
@@ -2776,7 +2766,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '3');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Write I/O Operations per Second (W-IOPS).'
+DEF abstract = 'Write I/O Operations per Second (W-IOPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 4;
 DEF title = 'W-IOPS Series for Instance 4';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '4');
@@ -2784,7 +2774,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '4');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Write I/O Operations per Second (W-IOPS).'
+DEF abstract = 'Write I/O Operations per Second (W-IOPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 5;
 DEF title = 'W-IOPS Series for Instance 5';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '5');
@@ -2792,7 +2782,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '5');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Write I/O Operations per Second (W-IOPS).'
+DEF abstract = 'Write I/O Operations per Second (W-IOPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 6;
 DEF title = 'W-IOPS Series for Instance 6';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '6');
@@ -2800,7 +2790,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '6');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Write I/O Operations per Second (W-IOPS).'
+DEF abstract = 'Write I/O Operations per Second (W-IOPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 7;
 DEF title = 'W-IOPS Series for Instance 7';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '7');
@@ -2808,7 +2798,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '7');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Write I/O Operations per Second (W-IOPS).'
+DEF abstract = 'Write I/O Operations per Second (W-IOPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 8;
 DEF title = 'W-IOPS Series for Instance 8';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '8');
@@ -2849,14 +2839,14 @@ EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column15#', '0 dummy_15')
 
 DEF skip_lch = '';
 DEF skip_all = '&&is_single_instance.';
-DEF abstract = 'Writes per Second.'
+DEF abstract = 'Writes per Second.<br />'
 DEF title = 'Writes (per second) Series for Cluster';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', 'instance_number');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Writes per Second.'
+DEF abstract = 'Writes per Second.<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 1;
 DEF title = 'Writes (per second) Series for Instance 1';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '1');
@@ -2864,7 +2854,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '1');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Writes per Second.'
+DEF abstract = 'Writes per Second.<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 2;
 DEF title = 'Writes (per second) Series for Instance 2';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '2');
@@ -2872,7 +2862,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '2');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Writes per Second.'
+DEF abstract = 'Writes per Second.<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 3;
 DEF title = 'Writes (per second) Series for Instance 3';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '3');
@@ -2880,7 +2870,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '3');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Writes per Second.'
+DEF abstract = 'Writes per Second.<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 4;
 DEF title = 'Writes (per second) Series for Instance 4';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '4');
@@ -2888,7 +2878,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '4');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Writes per Second.'
+DEF abstract = 'Writes per Second.<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 5;
 DEF title = 'Writes (per second) Series for Instance 5';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '5');
@@ -2896,7 +2886,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '5');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Writes per Second.'
+DEF abstract = 'Writes per Second.<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 6;
 DEF title = 'Writes (per second) Series for Instance 6';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '6');
@@ -2904,7 +2894,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '6');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Writes per Second.'
+DEF abstract = 'Writes per Second.<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 7;
 DEF title = 'Writes (per second) Series for Instance 7';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '7');
@@ -2912,7 +2902,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '7');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Writes per Second.'
+DEF abstract = 'Writes per Second.<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 8;
 DEF title = 'Writes (per second) Series for Instance 8';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '8');
@@ -2953,14 +2943,14 @@ EXEC :sql_text_backup2 := REPLACE(:sql_text_backup2, '#column15#', '0 dummy_15')
 
 DEF skip_lch = '';
 DEF skip_all = '&&is_single_instance.';
-DEF abstract = 'Write Megabytes per Second (W-MBPS).'
+DEF abstract = 'Write Megabytes per Second (W-MBPS).<br />'
 DEF title = 'W-MBPS Series for Cluster';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', 'instance_number');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Write Megabytes per Second (W-MBPS).'
+DEF abstract = 'Write Megabytes per Second (W-MBPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 1;
 DEF title = 'W-MBPS Series for Instance 1';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '1');
@@ -2968,7 +2958,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '1');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Write Megabytes per Second (W-MBPS).'
+DEF abstract = 'Write Megabytes per Second (W-MBPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 2;
 DEF title = 'W-MBPS Series for Instance 2';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '2');
@@ -2976,7 +2966,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '2');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Write Megabytes per Second (W-MBPS).'
+DEF abstract = 'Write Megabytes per Second (W-MBPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 3;
 DEF title = 'W-MBPS Series for Instance 3';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '3');
@@ -2984,7 +2974,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '3');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Write Megabytes per Second (W-MBPS).'
+DEF abstract = 'Write Megabytes per Second (W-MBPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 4;
 DEF title = 'W-MBPS Series for Instance 4';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '4');
@@ -2992,7 +2982,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '4');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Write Megabytes per Second (W-MBPS).'
+DEF abstract = 'Write Megabytes per Second (W-MBPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 5;
 DEF title = 'W-MBPS Series for Instance 5';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '5');
@@ -3000,7 +2990,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '5');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Write Megabytes per Second (W-MBPS).'
+DEF abstract = 'Write Megabytes per Second (W-MBPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 6;
 DEF title = 'W-MBPS Series for Instance 6';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '6');
@@ -3008,7 +2998,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '6');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Write Megabytes per Second (W-MBPS).'
+DEF abstract = 'Write Megabytes per Second (W-MBPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 7;
 DEF title = 'W-MBPS Series for Instance 7';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '7');
@@ -3016,7 +3006,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '7');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-DEF abstract = 'Write Megabytes per Second (W-MBPS).'
+DEF abstract = 'Write Megabytes per Second (W-MBPS).<br />'
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 8;
 DEF title = 'W-MBPS Series for Instance 8';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@instance_number@', '8');

@@ -116,80 +116,85 @@ BEGIN
     l_col_06, l_col_07, l_col_08, l_col_09, l_col_10,
     l_col_11, l_col_12, l_col_13, l_col_14, l_col_15;
     EXIT WHEN cur%NOTFOUND;
-    l_line := ', [new Date('||SUBSTR(l_end_time,1,4)||','||
-    (TO_NUMBER(SUBSTR(l_end_time,6,2)) - 1)||','||
-    SUBSTR(l_end_time,9,2)||','||
-    SUBSTR(l_end_time,12,2)||','||
-    SUBSTR(l_end_time,15,2)||',0)';
-    IF '&&tit_01.' IS NOT NULL THEN
-      l_line := l_line||', '||l_col_01; 
+    IF l_col_01 IS NOT NULL AND l_col_02 IS NOT NULL AND l_col_03 IS NOT NULL AND l_col_04 IS NOT NULL AND l_col_05 IS NOT NULL AND l_col_06 IS NOT NULL AND l_col_07 IS NOT NULL AND l_col_08 IS NOT NULL AND l_col_09 IS NOT NULL AND l_col_10 IS NOT NULL AND l_col_11 IS NOT NULL AND l_col_12 IS NOT NULL AND l_col_13 IS NOT NULL AND l_col_14 IS NOT NULL AND l_col_15 IS NOT NULL THEN
+      l_line := ', [new Date('||SUBSTR(l_end_time,1,4)||','||
+      (TO_NUMBER(SUBSTR(l_end_time,6,2)) - 1)||','||
+      SUBSTR(l_end_time,9,2)||','||
+      SUBSTR(l_end_time,12,2)||','||
+      SUBSTR(l_end_time,15,2)||','||
+      NVL(SUBSTR(l_end_time,18,2),'0')||
+      ')';
+      IF '&&tit_01.' IS NOT NULL THEN
+        l_line := l_line||', '||l_col_01; 
+      END IF;
+      IF '&&tit_02.' IS NOT NULL THEN
+        l_line := l_line||', '||l_col_02; 
+      END IF;
+      IF '&&tit_03.' IS NOT NULL THEN
+        l_line := l_line||', '||l_col_03; 
+      END IF;
+      IF '&&tit_04.' IS NOT NULL THEN
+        l_line := l_line||', '||l_col_04; 
+      END IF;
+      IF '&&tit_05.' IS NOT NULL THEN
+        l_line := l_line||', '||l_col_05; 
+      END IF;
+      IF '&&tit_06.' IS NOT NULL THEN
+        l_line := l_line||', '||l_col_06; 
+      END IF;
+      IF '&&tit_07.' IS NOT NULL THEN
+        l_line := l_line||', '||l_col_07; 
+      END IF;
+      IF '&&tit_08.' IS NOT NULL THEN
+        l_line := l_line||', '||l_col_08; 
+      END IF;
+      IF '&&tit_09.' IS NOT NULL THEN
+        l_line := l_line||', '||l_col_09; 
+      END IF;
+      IF '&&tit_10.' IS NOT NULL THEN
+        l_line := l_line||', '||l_col_10; 
+      END IF;
+      IF '&&tit_11.' IS NOT NULL THEN
+        l_line := l_line||', '||l_col_11; 
+      END IF;
+      IF '&&tit_12.' IS NOT NULL THEN
+        l_line := l_line||', '||l_col_12; 
+      END IF;
+      IF '&&tit_13.' IS NOT NULL THEN
+        l_line := l_line||', '||l_col_13; 
+      END IF;
+      IF '&&tit_14.' IS NOT NULL THEN
+        l_line := l_line||', '||l_col_14; 
+      END IF;
+      IF '&&tit_15.' IS NOT NULL THEN
+        l_line := l_line||', '||l_col_15; 
+      END IF;
+      l_line := l_line||']';
+      DBMS_OUTPUT.PUT_LINE(l_line);
     END IF;
-    IF '&&tit_02.' IS NOT NULL THEN
-      l_line := l_line||', '||l_col_02; 
-    END IF;
-    IF '&&tit_03.' IS NOT NULL THEN
-      l_line := l_line||', '||l_col_03; 
-    END IF;
-    IF '&&tit_04.' IS NOT NULL THEN
-      l_line := l_line||', '||l_col_04; 
-    END IF;
-    IF '&&tit_05.' IS NOT NULL THEN
-      l_line := l_line||', '||l_col_05; 
-    END IF;
-    IF '&&tit_06.' IS NOT NULL THEN
-      l_line := l_line||', '||l_col_06; 
-    END IF;
-    IF '&&tit_07.' IS NOT NULL THEN
-      l_line := l_line||', '||l_col_07; 
-    END IF;
-    IF '&&tit_08.' IS NOT NULL THEN
-      l_line := l_line||', '||l_col_08; 
-    END IF;
-    IF '&&tit_09.' IS NOT NULL THEN
-      l_line := l_line||', '||l_col_09; 
-    END IF;
-    IF '&&tit_10.' IS NOT NULL THEN
-      l_line := l_line||', '||l_col_10; 
-    END IF;
-    IF '&&tit_11.' IS NOT NULL THEN
-      l_line := l_line||', '||l_col_11; 
-    END IF;
-    IF '&&tit_12.' IS NOT NULL THEN
-      l_line := l_line||', '||l_col_12; 
-    END IF;
-    IF '&&tit_13.' IS NOT NULL THEN
-      l_line := l_line||', '||l_col_13; 
-    END IF;
-    IF '&&tit_14.' IS NOT NULL THEN
-      l_line := l_line||', '||l_col_14; 
-    END IF;
-    IF '&&tit_15.' IS NOT NULL THEN
-      l_line := l_line||', '||l_col_15; 
-    END IF;
-    l_line := l_line||']';
-    DBMS_OUTPUT.PUT_LINE(l_line);
   END LOOP;
   CLOSE cur;
 END;
 /
 SET SERVEROUT OFF;
 
--- chart footer
+-- line chart footer
 PRO        ]);;
 PRO        
 PRO        var options = {&&stacked.
+PRO          chartArea:{left:90, top:75, width:'65%', height:'70%'},
 PRO          backgroundColor: {fill: '#fcfcf0', stroke: '#336699', strokeWidth: 1},
 PRO          explorer: {actions: ['dragToZoom', 'rightClickToReset'], maxZoomIn: 0.025},
 PRO          title: '&&section_id..&&report_sequence.. &&title.&&title_suffix.',
-PRO          titleTextStyle: {fontSize: 16, bold: false},
+PRO          titleTextStyle: {fontSize: 18, bold: false},
 PRO          focusTarget: 'category',
-PRO          legend: {position: 'right', textStyle: {fontSize: 12}},
-PRO          tooltip: {textStyle: {fontSize: 10}},
-PRO          hAxis: {title: '&&haxis.', gridlines: {count: -1}},
+PRO          legend: {position: 'right', textStyle: {fontSize: 14}},
+PRO          tooltip: {textStyle: {fontSize: 14}},
+PRO          hAxis: {title: '&&haxis.', gridlines: {count: -1}, titleTextStyle: {fontSize: 16, bold: false}},
 PRO          series: { 0: { &&series_01.}, 1: { &&series_02.},  2: { &&series_03.},  3: { &&series_04.},  4: { &&series_05.},  5: { &&series_06.},  6: { &&series_07.}, 7: {&&series_08.},
 PRO                    8: { &&series_09.}, 9: { &&series_10.}, 10: { &&series_11.}, 11: { &&series_12.}, 12: { &&series_13.}, 13: { &&series_14.}, 14: { &&series_15.}
 PRO          },
-PRO          vAxis: {title: '&&vaxis.', &&vbaseline. gridlines: {count: -1}}
+PRO          vAxis: {title: '&&vaxis.', &&vbaseline. gridlines: {count: -1}, titleTextStyle: {fontSize: 16, bold: false}}
 PRO        };
 PRO
 PRO        var chart = new google.visualization.&&chartype.(document.getElementById('line_chart'));
@@ -198,18 +203,21 @@ PRO      }
 PRO    </script>
 PRO  </head>
 PRO  <body>
+PRO
 PRO<h1> &&edb360_conf_all_pages_icon. &&section_id..&&report_sequence.. &&title. <em>(&&main_table.)</em> &&edb360_conf_all_pages_logo. </h1>
 PRO
 PRO <br />
 PRO &&abstract.
 PRO &&abstract2.
+PRO <br />
 PRO
 PRO    <div id="line_chart" class="google-chart"></div>
 PRO
 
 -- footer
-PRO<font class="n">Notes:<br />1) drag to zoom, and right click to reset<br />2) up to &&history_days. days of awr history were considered</font>
-PRO<font class="n"><br />3) &&foot.</font>
+PRO <br />
+PRO <font class="n">Notes:<br />1) drag to zoom, and right click to reset<br />2) up to &&history_days. days of awr history were considered</font>
+PRO <font class="n"><br />3) &&foot.</font>
 PRO <pre>
 SET LIN 80;
 DESC &&main_table.

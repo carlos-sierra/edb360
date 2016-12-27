@@ -1,6 +1,6 @@
 @@&&edb360_0g.tkprof.sql
 DEF section_id = '5d';
-DEF section_name = 'System Statistics per Hour';
+DEF section_name = 'System Statistics per Snap Interval';
 EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
 SPO &&edb360_main_report..html APP;
 PRO <h2>&&section_id.. &&section_name.</h2>
@@ -20,11 +20,11 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
        h.snap_id,
        h.instance_number,
        s.begin_interval_time,
-       s.startup_time,
-       h.stat_id,
+       s.end_interval_time,
+       (s.startup_time - LAG(s.startup_time) OVER (PARTITION BY h.dbid, h.instance_number, h.stat_id ORDER BY h.snap_id)) startup_time_interval,
        h.stat_name,
-       h.value,
-       ROW_NUMBER () OVER (PARTITION BY h.dbid, h.instance_number, h.stat_id, TRUNC(s.begin_interval_time, ''HH'') ORDER BY h.snap_id) rn -- row_number within each hour
+       (h.value - LAG(h.value) OVER (PARTITION BY h.dbid, h.instance_number, h.stat_id ORDER BY h.snap_id)) value
+       --h.value
   FROM dba_hist_sysstat h,
        dba_hist_snapshot s
  WHERE h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
@@ -35,34 +35,24 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
    AND s.instance_number = h.instance_number
    AND s.end_interval_time - s.begin_interval_time > TO_DSINTERVAL(''+00 00:01:00.000000'') -- exclude snaps less than 1m appart
 ),
-stat_name_per_instance_n_hour AS (
+stat_name_per_snap AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
-       instance_number,
-       TRUNC(begin_interval_time, ''HH'') begin_time_hh,
-       startup_time - LAG(startup_time) OVER (PARTITION BY /*dbid,*/ instance_number, stat_id ORDER BY snap_id) startup_time_interval,
-       stat_name,
-       value - LAG(value) OVER (PARTITION BY instance_number, stat_id ORDER BY snap_id) value       
-  FROM selected_stat_name
- WHERE rn = 1 -- select only first snap from each hour
-),
-stat_name_per_hour AS (
-SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
-       MIN(snap_id) snap_id,
-       begin_time_hh,
+       MIN(begin_interval_time) begin_interval_time,
+       MIN(end_interval_time) end_interval_time,
        stat_name,
        SUM(value) value
-  FROM stat_name_per_instance_n_hour
+  FROM selected_stat_name
  WHERE startup_time_interval = TO_DSINTERVAL(''+00 00:00:00.000000'') -- include only snaps from same startup
    AND value >= 0 
  GROUP BY
-       begin_time_hh,
+       snap_id,
        stat_name
 )
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
-       TO_CHAR(begin_time_hh, ''YYYY-MM-DD HH24:MI'') begin_time,
-       TO_CHAR(begin_time_hh + (1/24), ''YYYY-MM-DD HH24:MI'') end_time,
+       TO_CHAR(MIN(begin_interval_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
+       TO_CHAR(MIN(end_interval_time), ''YYYY-MM-DD HH24:MI:SS'') end_time,
        SUM(CASE stat_name WHEN ''@stat_name_01@'' THEN value ELSE 0 END) dummy_01,
        SUM(CASE stat_name WHEN ''@stat_name_02@'' THEN value ELSE 0 END) dummy_02,
        SUM(CASE stat_name WHEN ''@stat_name_03@'' THEN value ELSE 0 END) dummy_03,
@@ -78,19 +68,17 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        SUM(CASE stat_name WHEN ''@stat_name_13@'' THEN value ELSE 0 END) dummy_13,
        SUM(CASE stat_name WHEN ''@stat_name_14@'' THEN value ELSE 0 END) dummy_14,
        SUM(CASE stat_name WHEN ''@stat_name_15@'' THEN value ELSE 0 END) dummy_15
-  FROM stat_name_per_hour
+  FROM stat_name_per_snap
  GROUP BY
-       snap_id,
-       begin_time_hh
+       snap_id
  ORDER BY
-       snap_id,
-       begin_time_hh
+       snap_id
 ';
 END;
 /
 
 DEF skip_lch = '';
-DEF title = 'Cell Blocks per Hour';
+DEF title = 'Cell Blocks';
 DEF vaxis = 'Cell Blocks';
 DEF tit_01 = 'cell blocks helped by commit cache';
 DEF tit_02 = 'cell blocks helped by minscn optimization';
@@ -122,7 +110,7 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_06', '"'||SUBSTR('&&tit_06.',13,30)|
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
-DEF title = 'Cell Commit Cache per Hour';
+DEF title = 'Cell Commit Cache';
 DEF vaxis = 'Counts';
 DEF tit_01 = 'cell commit cache queries';
 DEF tit_02 = 'cell transactions found in commit cache';
@@ -146,7 +134,7 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_02', '"'||SUBSTR('&&tit_02.',1,30)||
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
-DEF title = 'Cell Compression Units per Hour';
+DEF title = 'Cell Compression Units';
 DEF vaxis = 'Cell Compression Units';
 DEF tit_01 = 'cell CUs processed for compressed';
 DEF tit_02 = 'cell CUs processed for uncompressed';
@@ -176,7 +164,7 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_05', '"'||SUBSTR('&&tit_05.',10,30)|
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
-DEF title = 'Cell Flash Cache Read Hits per Hour';
+DEF title = 'Cell Flash Cache Read Hits';
 DEF vaxis = 'Read Hits';
 DEF tit_01 = 'cell flash cache read hits';
 DEF tit_02 = '';
@@ -198,7 +186,7 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_01', '"'||SUBSTR('&&tit_01.',1,30)||
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
-DEF title = 'Cell I/O Bytes per Hour';
+DEF title = 'Cell I/O Bytes';
 DEF vaxis = 'Bytes';
 DEF tit_01 = 'cell IO uncompressed bytes';
 DEF tit_02 = 'cell physical IO bytes eligible for predicate offload';
@@ -238,7 +226,7 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_10', '"'||SUBSTR('&&tit_10.',28,30)|
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
-DEF title = 'Cell Scans per Hour';
+DEF title = 'Cell Scans';
 DEF vaxis = 'Scans';
 DEF tit_01 = 'cell scans';
 DEF tit_02 = 'cell index scans';
@@ -262,7 +250,7 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_02', '"'||SUBSTR('&&tit_02.',1,30)||
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
-DEF title = 'Cell Smart Scan Sessions per Hour';
+DEF title = 'Cell Smart Scan Sessions';
 DEF vaxis = 'Sessions';
 DEF tit_01 = 'cell num fast response sessions';
 DEF tit_02 = 'cell num fast response sessions continuing to smart scan';
@@ -310,7 +298,7 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_14', '"'||SUBSTR('&&tit_14.',23,30)|
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
-DEF title = 'Chained or Migrated Rows per Hour';
+DEF title = 'Chained or Migrated Rows';
 DEF vaxis = 'Rows';
 DEF tit_01 = 'table fetch continued row';
 DEF tit_02 = 'chained rows processed by cell';
@@ -338,7 +326,7 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_04', '"'||SUBSTR('&&tit_04.',1,30)||
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
-DEF title = 'Checkpoints per Hour';
+DEF title = 'Checkpoints';
 DEF vaxis = 'Checkpoints';
 DEF tit_01 = 'background checkpoints completed';
 DEF tit_02 = 'background checkpoints started';
@@ -364,7 +352,7 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_03', '"'||SUBSTR('&&tit_03.',1,30)||
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
-DEF title = 'Commits and Rollbacks per Hour';
+DEF title = 'Commits and Rollbacks';
 DEF vaxis = 'Commits and Rollbacks';
 DEF tit_01 = 'user commits';
 DEF tit_02 = 'user rollbacks';
@@ -388,7 +376,7 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_02', '"'||SUBSTR('&&tit_02.',1,30)||
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
-DEF title = 'Current and Consistent Blocks per Hour';
+DEF title = 'Current and Consistent Blocks';
 DEF vaxis = 'Counts';
 DEF tit_01 = 'consistent changes';
 DEF tit_02 = 'consistent gets';
@@ -436,8 +424,8 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_14', '"'||SUBSTR('&&tit_14.',14,30)|
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
-DEF abstract = 'Number of times a consistent read was requested for a block.';
-DEF title = 'Consistent Gets (direct and from cache) per Hour';
+DEF abstract = 'Number of times a consistent read was requested for a block.<br />';
+DEF title = 'Consistent Gets (direct and from cache)';
 DEF vaxis = 'Counts';
 DEF tit_01 = 'consistent gets';
 DEF tit_02 = 'consistent gets direct';
@@ -463,7 +451,7 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_03', '"'||SUBSTR('&&tit_03.',1,30)||
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
-DEF title = 'Cursor and SQL Area evicted per Hour';
+DEF title = 'Cursor and SQL Area evicted';
 DEF vaxis = 'Count';
 DEF tit_01 = 'CCursor + sql area evicted';
 DEF tit_02 = 'sql area evicted';
@@ -487,7 +475,7 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_02', '"'||SUBSTR('&&tit_02.',1,30)||
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
-DEF title = 'En(De)cryption per Hour';
+DEF title = 'En(De)cryption';
 DEF vaxis = 'Blocks or Bytes';
 DEF tit_01 = 'blocks decrypted';
 DEF tit_02 = 'blocks encrypted';
@@ -513,7 +501,7 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_03', '"'||SUBSTR('&&tit_03.',1,30)||
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
-DEF title = 'EHCC Compression Units (De)Compressed per Hour';
+DEF title = 'EHCC Compression Units (De)Compressed';
 DEF vaxis = 'Compression Units';
 DEF tit_01 = 'EHCC Analyze CUs Decompressed';
 DEF tit_02 = 'EHCC Archive CUs Compressed';
@@ -563,7 +551,7 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_15', '"'||SUBSTR('&&tit_15.',6,30)||
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
-DEF title = 'Enqueues per Hour';
+DEF title = 'Enqueues';
 DEF vaxis = 'Enqueues';
 DEF tit_01 = 'enqueue conversions';
 DEF tit_02 = 'enqueue deadlocks';
@@ -601,7 +589,7 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_09', '"'||SUBSTR('&&tit_09.',1,30)||
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
-DEF title = 'Flash Cache Inserts and Evictions per Hour';
+DEF title = 'Flash Cache Inserts and Evictions';
 DEF vaxis = 'Counts';
 DEF tit_01 = 'flash cache eviction: aged out';
 DEF tit_02 = 'flash cache eviction: buffer pinned';
@@ -641,7 +629,7 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_10', '"'||SUBSTR('&&tit_10.',13,30)|
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
-DEF title = 'Global Blocks and Reads per Hour';
+DEF title = 'Global Blocks and Reads';
 DEF vaxis = 'Counts';
 DEF tit_01 = 'gc blocks compressed';
 DEF tit_02 = 'gc blocks corrupt';
@@ -687,7 +675,7 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_13', '"'||SUBSTR('&&tit_13.',1,30)||
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
-DEF title = 'Logons per Hour';
+DEF title = 'Logons';
 DEF vaxis = 'Logons';
 DEF tit_01 = 'logons cumulative';
 DEF tit_02 = '';
@@ -709,7 +697,7 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_01', '"'||SUBSTR('&&tit_01.',1,30)||
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
-DEF title = 'Node Splits per Hour';
+DEF title = 'Node Splits';
 DEF vaxis = 'Node Splits';
 DEF tit_01 = 'branch node splits';
 DEF tit_02 = 'leaf node 90-10 splits';
@@ -737,7 +725,7 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_04', '"'||SUBSTR('&&tit_04.',1,30)||
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
-DEF title = 'Parse Counts per Hour';
+DEF title = 'Parse Counts';
 DEF vaxis = 'Parse Counts';
 DEF tit_01 = 'parse count (describe)';
 DEF tit_02 = 'parse count (failures)';
@@ -765,7 +753,7 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_04', '"'||SUBSTR('&&tit_04.',1,30)||
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
-DEF title = 'Parallel Operations per Hour';
+DEF title = 'Parallel Operations';
 DEF vaxis = 'Counts';
 DEF tit_01 = 'DDL statements parallelized';
 DEF tit_02 = 'DFO trees parallelized';
@@ -805,7 +793,7 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_10', '"'||SUBSTR('&&tit_10.',1,30)||
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
-DEF title = 'Physical Reads Blocks per Hour';
+DEF title = 'Physical Reads Blocks';
 DEF vaxis = 'Blocks';
 DEF tit_01 = 'physical read flash cache hits';
 DEF tit_02 = 'physical reads';
@@ -843,8 +831,8 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_09', '"'||SUBSTR('&&tit_09.',10,30)|
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
-DEF abstract = 'Total number of data blocks read from disk. "physical reads" value can be greater than the value of "physical reads direct" plus "physical reads cache" as reads into process private buffers also included in this statistic.';
-DEF title = 'Physical Reads Blocks (direct and cache) per Hour';
+DEF abstract = 'Total number of data blocks read from disk. "physical reads" value can be greater than the value of "physical reads direct" plus "physical reads cache" as reads into process private buffers also included in this statistic.<br />';
+DEF title = 'Physical Reads Blocks (direct and cache)';
 DEF vaxis = 'Blocks';
 DEF tit_01 = 'physical reads';
 DEF tit_02 = 'physical reads cache';
@@ -870,7 +858,7 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_03', '"'||SUBSTR('&&tit_03.',10,30)|
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
-DEF title = 'Physical Reads Bytes per Hour';
+DEF title = 'Physical Reads Bytes';
 DEF vaxis = 'Bytes';
 DEF tit_01 = 'physical read bytes';
 DEF tit_02 = 'physical read total bytes';
@@ -896,7 +884,7 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_03', '"'||SUBSTR('&&tit_03.',10,30)|
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
-DEF title = 'Physical Reads Requests per Hour';
+DEF title = 'Physical Reads Requests';
 DEF vaxis = 'Requests';
 DEF tit_01 = 'physical read IO requests';
 DEF tit_02 = 'physical read requests optimized';
@@ -924,8 +912,8 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_04', '"'||SUBSTR('&&tit_04.',10,30)|
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
-DEF abstract = 'The difference between "physical read total IO requests" and "physical read total multi block requests" gives the total number of single block read requests';
-DEF title = 'Physical Reads Total IO Requests per Hour';
+DEF abstract = 'The difference between "physical read total IO requests" and "physical read total multi block requests" gives the total number of single block read requests<br />';
+DEF title = 'Physical Reads Total IO Requests';
 DEF vaxis = 'Requests';
 DEF tit_01 = 'physical read total IO requests';
 DEF tit_02 = 'physical read total multi block requests';
@@ -949,7 +937,7 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_02', '"'||SUBSTR('&&tit_02.',10,30)|
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
-DEF title = 'Physical Writes Blocks per Hour';
+DEF title = 'Physical Writes Blocks';
 DEF vaxis = 'Blocks';
 DEF tit_01 = 'physical writes';
 DEF tit_02 = 'physical writes direct';
@@ -981,7 +969,7 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_06', '"'||SUBSTR('&&tit_06.',10,30)|
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
-DEF title = 'Physical Writes Bytes per Hour';
+DEF title = 'Physical Writes Bytes';
 DEF vaxis = 'Bytes';
 DEF tit_01 = 'physical write bytes';
 DEF tit_02 = 'physical write total bytes';
@@ -1007,7 +995,7 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_03', '"'||SUBSTR('&&tit_03.',1,30)||
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
-DEF title = 'Physical Writes Requests per Hour';
+DEF title = 'Physical Writes Requests';
 DEF vaxis = 'Requests';
 DEF tit_01 = 'physical write IO requests';
 DEF tit_02 = 'physical write total IO requests';
@@ -1035,7 +1023,7 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_04', '"'||SUBSTR('&&tit_04.',1,30)||
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
-DEF title = 'PX messages per Hour';
+DEF title = 'PX messages';
 DEF vaxis = 'Messages';
 DEF tit_01 = 'PX local messages recv`d';
 DEF tit_02 = 'PX local messages sent';
@@ -1064,7 +1052,7 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_04', '"'||SUBSTR('&&tit_04.',4,30)||
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
-DEF title = 'Redo and Undo Bytes per Hour';
+DEF title = 'Redo and Undo Bytes';
 DEF vaxis = 'Bytes';
 DEF tit_01 = 'redo size';
 DEF tit_02 = 'redo size for direct writes';
@@ -1094,7 +1082,7 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_05', '"'||SUBSTR('&&tit_05.',1,30)||
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
-DEF title = 'Rollback Activity per Hour';
+DEF title = 'Rollback Activity';
 DEF vaxis = 'Counts';
 DEF tit_01 = 'rollback changes - undo records applied';
 DEF tit_02 = 'rollbacks only - consistent read gets';
@@ -1118,7 +1106,7 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_02', '"'||SUBSTR('&&tit_02.',1,30)||
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
-DEF title = 'Sorts per Hour';
+DEF title = 'Sorts';
 DEF vaxis = 'Sorts';
 DEF tit_01 = 'sorts (disk)';
 DEF tit_02 = 'sorts (memory)';
@@ -1142,7 +1130,7 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_02', '"'||SUBSTR('&&tit_02.',1,30)||
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
-DEF title = 'SQL*Net Bytes per Hour';
+DEF title = 'SQL*Net Bytes';
 DEF vaxis = 'Bytes';
 DEF tit_01 = 'bytes received via SQL*Net from client';
 DEF tit_02 = 'bytes received via SQL*Net from dblink';
@@ -1178,7 +1166,7 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_08', '"'||SUBSTR('&&tit_08.',7,30)||
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
-DEF title = 'SQL*Net Roundtrips per Hour';
+DEF title = 'SQL*Net Roundtrips';
 DEF vaxis = 'Roundtrips';
 DEF tit_01 = 'SQL*Net roundtrips to/from client';
 DEF tit_02 = 'SQL*Net roundtrips to/from dblink';
@@ -1202,7 +1190,7 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_02', '"'||SUBSTR('&&tit_02.',20,30)|
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
-DEF title = 'Table Scans per Hour';
+DEF title = 'Table Scans';
 DEF vaxis = 'Table Scans';
 DEF tit_01 = 'table scans (cache partitions)';
 DEF tit_02 = 'table scans (direct read)';
@@ -1234,7 +1222,7 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_06', '"'||SUBSTR('&&tit_06.',1,30)||
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
-DEF title = 'Wait Time per Hour';
+DEF title = 'Wait Time';
 DEF vaxis = 'Microseconds';
 DEF tit_01 = 'application wait time';
 DEF tit_02 = 'cluster wait time';
@@ -1272,7 +1260,7 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_09', '"'||SUBSTR('&&tit_09.',1,30)||
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
-DEF title = 'Workarea Executions per Hour';
+DEF title = 'Workarea Executions';
 DEF vaxis = 'Executions';
 DEF tit_01 = 'workarea executions - multipass';
 DEF tit_02 = 'workarea executions - onepass';

@@ -21,7 +21,7 @@ BEGIN
       DBMS_OUTPUT.PUT_LINE('COL inst_'||LPAD(i, 2, '0')||' NOPRI;');
       DBMS_OUTPUT.PUT_LINE('DEF tit_'||LPAD(i, 2, '0')||' = '''';');
     ELSE
-      DBMS_OUTPUT.PUT_LINE('COL inst_'||LPAD(i, 2, '0')||' HEA ''Inst '||i||''' FOR 999990.0 PRI;');
+      DBMS_OUTPUT.PUT_LINE('COL inst_'||LPAD(i, 2, '0')||' HEA ''Inst '||i||''' FOR 999990.000 PRI;');
       DBMS_OUTPUT.PUT_LINE('DEF tit_'||LPAD(i, 2, '0')||' = ''Inst '||i||''';');
     END IF;
   END LOOP;
@@ -130,8 +130,8 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
        dbid,
        instance_number,
-       TO_CHAR(begin_interval_time, ''YYYY-MM-DD HH24:MI'') begin_time,
-       TO_CHAR(end_interval_time, ''YYYY-MM-DD HH24:MI'') end_time,
+       TO_CHAR(begin_interval_time, ''YYYY-MM-DD HH24:MI:SS'') begin_time,
+       TO_CHAR(end_interval_time, ''YYYY-MM-DD HH24:MI:SS'') end_time,
        (background_time / interval_secs) background_time,
        (background_cpu / interval_secs) background_cpu,
        (rman_cpu / interval_secs) rman_cpu,
@@ -193,91 +193,91 @@ END;
 
 DEF skip_lch = '';
 DEF title = 'STM: background elapsed time per Instance';
-DEF abstract = 'Average Active Sessions (AAS).'
+DEF abstract = 'Average Active Sessions (AAS).<br />'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name@', 'background_time');
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'STM: background cpu time per Instance';
-DEF abstract = 'Average Active Sessions (AAS).'
+DEF abstract = 'Average Active Sessions (AAS).<br />'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name@', 'background_cpu');
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'STM: RMAN cpu time (backup/restore) per Instance';
-DEF abstract = 'Average Active Sessions (AAS).'
+DEF abstract = 'Average Active Sessions (AAS).<br />'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name@', 'rman_cpu');
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'STM: DB time per Instance';
-DEF abstract = 'Average Active Sessions (AAS).'
+DEF abstract = 'Average Active Sessions (AAS).<br />'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name@', 'db_time');
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'STM: DB CPU per Instance';
-DEF abstract = 'Average Active Sessions (AAS).'
+DEF abstract = 'Average Active Sessions (AAS).<br />'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name@', 'db_cpu');
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'STM: connection management call elapsed time per Instance';
-DEF abstract = 'Average Active Sessions (AAS).'
+DEF abstract = 'Average Active Sessions (AAS).<br />'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name@', 'connection_management_call');
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'STM: sequence load elapsed time per Instance';
-DEF abstract = 'Average Active Sessions (AAS).'
+DEF abstract = 'Average Active Sessions (AAS).<br />'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name@', 'sequence_load');
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'STM: sql execute elapsed time per Instance';
-DEF abstract = 'Average Active Sessions (AAS).'
+DEF abstract = 'Average Active Sessions (AAS).<br />'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name@', 'sql_execute');
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'STM: parse time elapsed per Instance';
-DEF abstract = 'Average Active Sessions (AAS).'
+DEF abstract = 'Average Active Sessions (AAS).<br />'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name@', 'parse_time');
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'STM: hard parse elapsed time per Instance';
-DEF abstract = 'Average Active Sessions (AAS).'
+DEF abstract = 'Average Active Sessions (AAS).<br />'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name@', 'hard_parse');
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'STM: PL/SQL execution elapsed time per Instance';
-DEF abstract = 'Average Active Sessions (AAS).'
+DEF abstract = 'Average Active Sessions (AAS).<br />'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name@', 'plsql_execution');
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'STM: inbound PL/SQL rpc elapsed time per Instance';
-DEF abstract = 'Average Active Sessions (AAS).'
+DEF abstract = 'Average Active Sessions (AAS).<br />'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name@', 'inbound_plsql_rpc');
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'STM: PL/SQL compilation elapsed time per Instance';
-DEF abstract = 'Average Active Sessions (AAS).'
+DEF abstract = 'Average Active Sessions (AAS).<br />'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name@', 'plsql_compilation');
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'STM: Java execution elapsed time per Instance';
-DEF abstract = 'Average Active Sessions (AAS).'
+DEF abstract = 'Average Active Sessions (AAS).<br />'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name@', 'java_execution');
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'STM: repeated bind elapsed time per Instance';
-DEF abstract = 'Average Active Sessions (AAS).'
+DEF abstract = 'Average Active Sessions (AAS).<br />'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name@', 'repeated_bind');
 @@edb360_9a_pre_one.sql
 

@@ -21,7 +21,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
   FROM gv$active_session_history
  WHERE @filter_predicate@
    AND sql_id IS NOT NULL
-   AND sql_plan_hash_value IS NOT NULL
+   AND sql_plan_hash_value > 0
  GROUP BY
        sql_plan_hash_value
 ),
@@ -129,7 +129,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
   FROM dba_hist_active_sess_history h
  WHERE @filter_predicate@
    AND sql_id IS NOT NULL
-   AND sql_plan_hash_value IS NOT NULL
+   AND sql_plan_hash_value > 0
    AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
  GROUP BY

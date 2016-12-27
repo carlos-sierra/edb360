@@ -65,24 +65,23 @@ BEGIN
   :sql_text_backup := '
 SELECT /*+ &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
        /* &&section_id..&&report_sequence. */
-       MIN(snap_id) snap_id,
-       TO_CHAR(TRUNC(sample_time, ''HH''), ''YYYY-MM-DD HH24:MI'')          begin_time,
-       TO_CHAR(TRUNC(sample_time, ''HH'') + (1/24), ''YYYY-MM-DD HH24:MI'') end_time,
-       --ROUND(10 * COUNT(*) / 3600, 3)                                                      aas_total,
-       ROUND(SUM(CASE session_state WHEN ''ON CPU''         THEN 10 ELSE 0 END) / 3600, 3) aas_on_cpu,
-       ROUND(SUM(CASE wait_class    WHEN ''User I/O''       THEN 10 ELSE 0 END) / 3600, 3) aas_user_io,
-       ROUND(SUM(CASE wait_class    WHEN ''System I/O''     THEN 10 ELSE 0 END) / 3600, 3) aas_system_io,
-       ROUND(SUM(CASE wait_class    WHEN ''Cluster''        THEN 10 ELSE 0 END) / 3600, 3) aas_cluster,
-       ROUND(SUM(CASE wait_class    WHEN ''Commit''         THEN 10 ELSE 0 END) / 3600, 3) aas_commit,
-       ROUND(SUM(CASE wait_class    WHEN ''Concurrency''    THEN 10 ELSE 0 END) / 3600, 3) aas_concurrency,
-       ROUND(SUM(CASE wait_class    WHEN ''Application''    THEN 10 ELSE 0 END) / 3600, 3) aas_application,
-       ROUND(SUM(CASE wait_class    WHEN ''Administrative'' THEN 10 ELSE 0 END) / 3600, 3) aas_administrative,
-       ROUND(SUM(CASE wait_class    WHEN ''Configuration''  THEN 10 ELSE 0 END) / 3600, 3) aas_configuration,
-       ROUND(SUM(CASE wait_class    WHEN ''Network''        THEN 10 ELSE 0 END) / 3600, 3) aas_network,
-       ROUND(SUM(CASE wait_class    WHEN ''Queueing''       THEN 10 ELSE 0 END) / 3600, 3) aas_queueing,
-       ROUND(SUM(CASE wait_class    WHEN ''Scheduler''      THEN 10 ELSE 0 END) / 3600, 3) aas_scheduler,
-       --ROUND(SUM(CASE wait_class    WHEN ''Idle''           THEN 10 ELSE 0 END) / 3600, 3) aas_idle,
-       ROUND(SUM(CASE wait_class    WHEN  ''Other''         THEN 10 ELSE 0 END) / 3600, 3) aas_other,
+       snap_id,
+       --TO_CHAR(LAG(MAX(sample_time)) OVER (ORDER BY snap_id), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
+       TO_CHAR(MIN(sample_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
+       TO_CHAR(MAX(sample_time), ''YYYY-MM-DD HH24:MI:SS'') end_time,
+       ROUND(SUM(CASE session_state WHEN ''ON CPU''         THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), 1) * 24 * 3600), 3) aas_on_cpu,
+       ROUND(SUM(CASE wait_class    WHEN ''User I/O''       THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), 1) * 24 * 3600), 3) aas_user_io,
+       ROUND(SUM(CASE wait_class    WHEN ''System I/O''     THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), 1) * 24 * 3600), 3) aas_system_io,
+       ROUND(SUM(CASE wait_class    WHEN ''Cluster''        THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), 1) * 24 * 3600), 3) aas_cluster,
+       ROUND(SUM(CASE wait_class    WHEN ''Commit''         THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), 1) * 24 * 3600), 3) aas_commit,
+       ROUND(SUM(CASE wait_class    WHEN ''Concurrency''    THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), 1) * 24 * 3600), 3) aas_concurrency,
+       ROUND(SUM(CASE wait_class    WHEN ''Application''    THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), 1) * 24 * 3600), 3) aas_application,
+       ROUND(SUM(CASE wait_class    WHEN ''Administrative'' THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), 1) * 24 * 3600), 3) aas_administrative,
+       ROUND(SUM(CASE wait_class    WHEN ''Configuration''  THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), 1) * 24 * 3600), 3) aas_configuration,
+       ROUND(SUM(CASE wait_class    WHEN ''Network''        THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), 1) * 24 * 3600), 3) aas_network,
+       ROUND(SUM(CASE wait_class    WHEN ''Queueing''       THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), 1) * 24 * 3600), 3) aas_queueing,
+       ROUND(SUM(CASE wait_class    WHEN ''Scheduler''      THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), 1) * 24 * 3600), 3) aas_scheduler,
+       ROUND(SUM(CASE wait_class    WHEN  ''Other''         THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), 1) * 24 * 3600), 3) aas_other,
        0 dummy_14,
        0 dummy_15
   FROM dba_hist_active_sess_history h
@@ -90,9 +89,9 @@ SELECT /*+ &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */
    AND dbid = &&edb360_dbid.
    AND instance_number = @instance_number@
  GROUP BY
-       TRUNC(sample_time, ''HH'')
+       snap_id
  ORDER BY
-       TRUNC(sample_time, ''HH'')
+       snap_id
 ';
 END;
 /
@@ -189,7 +188,7 @@ BEGIN
       DBMS_OUTPUT.PUT_LINE('COL inst_'||LPAD(i, 2, '0')||' NOPRI;');
       DBMS_OUTPUT.PUT_LINE('DEF tit_'||LPAD(i, 2, '0')||' = '''';');
     ELSE
-      DBMS_OUTPUT.PUT_LINE('COL inst_'||LPAD(i, 2, '0')||' HEA ''Inst '||i||''' FOR 999990.0 PRI;');
+      DBMS_OUTPUT.PUT_LINE('COL inst_'||LPAD(i, 2, '0')||' HEA ''Inst '||i||''' FOR 999990.000 PRI;');
       DBMS_OUTPUT.PUT_LINE('DEF tit_'||LPAD(i, 2, '0')||' = ''Inst '||i||''';');
     END IF;
   END LOOP;
@@ -208,17 +207,18 @@ BEGIN
   :sql_text_backup := '
 SELECT /*+ &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
        /* &&section_id..&&report_sequence. */
-       MIN(snap_id) snap_id,
-       TO_CHAR(TRUNC(sample_time, ''HH''), ''YYYY-MM-DD HH24:MI'')          begin_time,
-       TO_CHAR(TRUNC(sample_time, ''HH'') + (1/24), ''YYYY-MM-DD HH24:MI'') end_time,
-       ROUND(SUM(CASE instance_number WHEN 1 THEN 10 ELSE 0 END) / 3600, 3) inst_01,
-       ROUND(SUM(CASE instance_number WHEN 2 THEN 10 ELSE 0 END) / 3600, 3) inst_02,
-       ROUND(SUM(CASE instance_number WHEN 3 THEN 10 ELSE 0 END) / 3600, 3) inst_03,
-       ROUND(SUM(CASE instance_number WHEN 4 THEN 10 ELSE 0 END) / 3600, 3) inst_04,
-       ROUND(SUM(CASE instance_number WHEN 5 THEN 10 ELSE 0 END) / 3600, 3) inst_05,
-       ROUND(SUM(CASE instance_number WHEN 6 THEN 10 ELSE 0 END) / 3600, 3) inst_06,
-       ROUND(SUM(CASE instance_number WHEN 7 THEN 10 ELSE 0 END) / 3600, 3) inst_07,
-       ROUND(SUM(CASE instance_number WHEN 8 THEN 10 ELSE 0 END) / 3600, 3) inst_08,
+       snap_id,
+       --TO_CHAR(LAG(MAX(sample_time)) OVER (ORDER BY snap_id), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
+       TO_CHAR(MIN(sample_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
+       TO_CHAR(MAX(sample_time), ''YYYY-MM-DD HH24:MI:SS'') end_time,
+       ROUND(SUM(CASE instance_number WHEN 1 THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), 1) * 24 * 3600), 3) inst_01,
+       ROUND(SUM(CASE instance_number WHEN 2 THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), 1) * 24 * 3600), 3) inst_02,
+       ROUND(SUM(CASE instance_number WHEN 3 THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), 1) * 24 * 3600), 3) inst_03,
+       ROUND(SUM(CASE instance_number WHEN 4 THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), 1) * 24 * 3600), 3) inst_04,
+       ROUND(SUM(CASE instance_number WHEN 5 THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), 1) * 24 * 3600), 3) inst_05,
+       ROUND(SUM(CASE instance_number WHEN 6 THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), 1) * 24 * 3600), 3) inst_06,
+       ROUND(SUM(CASE instance_number WHEN 7 THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), 1) * 24 * 3600), 3) inst_07,
+       ROUND(SUM(CASE instance_number WHEN 8 THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), 1) * 24 * 3600), 3) inst_08,
        0 dummy_09,
        0 dummy_10,
        0 dummy_11,
@@ -231,22 +231,67 @@ SELECT /*+ &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */
    AND dbid = &&edb360_dbid.
    AND @filter_predicate@
  GROUP BY
-       TRUNC(sample_time, ''HH'')
+       snap_id
  ORDER BY
-       TRUNC(sample_time, ''HH'')
+       snap_id
 ';
 END;
 /
+-- end from 5a
 
 DEF skip_lch = '';
+DEF skip_all = '&&is_single_instance.';
 DEF title = 'AAS Total per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', '1 = 1');
-@@edb360_9a_pre_one.sql
+@@&&skip_all.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
+DEF skip_all = '&&is_single_instance.';
 DEF title = 'AAS On CPU per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'session_state = ''ON CPU''');
-@@edb360_9a_pre_one.sql
+@@&&skip_all.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = '&&is_single_instance.';
+DEF title = 'AAS waiting on User I/O per Instance';
+EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''User I/O''');
+@@&&skip_all.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = '&&is_single_instance.';
+DEF title = 'AAS waiting on System I/O per Instance';
+EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''System I/O''');
+@@&&skip_all.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = '&&is_single_instance.';
+DEF title = 'AAS waiting on Cluster per Instance';
+EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''Cluster''');
+@@&&skip_all.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = '&&is_single_instance.';
+DEF title = 'AAS waiting on Commit per Instance';
+EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''Commit''');
+@@&&skip_all.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = '&&is_single_instance.';
+DEF title = 'AAS waiting on Concurrency per Instance';
+EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''Concurrency''');
+@@&&skip_all.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = '&&is_single_instance.';
+DEF title = 'AAS waiting on Application per Instance';
+EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''Application''');
+@@&&skip_all.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = '&&is_single_instance.';
+DEF title = 'AAS waiting on Administrative per Instance';
+EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''Administrative''');
+@@&&skip_all.edb360_9a_pre_one.sql
 
 SPO &&edb360_main_report..html APP;
 PRO </ol>

@@ -1,6 +1,6 @@
 @@&&edb360_0g.tkprof.sql
 DEF section_id = '5e';
-DEF section_name = 'System Statistics (Exadata) per Hour';
+DEF section_name = 'System Statistics (Exadata) per Snap Interval';
 EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
 SPO &&edb360_main_report..html APP;
 PRO <h2>&&section_id.. &&section_name.</h2>
@@ -20,11 +20,11 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
        h.snap_id,
        h.instance_number,
        s.begin_interval_time,
-       s.startup_time,
-       h.stat_id,
+       s.end_interval_time,
+       (s.startup_time - LAG(s.startup_time) OVER (PARTITION BY h.dbid, h.instance_number, h.stat_id ORDER BY h.snap_id)) startup_time_interval,
        h.stat_name,
-       h.value,
-       ROW_NUMBER () OVER (PARTITION BY h.dbid, h.instance_number, h.stat_id, TRUNC(s.begin_interval_time, ''HH'') ORDER BY h.snap_id) rn -- row_number within each hour
+       (h.value - LAG(h.value) OVER (PARTITION BY h.dbid, h.instance_number, h.stat_id ORDER BY h.snap_id)) value
+       --h.value
   FROM dba_hist_sysstat h,
        dba_hist_snapshot s
  WHERE h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
@@ -35,34 +35,25 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
    AND s.instance_number = h.instance_number
    AND s.end_interval_time - s.begin_interval_time > TO_DSINTERVAL(''+00 00:01:00.000000'') -- exclude snaps less than 1m appart
 ),
-stat_name_per_instance_n_hour AS (
+stat_name_per_snap AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
-       instance_number,
-       TRUNC(begin_interval_time, ''HH'') begin_time_hh,
-       startup_time - LAG(startup_time) OVER (PARTITION BY /*dbid,*/ instance_number, stat_id ORDER BY snap_id) startup_time_interval,
+       MIN(begin_interval_time) begin_interval_time,
+       MIN(end_interval_time) end_interval_time,
        stat_name,
-       value - LAG(value) OVER (PARTITION BY instance_number, stat_id ORDER BY snap_id) value       
-  FROM selected_stat_name
- WHERE rn = 1 -- select only first snap from each hour
-),
-stat_name_per_hour AS (
-SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
-       MIN(snap_id) snap_id,
-       begin_time_hh,
-       stat_name,
+       --SUM(value) value
        ROUND(SUM(value)/1e9, 3) value
-  FROM stat_name_per_instance_n_hour
+  FROM selected_stat_name
  WHERE startup_time_interval = TO_DSINTERVAL(''+00 00:00:00.000000'') -- include only snaps from same startup
    AND value >= 0 
  GROUP BY
-       begin_time_hh,
+       snap_id,
        stat_name
 )
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
-       TO_CHAR(begin_time_hh, ''YYYY-MM-DD HH24:MI'') begin_time,
-       TO_CHAR(begin_time_hh + (1/24), ''YYYY-MM-DD HH24:MI'') end_time,
+       TO_CHAR(MIN(begin_interval_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
+       TO_CHAR(MIN(end_interval_time), ''YYYY-MM-DD HH24:MI:SS'') end_time,
        SUM(CASE stat_name WHEN ''@stat_name_01@'' THEN value ELSE 0 END) dummy_01,
        SUM(CASE stat_name WHEN ''@stat_name_02@'' THEN value ELSE 0 END) dummy_02,
        SUM(CASE stat_name WHEN ''@stat_name_03@'' THEN value ELSE 0 END) dummy_03,
@@ -78,26 +69,24 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        SUM(CASE stat_name WHEN ''@stat_name_13@'' THEN value ELSE 0 END) dummy_13,
        SUM(CASE stat_name WHEN ''@stat_name_14@'' THEN value ELSE 0 END) dummy_14,
        SUM(CASE stat_name WHEN ''@stat_name_15@'' THEN value ELSE 0 END) dummy_15
-  FROM stat_name_per_hour
+  FROM stat_name_per_snap
  GROUP BY
-       snap_id,
-       begin_time_hh
+       snap_id
  ORDER BY
-       snap_id,
-       begin_time_hh
+       snap_id
 ';
 END;
 /
 
 DEF skip_lch = '';
-DEF title = 'GBs per Hour';
+DEF title = 'Physical I/O in GBs';
 DEF vaxis = 'GBs';
-DEF tit_01 = 'physical read total GBs';
-DEF tit_02 = 'physical write total GBs';
-DEF tit_03 = 'cell physical IO GBs eligible for predicate offload';
-DEF tit_04 = 'cell physical IO interconnect GBs';
-DEF tit_05 = 'cell physical IO interconnect GBs returned by smart scan';
-DEF tit_06 = 'cell physical IO GBs saved by storage index';
+DEF tit_01 = 'physical read total bytes';
+DEF tit_02 = 'physical write total bytes';
+DEF tit_03 = 'cell physical IO bytes eligible for predicate offload';
+DEF tit_04 = 'cell physical IO interconnect bytes';
+DEF tit_05 = 'cell physical IO interconnect bytes returned by smart scan';
+DEF tit_06 = 'cell physical IO bytes saved by storage index';
 DEF tit_07 = '';
 DEF tit_08 = '';
 DEF tit_09 = '';
@@ -131,11 +120,11 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
        h.snap_id,
        h.instance_number,
        s.begin_interval_time,
-       s.startup_time,
-       h.stat_id,
+       s.end_interval_time,
+       (s.startup_time - LAG(s.startup_time) OVER (PARTITION BY h.dbid, h.instance_number, h.stat_id ORDER BY h.snap_id)) startup_time_interval,
        h.stat_name,
-       h.value,
-       ROW_NUMBER () OVER (PARTITION BY h.dbid, h.instance_number, h.stat_id, TRUNC(s.begin_interval_time, ''HH'') ORDER BY h.snap_id) rn -- row_number within each hour
+       (h.value - LAG(h.value) OVER (PARTITION BY h.dbid, h.instance_number, h.stat_id ORDER BY h.snap_id)) value
+       --h.value
   FROM dba_hist_sysstat h,
        dba_hist_snapshot s
  WHERE h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
@@ -153,35 +142,26 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
    AND s.instance_number = h.instance_number
    AND s.end_interval_time - s.begin_interval_time > TO_DSINTERVAL(''+00 00:01:00.000000'') -- exclude snaps less than 1m appart
 ),
-stat_name_per_instance_n_hour AS (
+stat_name_per_snap AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
-       instance_number,
-       TRUNC(begin_interval_time, ''HH'') begin_time_hh,
-       startup_time - LAG(startup_time) OVER (PARTITION BY /*dbid,*/ instance_number, stat_id ORDER BY snap_id) startup_time_interval,
-       stat_name,
-       value - LAG(value) OVER (PARTITION BY instance_number, stat_id ORDER BY snap_id) value       
-  FROM selected_stat_name
- WHERE rn = 1 -- select only first snap from each hour
-),
-stat_name_per_hour AS (
-SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
-       MIN(snap_id) snap_id,
-       begin_time_hh,
+       MIN(begin_interval_time) begin_interval_time,
+       MIN(end_interval_time) end_interval_time,
        stat_name,
        SUM(value) value
-  FROM stat_name_per_instance_n_hour
+       --ROUND(SUM(value)/1e9, 3) value
+  FROM selected_stat_name
  WHERE startup_time_interval = TO_DSINTERVAL(''+00 00:00:00.000000'') -- include only snaps from same startup
    AND value >= 0 
  GROUP BY
-       begin_time_hh,
+       snap_id,
        stat_name
 ),
-stats_per_hour AS (
-SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
+stats_per_snap AS (
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
-       TO_CHAR(begin_time_hh, ''YYYY-MM-DD HH24:MI'') begin_time,
-       TO_CHAR(begin_time_hh + (1/24), ''YYYY-MM-DD HH24:MI'') end_time,
+       TO_CHAR(MIN(begin_interval_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
+       TO_CHAR(MIN(end_interval_time), ''YYYY-MM-DD HH24:MI:SS'') end_time,
        SUM(CASE stat_name WHEN ''physical read total bytes'' THEN value ELSE 0 END) prtb,
        SUM(CASE stat_name WHEN ''physical write total bytes'' THEN value ELSE 0 END) pwtb,
        SUM(CASE stat_name WHEN ''physical read total IO requests'' THEN value ELSE 0 END) prtior,
@@ -190,10 +170,9 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        SUM(CASE stat_name WHEN ''cell physical IO interconnect bytes'' THEN value ELSE 0 END) ib,
        SUM(CASE stat_name WHEN ''cell physical IO interconnect bytes returned by smart scan'' THEN value ELSE 0 END) ibrss,
        SUM(CASE stat_name WHEN ''cell physical IO bytes saved by storage index'' THEN value ELSE 0 END) bssi
-  FROM stat_name_per_hour
+  FROM stat_name_per_snap
  GROUP BY
-       snap_id,
-       begin_time_hh
+       snap_id
 )
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
@@ -218,15 +197,15 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        0 dummy_13,
        0 dummy_14,
        0 dummy_15
-  FROM stats_per_hour
+  FROM stats_per_snap
  ORDER BY
-       snap_id,
-       begin_time';
+       snap_id
+';
 END;
-/         
-                              
+/
+
 DEF skip_lch = '';
-DEF title = 'Smart Scan efficiency per Hour';
+DEF title = 'Smart Scan efficiency';
 DEF vaxis = 'Percent %';
 DEF tit_01 = 'Eligible Percent';
 DEF tit_02 = 'IO Saved Percent';
@@ -245,6 +224,7 @@ DEF tit_14 = '';
 DEF tit_15 = '';
 @@edb360_9a_pre_one.sql
 
+DEF skip_lch = 'Y';
 DEF tit_01 = '';
 DEF tit_02 = '';
 DEF tit_03 = '';
@@ -260,8 +240,6 @@ DEF tit_12 = '';
 DEF tit_13 = '';
 DEF tit_14 = '';
 DEF tit_15 = '';
-
-DEF skip_lch = 'Y';
 
 /*****************************************************************************************/
 

@@ -49,6 +49,7 @@ SELECT prev_sql_id edb360_prev_sql_id, TO_CHAR(prev_child_number) edb360_prev_ch
 
 -- footer
 PRO &&foot.
+PRO <br />
 PRO #: click on a column heading to sort on it
 PRO
 PRO <pre>

@@ -66,16 +66,17 @@ END;
 /
 SET SERVEROUT OFF;
 
--- chart footer
+-- bar chart footer
 PRO        ]);;
 PRO        
 PRO        var options = {
+PRO          chartArea:{left:90, top:90, width:'85%', height:'65%'},
 PRO          backgroundColor: {fill: '#fcfcf0', stroke: '#336699', strokeWidth: 1},
 PRO          title: '&&section_id..&&report_sequence.. &&title.&&title_suffix.',
-PRO          titleTextStyle: {fontSize: 16, bold: false},
+PRO          titleTextStyle: {fontSize: 18, bold: false},
 PRO          legend: {position: 'none'},
-PRO          vAxis: {minValue: 0, title: '&&vaxis.'}, 
-PRO          hAxis: {title: '&&haxis.'},
+PRO          vAxis: {minValue: 0, title: '&&vaxis.', titleTextStyle: {fontSize: 16, bold: false}}, 
+PRO          hAxis: {title: '&&haxis.', titleTextStyle: {fontSize: 16, bold: false}},
 PRO          tooltip: {textStyle: {fontSize: 14}}
 PRO        };
 PRO
@@ -90,13 +91,15 @@ PRO
 PRO <br />
 PRO &&abstract.
 PRO &&abstract2.
+PRO <br />
 PRO
 PRO    <div id="barchart" style="width: 900px; height: 500px;"></div>
 PRO
 
 -- footer
-PRO<font class="n">Notes:<br>1) Values are approximated<br>2) Hovering on the bars show more info.</font>
-PRO<font class="n"><br />3) &&foot.</font>
+PRO <br />
+PRO <font class="n">Notes:<br>1) Values are approximated<br>2) Hovering on the bars show more info.</font>
+PRO <font class="n"><br />3) &&foot.</font>
 PRO <pre>
 SET LIN 80;
 DESC &&main_table.

@@ -101,9 +101,8 @@ WITH
 cpu_per_inst_and_sample AS (
 SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
        /* &&section_id..&&report_sequence. */
-       instance_number,
        snap_id,
-       sample_id,
+       instance_number,
        MIN(sample_time) sample_time,
        SUM(CASE session_state WHEN ''ON CPU'' THEN 1 ELSE 0 END) on_cpu,
        SUM(CASE event WHEN ''resmgr:cpu quantum'' THEN 1 ELSE 0 END) resmgr,
@@ -114,27 +113,27 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
    AND instance_number = @instance_number@
    AND (session_state = ''ON CPU'' OR event = ''resmgr:cpu quantum'')
  GROUP BY
-       instance_number,
        snap_id,
+       instance_number,
        sample_id
 ),
 cpu_per_inst_and_hour AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
-       MIN(snap_id) snap_id,
+       snap_id,
        instance_number, 
-       TRUNC(CAST(sample_time AS DATE), ''HH'') begin_time, 
-       TRUNC(CAST(sample_time AS DATE), ''HH'') + (1/24) end_time, 
+       MIN(sample_time) min_sample_time, 
+       MAX(sample_time) max_sample_time, 
        MAX(on_cpu) on_cpu,
        MAX(resmgr) resmgr,
        MAX(on_cpu_and_resmgr) on_cpu_and_resmgr
   FROM cpu_per_inst_and_sample
  GROUP BY
-       instance_number,
-       TRUNC(CAST(sample_time AS DATE), ''HH'')
+       snap_id,
+       instance_number
 )
-SELECT MIN(snap_id) snap_id,
-       TO_CHAR(begin_time, ''YYYY-MM-DD HH24:MI'') begin_time,
-       TO_CHAR(end_time, ''YYYY-MM-DD HH24:MI'') end_time,
+SELECT snap_id,
+       TO_CHAR(MIN(min_sample_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
+       TO_CHAR(MAX(max_sample_time), ''YYYY-MM-DD HH24:MI:SS'') end_time,
        SUM(on_cpu_and_resmgr) on_cpu_and_resmgr,
        SUM(on_cpu) on_cpu,
        SUM(resmgr) resmgr,
@@ -152,20 +151,20 @@ SELECT MIN(snap_id) snap_id,
        0 dummy_15
   FROM cpu_per_inst_and_hour
  GROUP BY
-       begin_time,
-       end_time
+       snap_id
  ORDER BY
-       end_time
+       snap_id
 ';
 END;
 /
 
-DEF vbaseline = 'baseline:&&sum_cpu_count.,'; 
+--DEF vbaseline = 'baseline:&&sum_cpu_count.,'; 
+DEF vbaseline = ''; 
 
 DEF skip_lch = '';
 DEF skip_all = '&&is_single_instance.';
 DEF title = 'CPU Demand Series (Peak) for Cluster';
-DEF abstract = 'Number of Sessions demanding CPU. Based on peak demand per hour.'
+DEF abstract = 'Number of Sessions demanding CPU. Based on peak demand per hour.<br />'
 DEF foot = 'Sessions "ON CPU" or "ON CPU" + "resmgr:cpu quantum"'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', 'instance_number');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
@@ -201,19 +200,20 @@ per_instance AS (
 SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
        snap_id,
        instance_number,
-       TRUNC(begin_time, ''HH'') begin_time_hh,
-       maxval,
-       ROW_NUMBER () OVER (PARTITION BY dbid, instance_number, group_id, metric_id, TRUNC(begin_time, ''HH'') ORDER BY maxval DESC NULLS LAST, begin_time DESC) rn
+       begin_time, 
+       end_time, 
+       maxval
   FROM dba_hist_sysmetric_summary
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
    AND group_id = 2 /* 1 minute intervals */
    AND metric_name = ''@metric_name@''
+   AND maxval >= 0
 )
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
-       MIN(snap_id) snap_id,
-       TO_CHAR(begin_time_hh, ''YYYY-MM-DD HH24:MI'') begin_time,
-       TO_CHAR(begin_time_hh + (1/24), ''YYYY-MM-DD HH24:MI'') end_time,
+       snap_id,
+       TO_CHAR(MIN(begin_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
+       TO_CHAR(MIN(end_time), ''YYYY-MM-DD HH24:MI:SS'') end_time,
        ROUND(SUM(maxval), 1) "Max Value",
        0 dummy_02,
        0 dummy_03,
@@ -230,11 +230,10 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        0 dummy_14,
        0 dummy_15
   FROM per_instance
- WHERE rn = 1
  GROUP BY
-       begin_time_hh
+       snap_id
  ORDER BY
-       begin_time_hh
+       snap_id
 ';
 END;
 /
@@ -242,7 +241,7 @@ END;
 DEF skip_lch = '';
 DEF title = 'User Commits Per Sec';
 DEF vaxis = 'Commits Per Second';
-DEF abstract = '"&&title." with unit of "&&vaxis.", based on 1-minute samples. Max value is within each hour.'
+DEF abstract = '"&&title." with unit of "&&vaxis.", based on 1-minute samples. Max value is within each hour.<br />'
 DEF foot = 'Max values represent the peak of the metric within each hour and among the 60 samples on it. Each sample represents in turn an average within a 1-minute interval.'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@metric_name@', '&&title.');
 @@edb360_9a_pre_one.sql
@@ -266,7 +265,7 @@ BEGIN
       DBMS_OUTPUT.PUT_LINE('COL inst_'||LPAD(i, 2, '0')||' NOPRI;');
       DBMS_OUTPUT.PUT_LINE('DEF tit_'||LPAD(i, 2, '0')||' = '''';');
     ELSE
-      DBMS_OUTPUT.PUT_LINE('COL inst_'||LPAD(i, 2, '0')||' HEA ''Inst '||i||''' FOR 999990.0 PRI;');
+      DBMS_OUTPUT.PUT_LINE('COL inst_'||LPAD(i, 2, '0')||' HEA ''Inst '||i||''' FOR 999990.000 PRI;');
       DBMS_OUTPUT.PUT_LINE('DEF tit_'||LPAD(i, 2, '0')||' = ''Inst '||i||''';');
     END IF;
   END LOOP;
@@ -287,17 +286,18 @@ BEGIN
   :sql_text_backup := '
 SELECT /*+ &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
        /* &&section_id..&&report_sequence. */
-       MIN(snap_id) snap_id,
-       TO_CHAR(TRUNC(sample_time, ''HH''), ''YYYY-MM-DD HH24:MI'')          begin_time,
-       TO_CHAR(TRUNC(sample_time, ''HH'') + (1/24), ''YYYY-MM-DD HH24:MI'') end_time,
-       ROUND(SUM(CASE instance_number WHEN 1 THEN 10 ELSE 0 END) / 3600, 3) inst_01,
-       ROUND(SUM(CASE instance_number WHEN 2 THEN 10 ELSE 0 END) / 3600, 3) inst_02,
-       ROUND(SUM(CASE instance_number WHEN 3 THEN 10 ELSE 0 END) / 3600, 3) inst_03,
-       ROUND(SUM(CASE instance_number WHEN 4 THEN 10 ELSE 0 END) / 3600, 3) inst_04,
-       ROUND(SUM(CASE instance_number WHEN 5 THEN 10 ELSE 0 END) / 3600, 3) inst_05,
-       ROUND(SUM(CASE instance_number WHEN 6 THEN 10 ELSE 0 END) / 3600, 3) inst_06,
-       ROUND(SUM(CASE instance_number WHEN 7 THEN 10 ELSE 0 END) / 3600, 3) inst_07,
-       ROUND(SUM(CASE instance_number WHEN 8 THEN 10 ELSE 0 END) / 3600, 3) inst_08,
+       snap_id,
+       --TO_CHAR(LAG(MAX(sample_time)) OVER (ORDER BY snap_id), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
+       TO_CHAR(MIN(sample_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
+       TO_CHAR(MAX(sample_time), ''YYYY-MM-DD HH24:MI:SS'') end_time,
+       ROUND(SUM(CASE instance_number WHEN 1 THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), 1) * 24 * 3600), 3) inst_01,
+       ROUND(SUM(CASE instance_number WHEN 2 THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), 1) * 24 * 3600), 3) inst_02,
+       ROUND(SUM(CASE instance_number WHEN 3 THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), 1) * 24 * 3600), 3) inst_03,
+       ROUND(SUM(CASE instance_number WHEN 4 THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), 1) * 24 * 3600), 3) inst_04,
+       ROUND(SUM(CASE instance_number WHEN 5 THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), 1) * 24 * 3600), 3) inst_05,
+       ROUND(SUM(CASE instance_number WHEN 6 THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), 1) * 24 * 3600), 3) inst_06,
+       ROUND(SUM(CASE instance_number WHEN 7 THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), 1) * 24 * 3600), 3) inst_07,
+       ROUND(SUM(CASE instance_number WHEN 8 THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), 1) * 24 * 3600), 3) inst_08,
        0 dummy_09,
        0 dummy_10,
        0 dummy_11,
@@ -309,11 +309,10 @@ SELECT /*+ &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
    AND @filter_predicate@
-   AND (session_state = ''ON CPU'' OR event IN (''log file sync'', ''log file parallel write''))
  GROUP BY
-       TRUNC(sample_time, ''HH'')
+       snap_id
  ORDER BY
-       TRUNC(sample_time, ''HH'')
+       snap_id
 ';
 END;
 /
@@ -498,7 +497,7 @@ SELECT SUBSTR(TRIM(h.sql_id||'' ''||h.program||'' ''||
        (SELECT DBMS_LOB.SUBSTR(s.sql_text, 1000) FROM dba_hist_sqltext s WHERE s.sql_id = h.sql_id AND s.dbid = h.dbid AND ROWNUM = 1) sql_text
   FROM hist h,
        total t
- WHERE h.samples >= t.samples / 1000 AND rn <= 24
+ WHERE h.samples >= t.samples / 1000 AND rn <= 14
  UNION ALL
 SELECT ''Others'' source,
        NVL(SUM(h.samples), 0) samples,
@@ -506,7 +505,7 @@ SELECT ''Others'' source,
        NULL sql_text
   FROM hist h,
        total t
- WHERE h.samples < t.samples / 1000 OR rn > 24
+ WHERE h.samples < t.samples / 1000 OR rn > 14
  ORDER BY 2 DESC NULLS LAST
 ';
 END;
@@ -514,7 +513,7 @@ END;
 
 DEF skip_lch = '';
 DEF title = 'AAS on CPU per Instance';
-DEF abstract = 'Average Active Sessions (AAS) on CPU'
+DEF abstract = 'Average Active Sessions (AAS) on CPU<br />'
 DEF vaxis = 'Average Active Sessions (AAS) on CPU (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'session_state = ''ON CPU''');
 @@edb360_9a_pre_one.sql
@@ -526,7 +525,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@filter_predicate@', 'session_stat
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on &&wait_class_01. "&&event_name_01." per Instance';
-DEF abstract = 'Average Active Sessions (AAS) Waiting on &&wait_class_01. "&&event_name_01."'
+DEF abstract = 'Average Active Sessions (AAS) Waiting on &&wait_class_01. "&&event_name_01."<br />'
 DEF vaxis = 'Average Active Sessions (AAS) Waiting on &&wait_class_01. "&&event_name_01." (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''&&wait_class_01.'' AND event = ''&&event_name_01.''');
 @@edb360_9a_pre_one.sql
@@ -538,7 +537,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup2, '@filter_predicate@', 'wait_class =
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on &&wait_class_02. "&&event_name_02." per Instance';
-DEF abstract = 'Average Active Sessions (AAS) Waiting on &&wait_class_02. "&&event_name_02."'
+DEF abstract = 'Average Active Sessions (AAS) Waiting on &&wait_class_02. "&&event_name_02."<br />'
 DEF vaxis = 'Average Active Sessions (AAS) Waiting on &&wait_class_02. "&&event_name_02." (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''&&wait_class_02.'' AND event = ''&&event_name_02.''');
 @@edb360_9a_pre_one.sql

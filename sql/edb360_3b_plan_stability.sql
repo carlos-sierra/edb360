@@ -61,7 +61,9 @@ DEF main_table = 'DBA_SQL_PROFILES';
 BEGIN
   :sql_text := '
 SELECT TO_CHAR(TRUNC(created, ''MM''), ''YYYY-MM'') created,
-       COUNT(*)
+       COUNT(*) profiles,
+       SUM(CASE status WHEN ''ENABLED'' THEN 1 ELSE 0 END) enabled,
+       SUM(CASE status WHEN ''DISABLED'' THEN 1 ELSE 0 END) disabled
   FROM dba_sql_profiles
  GROUP BY
        TRUNC(created, ''MM'')
@@ -115,7 +117,11 @@ DEF main_table = 'DBA_SQL_PLAN_BASELINES';
 BEGIN
   :sql_text := '
 SELECT TO_CHAR(TRUNC(created, ''MM''), ''YYYY-MM'') created,
-       COUNT(*)
+       COUNT(*) baselines,
+       SUM(CASE enabled WHEN ''YES'' THEN 1 ELSE 0 END) enabled,
+       SUM(CASE enabled WHEN ''YES'' THEN (CASE accepted WHEN ''YES'' THEN 1 ELSE 0 END) ELSE 0 END) accepted,
+       &&skip_11r1.SUM(CASE enabled WHEN ''YES'' THEN (CASE accepted WHEN ''YES'' THEN (CASE reproduced WHEN ''YES'' THEN 1 ELSE 0 END) ELSE 0 END) ELSE 0 END) reproduced,
+       SUM(CASE enabled WHEN ''NO'' THEN 1 ELSE 0 END) disabled
   FROM dba_sql_plan_baselines
  GROUP BY
        TRUNC(created, ''MM'')

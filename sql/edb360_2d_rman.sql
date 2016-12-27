@@ -7,6 +7,30 @@ PRO <h2>&&section_id.. &&section_name.</h2>
 PRO <ol start="&&report_sequence.">
 SPO OFF;
 
+DEF title = 'Block Corruption';
+DEF main_table = 'V$DATABASE_BLOCK_CORRUPTION';
+BEGIN
+  :sql_text := '
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
+       *
+  FROM v$database_block_corruption
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+DEF title = 'Block Change Tracking';
+DEF main_table = 'V$BLOCK_CHANGE_TRACKING';
+BEGIN
+  :sql_text := '
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
+       *
+  FROM v$block_change_tracking
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
 DEF title = 'RMAN Backup Job Details';
 DEF main_table = 'V$RMAN_BACKUP_JOB_DETAILS';
 BEGIN
@@ -72,7 +96,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
 ';
 END;
 /
-@@edb360_9a_pre_one.sql
+@@&&skip_10g.edb360_9a_pre_one.sql
 
 DEF title = 'Restore Point';
 DEF main_table = 'V$RESTORE_POINT';
@@ -105,30 +129,6 @@ BEGIN
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM v$flashback_database_log
-';
-END;
-/
-@@edb360_9a_pre_one.sql
-
-DEF title = 'Block Corruption';
-DEF main_table = 'V$DATABASE_BLOCK_CORRUPTION';
-BEGIN
-  :sql_text := '
-SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
-       *
-  FROM v$database_block_corruption
-';
-END;
-/
-@@edb360_9a_pre_one.sql
-
-DEF title = 'Block Change Tracking';
-DEF main_table = 'V$BLOCK_CHANGE_TRACKING';
-BEGIN
-  :sql_text := '
-SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
-       *
-  FROM v$block_change_tracking
 ';
 END;
 /

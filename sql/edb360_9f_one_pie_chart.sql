@@ -50,6 +50,7 @@ BEGIN
   LOOP
     FETCH cur INTO l_slice, l_value, l_percent, l_text;
     EXIT WHEN cur%NOTFOUND;
+    l_slice := l_slice||' ('||TRIM(TO_CHAR(l_percent, '990.0'))||'%)';
     DBMS_OUTPUT.PUT_LINE(',['''||l_slice||''', '||l_value||']');
   END LOOP;
   CLOSE cur;
@@ -57,16 +58,18 @@ END;
 /
 SET SERVEROUT OFF;
 
--- chart footer
+-- pie chart footer
 PRO        ]);;
 PRO        
 PRO        var options = {
+PRO          chartArea: {left:25, top:75, width:'95%', height:'80%'},
 PRO          is3D: false,
 PRO          backgroundColor: {fill: '#fcfcf0', stroke: '#336699', strokeWidth: 1},
 PRO          title: '&&section_id..&&report_sequence.. &&title.&&title_suffix.',
-PRO          titleTextStyle: {fontSize: 16, bold: false},
-PRO          legend: {position: 'right', textStyle: {fontSize: 12}},
-PRO          tooltip: {textStyle: {fontSize: 14}},
+PRO          titleTextStyle: {fontSize: 18, bold: false},
+PRO          legend: {position: 'right', textStyle: {fontSize: 14}},
+PRO          tooltip: {textStyle: {fontSize: 14}, text: 'value'},
+PRO          pieHole: 0.4,
 PRO          sliceVisibilityThreshold: 1/1440
 PRO        };
 PRO
@@ -76,18 +79,21 @@ PRO      }
 PRO    </script>
 PRO  </head>
 PRO  <body>
+PRO
 PRO<h1> &&edb360_conf_all_pages_icon. &&section_id..&&report_sequence.. &&title. <em>(&&main_table.)</em> &&edb360_conf_all_pages_logo. </h1>
 PRO
 PRO <br />
 PRO &&abstract.
 PRO &&abstract2.
+PRO <br />
 PRO
 PRO    <div id="piechart" class="google-chart"></div>
 PRO
 
 -- footer
-PRO<font class="n">Notes:<br />1) up to &&history_days. days of awr history were considered<br />2) ASH reports are based on number of samples</font>
-PRO<font class="n"><br />3) &&foot.</font>
+PRO <br />
+PRO <font class="n">Notes:<br />1) up to &&history_days. days of awr history were considered<br />2) ASH reports are based on number of samples</font>
+PRO <font class="n"><br />3) &&foot.</font>
 PRO <pre>
 SET LIN 80;
 DESC &&main_table.

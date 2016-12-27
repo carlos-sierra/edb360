@@ -54,6 +54,7 @@ SET HEA ON;
 GET &&common_edb360_prefix._query.sql
 
 -- update main report
+SET TERM OFF;
 SPO &&edb360_main_report..html APP;
 PRO <li title="&&main_table.">&&edb360_bypass.&&title.
 SPO OFF;
@@ -118,7 +119,8 @@ DEF skip_lch = '--skip--';
 DEF skip_pch = '--skip--';
 DEF skip_bch = '--skip--';
 DEF title_suffix = '';
-DEF haxis = '&&db_version. dbmod:&&edb360_dbmod. host:&&host_hash. (avg cpu_count: &&avg_cpu_count.)';
+--DEF haxis = '&&db_version. dbmod:&&edb360_dbmod. host:&&host_hash. (avg cpu_count: &&avg_cpu_count.)';
+DEF haxis = '&&db_version. &&cores_threads_hosts.';
 
 -- update main report
 SPO &&edb360_main_report..html APP;

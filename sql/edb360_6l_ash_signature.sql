@@ -16,12 +16,13 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
        force_matching_signature,
        ROW_NUMBER () OVER (ORDER BY COUNT(*) DESC) rn,
        COUNT(DISTINCT sql_id) distinct_sql_id,
-       MIN(sql_id) sample_sql_id,
+       MIN(sql_id) min_sql_id,
+       MAX(sql_id) max_sql_id,
        COUNT(*) samples
   FROM gv$active_session_history
  WHERE @filter_predicate@
    AND sql_id IS NOT NULL
-   AND force_matching_signature IS NOT NULL
+   AND force_matching_signature > 0
  GROUP BY
        force_matching_signature
 ),
@@ -31,7 +32,9 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */ SUM(sample
 SELECT h.force_matching_signature||''(''||h.distinct_sql_id||'')'' force_matching_signature,
        h.samples,
        ROUND(100 * h.samples / t.samples, 1) percent,
-       (SELECT v2.sql_text FROM gv$sql v2 WHERE v2.sql_id = h.sample_sql_id AND ROWNUM = 1) sample_sql_text
+       h.min_sql_id,
+       h.max_sql_id,
+       (SELECT v2.sql_text FROM gv$sql v2 WHERE v2.sql_id = h.min_sql_id AND ROWNUM = 1) sample_sql_text
   FROM hist h,
        total t
  WHERE h.samples >= t.samples / 1000 AND rn <= 14
@@ -39,6 +42,8 @@ SELECT h.force_matching_signature||''(''||h.distinct_sql_id||'')'' force_matchin
 SELECT ''Others'',
        NVL(SUM(h.samples), 0) samples,
        NVL(ROUND(100 * SUM(h.samples) / AVG(t.samples), 1), 0) percent,
+       NULL min_sql_id,
+       NULL max_sql_id,
        NULL sample_sql_text
   FROM hist h,
        total t
@@ -124,12 +129,13 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
        dbid,
        ROW_NUMBER () OVER (ORDER BY COUNT(*) DESC) rn,
        COUNT(DISTINCT sql_id) distinct_sql_id,
-       MIN(sql_id) sample_sql_id,
+       MIN(sql_id) min_sql_id,
+       MAX(sql_id) max_sql_id,
        COUNT(*) samples
   FROM dba_hist_active_sess_history h
  WHERE @filter_predicate@
    AND sql_id IS NOT NULL
-   AND force_matching_signature IS NOT NULL
+   AND force_matching_signature > 0
    AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
  GROUP BY
@@ -142,7 +148,9 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */ SUM(sample
 SELECT h.force_matching_signature||''(''||h.distinct_sql_id||'')'' force_matching_signature,
        h.samples,
        ROUND(100 * h.samples / t.samples, 1) percent,
-       (SELECT DBMS_LOB.SUBSTR(s.sql_text, 1000) FROM dba_hist_sqltext s WHERE s.sql_id = h.sample_sql_id AND s.dbid = h.dbid AND ROWNUM = 1) sample_sql_text
+       --h.min_sql_id,
+       --h.max_sql_id,
+       (SELECT DBMS_LOB.SUBSTR(s.sql_text, 1000) FROM dba_hist_sqltext s WHERE s.sql_id = h.min_sql_id AND s.dbid = h.dbid AND ROWNUM = 1) sample_sql_text
   FROM hist h,
        total t
  WHERE h.samples >= t.samples / 1000 AND rn <= 14
@@ -150,6 +158,8 @@ SELECT h.force_matching_signature||''(''||h.distinct_sql_id||'')'' force_matchin
 SELECT ''Others'',
        NVL(SUM(h.samples), 0) samples,
        NVL(ROUND(100 * SUM(h.samples) / AVG(t.samples), 1), 0) percent,
+       --NULL min_sql_id,
+       --NULL max_sql_id,
        NULL sample_sql_text
   FROM hist h,
        total t

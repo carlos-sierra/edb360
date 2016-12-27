@@ -35,8 +35,8 @@ SELECT NULL skip_if_missing FROM DUAL WHERE TO_NUMBER('&&sp_minimum_snap_id.') >
 
 DEF title = 'Memory Size (MEM)';
 DEF main_table = 'GV$SYSTEM_PARAMETER2';
-DEF abstract = 'Consolidated view of Memory requirements.'
-DEF abstract2 = 'It considers AMM if setup, else ASMM if setup, else no memory management settings (individual pools size).'
+DEF abstract = 'Consolidated view of Memory requirements.<br />'
+DEF abstract2 = 'It considers AMM if setup, else ASMM if setup, else no memory management settings (individual pools size).<br />'
 DEF foot = 'Consider "Giga Bytes (GB)" column for sizing.'
 BEGIN
   :sql_text := '
@@ -315,8 +315,8 @@ END;
 
 DEF title = 'Memory Size (statspack)';
 DEF main_table = 'STATS$PARAMETER';
-DEF abstract = 'Consolidated view of Memory requirements.'
-DEF abstract2 = 'It considers AMM if setup, else ASMM if setup, else no memory management settings (individual pools size).'
+DEF abstract = 'Consolidated view of Memory requirements.<br />'
+DEF abstract2 = 'It considers AMM if setup, else ASMM if setup, else no memory management settings (individual pools size).<br />'
 DEF foot = 'Consider "Giga Bytes (GB)" column for sizing.'
 BEGIN
   :sql_text := '
@@ -661,7 +661,7 @@ END;
 
 DEF title = 'Database Size on Disk';
 DEF main_table = 'GV$DATABASE';
-DEF abstract = 'Displays Space on Disk including datafiles, tempfiles, log and control files.'
+DEF abstract = 'Displays Space on Disk including datafiles, tempfiles, log and control files.<br />'
 DEF foot = 'Consider "Tera Bytes (TB)" column for sizing.'
 BEGIN
   :sql_text := '
@@ -724,7 +724,7 @@ END;
 
 DEF title = 'IOPS and MBPS';
 DEF main_table = 'STATS$SYSSTAT';
-DEF abstract = 'I/O Operations per Second (IOPS) and I/O Mega Bytes per Second (MBPS). Includes Peak (max), percentiles and average for read (R), write (W) and read+write (RW) operations.'
+DEF abstract = 'I/O Operations per Second (IOPS) and I/O Mega Bytes per Second (MBPS). Includes Peak (max), percentiles and average for read (R), write (W) and read+write (RW) operations.<br />'
 DEF foot = 'Consider Peak or high Percentile for sizing.'
 BEGIN
   :sql_text := '
@@ -1437,7 +1437,7 @@ END;
 
 DEF title = 'CPU usage';
 DEF main_table = 'STATS$SYS_TIME_MODEL';
-DEF abstract = 'CPU usage as reported in stats$sys_time_model. Includes Peak (max), percentiles and average for CPU operations.'
+DEF abstract = 'CPU usage as reported in stats$sys_time_model. Includes Peak (max), percentiles and average for CPU operations.<br />'
 DEF foot = 'Consider Peak or high Percentile for sizing.'
 BEGIN
   :sql_text := '
@@ -1783,6 +1783,9 @@ SELECT * FROM per_cluster
 END;
 /
 @@&&skip_if_missing.edb360_9a_pre_one.sql
+
+DEF abstract = ''
+DEF foot = ''
 
 SPO &&edb360_main_report..html APP;
 PRO </ol>

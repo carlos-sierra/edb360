@@ -11,7 +11,8 @@ DEF main_table = 'DBA_HIST_SYS_TIME_MODEL';
 DEF chartype = 'LineChart';
 DEF stacked = '';
 DEF vaxis = 'Average Active Sessions (AAS)';
-DEF vbaseline = 'baseline:&&avg_cpu_count.,';
+--DEF vbaseline = 'baseline:&&avg_cpu_count.,';
+DEF vbaseline = '';
 DEF tit_01 = 'background elapsed time';
 DEF tit_02 = 'background cpu time';
 DEF tit_03 = 'RMAN cpu time (backup/restore)';
@@ -140,9 +141,8 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
 sys_time_model_denorm_4 AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
-       dbid,
-       TO_CHAR(MIN(begin_interval_time), ''YYYY-MM-DD HH24:MI'') begin_time,
-       TO_CHAR(MIN(end_interval_time), ''YYYY-MM-DD HH24:MI'') end_time,
+       TO_CHAR(MIN(begin_interval_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
+       TO_CHAR(MIN(end_interval_time), ''YYYY-MM-DD HH24:MI:SS'') end_time,
        ROUND(SUM(background_time / interval_secs), 3) background_time,
        ROUND(SUM(background_cpu / interval_secs), 3) background_cpu,
        ROUND(SUM(rman_cpu / interval_secs), 3) rman_cpu,
@@ -160,8 +160,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        ROUND(SUM(repeated_bind / interval_secs), 3) repeated_bind
   FROM sys_time_model_denorm_3
  GROUP BY
-       snap_id,
-       dbid
+       snap_id
 )
 SELECT snap_id,
        begin_time,
@@ -183,7 +182,7 @@ SELECT snap_id,
        repeated_bind
   FROM sys_time_model_denorm_4
  ORDER BY
-       end_time
+       snap_id
 ';
 END;
 /
@@ -191,7 +190,7 @@ END;
 DEF skip_lch = '';
 DEF skip_all = '&&is_single_instance.';
 DEF title = 'System Time Model (STM) per Cluster';
-DEF abstract = 'Average Active Sessions (AAS).'
+DEF abstract = 'Average Active Sessions (AAS).<br />'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', 'instance_number');
 @@&&skip_all.edb360_9a_pre_one.sql
 
@@ -199,7 +198,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 1;
 DEF title = 'System Time Model (STM) for Instance 1';
-DEF abstract = 'Average Active Sessions (AAS).'
+DEF abstract = 'Average Active Sessions (AAS).<br />'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '1');
 @@&&skip_all.edb360_9a_pre_one.sql
 
@@ -207,7 +206,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 2;
 DEF title = 'System Time Model (STM) for Instance 2';
-DEF abstract = 'Average Active Sessions (AAS).'
+DEF abstract = 'Average Active Sessions (AAS).<br />'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '2');
 @@&&skip_all.edb360_9a_pre_one.sql
 
@@ -215,7 +214,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 3;
 DEF title = 'System Time Model (STM) for Instance 3';
-DEF abstract = 'Average Active Sessions (AAS).'
+DEF abstract = 'Average Active Sessions (AAS).<br />'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '3');
 @@&&skip_all.edb360_9a_pre_one.sql
 
@@ -223,7 +222,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 4;
 DEF title = 'System Time Model (STM) for Instance 4';
-DEF abstract = 'Average Active Sessions (AAS).'
+DEF abstract = 'Average Active Sessions (AAS).<br />'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '4');
 @@&&skip_all.edb360_9a_pre_one.sql
 
@@ -231,7 +230,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 5;
 DEF title = 'System Time Model (STM) for Instance 5';
-DEF abstract = 'Average Active Sessions (AAS).'
+DEF abstract = 'Average Active Sessions (AAS).<br />'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '5');
 @@&&skip_all.edb360_9a_pre_one.sql
 
@@ -239,7 +238,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 6;
 DEF title = 'System Time Model (STM) for Instance 6';
-DEF abstract = 'Average Active Sessions (AAS).'
+DEF abstract = 'Average Active Sessions (AAS).<br />'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '6');
 @@&&skip_all.edb360_9a_pre_one.sql
 
@@ -247,7 +246,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 7;
 DEF title = 'System Time Model (STM) for Instance 7';
-DEF abstract = 'Average Active Sessions (AAS).'
+DEF abstract = 'Average Active Sessions (AAS).<br />'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '7');
 @@&&skip_all.edb360_9a_pre_one.sql
 
@@ -255,7 +254,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 8;
 DEF title = 'System Time Model (STM) for Instance 8';
-DEF abstract = 'Average Active Sessions (AAS).'
+DEF abstract = 'Average Active Sessions (AAS).<br />'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '8');
 @@&&skip_all.edb360_9a_pre_one.sql
 

@@ -22,12 +22,13 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
        h.dbid,
        h.instance_number,
        h.target_instance,
+       s.begin_interval_time,
        s.end_interval_time,
        s.startup_time - LAG(s.startup_time) OVER (PARTITION BY h.dbid, h.instance_number, h.target_instance ORDER BY h.snap_id) startup_time_interval,
-       h.cnt_500b - LAG(h.cnt_500b) OVER (PARTITION BY h.dbid, h.instance_number, h.target_instance ORDER BY h.snap_id) cnt_500b,
-       h.cnt_8k - LAG(h.cnt_8k) OVER (PARTITION BY h.dbid, h.instance_number, h.target_instance ORDER BY h.snap_id) cnt_8k,
-       h.wait_500b - LAG(h.wait_500b) OVER (PARTITION BY h.dbid, h.instance_number, h.target_instance ORDER BY h.snap_id) wait_500b,
-       h.wait_8k - LAG(h.wait_8k) OVER (PARTITION BY h.dbid, h.instance_number, h.target_instance ORDER BY h.snap_id) wait_8k
+       h.cnt_500b - LAG(h.cnt_500b)         OVER (PARTITION BY h.dbid, h.instance_number, h.target_instance ORDER BY h.snap_id) cnt_500b,
+       h.cnt_8k - LAG(h.cnt_8k)             OVER (PARTITION BY h.dbid, h.instance_number, h.target_instance ORDER BY h.snap_id) cnt_8k,
+       h.wait_500b - LAG(h.wait_500b)       OVER (PARTITION BY h.dbid, h.instance_number, h.target_instance ORDER BY h.snap_id) wait_500b,
+       h.wait_8k - LAG(h.wait_8k)           OVER (PARTITION BY h.dbid, h.instance_number, h.target_instance ORDER BY h.snap_id) wait_8k
   FROM dba_hist_interconnect_pings h,
        dba_hist_snapshot s
  WHERE h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
@@ -41,10 +42,11 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
 ),
 per_source_and_target AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
-       MAX(snap_id) snap_id,
+       snap_id,
        instance_number,
        target_instance,
-       TRUNC(end_interval_time, ''HH'') end_time,
+       begin_interval_time,
+       end_interval_time,
        SUM(cnt_500b) cnt_500b,
        SUM(cnt_8k) cnt_8k,
        SUM(wait_500b) wait_500b,
@@ -58,16 +60,19 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
    AND wait_500b > 0
    AND wait_8k > 0
  GROUP BY
+       snap_id,
        instance_number,
        target_instance,
-       TRUNC(end_interval_time, ''HH'')
+       begin_interval_time,
+       end_interval_time
 ),
 per_source AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
        instance_number,
        -1 target_instance,
-       end_time,
+       MIN(begin_interval_time) begin_interval_time,
+       MIN(end_interval_time) end_interval_time,
        SUM(cnt_500b) cnt_500b,
        SUM(cnt_8k) cnt_8k,
        SUM(wait_500b) wait_500b,
@@ -77,15 +82,15 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
   FROM per_source_and_target
  GROUP BY
        snap_id,
-       instance_number,
-       end_time
+       instance_number
 ),
 per_target AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
        -1 instance_number,
        target_instance,
-       end_time,
+       MIN(begin_interval_time) begin_interval_time,
+       MIN(end_interval_time) end_interval_time,
        SUM(cnt_500b) cnt_500b,
        SUM(cnt_8k) cnt_8k,
        SUM(wait_500b) wait_500b,
@@ -95,15 +100,15 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
   FROM per_source_and_target
  GROUP BY
        snap_id,
-       target_instance,
-       end_time
+       target_instance
 ),
 per_cluster AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
        -1 instance_number,
        -1 target_instance,
-       end_time,
+       MIN(begin_interval_time) begin_interval_time,
+       MIN(end_interval_time) end_interval_time,
        SUM(cnt_500b) cnt_500b,
        SUM(cnt_8k) cnt_8k,
        SUM(wait_500b) wait_500b,
@@ -112,15 +117,15 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        ROUND(SUM(wait_8k) / SUM(cnt_8k) / 1000, 2) Avg_Latency_8K_msg
   FROM per_source_and_target
  GROUP BY
-       snap_id,
-       end_time
+       snap_id
 ),
 source_and_target_extended AS (
 SELECT /*+ &&sq_fact_hints. LEADING(st) */
        st.snap_id,
        st.instance_number,
        st.target_instance,
-       st.end_time,
+       LEAST(st.begin_interval_time, s.begin_interval_time, t.begin_interval_time, c.begin_interval_time) begin_interval_time,
+       LEAST(st.end_interval_time, s.end_interval_time, t.end_interval_time, c.end_interval_time) end_interval_time,
        st.Avg_Latency_500B_msg,
        st.Avg_Latency_8K_msg,
        s.Avg_Latency_500B_msg s_Avg_Latency_500B_msg,
@@ -135,25 +140,20 @@ SELECT /*+ &&sq_fact_hints. LEADING(st) */
        per_cluster c
  WHERE s.snap_id = st.snap_id
    AND s.instance_number = st.instance_number
-   AND s.end_time = st.end_time
    AND t.snap_id = st.snap_id
    AND t.target_instance = st.target_instance
-   AND t.end_time = st.end_time
    AND c.snap_id = st.snap_id
-   AND c.end_time = st.end_time
 -- automatic transitivity does not apply to joins
 -- added predicates in case LEADING hint is not obeyed 
    AND t.snap_id = s.snap_id
-   AND t.end_time = s.end_time
    AND c.snap_id = s.snap_id
-   AND c.end_time = s.end_time
    AND c.snap_id = t.snap_id
-   AND c.end_time = t.end_time
  UNION ALL
 SELECT s.snap_id,
        s.instance_number,
        s.target_instance,
-       s.end_time,
+       LEAST(s.begin_interval_time, c.begin_interval_time) begin_interval_time,
+       LEAST(s.end_interval_time, c.end_interval_time) end_interval_time,
        s.Avg_Latency_500B_msg,
        s.Avg_Latency_8K_msg,
        0 s_Avg_Latency_500B_msg,
@@ -165,12 +165,12 @@ SELECT s.snap_id,
   FROM per_source s,
        per_cluster c
  WHERE c.snap_id = s.snap_id
-   AND c.end_time = s.end_time
  UNION ALL
 SELECT t.snap_id,
        t.instance_number,
        t.target_instance,
-       t.end_time,
+       LEAST(t.begin_interval_time, c.begin_interval_time) begin_interval_time,
+       LEAST(c.end_interval_time, c.end_interval_time) end_interval_time,
        t.Avg_Latency_500B_msg,
        t.Avg_Latency_8K_msg,
        0 s_Avg_Latency_500B_msg,
@@ -182,13 +182,13 @@ SELECT t.snap_id,
   FROM per_target t,
        per_cluster c
  WHERE c.snap_id = t.snap_id
-   AND c.end_time = t.end_time
 ),
 denorm_target AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
-       end_time,
        instance_number inst_num,
+       MIN(begin_interval_time) begin_interval_time,
+       MIN(end_interval_time) end_interval_time,
        SUM(CASE target_instance WHEN 1 THEN Avg_Latency_500B_msg ELSE 0 END) Avg_Latency_500B_msg_i1,
        SUM(CASE target_instance WHEN 1 THEN Avg_Latency_8K_msg ELSE 0 END) Avg_Latency_8K_msg_i1,
        SUM(CASE target_instance WHEN 2 THEN Avg_Latency_500B_msg ELSE 0 END) Avg_Latency_500B_msg_i2,
@@ -213,14 +213,14 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
  WHERE instance_number = @instance_number@
  GROUP BY
        snap_id,
-       end_time,
        instance_number
 ),
 denorm_source AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
-       end_time,
        target_instance inst_num,
+       MIN(begin_interval_time) begin_interval_time,
+       MIN(end_interval_time) end_interval_time,
        SUM(CASE instance_number WHEN 1 THEN Avg_Latency_500B_msg ELSE 0 END) Avg_Latency_500B_msg_i1,
        SUM(CASE instance_number WHEN 1 THEN Avg_Latency_8K_msg ELSE 0 END) Avg_Latency_8K_msg_i1,
        SUM(CASE instance_number WHEN 2 THEN Avg_Latency_500B_msg ELSE 0 END) Avg_Latency_500B_msg_i2,
@@ -245,13 +245,12 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
  WHERE target_instance = @instance_number@
  GROUP BY
        snap_id,
-       end_time,
        target_instance
 )
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
-       TO_CHAR(end_time - (1/24), ''YYYY-MM-DD HH24:MI'') begin_time,
-       TO_CHAR(end_time, ''YYYY-MM-DD HH24:MI'') end_time,
+       TO_CHAR(CAST(begin_interval_time AS DATE), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
+       TO_CHAR(CAST(end_interval_time AS DATE), ''YYYY-MM-DD HH24:MI:SS'') end_time,
        c_Avg_Latency_@msg@_msg cluster_avg,
        i_Avg_Latency_@msg@_msg instance_avg,
        Avg_Latency_@msg@_msg_i1 inst_1,
@@ -269,8 +268,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        0 dummy_15
   FROM denorm_@denorm@
  ORDER BY       
-       snap_id,
-       end_time
+       snap_id
 ';
 END;
 /
