@@ -131,10 +131,12 @@ DEF title = 'AAS Waiting on Scheduler per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''Scheduler''');
 @@edb360_9a_pre_one.sql
 
+/*
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on Idle per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''Idle''');
 @@edb360_9a_pre_one.sql
+*/
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on Other per Instance';

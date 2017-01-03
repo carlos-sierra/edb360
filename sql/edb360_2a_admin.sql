@@ -1851,14 +1851,74 @@ DEF title = 'Libraries calling DBMS_STATS';
 DEF main_table = 'DBA_SOURCE';
 BEGIN
   :sql_text := '
-SELECT *
+WITH 
+lines_with_api AS (
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */ *
   FROM dba_source
  WHERE REPLACE(UPPER(text), '' '') LIKE ''%DBMS_STATS.%''
    AND UPPER(text) NOT LIKE ''%--%DBMS_STATS%''
    AND owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
+)
+SELECT s1.owner,
+       s1.name,
+       s1.type,
+       s1.line,
+       s1.text,
+       CASE WHEN s1.text NOT LIKE ''%;%'' THEN s2.text END text2,
+       CASE WHEN s1.text||s2.text NOT LIKE ''%;%'' THEN s3.text END text3,
+       CASE WHEN s1.text||s2.text||s3.text NOT LIKE ''%;%'' THEN s4.text END text4,
+       CASE WHEN s1.text||s2.text||s3.text||s4.text NOT LIKE ''%;%'' THEN s5.text END text5,
+       CASE WHEN s1.text||s2.text||s3.text||s4.text||s5.text NOT LIKE ''%;%'' THEN s6.text END text6,
+       CASE WHEN s1.text||s2.text||s3.text||s4.text||s5.text||s6.text NOT LIKE ''%;%'' THEN s7.text END text7,
+       CASE WHEN s1.text||s2.text||s3.text||s4.text||s5.text||s6.text||s7.text NOT LIKE ''%;%'' THEN s8.text END text8,
+       CASE WHEN s1.text||s2.text||s3.text||s4.text||s5.text||s6.text||s7.text||s8.text NOT LIKE ''%;%'' THEN s9.text END text9
+  FROM lines_with_api s1,
+       dba_source s2,
+       dba_source s3,
+       dba_source s4,
+       dba_source s5,
+       dba_source s6,
+       dba_source s7,
+       dba_source s8,
+       dba_source s9
+ WHERE s2.owner(+) = s1.owner
+   AND s2.name(+) = s1.name
+   AND s2.type(+) = s1.type
+   AND s2.line(+) = s1.line + 1
+   AND s3.owner(+) = s1.owner
+   AND s3.name(+) = s1.name
+   AND s3.type(+) = s1.type
+   AND s3.line(+) = s1.line + 2
+   AND s4.owner(+) = s1.owner
+   AND s4.name(+) = s1.name
+   AND s4.type(+) = s1.type
+   AND s4.line(+) = s1.line + 3
+   AND s5.owner(+) = s1.owner
+   AND s5.name(+) = s1.name
+   AND s5.type(+) = s1.type
+   AND s5.line(+) = s1.line + 4
+   AND s6.owner(+) = s1.owner
+   AND s6.name(+) = s1.name
+   AND s6.type(+) = s1.type
+   AND s6.line(+) = s1.line + 5
+   AND s7.owner(+) = s1.owner
+   AND s7.name(+) = s1.name
+   AND s7.type(+) = s1.type
+   AND s7.line(+) = s1.line + 6
+   AND s8.owner(+) = s1.owner
+   AND s8.name(+) = s1.name
+   AND s8.type(+) = s1.type
+   AND s8.line(+) = s1.line + 7
+   AND s9.owner(+) = s1.owner
+   AND s9.name(+) = s1.name
+   AND s9.type(+) = s1.type
+   AND s9.line(+) = s1.line + 8
  ORDER BY
-       owner, name, type, line
+       s1.owner,
+       s1.name,
+       s1.type,
+       s1.line  
 ';
 END;
 /

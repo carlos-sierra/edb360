@@ -1,6 +1,15 @@
 Changelog
 =========
 
+v1701 (2017-01-02)
+=====
+1. Increase font and chart size on edb360 and sqld360 to improve readability
+2. AWR/ADDM/ASH reports add two more: max31 and max7. These two include a range that covers all the individual reports. So they are almost as large as 7 days and 31 days. There are cases where we can to see the big picture.
+3. New reports on 3h: Sessions, Processes and Parallel Max Servers - Time Series
+4. Added some columns to planx for DBA_HIST_SQLSTAT and similar views. Condition such columns to database version so we get more than the maximum common denominator
+5. List of libraries which include DBMS_STATS shows not only the line where DBMS_STATS is referenced, but a few lines afterwards
+6. Top timed events is promoted to use bar char instead of pie chart
+
 v1622 (2016-12-27)
 =====
 1. Active Session History (ASH) - Top Signature includes now min and max SQL_ID

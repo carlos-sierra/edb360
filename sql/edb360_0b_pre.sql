@@ -1,6 +1,6 @@
-DEF edb360_vYYNN = 'v1622';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2016-12-27)';
-DEF edb360_copyright = ' (c) 2016';
+DEF edb360_vYYNN = 'v1701';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2017-01-02)';
+DEF edb360_copyright = ' (c) 2017';
 
 SET TERM OFF;
 -- watchdog

@@ -57,7 +57,7 @@ BEGIN
     END IF;
   END LOOP;
   CLOSE cur;
-  l_bar := 'All other Timed Clases ('||l_others||'%)';
+  l_bar := 'All others ('||l_others||'%)';
   l_value := l_others;
   l_style := 'D3D3D3'; -- light gray
   l_tooltip := '('||l_others||'% of DB Time)';
@@ -93,7 +93,7 @@ PRO &&abstract.
 PRO &&abstract2.
 PRO <br />
 PRO
-PRO    <div id="barchart" style="width: 900px; height: 500px;"></div>
+PRO    <div id="barchart" class="google-chart"></div>
 PRO
 
 -- footer
