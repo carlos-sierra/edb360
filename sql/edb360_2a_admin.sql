@@ -682,7 +682,7 @@ BEGIN
   :sql_text := '
 -- requested by David Kurtz
 WITH f AS ( /*function expressions*/
-SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */ 
        owner, table_name, extension, extension_name
 FROM   dba_stat_extensions
 where  creator = ''SYSTEM'' /*exclude extended stats*/
@@ -729,20 +729,25 @@ where  creator = ''USER'' /*extended stats not function based indexes*/
 SELECT r.table_owner, r.table_name,
        i.index_name||'' (''||i.column_list||'')'' superset_index,
        r.index_name||'' (''||r.column_list||'')'' redundant_index,
+       c.constraint_type, c.constraint_name,
        r.index_type, r.visibility, e.extension_name
   FROM i r
        LEFT OUTER JOIN e
-       ON  e.owner = r.table_owner
-       AND e.table_name = r.table_name
-       AND e.extension = r.extension
+         ON  e.owner = r.table_owner
+         AND e.table_name = r.table_name
+         AND e.extension = r.extension
+       LEFT OUTER JOIN dba_constraints c
+         ON c.table_name = r.table_name
+         AND c.index_owner = r.index_owner
+         AND c.index_name = r.index_name
+         AND c.owner = r.table_owner
+         AND c.constraint_type IN(''P'',''U'')
      , i
  WHERE i.table_owner = r.table_owner
    AND i.table_name = r.table_name
--- AND i.index_type = r.index_type
    AND i.index_name != r.index_name
    AND i.column_list LIKE r.column_list||'',%''
    AND i.num_columns > r.num_columns
-   AND r.uniqueness = ''NONUNIQUE''
  ORDER BY r.table_owner, r.table_name, r.index_name, i.index_name
 ';
 END;
@@ -1345,7 +1350,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_autotask_client_history
  ORDER BY
-       1,2,3
+       window_start_time DESC 
 ';
 END;
 /

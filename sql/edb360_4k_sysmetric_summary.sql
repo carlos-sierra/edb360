@@ -1,5 +1,5 @@
 @@&&edb360_0g.tkprof.sql
-DEF section_id = '4j';
+DEF section_id = '4k';
 DEF section_name = 'System Metric Summary per Snap Interval';
 EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
 SPO &&edb360_main_report..html APP;

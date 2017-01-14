@@ -1,5 +1,5 @@
-DEF edb360_vYYNN = 'v1701';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2017-01-02)';
+DEF edb360_vYYNN = 'v1702';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2017-01-13)';
 DEF edb360_copyright = ' (c) 2017';
 
 SET TERM OFF;
@@ -126,6 +126,7 @@ COL edb360_4g NEW_V edb360_4g;
 COL edb360_4h NEW_V edb360_4h;
 COL edb360_4i NEW_V edb360_4i;
 COL edb360_4j NEW_V edb360_4j;
+COL edb360_4k NEW_V edb360_4k;
 COL edb360_5a NEW_V edb360_5a;
 COL edb360_5b NEW_V edb360_5b;
 COL edb360_5c NEW_V edb360_5c;
@@ -181,6 +182,7 @@ SELECT CASE WHEN '4g' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4
 SELECT CASE WHEN '4h' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4h_' ELSE '--' END edb360_4h FROM DUAL;
 SELECT CASE WHEN '4i' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4i_' ELSE '--' END edb360_4i FROM DUAL;
 SELECT CASE WHEN '4j' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4j_' ELSE '--' END edb360_4j FROM DUAL;
+SELECT CASE WHEN '4k' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4k_' ELSE '--' END edb360_4k FROM DUAL;
 SELECT CASE WHEN '5a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_5a_' ELSE '--' END edb360_5a FROM DUAL;
 SELECT CASE WHEN '5b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_5b_' ELSE '--' END edb360_5b FROM DUAL;
 SELECT CASE WHEN '5c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_5c_' ELSE '--' END edb360_5c FROM DUAL;

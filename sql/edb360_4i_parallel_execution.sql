@@ -1,5 +1,5 @@
 @@&&edb360_0g.tkprof.sql
-DEF section_id = '4h';
+DEF section_id = '4i';
 DEF section_name = 'Parallel Execution';
 EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
 SPO &&edb360_main_report..html APP;

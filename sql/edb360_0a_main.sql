@@ -217,10 +217,11 @@ SPO OFF;
 @@&&skip_diagnostics.&&edb360_4d.time_model.sql
 @@&&skip_diagnostics.&&edb360_4e.time_model_comp.sql
 @@&&skip_diagnostics.&&skip_10g.&&edb360_4f.io_waits.sql
-@@&&skip_diagnostics.&&skip_10g.&&edb360_4g.io_waits_top.sql
-@@&&edb360_4h.parallel_execution.sql
-@@&&skip_diagnostics.&&edb360_4i.sysmetric_history.sql
-@@&&skip_diagnostics.&&edb360_4j.sysmetric_summary.sql
+@@&&skip_diagnostics.&&skip_10g.&&edb360_4g.io_waits_top_histog.sql
+@@&&skip_diagnostics.&&skip_10g.&&edb360_4h.io_waits_top_trend.sql
+@@&&edb360_4i.parallel_execution.sql
+@@&&skip_diagnostics.&&edb360_4j.sysmetric_history.sql
+@@&&skip_diagnostics.&&edb360_4k.sysmetric_summary.sql
 
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

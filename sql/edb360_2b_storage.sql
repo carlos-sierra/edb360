@@ -915,7 +915,7 @@ BEGIN
   :sql_text := '
 -- provided by Simon Pane
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
-       s.owner, s.segment_type, s.tablespace_name, COUNT(1)
+       s.owner, s.segment_type, s.tablespace_name, COUNT(1) segments
   FROM dba_segments s
  WHERE ''&&edb360_conf_incl_segments.'' = ''Y''
    AND s.owner NOT IN (''SYS'',''SYSTEM'',''OUTLN'',''AURORA$JIS$UTILITY$'',''OSE$HTTP$ADMIN'',''ORACACHE'',''ORDSYS'',

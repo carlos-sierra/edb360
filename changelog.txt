@@ -1,6 +1,14 @@
 Changelog
 =========
 
+v1702 (2017-01-13)
+=====
+1. Update Redundant Indexes(2) as per changes from david Kurtz
+2. Section 7a now generates reports when AWR retention is less than 10 days. v1701.2 had introduced a new bug where retention less than 10 days would not produce any AWR/ADDM/ASH report
+3. Added new section 4h Average Latency for Top 24 Wait Events
+4. Fix 5a, 5b and 5c section where the number of AAS is incorrect due to bug here: (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), 1) * 24 * 3600)
+
+
 v1701 (2017-01-02)
 =====
 1. Increase font and chart size on edb360 and sqld360 to improve readability
@@ -20,7 +28,7 @@ v1622 (2016-12-27)
 6. Pie charts include now percent on legend. Affects column 6 and section 5c
 7. Added memory configuration at the bottom of 1a
 8. Pie charts have now a hole
-9. skip SQL that would error on 10g
+9. Skip SQL that would error on 10g
 10. Refresh of sections 4f and 4g to include all waits and not just I/O waits
 11. Database name can now be shown on index page as per edb360_conf_incl_dbname
 12. Removed CBO Hints on 3 queries from David Kurtz on section 2b as per request from Luis Calvo
