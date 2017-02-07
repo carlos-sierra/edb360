@@ -1,5 +1,5 @@
-DEF edb360_vYYNN = 'v1702';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2017-01-13)';
+DEF edb360_vYYNN = 'v1703';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2017-02-07)';
 DEF edb360_copyright = ' (c) 2017';
 
 SET TERM OFF;
@@ -471,7 +471,7 @@ DEF ash_hints3 = ' USE_HASH(h.INT$DBA_HIST_ACT_SESS_HISTORY.sn h.INT$DBA_HIST_AC
 DEF def_max_rows = '10000';
 DEF max_rows = '1e4';
 DEF exclusion_list = "(''ANONYMOUS'',''APEX_030200'',''APEX_040000'',''APEX_SSO'',''APPQOSSYS'',''CTXSYS'',''DBSNMP'',''DIP'',''EXFSYS'',''FLOWS_FILES'',''MDSYS'',''OLAPSYS'',''ORACLE_OCM'',''ORDDATA'',''ORDPLUGINS'',''ORDSYS'',''OUTLN'',''OWBSYS'')";
-DEF exclusion_list2 = "(''SI_INFORMTN_SCHEMA'',''SQLTXADMIN'',''SQLTXPLAIN'',''SYS'',''SYSMAN'',''SYSTEM'',''TRCANLZR'',''WMSYS'',''XDB'',''XS$NULL'',''PERFSTAT'',''STDBYPERF'')";
+DEF exclusion_list2 = "(''SI_INFORMTN_SCHEMA'',''SQLTXADMIN'',''SQLTXPLAIN'',''SYS'',''SYSMAN'',''SYSTEM'',''TRCANLZR'',''WMSYS'',''XDB'',''XS$NULL'',''PERFSTAT'',''STDBYPERF'',''MGDSYS'',''OJVMSYS'')";
 COL exclusion_list_single_quote NEW_V exclusion_list_single_quote;
 COL exclusion_list2_single_quote NEW_V exclusion_list2_single_quote;
 SELECT REPLACE('&&exclusion_list.', '''''', '''') exclusion_list_single_quote FROM DUAL;
@@ -494,6 +494,7 @@ DEF stacked = '';
 DEF haxis = '&&db_version. &&cores_threads_hosts.';
 DEF vaxis = '';
 DEF vbaseline = '';
+DEF bar_height = '65%';
 COL tit_01 NEW_V tit_01;
 COL tit_02 NEW_V tit_02;
 COL tit_03 NEW_V tit_03;

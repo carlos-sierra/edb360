@@ -11,17 +11,26 @@ DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
 BEGIN
   :sql_text_backup := '
 WITH
-hist AS (
+h as (
 SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
+       /* &&section_id..&&report_sequence. */
+       h.module
+,      CASE WHEN h.module = ''DBMS_SCHEDULER'' AND h.action LIKE ''ORA$%'' THEN
+                          REGEXP_SUBSTR(h.action,''([[:alpha:]\$_]+)'')||''*''
+            ELSE h.action END action
+ FROM dba_hist_active_sess_history h
+WHERE @filter_predicate@
+   AND h.module IS NOT NULL
+   AND h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND h.dbid = &&edb360_dbid.
+),
+hist AS (
+SELECT /*+ &&sq_fact_hints. */ 
        /* &&section_id..&&report_sequence. */
        TRIM(module||'' ''||action) module_action,
        ROW_NUMBER () OVER (ORDER BY COUNT(*) DESC) rn,
        COUNT(*) samples
-  FROM dba_hist_active_sess_history h
- WHERE @filter_predicate@
-   AND module IS NOT NULL
-   AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
-   AND dbid = &&edb360_dbid.
+  FROM h
  GROUP BY
        TRIM(module||'' ''||action)
 ),

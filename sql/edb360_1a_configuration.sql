@@ -14,10 +14,10 @@ HOS cat /proc/cpuinfo | grep -i name | sort | uniq >> cpuinfo.sql
 HOS lsconf | grep Processor >> cpuinfo.sql
 HOS psrinfo -v >> cpuinfo.sql
 GET cpuinfo.sql
-A ' processor_model FROM DUAL;
-0 SELECT '
+A ', 1, 1000) processor_model FROM DUAL;
+0 SELECT SUBSTR('
 /
-SELECT REPLACE(REPLACE(REPLACE(REPLACE('&&processor_model.', CHR(9)), CHR(10)), ':'), 'model name ') processor_model FROM DUAL;
+SELECT SUBSTR(REPLACE(REPLACE(REPLACE(REPLACE('&&processor_model.', CHR(9)), CHR(10)), ':'), 'model name '), 1, 1000) processor_model FROM DUAL;
 HOS rm cpuinfo.sql
 
 COL system_item FOR A40 HEA 'Covers one database'

@@ -141,6 +141,46 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+DEF title = 'Roles (not default)';
+DEF main_table ='DBA_ROLES';
+BEGIN
+  :sql_text := '
+-- by berx
+select /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ * from   dba_roles
+where  role not in (SELECT ROLE FROM DBA_ROLES WHERE ORACLE_MAINTAINED=''Y'')
+';
+END;
+/
+@@&&skip_10g.&&skip_11g.edb360_9a_pre_one.sql
+
+DEF title = 'Role Privileges (not default)';
+DEF main_table ='DBA_ROLE_PRIVS';
+BEGIN
+  :sql_text := '
+-- by berx
+select  /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ *  from   dba_role_privs
+where  1=1
+  AND GRANTED_ROLE not in (SELECT ROLE FROM DBA_ROLES WHERE ORACLE_MAINTAINED=''Y'')
+';
+END;
+/
+@@&&skip_10g.&&skip_11g.edb360_9a_pre_one.sql
+
+
+DEF title = 'System Grants (not default)';
+DEF main_table='DBA_SYS_PRIVS';
+BEGIN
+  sql_text := '
+-- by berx
+select /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ *  from   dba_sys_privs
+WHERE 1=1
+  AND GRANTEE not in (SELECT USERNAME FROM DBA_USERS WHERE ORACLE_MAINTAINED=''Y'')
+  AND GRANTEE not in (SELECT ROLE FROM DBA_ROLES WHERE ORACLE_MAINTAINED=''Y'')
+';
+END;
+/
+@@&&skip_10g.&&skip_11g.edb360_9a_pre_one.sql
+
 SPO &&edb360_main_report..html APP;
 PRO </ol>
 SPO OFF;

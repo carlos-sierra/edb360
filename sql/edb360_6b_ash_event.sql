@@ -8,6 +8,8 @@ PRO <ol start="&&report_sequence.">
 SPO OFF;
 
 DEF main_table = 'GV$ACTIVE_SESSION_HISTORY';
+DEF bar_height = '45%';
+
 BEGIN
   :sql_text_backup := '
 WITH

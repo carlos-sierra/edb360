@@ -187,6 +187,19 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+DEF title = 'Tablespace Quotas';
+DEF main_table = 'DBA_TS_QUOTAS';
+BEGIN
+  :sql_text := '
+-- by berx
+select /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ * from DBA_TS_QUOTAS
+WHERE username NOT IN &&exclusion_list.
+and username not in &&exclusion_list2.
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
 DEF title = 'Datafile';
 DEF main_table = 'V$DATAFILE';
 BEGIN

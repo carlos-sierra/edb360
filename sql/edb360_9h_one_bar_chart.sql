@@ -51,13 +51,13 @@ BEGIN
   LOOP
     FETCH cur INTO l_bar, l_value, l_style, l_tooltip;
     EXIT WHEN cur%NOTFOUND;
-    IF l_value >= 3 THEN
+    IF l_value >= 5 THEN
       DBMS_OUTPUT.PUT_LINE(',['''||l_bar||''', '||l_value||', '''||l_style||''', '''||l_tooltip||''']');
       l_others := l_others - l_value;
     END IF;
   END LOOP;
   CLOSE cur;
-  l_bar := 'All others ('||l_others||'%)';
+  l_bar := 'The rest ('||l_others||'%)';
   l_value := l_others;
   l_style := 'D3D3D3'; -- light gray
   l_tooltip := '('||l_others||'% of DB Time)';
@@ -70,7 +70,7 @@ SET SERVEROUT OFF;
 PRO        ]);;
 PRO        
 PRO        var options = {
-PRO          chartArea:{left:90, top:90, width:'85%', height:'65%'},
+PRO          chartArea:{left:90, top:90, width:'85%', height:'&&bar_height.'},
 PRO          backgroundColor: {fill: '#fcfcf0', stroke: '#336699', strokeWidth: 1},
 PRO          title: '&&section_id..&&report_sequence.. &&title.&&title_suffix.',
 PRO          titleTextStyle: {fontSize: 18, bold: false},

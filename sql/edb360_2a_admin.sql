@@ -1422,10 +1422,10 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
   FROM dba_sequences s
  WHERE s.sequence_owner not in &&exclusion_list.
    AND s.sequence_owner not in &&exclusion_list2.
-   AND (s.cache_size < 1000 OR s.order_flag = ''Y'')
+   AND (s.cache_size <= 1000 OR s.order_flag = ''Y'')
    AND s.min_value != s.last_number
    AND s.max_value != s.last_number
-   AND (s.last_number - CASE WHEN s.increment_by > 0 THEN s.min_value ELSE s.max_value END) / s.increment_by > 10000
+   AND (s.last_number - CASE WHEN s.increment_by > 0 THEN s.min_value ELSE s.max_value END) / s.increment_by >= 10000
  ORDER BY 1 DESC
 ';
 END;
@@ -2061,7 +2061,7 @@ tablespace_name, max(bytes) bytes
 from dba_free_space
 group by tablespace_name )
 select /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
-s.owner, s.segment_name, s.tablespace_name, s.next_extent, max_free.bytes max_free_bytes 
+s.owner, s.segment_name, s.partition_name, s.tablespace_name, s.next_extent, max_free.bytes max_free_bytes 
 from dba_segments s, max_free
 where ''&&edb360_conf_incl_segments.'' = ''Y''
 and s.owner NOT IN &&exclusion_list.

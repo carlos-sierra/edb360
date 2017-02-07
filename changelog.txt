@@ -1,12 +1,20 @@
 Changelog
 =========
 
+v1703 (2017-02-07)
+=====
+1. Added 4 queries from berx into sections 1b and 2b
+2. Modify 6f query on modules and actions to remove duplicates as per request from Davod Kurtz
+3. List of SQL statements on 7b now consider >, < , " on GV$SQL
+4. Rename columns on planx to avoid #### on SQLd360
+5. Bar charts increased area for lengend at the bottom
+
 v1702 (2017-01-13)
 =====
 1. Update Redundant Indexes(2) as per changes from david Kurtz
 2. Section 7a now generates reports when AWR retention is less than 10 days. v1701.2 had introduced a new bug where retention less than 10 days would not produce any AWR/ADDM/ASH report
 3. Added new section 4h Average Latency for Top 24 Wait Events
-4. Fix 5a, 5b and 5c section where the number of AAS is incorrect due to bug here: (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), 1) * 24 * 3600)
+4. Fix 5a, 5b and 5c section where the number of AAS is incorrect due to bug from v1622: (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), 1) * 24 * 3600)
 
 
 v1701 (2017-01-02)

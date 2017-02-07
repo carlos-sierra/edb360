@@ -66,9 +66,9 @@ DECLARE
             top_sql AS (
             SELECT /*+ &&sq_fact_hints. &&section_id..&&report_sequence. */
                    r.sql_id,
-                   TRIM(TO_CHAR(ROUND(r.db_time_hrs, 2), '9990.00')) db_time_hrs,
-                   TRIM(TO_CHAR(ROUND(r.cpu_time_hrs, 2), '9990.00')) cpu_time_hrs,
-                   TRIM(TO_CHAR(ROUND(r.io_time_hrs, 2), '9990.00')) io_time_hrs,
+                   TRIM(TO_CHAR(ROUND(r.db_time_hrs, 2), '99990.00')) db_time_hrs,
+                   TRIM(TO_CHAR(ROUND(r.cpu_time_hrs, 2), '99990.00')) cpu_time_hrs,
+                   TRIM(TO_CHAR(ROUND(r.io_time_hrs, 2), '99990.00')) io_time_hrs,
                    r.rank_num,
                    NVL((SELECT a.name FROM audit_actions a WHERE a.action = h.command_type), TO_CHAR(h.command_type)) command_type,
                    NVL((SELECT u.username FROM dba_users u WHERE u.user_id = r.user_id), TO_CHAR(r.user_id)) username,
@@ -99,7 +99,11 @@ DECLARE
                    ns.sql_rank,
                    ns.child_cursors,
                    ns.sql_id,
-                   (SELECT s.sql_text FROM gv$sql s WHERE s.sql_id = ns.sql_id AND ROWNUM = 1) sql_text
+                   --(SELECT s.sql_text FROM gv$sql s WHERE s.sql_id = ns.sql_id AND ROWNUM = 1) sql_text
+                   (SELECT REPLACE(REPLACE(REPLACE(REPLACE(DBMS_LOB.SUBSTR(s.sql_fulltext, 1000), CHR(10), ' '), '"', CHR(38)||'#34;'), '>', CHR(38)||'#62;'), '<', CHR(38)||'#60;')
+                      FROM gv$sql s 
+                     WHERE s.sql_id = ns.sql_id 
+                       AND ROWNUM = 1) sql_text_1000
               FROM not_shared ns
              WHERE ns.sql_rank <= &&edb360_conf_top_cur.
             ),
@@ -165,7 +169,8 @@ DECLARE
                    NULL command_type, -- not null means Top as per DB time
                    NULL username, -- not null means Top as per DB time
                    NULL module, -- not null means Top as per DB time
-                   sql_text sql_text_1000,
+                   --sql_text sql_text_1000,
+                   sql_text_1000,
                    2 top_type, -- as per not shared cursors
                    child_cursors, -- <> 0 means Top as per number of cursors
                    0 signature, -- <> 0 means Top as per signature
