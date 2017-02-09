@@ -390,11 +390,10 @@ DEF title = 'SYSAUX Occupants';
 DEF main_table = 'V$SYSAUX_OCCUPANTS';
 BEGIN
   :sql_text := '
-SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
-       *
-  FROM v$sysaux_occupants
- ORDER BY
-       1
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
+       v.*, ROUND(v.space_usage_kbytes / POWER(10,6), 3) space_usage_gbs
+  FROM v$sysaux_occupants v
+ ORDER BY 1
 ';
 END;
 /
@@ -739,7 +738,8 @@ tables AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        owner,
        segment_name,
-       SUM(bytes) bytes
+       SUM(bytes) bytes,
+       COUNT(*) segments
   FROM dba_segments
  WHERE ''&&edb360_conf_incl_segments.'' = ''Y''
    AND segment_type LIKE ''TABLE%''
@@ -751,7 +751,8 @@ indexes AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        owner,
        segment_name,
-       SUM(bytes) bytes
+       SUM(bytes) bytes,
+       COUNT(*) segments
   FROM dba_segments
  WHERE ''&&edb360_conf_incl_segments.'' = ''Y''
    AND segment_type LIKE ''INDEX%''
@@ -763,11 +764,12 @@ idx_tbl AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        d.table_owner,
        d.table_name,
-       SUM(i.bytes) bytes
+       SUM(i.bytes) bytes,
+       SUM(i.segments) segments
   FROM indexes i,
        dba_indexes d
 WHERE i.owner = d.owner
-   AND i.segment_name = d.index_name
+  AND i.segment_name = d.index_name
 GROUP BY
        d.table_owner,
        d.table_name
@@ -778,7 +780,10 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        t.segment_name table_name,
        (t.bytes + NVL(i.bytes, 0)) bytes,
        t.bytes table_bytes,
-       NVL(i.bytes, 0) indexes_bytes
+       NVL(i.bytes, 0) indexes_bytes,
+       (t.segments + NVL(i.segments, 0)) segs,
+       t.segments tab_segs,
+       NVL(i.segments, 0) idx_segs
   FROM tables t,
        idx_tbl i
 WHERE t.owner = i.table_owner(+)
@@ -788,7 +793,10 @@ SELECT owner,
        table_name,
        ROUND(bytes / POWER(10,9), 3) total_gb,
        ROUND(table_bytes / POWER(10,9), 3) table_gb,
-       ROUND(indexes_bytes / POWER(10,9), 3) indexes_gb
+       ROUND(indexes_bytes / POWER(10,9), 3) indexes_gb,
+       segs,
+       tab_segs,
+       idx_segs
   FROM total
 WHERE bytes > POWER(10,9)
 ORDER BY

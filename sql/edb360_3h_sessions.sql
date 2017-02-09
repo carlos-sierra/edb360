@@ -17,22 +17,16 @@ SELECT COUNT(*),
        type,
        server,
        status,
-       state,
-       failover_type,
-       failover_method,
-       blocking_session_status
+       state
   FROM gv$session
  GROUP BY
        inst_id,
        type,
        server,
        status,
-       state,
-       failover_type,
-       failover_method,
-       blocking_session_status
+       state
  ORDER BY
-       1 DESC, 2, 3, 4, 5, 6, 7, 8, 9
+       1 DESC, 2, 3, 4, 5, 6
 ';
 END;
 /
@@ -49,10 +43,7 @@ SELECT COUNT(*),
        type,
        server,
        status,
-       state,
-       failover_type,
-       failover_method,
-       blocking_session_status
+       state
   FROM gv$session
  GROUP BY
        username,
@@ -60,12 +51,9 @@ SELECT COUNT(*),
        type,
        server,
        status,
-       state,
-       failover_type,
-       failover_method,
-       blocking_session_status
+       state
  ORDER BY
-       1 DESC, 2, 3, 4, 5, 6, 7, 8, 9, 10
+       1 DESC, 2, 3, 4, 5, 6, 7
 ';
 END;
 /
@@ -83,10 +71,7 @@ SELECT COUNT(*),
        type,
        server,
        status,
-       state,
-       failover_type,
-       failover_method,
-       blocking_session_status
+       state
   FROM gv$session
  GROUP BY
        module,
@@ -95,12 +80,9 @@ SELECT COUNT(*),
        type,
        server,
        status,
-       state,
-       failover_type,
-       failover_method,
-       blocking_session_status
+       state
  ORDER BY
-       1 DESC, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
+       1 DESC, 2, 3, 4, 5, 6, 7, 8
 ';
 END;
 /

@@ -1,6 +1,11 @@
 Changelog
 =========
 
+v1703 (2017-02-09)
+=====
+1. Added Archived Log list
+2. Tables and their indexes larger than 1 GB include now segments count
+
 v1703 (2017-02-07)
 =====
 1. Added 4 queries from berx into sections 1b and 2b

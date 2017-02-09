@@ -1988,19 +1988,6 @@ END;
 /
 @@&&skip_diagnostics.&&skip_10g.edb360_9a_pre_one.sql
 
-DEF title = 'SYSAUX Occupants';
-DEF main_table = 'V$SYSAUX_OCCUPANTS';
-BEGIN
-  :sql_text := '
-SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
-       v.*, ROUND(v.space_usage_kbytes / POWER(10,6), 3) space_usage_gbs
-  FROM v$sysaux_occupants v
- ORDER BY 1
-';
-END;
-/
-@@edb360_9a_pre_one.sql
-
 DEF title = 'ASH Retention ';
 DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
 BEGIN

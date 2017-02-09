@@ -249,6 +249,17 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+DEF title = 'ARCHIVED LOG';
+DEF main_table = 'V$ARCHIVED_LOG';
+BEGIN
+  :sql_text := '
+SELECT *
+  FROM v$archived_log
+';
+END;
+/
+@@edb360_9a_pre_one.sql
+
 DEF title = 'ARCHIVED LOG Frequency Map per Thread';
 DEF main_table = 'V$ARCHIVED_LOG';
 COL row_num_noprint NOPRI;
@@ -258,7 +269,7 @@ BEGIN
 WITH
 log AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
-       DISTINCT 
+       --DISTINCT 
        thread#,
        sequence#,
        first_time,
@@ -342,7 +353,7 @@ BEGIN
 WITH
 log AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
-       DISTINCT 
+       --DISTINCT 
        thread#,
        sequence#,
        first_time,
