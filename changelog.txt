@@ -1,7 +1,11 @@
 Changelog
 =========
 
-v1703 (2017-02-09)
+v1705 (2017-02-15)
+=====
+1. Improve performance on 2.a "Libraries calling DBMS_STATS"
+
+v1704 (2017-02-09)
 =====
 1. Added Archived Log list
 2. Tables and their indexes larger than 1 GB include now segments count
