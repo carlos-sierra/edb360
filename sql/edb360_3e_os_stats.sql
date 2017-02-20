@@ -19,7 +19,7 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
-DEF main_table = 'DBA_HIST_OSSTAT';
+DEF main_table = '&&awr_hist_prefix.OSSTAT';
 DEF chartype = 'LineChart';
 DEF stacked = '';
 DEF vaxis = 'OS Avg Load and Num of CPU Cores';
@@ -50,7 +50,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        s.instance_number,
        SUM(CASE s.stat_name WHEN ''LOAD''          THEN value ELSE 0 END) load,
        SUM(CASE s.stat_name WHEN ''NUM_CPU_CORES'' THEN value ELSE 0 END) num_cpu_cores
-  FROM dba_hist_osstat s
+  FROM &&awr_object_prefix.osstat s
  WHERE s.stat_name IN (''LOAD'', ''NUM_CPUS'', ''NUM_CPU_CORES'')
    AND s.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND s.dbid = &&edb360_dbid.
@@ -68,7 +68,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        MAX(load) load,
        MAX(num_cpu_cores) num_cpu_cores
   FROM osstat_denorm h,
-       dba_hist_snapshot s
+       &&awr_object_prefix.snapshot s
  WHERE s.snap_id = h.snap_id
    AND s.instance_number = h.instance_number
    AND s.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
@@ -170,7 +170,7 @@ DEF title = 'Load and Cores for Instance 8';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '8');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
-DEF main_table = 'DBA_HIST_OSSTAT';
+DEF main_table = '&&awr_hist_prefix.OSSTAT';
 DEF chartype = 'LineChart';
 DEF stacked = '';
 DEF vaxis = 'Time as a Percent of Number of CPUs';
@@ -219,7 +219,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        SUM(CASE stat_name WHEN ''IOWAIT_TIME''            THEN value / 100 ELSE 0 END) iowait_time_secs,
        SUM(CASE stat_name WHEN ''VM_IN_BYTES''            THEN value       ELSE 0 END) vm_in_bytes,
        SUM(CASE stat_name WHEN ''VM_OUT_BYTES''           THEN value       ELSE 0 END) vm_out_bytes
-  FROM dba_hist_osstat
+  FROM &&awr_object_prefix.osstat
  WHERE stat_name IN (''NUM_CPUS'', ''LOAD'', ''IDLE_TIME'', ''BUSY_TIME'', ''USER_TIME'', ''NICE_TIME'', ''SYS_TIME'', ''OS_CPU_WAIT_TIME'', ''RSRC_MGR_CPU_WAIT_TIME'', ''IOWAIT_TIME'', ''VM_IN_BYTES'', ''VM_OUT_BYTES'')
    AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
@@ -251,8 +251,8 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        (h1.vm_out_bytes - h0.vm_out_bytes) vm_out_bytes
   FROM osstat_denorm_2 h0,
        osstat_denorm_2 h1,
-       dba_hist_snapshot s0,
-       dba_hist_snapshot s1
+       &&awr_object_prefix.snapshot s0,
+       &&awr_object_prefix.snapshot s1
  WHERE h1.snap_id = h0.snap_id + 1
    AND h1.dbid = h0.dbid
    AND h1.instance_number = h0.instance_number
@@ -411,7 +411,7 @@ SET SERVEROUT OFF;
 @99810_&&common_edb360_prefix._chart_setup_driver1.sql;
 HOS zip -m &&edb360_main_filename._&&edb360_file_time. 99810_&&common_edb360_prefix._chart_setup_driver1.sql >> &&edb360_log3..txt
 
-DEF main_table = 'DBA_HIST_OSSTAT';
+DEF main_table = '&&awr_hist_prefix.OSSTAT';
 DEF vaxis = 'Time as a Percent of Number of CPUs';
 --DEF vbaseline = 'baseline: 100,';
 BEGIN
@@ -434,7 +434,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        SUM(CASE stat_name WHEN ''IOWAIT_TIME''            THEN value / 100 ELSE 0 END) iowait_time_secs,
        SUM(CASE stat_name WHEN ''VM_IN_BYTES''            THEN value       ELSE 0 END) vm_in_bytes,
        SUM(CASE stat_name WHEN ''VM_OUT_BYTES''           THEN value       ELSE 0 END) vm_out_bytes
-  FROM dba_hist_osstat
+  FROM &&awr_object_prefix.osstat
  --WHERE stat_name IN (''NUM_CPUS'', ''LOAD'', ''IDLE_TIME'', ''BUSY_TIME'', ''USER_TIME'', ''NICE_TIME'', ''SYS_TIME'', ''OS_CPU_WAIT_TIME'', ''RSRC_MGR_CPU_WAIT_TIME'', ''IOWAIT_TIME'', ''VM_IN_BYTES'', ''VM_OUT_BYTES'')
  WHERE stat_name IN (''NUM_CPUS'', UPPER(''@stat_name@''))
    AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
@@ -466,8 +466,8 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        (h1.vm_out_bytes - h0.vm_out_bytes) vm_out_bytes
   FROM osstat_denorm_2 h0,
        osstat_denorm_2 h1,
-       dba_hist_snapshot s0,
-       dba_hist_snapshot s1
+       &&awr_object_prefix.snapshot s0,
+       &&awr_object_prefix.snapshot s1
  WHERE h1.snap_id = h0.snap_id + 1
    AND h1.dbid = h0.dbid
    AND h1.instance_number = h0.instance_number

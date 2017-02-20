@@ -7,7 +7,7 @@ PRO <h2>&&section_id.. &&section_name.</h2>
 PRO <ol start="&&report_sequence.">
 SPO OFF;
 
-DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
+DEF main_table = '&&awr_hist_prefix.ACTIVE_SESS_HISTORY';
 BEGIN
   :sql_text_backup := '
 WITH
@@ -18,7 +18,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
        user_id,
        ROW_NUMBER () OVER (ORDER BY COUNT(*) DESC) rn,
        COUNT(*) samples
-  FROM dba_hist_active_sess_history h
+  FROM &&awr_object_prefix.active_sess_history h
  WHERE @filter_predicate@
    AND service_hash IS NOT NULL
    AND user_id IS NOT NULL
@@ -31,7 +31,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
 total AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */ SUM(samples) samples FROM hist
 )
-SELECT NVL((SELECT s.service_name FROM dba_hist_service_name s WHERE s.dbid = &&edb360_dbid. AND s.service_name_hash = h.service_hash AND ROWNUM = 1), h.service_hash)||'' ''||
+SELECT NVL((SELECT s.service_name FROM &&awr_object_prefix.service_name s WHERE s.dbid = &&edb360_dbid. AND s.service_name_hash = h.service_hash AND ROWNUM = 1), h.service_hash)||'' ''||
        NVL((SELECT u.username FROM dba_users u WHERE u.user_id = h.user_id AND ROWNUM = 1), h.user_id) service_username,
        h.samples,
        ROUND(100 * h.samples / t.samples, 1) percent,

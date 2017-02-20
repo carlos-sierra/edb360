@@ -53,7 +53,7 @@ DECLARE
                    ROUND(SUM(CASE session_state WHEN 'ON CPU' THEN 1 ELSE 0 END) / 360, 6) cpu_time_hrs,
                    ROUND(SUM(CASE WHEN session_state = 'WAITING' AND wait_class IN ('User I/O', 'System I/O') THEN 1 ELSE 0 END) / 360, 6) io_time_hrs,
                    ROW_NUMBER () OVER (ORDER BY COUNT(*) DESC) rank_num
-              FROM dba_hist_active_sess_history h
+              FROM &&awr_object_prefix.active_sess_history h
              WHERE sql_id IS NOT NULL
                AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
                AND dbid = &&edb360_dbid.
@@ -79,7 +79,7 @@ DECLARE
                    ELSE REPLACE(REPLACE(REPLACE(REPLACE(DBMS_LOB.SUBSTR(h.sql_text, 1000), CHR(10), ' '), '"', CHR(38)||'#34;'), '>', CHR(38)||'#62;'), '<', CHR(38)||'#60;')
                    END sql_text_1000
               FROM ranked_sql r,
-                   dba_hist_sqltext h
+                   &&awr_object_prefix.sqltext h
              WHERE r.rank_num <= &&edb360_conf_top_sql.
                AND h.dbid(+) = r.dbid
                AND h.sql_id(+) = r.sql_id
@@ -107,16 +107,17 @@ DECLARE
               FROM not_shared ns
              WHERE ns.sql_rank <= &&edb360_conf_top_cur.
             ),
+            /*
             by_signature AS (
-            SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
-                   /* &&section_id..&&report_sequence. */
+            SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. * 
+                   /* &&section_id..&&report_sequence. *
                    force_matching_signature,
                    dbid,
                    ROW_NUMBER () OVER (ORDER BY COUNT(*) DESC) rn,
                    COUNT(DISTINCT sql_id) distinct_sql_id,
                    MIN(sql_id) sample_sql_id,
                    COUNT(*) samples
-              FROM dba_hist_active_sess_history h
+              FROM &&awr_object_prefix.active_sess_history h
              WHERE sql_id IS NOT NULL
                AND force_matching_signature IS NOT NULL
                AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
@@ -127,6 +128,33 @@ DECLARE
              GROUP BY
                    force_matching_signature,
                    dbid
+            HAVING COUNT(*) > 60 -- >10min
+            ),
+            */
+            by_signature AS (
+            SELECT /*+ FULL(ts) FULL(ns) USE_HASH(ts ns h) &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
+                   /* &&section_id..&&report_sequence. */
+                   h.force_matching_signature,
+                   h.dbid,
+                   ROW_NUMBER () OVER (ORDER BY COUNT(*) DESC) rn,
+                   COUNT(DISTINCT h.sql_id) distinct_sql_id,
+                   MIN(h.sql_id) sample_sql_id,
+                   COUNT(*) samples
+              FROM &&awr_object_prefix.active_sess_history h,
+                   top_sql ts,
+                   top_not_shared ns
+             WHERE h.sql_id IS NOT NULL
+               AND h.force_matching_signature IS NOT NULL
+               AND h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+               AND h.dbid = &&edb360_dbid.
+               AND h.sql_id = ts.sql_id(+)
+               AND h.sql_id = ns.sql_id(+)
+               AND ts.sql_id(+) IS NULL
+               AND ns.sql_id(+) IS NULL
+               AND '&&edb360_bypass.' IS NULL
+             GROUP BY
+                   h.force_matching_signature,
+                   h.dbid
             HAVING COUNT(*) > 60 -- >10min
             ),
             top_signature AS (
@@ -141,7 +169,7 @@ DECLARE
                    ELSE REPLACE(REPLACE(REPLACE(REPLACE(DBMS_LOB.SUBSTR(h.sql_text, 1000), CHR(10), ' '), '"', CHR(38)||'#34;'), '>', CHR(38)||'#62;'), '<', CHR(38)||'#60;')
                    END sql_text_1000
               FROM by_signature r,
-                   dba_hist_sqltext h
+                   &&awr_object_prefix.sqltext h
              WHERE r.rn <= &&edb360_conf_top_sig.
                AND h.dbid(+) = r.dbid
                AND h.sql_id(+) = r.sample_sql_id

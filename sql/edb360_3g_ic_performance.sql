@@ -24,8 +24,8 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
        s.startup_time - LAG(s.startup_time) OVER (PARTITION BY h.dbid, h.instance_number, h.name ORDER BY h.snap_id) startup_time_interval,
        h.bytes_sent - LAG(h.bytes_sent) OVER (PARTITION BY h.dbid, h.instance_number, h.name ORDER BY h.snap_id) bytes_sent,
        h.bytes_received - LAG(h.bytes_received) OVER (PARTITION BY h.dbid, h.instance_number, h.name ORDER BY h.snap_id) bytes_received
-  FROM dba_hist_ic_client_stats h,
-       dba_hist_snapshot s
+  FROM &&awr_object_prefix.ic_client_stats h,
+       &&awr_object_prefix.snapshot s
  WHERE h.instance_number = @instance_number@
    AND h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND h.dbid = &&edb360_dbid.
@@ -79,7 +79,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
 ';
 END;
 /
-DEF main_table = 'DBA_HIST_IC_CLIENT_STATS';
+DEF main_table = '&&awr_hist_prefix.IC_CLIENT_STATS';
 DEF vaxis = 'IC Client Statistics (MBPS)';
 DEF tit_01 = 'MBPS Total';
 DEF tit_02 = 'MBPS Sent';
@@ -184,8 +184,8 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
        h.sends_dropped - LAG(h.sends_dropped) OVER (PARTITION BY h.dbid, h.instance_number, h.if_name ORDER BY h.snap_id) sends_dropped,
        h.send_buf_or - LAG(h.send_buf_or) OVER (PARTITION BY h.dbid, h.instance_number, h.if_name ORDER BY h.snap_id) send_buf_or,
        h.send_carrier_lost - LAG(h.send_carrier_lost) OVER (PARTITION BY h.dbid, h.instance_number, h.if_name ORDER BY h.snap_id) send_carrier_lost
-  FROM dba_hist_ic_device_stats h,
-       dba_hist_snapshot s
+  FROM &&awr_object_prefix.ic_device_stats h,
+       &&awr_object_prefix.snapshot s
  WHERE h.instance_number = @instance_number@
    AND h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND h.dbid = &&edb360_dbid.
@@ -282,7 +282,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
 ';
 END;
 /
-DEF main_table = 'DBA_HIST_IC_DEVICE_STATS';
+DEF main_table = '&&awr_hist_prefix.IC_DEVICE_STATS';
 DEF vaxis = 'IC Device Statistics';
 DEF tit_01 = 'Packets Received';
 DEF tit_02 = 'Packets Sent';
@@ -394,8 +394,8 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        h.sends_dropped - LAG(h.sends_dropped) OVER (PARTITION BY h.dbid, h.instance_number, h.if_name ORDER BY h.snap_id) sends_dropped,
        h.send_buf_or - LAG(h.send_buf_or) OVER (PARTITION BY h.dbid, h.instance_number, h.if_name ORDER BY h.snap_id) send_buf_or,
        h.send_carrier_lost - LAG(h.send_carrier_lost) OVER (PARTITION BY h.dbid, h.instance_number, h.if_name ORDER BY h.snap_id) send_carrier_lost
-  FROM dba_hist_ic_device_stats h,
-       dba_hist_snapshot s
+  FROM &&awr_object_prefix.ic_device_stats h,
+       &&awr_object_prefix.snapshot s
  WHERE h.instance_number = @instance_number@
    AND h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND h.dbid = &&edb360_dbid.

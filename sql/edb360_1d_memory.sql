@@ -214,13 +214,13 @@ END;
 @@&&skip_10g.edb360_9a_pre_one.sql
 
 DEF title = 'Memory Resize Operations Hist';
-DEF main_table = 'DBA_HIST_MEMORY_RESIZE_OPS';
+DEF main_table = '&&awr_hist_prefix.MEMORY_RESIZE_OPS';
 BEGIN
   :sql_text := '
 -- requested by Rodrigo Righetti
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM dba_hist_memory_resize_ops
+  FROM &&awr_object_prefix.memory_resize_ops
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
  ORDER BY
@@ -233,13 +233,13 @@ END;
 @@&&skip_diagnostics.&&skip_10g.edb360_9a_pre_one.sql
 
 DEF title = 'Memory Target Advice Hist';
-DEF main_table = 'DBA_HIST_MEMORY_TARGET_ADVICE';
+DEF main_table = '&&awr_hist_prefix.MEMORY_TARGET_ADVICE';
 BEGIN
   :sql_text := '
 -- requested by Rodrigo Righetti
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM dba_hist_memory_target_advice
+  FROM &&awr_object_prefix.memory_target_advice
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
  ORDER BY

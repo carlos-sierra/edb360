@@ -60,8 +60,8 @@ BEGIN
                      CAST(s.end_interval_time AS DATE) end_date,
                      h.value - LAG(h.value) OVER (PARTITION BY h.dbid, h.instance_number, h.stat_id ORDER BY h.snap_id) value,
                      s.startup_time - LAG(s.startup_time) OVER (PARTITION BY h.dbid, h.instance_number, h.stat_id ORDER BY h.snap_id) startup_time_interval
-                FROM dba_hist_sys_time_model h,
-                     dba_hist_snapshot s
+                FROM &&awr_object_prefix.sys_time_model h,
+                     &&awr_object_prefix.snapshot s
                WHERE h.stat_name IN ('DB time', 'background elapsed time')
                  AND h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
                  AND h.dbid = &&edb360_dbid.
@@ -539,8 +539,8 @@ BEGIN
                      CAST(s.end_interval_time AS DATE) end_date,
                      h.value - LAG(h.value) OVER (PARTITION BY h.dbid, h.instance_number, h.stat_id ORDER BY h.snap_id) value,
                      s.startup_time - LAG(s.startup_time) OVER (PARTITION BY h.dbid, h.instance_number, h.stat_id ORDER BY h.snap_id) startup_time_interval
-                FROM dba_hist_sys_time_model h,
-                     dba_hist_snapshot s
+                FROM &&awr_object_prefix.sys_time_model h,
+                     &&awr_object_prefix.snapshot s
                WHERE h.instance_number = i.instance_number
                  AND h.stat_name IN ('DB time', 'background elapsed time')
                  AND h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.

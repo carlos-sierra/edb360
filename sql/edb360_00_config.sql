@@ -59,6 +59,9 @@ DEF edb360_conf_incl_metadata = 'Y';
 -- include eadam for top SQL (default Y)
 DEF edb360_conf_incl_eadam = 'Y';
 
+-- awr repository. set edb360_repo_user only if edb360 repository has been seeded recently
+DEF edb360_repo_user = '';
+
 /**************************** not recommended to modify *********************************/
 
 -- excluding report types reduce usability while providing marginal performance gain
@@ -86,6 +89,9 @@ DEF edb360_conf_sqlash_top = '0';
 DEF edb360_conf_sqlhc_top = '0';
 DEF edb360_conf_sqld360_top = '16';
 DEF edb360_conf_sqld360_top_tc = '0';
+
+-- change only if you changed it while generating repository, they must match
+DEF edb360_repo_prefix = 'edb360_';
 
 /************************************ modifications *************************************/
 

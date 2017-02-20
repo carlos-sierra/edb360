@@ -7,7 +7,7 @@ PRO <h2>&&section_id.. &&section_name.</h2>
 PRO <ol start="&&report_sequence.">
 SPO OFF;
 
-DEF main_table = 'DBA_HIST_OSSTAT';
+DEF main_table = '&&awr_hist_prefix.OSSTAT';
 DEF chartype = 'LineChart';
 DEF stacked = '';
 DEF vaxis = 'Memory Statistics in GB';
@@ -37,8 +37,8 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        h1.instance_number,
        SUM(CASE WHEN h1.stat_name = ''VM_IN_BYTES''  AND h1.value > h0.value THEN h1.value - h0.value ELSE 0 END) in_bytes,
        SUM(CASE WHEN h1.stat_name = ''VM_OUT_BYTES'' AND h1.value > h0.value THEN h1.value - h0.value ELSE 0 END) out_bytes
-  FROM dba_hist_osstat h0,
-       dba_hist_osstat h1
+  FROM &&awr_object_prefix.osstat h0,
+       &&awr_object_prefix.osstat h1
  WHERE h1.stat_name IN (''VM_IN_BYTES'', ''VM_OUT_BYTES'')
    AND h1.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND h1.dbid = &&edb360_dbid.
@@ -60,7 +60,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        h1.dbid,
        h1.instance_number,
        SUM(h1.value) bytes
-  FROM dba_hist_sga h1
+  FROM &&awr_object_prefix.sga h1
  WHERE h1.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND h1.dbid = &&edb360_dbid.
    AND h1.instance_number = @instance_number@
@@ -75,7 +75,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        h1.dbid,
        h1.instance_number,
        SUM(h1.value) bytes
-  FROM dba_hist_pgastat h1
+  FROM &&awr_object_prefix.pgastat h1
  WHERE h1.name = ''total PGA allocated''
    AND h1.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND h1.dbid = &&edb360_dbid.
@@ -98,7 +98,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        NVL(sga.bytes, 0) sga_bytes,
        NVL(pga.bytes, 0) pga_bytes,
        NVL(sga.bytes, 0) + NVL(pga.bytes, 0) mem_bytes
-  FROM dba_hist_snapshot snp,
+  FROM &&awr_object_prefix.snapshot snp,
        vm, sga, pga
  WHERE snp.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND snp.dbid = &&edb360_dbid.

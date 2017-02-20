@@ -1,5 +1,5 @@
-DEF edb360_vYYNN = 'v1705';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2017-02-15)';
+DEF edb360_vYYNN = 'v1706';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2017-02-19)';
 DEF edb360_copyright = ' (c) 2017';
 
 SET TERM OFF;
@@ -17,7 +17,7 @@ SELECT '' edb360_bypass FROM DUAL;
 SELECT startup_time, dbid, instance_number, COUNT(*) snaps,
        MIN(begin_interval_time) min_time, MAX(end_interval_time) max_time,
        MIN(snap_id) min_snap_id, MAX(snap_id) max_snap_id
-  FROM dba_hist_snapshot
+  FROM &&awr_object_prefix.snapshot
  GROUP BY
        startup_time, dbid, instance_number
  ORDER BY
@@ -26,7 +26,7 @@ SELECT startup_time, dbid, instance_number, COUNT(*) snaps,
 
 COL history_days NEW_V history_days;
 -- range: takes at least 31 days and at most as many as actual history, with a default of 31. parameter restricts within that range. 
-SELECT TO_CHAR(LEAST(CEIL(SYSDATE - CAST(MIN(begin_interval_time) AS DATE)), GREATEST(31, TO_NUMBER(NVL(TRIM('&&edb360_conf_days.'), '31'))))) history_days FROM dba_hist_snapshot WHERE '&&diagnostics_pack.' = 'Y' AND dbid = (SELECT dbid FROM v$database);
+SELECT TO_CHAR(LEAST(CEIL(SYSDATE - CAST(MIN(begin_interval_time) AS DATE)), GREATEST(31, TO_NUMBER(NVL(TRIM('&&edb360_conf_days.'), '31'))))) history_days FROM &&awr_object_prefix.snapshot WHERE '&&diagnostics_pack.' = 'Y' AND dbid = (SELECT dbid FROM v$database);
 SELECT TO_CHAR(TO_DATE('&&edb360_conf_date_to.', 'YYYY-MM-DD') - TO_DATE('&&edb360_conf_date_from.', 'YYYY-MM-DD') + 1) history_days FROM DUAL WHERE '&&edb360_conf_date_from.' != 'YYYY-MM-DD' AND '&&edb360_conf_date_to.' != 'YYYY-MM-DD';
 SELECT '0' history_days FROM DUAL WHERE NVL(TRIM('&&diagnostics_pack.'), 'N') = 'N';
 SET TERM OFF;
@@ -405,10 +405,10 @@ COL between_times NEW_V between_times;
 COL between_dates NEW_V between_dates;
 SELECT ', between &&edb360_date_from. and &&edb360_date_to.' between_dates FROM DUAL;
 COL minimum_snap_id NEW_V minimum_snap_id;
-SELECT NVL(TO_CHAR(MIN(snap_id)), '0') minimum_snap_id FROM dba_hist_snapshot WHERE '&&diagnostics_pack.' = 'Y' AND dbid = &&edb360_dbid. AND begin_interval_time > TO_DATE('&&edb360_date_from.', '&&edb360_date_format.');
+SELECT NVL(TO_CHAR(MIN(snap_id)), '0') minimum_snap_id FROM &&awr_object_prefix.snapshot WHERE '&&diagnostics_pack.' = 'Y' AND dbid = &&edb360_dbid. AND begin_interval_time > TO_DATE('&&edb360_date_from.', '&&edb360_date_format.');
 SELECT '-1' minimum_snap_id FROM DUAL WHERE TRIM('&&minimum_snap_id.') IS NULL;
 COL maximum_snap_id NEW_V maximum_snap_id;
-SELECT NVL(TO_CHAR(MAX(snap_id)), '&&minimum_snap_id.') maximum_snap_id FROM dba_hist_snapshot WHERE '&&diagnostics_pack.' = 'Y' AND dbid = &&edb360_dbid. AND end_interval_time < TO_DATE('&&edb360_date_to.', '&&edb360_date_format.');
+SELECT NVL(TO_CHAR(MAX(snap_id)), '&&minimum_snap_id.') maximum_snap_id FROM &&awr_object_prefix.snapshot WHERE '&&diagnostics_pack.' = 'Y' AND dbid = &&edb360_dbid. AND end_interval_time < TO_DATE('&&edb360_date_to.', '&&edb360_date_format.');
 SELECT '-1' maximum_snap_id FROM DUAL WHERE TRIM('&&maximum_snap_id.') IS NULL;
 
 -- ebs
@@ -466,8 +466,8 @@ DEF top_level_hints = ' NO_MERGE ';
 DEF sq_fact_hints = ' MATERIALIZE NO_MERGE ';
 DEF ds_hint = ' DYNAMIC_SAMPLING(4) ';
 DEF ash_hints1 = ' FULL(h.ash) FULL(h.evt) FULL(h.sn) USE_HASH(h.sn h.ash h.evt) ';
-DEF ash_hints2 = ' FULL(h.INT$DBA_HIST_ACT_SESS_HISTORY.sn) FULL(h.INT$DBA_HIST_ACT_SESS_HISTORY.ash) FULL(h.INT$DBA_HIST_ACT_SESS_HISTORY.evt) ';
-DEF ash_hints3 = ' USE_HASH(h.INT$DBA_HIST_ACT_SESS_HISTORY.sn h.INT$DBA_HIST_ACT_SESS_HISTORY.ash h.INT$DBA_HIST_ACT_SESS_HISTORY.evt) ';
+DEF ash_hints2 = ' FULL(h.INT$&&awr_hist_prefix.ACT_SESS_HISTORY.sn) FULL(h.INT$&&awr_hist_prefix.ACT_SESS_HISTORY.ash) FULL(h.INT$&&awr_hist_prefix.ACT_SESS_HISTORY.evt) ';
+DEF ash_hints3 = ' USE_HASH(h.INT$&&awr_hist_prefix.ACT_SESS_HISTORY.sn h.INT$&&awr_hist_prefix.ACT_SESS_HISTORY.ash h.INT$&&awr_hist_prefix.ACT_SESS_HISTORY.evt) ';
 DEF def_max_rows = '10000';
 DEF max_rows = '1e4';
 DEF exclusion_list = "(''ANONYMOUS'',''APEX_030200'',''APEX_040000'',''APEX_SSO'',''APPQOSSYS'',''CTXSYS'',''DBSNMP'',''DIP'',''EXFSYS'',''FLOWS_FILES'',''MDSYS'',''OLAPSYS'',''ORACLE_OCM'',''ORDDATA'',''ORDPLUGINS'',''ORDSYS'',''OUTLN'',''OWBSYS'')";

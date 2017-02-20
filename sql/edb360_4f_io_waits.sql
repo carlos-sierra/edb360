@@ -84,7 +84,7 @@ SET SERVEROUT OFF;
 @99870_&&common_edb360_prefix._chart_setup_driver4.sql;
 HOS zip -m &&edb360_main_filename._&&edb360_file_time. 99870_&&common_edb360_prefix._chart_setup_driver4.sql >> &&edb360_log3..txt
 
-DEF main_table = 'DBA_HIST_EVENT_HISTOGRAM';
+DEF main_table = '&&awr_hist_prefix.EVENT_HISTOGRAM';
 DEF vaxis = 'Wait Minutes (stacked)';
 DEF vbaseline = '';
 DEF chartype = 'AreaChart';
@@ -102,7 +102,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        (wait_count - LAG(wait_count) OVER (PARTITION BY dbid, instance_number, event_id, wait_class_id, wait_time_milli ORDER BY snap_id)) * /* wait_count_this_snap */ 
        (wait_time_milli - LAG(wait_time_milli) OVER (PARTITION BY snap_id, dbid, instance_number, event_id, wait_class_id  ORDER BY wait_time_milli)) / 2 /* average wait_time_milli */
        wait_time_milli_total
-  FROM dba_hist_event_histogram
+  FROM &&awr_object_prefix.event_histogram
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
    AND @filter_predicate@
@@ -128,7 +128,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        h.instance_number,
        (h.wait_time_milli_total / 1000 / 60) wait_minutes
   FROM history           h,
-       dba_hist_snapshot s
+       &&awr_object_prefix.snapshot s
  WHERE s.snap_id         = h.snap_id
    AND s.dbid            = h.dbid
    AND s.instance_number = h.instance_number
@@ -244,7 +244,7 @@ DEF title = 'Other Wait Time per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''Other''');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
-DEF main_table = 'DBA_HIST_EVENT_HISTOGRAM';
+DEF main_table = '&&awr_hist_prefix.EVENT_HISTOGRAM';
 COL less_1_perc FOR 999990.0;
 COL less_2_perc FOR 999990.0;
 COL less_4_perc FOR 999990.0;
@@ -287,7 +287,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        instance_number,
        wait_time_milli,
        wait_count - LAG(wait_count) OVER (PARTITION BY dbid, instance_number, event_id, wait_class_id, wait_time_milli ORDER BY snap_id) wait_count_this_snap
-  FROM dba_hist_event_histogram
+  FROM &&awr_object_prefix.event_histogram
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
    AND @filter_predicate@
@@ -315,7 +315,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        h.wait_time_milli,
        h.wait_count_this_snap
   FROM history           h,
-       dba_hist_snapshot s
+       &&awr_object_prefix.snapshot s
  WHERE s.snap_id         = h.snap_id
    AND s.dbid            = h.dbid
    AND s.instance_number = h.instance_number

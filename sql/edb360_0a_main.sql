@@ -23,7 +23,7 @@ BEGIN
   WHERE table_name = 'PLAN_TABLE';
   -- user has a physical table called PLAN_TABLE, abort
   IF is_plan_table_in_usr_schema > 0 THEN
-    RAISE_APPLICATION_ERROR(-20100, 'PLAN_TABLE physical table present in user schema.');
+    RAISE_APPLICATION_ERROR(-20100, 'PLAN_TABLE physical table present in user schema '||USER||'.');
   END IF;
   SELECT version INTO l_version FROM v$instance;
   IF SUBSTR(l_version, 1, 2) != SUBSTR('&&_o_release.', 1, 2) THEN
@@ -118,6 +118,12 @@ PRO
 PRO custom configuration filename: "&&custom_config_filename."
 PRO
 @@&&custom_config_filename.
+-- dba_hist or awr repository. do not change awr_hist_prefix.
+DEF awr_hist_prefix = 'DBA_HIST_';
+DEF awr_object_prefix = 'dba_hist_';
+COL awr_object_prefix NEW_V awr_object_prefix;
+SELECT CASE WHEN '&&edb360_repo_user.' IS NULL THEN '&&awr_object_prefix.' ELSE '&&edb360_repo_user..&&edb360_repo_prefix.' END awr_object_prefix FROM DUAL
+/
 -- links
 DEF edb360_conf_tool_page = '<a href="http://carlos-sierra.net/edb360-an-oracle-database-360-degree-view/" target="_blank">';
 DEF edb360_conf_all_pages_icon = '<a href="http://carlos-sierra.net/edb360-an-oracle-database-360-degree-view/" target="_blank"><img src="edb360_img.jpg" alt="eDB360" height="47" width="50" /></a>';

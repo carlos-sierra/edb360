@@ -7,7 +7,7 @@ PRO <h2>&&section_id.. &&section_name.</h2>
 PRO <ol start="&&report_sequence.">
 SPO OFF;
 
-DEF main_table = 'DBA_HIST_SGASTAT';
+DEF main_table = '&&awr_hist_prefix.SGASTAT';
 DEF chartype = 'LineChart';
 DEF stacked = '';
 DEF vaxis = 'SGA Statistics in GBs';
@@ -44,7 +44,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        SUM(CASE pool WHEN ''large pool'' THEN bytes ELSE 0 END) large_pool,
        SUM(CASE pool WHEN ''java pool'' THEN bytes ELSE 0 END) java_pool,
        SUM(CASE pool WHEN ''streams pool'' THEN bytes ELSE 0 END) streams_pool       
-  FROM dba_hist_sgastat
+  FROM &&awr_object_prefix.sgastat
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
    AND instance_number = @instance_number@
@@ -72,8 +72,8 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        h1.streams_pool
   FROM sgastat_denorm_1 h0,
        sgastat_denorm_1 h1,
-       dba_hist_snapshot s0,
-       dba_hist_snapshot s1
+       &&awr_object_prefix.snapshot s0,
+       &&awr_object_prefix.snapshot s1
  WHERE h1.snap_id = h0.snap_id + 1
    AND h1.dbid = h0.dbid
    AND h1.instance_number = h0.instance_number

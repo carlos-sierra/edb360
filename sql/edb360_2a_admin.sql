@@ -441,7 +441,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
        /* &&section_id..&&report_sequence. */
        current_obj#,
        MAX(CAST(sample_time AS DATE)) sample_date
-  FROM dba_hist_active_sess_history h
+  FROM &&awr_object_prefix.active_sess_history h
  WHERE current_obj# > 0
    AND sql_plan_operation LIKE ''%TABLE%''
    AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
@@ -564,7 +564,7 @@ ash_awr AS (
 SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
        /* &&section_id..&&report_sequence. */
        DISTINCT current_obj# 
-  FROM dba_hist_active_sess_history h
+  FROM &&awr_object_prefix.active_sess_history h
  WHERE sql_plan_operation = ''INDEX''
    AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
@@ -581,7 +581,7 @@ WHERE operation = ''INDEX''
 sql_awr AS (
 SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
        DISTINCT object_owner, object_name
-  FROM dba_hist_sql_plan
+  FROM &&awr_object_prefix.sql_plan
  WHERE operation = ''INDEX'' AND dbid = &&edb360_dbid.
 )
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
@@ -1527,15 +1527,15 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'SQL consuming over 10GB of TEMP space';
-DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
+DEF main_table = '&&awr_hist_prefix.ACTIVE_SESS_HISTORY';
 BEGIN
   :sql_text := '
 SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
        /* &&section_id..&&report_sequence. */
        h.sql_id,
        ROUND(MAX(h.temp_space_allocated)/POWER(10,9),1) max_temp_space_gb,
-       (SELECT DBMS_LOB.SUBSTR(s.sql_text, 1000) FROM dba_hist_sqltext s WHERE s.sql_id = h.sql_id AND s.dbid = &&edb360_dbid. AND ROWNUM = 1) sql_text
-  FROM dba_hist_active_sess_history h
+       (SELECT DBMS_LOB.SUBSTR(s.sql_text, 1000) FROM &&awr_object_prefix.sqltext s WHERE s.sql_id = h.sql_id AND s.dbid = &&edb360_dbid. AND ROWNUM = 1) sql_text
+  FROM &&awr_object_prefix.active_sess_history h
  WHERE h.temp_space_allocated > 10*POWER(10,9)
    AND h.sql_id IS NOT NULL
    AND h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
@@ -1550,15 +1550,15 @@ END;
 @@&&skip_10g.&&skip_11r1.edb360_9a_pre_one.sql
 
 DEF title = 'SQL with over 2GB of PGA allocated memory';
-DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
+DEF main_table = '&&awr_hist_prefix.ACTIVE_SESS_HISTORY';
 BEGIN
   :sql_text := '
 SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
        /* &&section_id..&&report_sequence. */
        h.sql_id,
        ROUND(MAX(h.pga_allocated)/POWER(2,30),1) max_pga_gb,
-       (SELECT DBMS_LOB.SUBSTR(s.sql_text, 1000) FROM dba_hist_sqltext s WHERE s.sql_id = h.sql_id AND s.dbid = &&edb360_dbid. AND ROWNUM = 1) sql_text
-  FROM dba_hist_active_sess_history h
+       (SELECT DBMS_LOB.SUBSTR(s.sql_text, 1000) FROM &&awr_object_prefix.sqltext s WHERE s.sql_id = h.sql_id AND s.dbid = &&edb360_dbid. AND ROWNUM = 1) sql_text
+  FROM &&awr_object_prefix.active_sess_history h
  WHERE h.pga_allocated > 2*POWER(2,30)
    AND h.sql_id IS NOT NULL
    AND h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
@@ -1923,12 +1923,12 @@ END;
 -- @@edb360_9a_pre_one.sql
 
 DEF title = 'Workload Repository Control';
-DEF main_table = 'DBA_HIST_WR_CONTROL';
+DEF main_table = '&&awr_hist_prefix.WR_CONTROL';
 BEGIN
   :sql_text := '
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        *
-  FROM dba_hist_wr_control
+  FROM &&awr_object_prefix.wr_control
 ';
 END;
 /
@@ -1947,7 +1947,7 @@ END;
 @@&&skip_diagnostics.&&skip_10g.edb360_9a_pre_one.sql
 
 DEF title = 'ASH Retention ';
-DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
+DEF main_table = '&&awr_hist_prefix.ACTIVE_SESS_HISTORY';
 BEGIN
   :sql_text := '
 -- from http://jhdba.wordpress.com/tag/purge-wrh-tables/

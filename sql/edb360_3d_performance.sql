@@ -290,7 +290,7 @@ END;
 
 DEF title = 'SQL with changing Elapsed Time per Execution (list)';
 DEF abstract = 'SQL Statements with "Elapsed Time per Execution" changing over time.<br />';
-DEF main_table = 'DBA_HIST_SQLSTAT';
+DEF main_table = '&&awr_hist_prefix.SQLSTAT';
 DEF days_of_history_accessed = '31';
 DEF captured_at_least_x_times = '10';
 DEF captured_at_least_x_days_apart = '5';
@@ -313,8 +313,8 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        h.sql_id,
        SYSDATE - CAST(s.end_interval_time AS DATE) days_ago,
        SUM(h.elapsed_time_total) / SUM(h.executions_total) time_per_exec
-  FROM dba_hist_sqlstat h, 
-       dba_hist_snapshot s
+  FROM &&awr_object_prefix.sqlstat h, 
+       &&awr_object_prefix.snapshot s
  WHERE h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND h.dbid = &&edb360_dbid.
    AND h.executions_total > 0 
@@ -386,8 +386,8 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        r.avg_secs_per_exec avg_secs_per_exec,
        r.min_secs_per_exec min_secs_per_exec,
        r.max_secs_per_exec max_secs_per_exec,
-       (SELECT COUNT(DISTINCT p.plan_hash_value) FROM dba_hist_sql_plan p WHERE p.dbid = r.dbid AND p.sql_id = r.sql_id) plans,
-       REPLACE((SELECT DBMS_LOB.SUBSTR(s.sql_text, 4000) FROM dba_hist_sqltext s WHERE s.dbid = r.dbid AND s.sql_id = r.sql_id), CHR(10)) sql_text
+       (SELECT COUNT(DISTINCT p.plan_hash_value) FROM &&awr_object_prefix.sql_plan p WHERE p.dbid = r.dbid AND p.sql_id = r.sql_id) plans,
+       REPLACE((SELECT DBMS_LOB.SUBSTR(s.sql_text, 4000) FROM &&awr_object_prefix.sqltext s WHERE s.dbid = r.dbid AND s.sql_id = r.sql_id), CHR(10)) sql_text
   FROM ranked r
  WHERE r.rank_num <= &&max_num_rows_x.
  ORDER BY
@@ -399,7 +399,7 @@ END;
 
 DEF title = 'SQL with changing Elapsed Time per Execution (time series)';
 DEF abstract = 'SQL Statements with "Elapsed Time per Execution" changing over time.<br />';
-DEF main_table = 'DBA_HIST_SQLSTAT';
+DEF main_table = '&&awr_hist_prefix.SQLSTAT';
 DEF days_of_history_accessed = '31';
 DEF captured_at_least_x_times = '10';
 DEF captured_at_least_x_days_apart = '5';
@@ -443,8 +443,8 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        h.sql_id,
        SYSDATE - CAST(s.end_interval_time AS DATE) days_ago,
        SUM(h.elapsed_time_total) / SUM(h.executions_total) time_per_exec
-  FROM dba_hist_sqlstat h, 
-       dba_hist_snapshot s
+  FROM &&awr_object_prefix.sqlstat h, 
+       &&awr_object_prefix.snapshot s
  WHERE h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND h.dbid = &&edb360_dbid.
    AND h.executions_total > 0 
@@ -536,8 +536,8 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        &&skip_10g.&&skip_11r1., ROUND(h.cell_uncompressed_bytes_total  / h.executions_total) unb_per_exec
        &&skip_10g.&&skip_11r1., ROUND(h.io_offload_return_bytes_total  / h.executions_total) orb_per_exec
   FROM ranked r,
-       dba_hist_sqlstat h, 
-       dba_hist_snapshot s
+       &&awr_object_prefix.sqlstat h, 
+       &&awr_object_prefix.snapshot s
  WHERE r.rank_num <= &&max_num_rows_x.
    AND h.sql_id = r.sql_id
    AND h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
@@ -559,7 +559,7 @@ END;
 
 DEF title = 'SQL with multiple Execution Plans';
 DEF abstract = 'SQL Statements with multiple Execution Plans performing significantly different<br />';
-DEF main_table = 'DBA_HIST_SQLSTAT';
+DEF main_table = '&&awr_hist_prefix.SQLSTAT';
 DEF days_of_history_accessed = '31';
 DEF max_num_rows_x = '20';
 
@@ -588,8 +588,8 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        STDDEV(h.elapsed_time_total / h.executions_total) / AVG(h.elapsed_time_total / h.executions_total) std_dev,
        MAX(h.executions_total) executions_total,
        MEDIAN(h.elapsed_time_total / h.executions_total) * MAX(h.executions_total) total_elapsed_time
-  FROM dba_hist_sqlstat h, 
-       dba_hist_snapshot s
+  FROM &&awr_object_prefix.sqlstat h, 
+       &&awr_object_prefix.snapshot s
  WHERE h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND h.dbid = &&edb360_dbid.
    AND h.executions_total > 1 
@@ -634,7 +634,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        ROUND(p.avg_time_per_exec / 1e6, 3) avg_secs_per_exec,
        ROUND(p.min_time_per_exec / 1e6, 3) min_secs_per_exec,
        ROUND(p.max_time_per_exec / 1e6, 3) max_secs_per_exec,
-       REPLACE((SELECT DBMS_LOB.SUBSTR(s.sql_text, 4000) FROM dba_hist_sqltext s WHERE s.dbid = r.dbid AND s.sql_id = r.sql_id), CHR(10)) sql_text
+       REPLACE((SELECT DBMS_LOB.SUBSTR(s.sql_text, 4000) FROM &&awr_object_prefix.sqltext s WHERE s.dbid = r.dbid AND s.sql_id = r.sql_id), CHR(10)) sql_text
   FROM ranked1 r,
        per_phv p
  WHERE r.rank_num1 <= &&max_num_rows_x. * 5
@@ -668,7 +668,7 @@ END;
 @@&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF title = 'Top Plans';
-DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
+DEF main_table = '&&awr_hist_prefix.ACTIVE_SESS_HISTORY';
 DEF abstract = 'Top Plans and their corresponding Top SQL in terms of ASH History<br />';
 BEGIN
   :sql_text := '
@@ -681,7 +681,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
        h.sql_plan_hash_value,
        h.dbid,
        COUNT(*) samples
-  FROM dba_hist_active_sess_history h
+  FROM &&awr_object_prefix.active_sess_history h
  WHERE h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND h.dbid = &&edb360_dbid.
    AND h.sql_id IS NOT NULL
@@ -700,7 +700,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
      , SUM(h.samples) over (partition by h.dbid, h.sql_plan_hash_value) plan_samples
      , DBMS_LOB.SUBSTR(s.sql_text, 1000) sql_text
   FROM hist h
-    LEFT OUTER JOIN dba_hist_sqltext s
+    LEFT OUTER JOIN &&awr_object_prefix.sqltext s
     ON s.sql_id = h.sql_id AND s.dbid = h.dbid
 ), hist3 AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */

@@ -7,7 +7,7 @@ PRO <h2>&&section_id.. &&section_name.</h2>
 PRO <ol start="&&report_sequence.">
 SPO OFF;
 
-DEF main_table = 'DBA_HIST_SYSMETRIC_HISTORY';
+DEF main_table = '&&awr_hist_prefix.SYSMETRIC_HISTORY';
 DEF chartype = 'LineChart';
 DEF vbaseline = ''; 
 DEF stacked = '';
@@ -44,7 +44,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
        PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY value) value_75p,
        MEDIAN(value) value_med,
        AVG(value) value_avg
-  FROM dba_hist_sysmetric_history
+  FROM &&awr_object_prefix.sysmetric_history
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
    AND group_id = 2 /* 1 minute intervals */

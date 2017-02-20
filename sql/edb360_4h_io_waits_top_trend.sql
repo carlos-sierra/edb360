@@ -8,7 +8,7 @@ PRO <ol start="&&report_sequence.">
 SPO OFF;
 
 DEF title = 'Top 24 Wait Events';
-DEF main_table = 'DBA_HIST_EVENT_HISTOGRAM';
+DEF main_table = '&&awr_hist_prefix.EVENT_HISTOGRAM';
 BEGIN
   :sql_text := '
 WITH
@@ -19,7 +19,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        (wait_count - LAG(wait_count) OVER (PARTITION BY dbid, instance_number, event_id, wait_class_id, wait_time_milli ORDER BY snap_id)) * /* wait_count_this_snap */
        (wait_time_milli - LAG(wait_time_milli) OVER (PARTITION BY snap_id, dbid, instance_number, event_id, wait_class_id  ORDER BY wait_time_milli)) / 2 /* average wait_time_milli */
        wait_time_milli_total
-  FROM dba_hist_event_histogram
+  FROM &&awr_object_prefix.event_histogram
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
    AND wait_class <> ''Idle''
@@ -135,7 +135,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        (wait_count - LAG(wait_count) OVER (PARTITION BY dbid, instance_number, event_id, wait_class_id, wait_time_milli ORDER BY snap_id)) * /* wait_count_this_snap */
        (wait_time_milli - LAG(wait_time_milli) OVER (PARTITION BY snap_id, dbid, instance_number, event_id, wait_class_id  ORDER BY wait_time_milli)) / 2 /* average wait_time_milli */
        wait_time_milli_total
-  FROM dba_hist_event_histogram
+  FROM &&awr_object_prefix.event_histogram
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
    AND wait_class <> 'Idle'
@@ -214,7 +214,7 @@ COL recovery NEW_V recovery;
 SELECT CHR(38)||' recovery' recovery FROM DUAL;
 -- this above is to handle event "RMAN backup & recovery I/O"
 
-DEF main_table = 'DBA_HIST_EVENT_HISTOGRAM';
+DEF main_table = '&&awr_hist_prefix.EVENT_HISTOGRAM';
 DEF vbaseline = '';
 DEF chartype = 'LineChart';
 DEF stacked = '';
@@ -245,7 +245,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        instance_number,
        wait_time_milli,
        wait_count - LAG(wait_count) OVER (PARTITION BY dbid, instance_number, event_id, wait_class_id, wait_time_milli ORDER BY snap_id) wait_count_this_snap
-  FROM dba_hist_event_histogram
+  FROM &&awr_object_prefix.event_histogram
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
    AND @filter_predicate@
@@ -289,7 +289,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        h.avg_wait_time_milli,
        h.avg_avg_wait_time_milli
   FROM average_average   h,
-       dba_hist_snapshot s
+       &&awr_object_prefix.snapshot s
  WHERE s.snap_id         = h.snap_id
    AND s.dbid            = h.dbid
    AND s.instance_number = h.instance_number

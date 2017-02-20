@@ -113,7 +113,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'inst_id = 8')
 
 /*****************************************************************************************/
 
-DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
+DEF main_table = '&&awr_hist_prefix.ACTIVE_SESS_HISTORY';
 BEGIN
   :sql_text_backup := '
 WITH
@@ -126,7 +126,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
        COUNT(DISTINCT sql_id) distinct_sql_id,
        MIN(sql_id) sample_sql_id,
        COUNT(*) samples
-  FROM dba_hist_active_sess_history h
+  FROM &&awr_object_prefix.active_sess_history h
  WHERE @filter_predicate@
    AND sql_id IS NOT NULL
    AND sql_plan_hash_value > 0
@@ -142,7 +142,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */ SUM(sample
 SELECT h.sql_plan_hash_value||''(''||h.distinct_sql_id||'')'' plan_hash_value,
        h.samples,
        ROUND(100 * h.samples / t.samples, 1) percent,
-       (SELECT DBMS_LOB.SUBSTR(s.sql_text, 1000) FROM dba_hist_sqltext s WHERE s.sql_id = h.sample_sql_id AND s.dbid = h.dbid AND ROWNUM = 1) sample_sql_text
+       (SELECT DBMS_LOB.SUBSTR(s.sql_text, 1000) FROM &&awr_object_prefix.sqltext s WHERE s.sql_id = h.sample_sql_id AND s.dbid = h.dbid AND ROWNUM = 1) sample_sql_text
   FROM hist h,
        total t
  WHERE h.samples >= t.samples / 1000 AND rn <= 14

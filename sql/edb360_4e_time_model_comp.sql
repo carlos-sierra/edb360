@@ -55,7 +55,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        SUM(CASE stat_name WHEN ''PL/SQL compilation elapsed time'' THEN value / 1e6 ELSE 0 END) plsql_compilation,
        SUM(CASE stat_name WHEN ''Java execution elapsed time'' THEN value / 1e6 ELSE 0 END) java_execution,
        SUM(CASE stat_name WHEN ''repeated bind elapsed time'' THEN value / 1e6 ELSE 0 END) repeated_bind
-  FROM dba_hist_sys_time_model
+  FROM &&awr_object_prefix.sys_time_model
  WHERE stat_name IN (
 ''background elapsed time'',
 ''background cpu time'',
@@ -106,8 +106,8 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        (h1.repeated_bind - h0.repeated_bind) repeated_bind
   FROM sys_time_model_denorm_2 h0,
        sys_time_model_denorm_2 h1,
-       dba_hist_snapshot s0,
-       dba_hist_snapshot s1
+       &&awr_object_prefix.snapshot s0,
+       &&awr_object_prefix.snapshot s1
  WHERE h1.snap_id = h0.snap_id + 1
    AND h1.dbid = h0.dbid
    AND h1.instance_number = h0.instance_number

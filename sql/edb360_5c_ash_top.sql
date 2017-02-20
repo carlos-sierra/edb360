@@ -33,7 +33,7 @@ SET SERVEROUT OFF;
 @99840_&&common_edb360_prefix._chart_setup_driver2.sql;
 HOS zip -m &&edb360_main_filename._&&edb360_file_time. 99840_&&common_edb360_prefix._chart_setup_driver2.sql >> &&edb360_log3..txt
 
-DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
+DEF main_table = '&&awr_hist_prefix.ACTIVE_SESS_HISTORY';
 DEF chartype = 'AreaChart';
 DEF stacked = 'isStacked: true,';
 DEF vaxis = 'Average Active Sessions - AAS (stacked)';
@@ -62,7 +62,7 @@ SELECT /*+ &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */
        0 dummy_13,
        0 dummy_14,
        0 dummy_15
-  FROM dba_hist_active_sess_history h
+  FROM &&awr_object_prefix.active_sess_history h
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
    AND @filter_predicate@
@@ -76,7 +76,7 @@ END;
 -- end from 5a
 
 DEF title = 'Top 24 Wait Events';
-DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
+DEF main_table = '&&awr_hist_prefix.ACTIVE_SESS_HISTORY';
 BEGIN
   :sql_text := '
 WITH
@@ -87,7 +87,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
        event event_name,
        COUNT(*) samples,
        ROW_NUMBER () OVER (ORDER BY COUNT(*) DESC) wrank
-  FROM dba_hist_active_sess_history h
+  FROM &&awr_object_prefix.active_sess_history h
  WHERE ''&&diagnostics_pack.'' = ''Y''
    AND h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND h.dbid = &&edb360_dbid.
@@ -189,7 +189,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
        event event_name,
        COUNT(*) samples,
        ROW_NUMBER () OVER (ORDER BY COUNT(*) DESC) wrank
-  FROM dba_hist_active_sess_history h
+  FROM &&awr_object_prefix.active_sess_history h
  WHERE '&&diagnostics_pack.' = 'Y'
    AND h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND h.dbid = &&edb360_dbid.
@@ -265,7 +265,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
        module,
        ROW_NUMBER () OVER (ORDER BY COUNT(*) DESC) rn,
        COUNT(*) samples
-  FROM dba_hist_active_sess_history h
+  FROM &&awr_object_prefix.active_sess_history h
  WHERE sql_id||program||module IS NOT NULL
    AND @filter_predicate@
    AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
@@ -283,7 +283,7 @@ SELECT SUBSTR(TRIM(h.sql_id||'' ''||h.program||'' ''||
        CASE h.module WHEN h.program THEN NULL ELSE h.module END), 1, 128) source,
        h.samples,
        ROUND(100 * h.samples / t.samples, 1) percent,
-       (SELECT DBMS_LOB.SUBSTR(s.sql_text, 1000) FROM dba_hist_sqltext s WHERE s.sql_id = h.sql_id AND s.dbid = h.dbid AND ROWNUM = 1) sql_text
+       (SELECT DBMS_LOB.SUBSTR(s.sql_text, 1000) FROM &&awr_object_prefix.sqltext s WHERE s.sql_id = h.sql_id AND s.dbid = h.dbid AND ROWNUM = 1) sql_text
   FROM hist h,
        total t
  WHERE h.samples >= t.samples / 1000 AND rn <= 14

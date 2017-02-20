@@ -284,7 +284,7 @@ END;
 @@&&skip_10g.edb360_9a_pre_one.sql
 
 DEF title = 'SQL blocking SQL';
-DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
+DEF main_table = '&&awr_hist_prefix.ACTIVE_SESS_HISTORY';
 BEGIN
   :sql_text := '
 WITH
@@ -301,7 +301,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
        MAX(h.sample_time) max_sample_time,
        COUNT(*) samples,
        RANK() OVER (ORDER BY COUNT(*) DESC NULLS LAST) AS w_rank
-  FROM dba_hist_active_sess_history h
+  FROM &&awr_object_prefix.active_sess_history h
  WHERE h.sql_id IS NOT NULL
    AND h.blocking_session IS NOT NULL
    AND h.session_state = ''WAITING''
@@ -326,7 +326,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
        h.sql_id b_sql_id,
        COUNT(*) b_samples
        FROM w, 
-            dba_hist_active_sess_history h
+            &&awr_object_prefix.active_sess_history h
  WHERE w.w_rank < 101
    AND h.dbid = w.dbid   
    AND h.session_id = w.blocking_session
@@ -371,8 +371,8 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        w2.w_event,
        (10 * b.b_samples) b_seconds,
        b.b_sql_id,
-       (SELECT DBMS_LOB.SUBSTR(s.sql_text, 500) FROM dba_hist_sqltext s WHERE s.sql_id = w2.w_sql_id AND s.dbid = w2.dbid AND ROWNUM = 1) w_sql_text,
-       (SELECT DBMS_LOB.SUBSTR(s.sql_text, 500) FROM dba_hist_sqltext s WHERE s.sql_id = b.b_sql_id AND s.dbid = b.dbid AND ROWNUM = 1) b_sql_text        
+       (SELECT DBMS_LOB.SUBSTR(s.sql_text, 500) FROM &&awr_object_prefix.sqltext s WHERE s.sql_id = w2.w_sql_id AND s.dbid = w2.dbid AND ROWNUM = 1) w_sql_text,
+       (SELECT DBMS_LOB.SUBSTR(s.sql_text, 500) FROM &&awr_object_prefix.sqltext s WHERE s.sql_id = b.b_sql_id AND s.dbid = b.dbid AND ROWNUM = 1) b_sql_text        
   FROM w2, b, w3
  WHERE b.dbid = w2.dbid
    AND b.w_sql_id = w2.w_sql_id
@@ -398,7 +398,7 @@ column hold_event heading 'Holding Event'
 column wait_event  heading 'Waiting Event'  
 
 DEF title = 'Profile of Blocking Sessions';
-DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
+DEF main_table = '&&awr_hist_prefix.ACTIVE_SESS_HISTORY';
 BEGIN
   :sql_text := '
 -- developed by David Kurtz
@@ -421,7 +421,7 @@ WITH w AS ( --waiting sessions
         ,       NVL(event,''CPU+CPU wait'')  wait_event
         ,       xid    wait_xid
         ,       blocking_inst_id, blocking_session, blocking_session_serial#
-        FROM       dba_hist_active_Sess_history h
+        FROM       &&awr_object_prefix.active_Sess_history h
         WHERE   blocking_session_status = ''VALID'' --holding a lock
 --add dbid/date/snap_id criteria here
    AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
@@ -446,7 +446,7 @@ SELECT /*+ &&sq_fact_hints. */
 ,       h.xid hold_xid
 ,       CASE WHEN w.blocking_inst_id != w.instance_number THEN ''CI'' END AS ci --cross-instance
 FROM    w
-        LEFT OUTER JOIN dba_hist_active_Sess_History h --holding session
+        LEFT OUTER JOIN &&awr_object_prefix.active_Sess_History h --holding session
         ON  h.dbid = w.dbid
         AND h.instance_number = w.blocking_inst_id
         AND h.snap_id = w.snap_id
@@ -475,7 +475,7 @@ column hold_sql_id heading 'Holding|SQL ID'
 column hold_sql_plan_hash_value heading 'Holding|SQL Plan|Hash Value'
 
 DEF title = 'Profile of Blocking Sessions with SQL_ID';
-DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
+DEF main_table = '&&awr_hist_prefix.ACTIVE_SESS_HISTORY';
 BEGIN
   :sql_text := '
 -- developed by David Kurtz
@@ -498,7 +498,7 @@ WITH w AS ( --waiting sessions
         ,       NVL(event,''CPU+CPU wait'')  wait_event
         ,       xid    wait_xid
         ,       blocking_inst_id, blocking_session, blocking_session_serial#
-        FROM       dba_Hist_active_Sess_history h
+        FROM       &&awr_object_prefix.active_Sess_history h
         WHERE   blocking_session_status = ''VALID'' --holding a lock
 --add dbid/date/snap_id criteria here
    AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
@@ -525,7 +525,7 @@ SELECT  /*+ &&sq_fact_hints. */
 ,       h.xid hold_xid
 ,       CASE WHEN w.blocking_inst_id != w.instance_number THEN ''CI'' END AS ci --cross-instance
 FROM    w
-        LEFT OUTER JOIN dba_Hist_active_Sess_History h --holding session
+        LEFT OUTER JOIN &&awr_object_prefix.active_Sess_History h --holding session
         ON  h.dbid = w.dbid
         AND h.instance_number = w.blocking_inst_id
         AND h.snap_id = w.snap_id
@@ -591,8 +591,8 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        s.end_interval_time,
        MAX(r.current_utilization) current_utilization,
        MAX(r.max_utilization) max_utilization
-  FROM dba_hist_resource_limit r,
-       dba_hist_snapshot s
+  FROM &&awr_object_prefix.resource_limit r,
+       &&awr_object_prefix.snapshot s
  WHERE s.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND s.dbid = &&edb360_dbid.
    AND r.snap_id = s.snap_id
@@ -638,7 +638,7 @@ DEF vbaseline = '';
 DEF stacked = '';
 DEF skip_lch = '';
 DEF title = 'Processes Time Series';
-DEF main_table = 'DBA_HIST_RESOURCE_LIMIT';
+DEF main_table = '&&awr_hist_prefix.RESOURCE_LIMIT';
 DEF vaxis = 'Processes';
 DEF tit_01 = 'Current Utilization';
 DEF tit_02 = 'Max Utilization';
@@ -664,7 +664,7 @@ DEF vbaseline = '';
 DEF stacked = '';
 DEF skip_lch = '';
 DEF title = 'Sessions Time Series';
-DEF main_table = 'DBA_HIST_RESOURCE_LIMIT';
+DEF main_table = '&&awr_hist_prefix.RESOURCE_LIMIT';
 DEF vaxis = 'Sessions';
 DEF tit_01 = 'Current Utilization';
 DEF tit_02 = 'Max Utilization';
@@ -690,7 +690,7 @@ DEF vbaseline = '';
 DEF stacked = '';
 DEF skip_lch = '';
 DEF title = 'Parallel Max Servers Time Series';
-DEF main_table = 'DBA_HIST_RESOURCE_LIMIT';
+DEF main_table = '&&awr_hist_prefix.RESOURCE_LIMIT';
 DEF vaxis = 'Parallel max servers';
 DEF tit_01 = 'Current Utilization';
 DEF tit_02 = 'Max Utilization';
@@ -722,8 +722,8 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        s.end_interval_time,
        r.resource_name,
        MAX(r.current_utilization) current_utilization
-  FROM dba_hist_resource_limit r,
-       dba_hist_snapshot s
+  FROM &&awr_object_prefix.resource_limit r,
+       &&awr_object_prefix.snapshot s
  WHERE s.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND s.dbid = &&edb360_dbid.
    AND r.snap_id = s.snap_id
@@ -770,7 +770,7 @@ DEF vbaseline = '';
 DEF stacked = '';
 DEF skip_lch = '';
 DEF title = 'Sessions, Processes and Parallel Servers - Time Series1';
-DEF main_table = 'DBA_HIST_RESOURCE_LIMIT';
+DEF main_table = '&&awr_hist_prefix.RESOURCE_LIMIT';
 DEF vaxis = 'Count';
 DEF tit_01 = 'Sessions';
 DEF tit_02 = 'Processes';
@@ -801,8 +801,8 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        CAST(s.end_interval_time AS DATE) end_time,
        r.resource_name metric_name,
        MAX(r.current_utilization) value
-  FROM dba_hist_resource_limit r,
-       dba_hist_snapshot s
+  FROM &&awr_object_prefix.resource_limit r,
+       &&awr_object_prefix.snapshot s
  WHERE s.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND s.dbid = &&edb360_dbid.
    AND r.snap_id = s.snap_id
@@ -824,7 +824,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
        end_time,
        metric_name, 
        ROUND(maxval, 3) value
-  FROM dba_hist_sysmetric_summary
+  FROM &&awr_object_prefix.sysmetric_summary
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
    AND group_id = 2 /* 1 minute intervals */
@@ -864,7 +864,7 @@ DEF vbaseline = '';
 DEF stacked = '';
 DEF skip_lch = '';
 DEF title = 'Sessions, Processes and Parallel Servers - Time Series2';
-DEF main_table = 'DBA_HIST_RESOURCE_LIMIT';
+DEF main_table = '&&awr_hist_prefix.RESOURCE_LIMIT';
 DEF vaxis = 'Count';
 DEF tit_01 = 'Sessions';
 DEF tit_02 = 'Processes';
@@ -896,8 +896,8 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        CAST(s.end_interval_time AS DATE) end_time,
        r.resource_name metric_name,
        MAX(r.current_utilization) value
-  FROM dba_hist_resource_limit r,
-       dba_hist_snapshot s
+  FROM &&awr_object_prefix.resource_limit r,
+       &&awr_object_prefix.snapshot s
  WHERE s.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND s.dbid = &&edb360_dbid.
    AND r.snap_id = s.snap_id
@@ -919,7 +919,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
        end_time,
        metric_name, 
        ROUND(maxval, 3) value
-  FROM dba_hist_sysmetric_summary
+  FROM &&awr_object_prefix.sysmetric_summary
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
    AND group_id = 2 /* 1 minute intervals */
@@ -964,7 +964,7 @@ DEF vbaseline = '';
 DEF stacked = '';
 DEF skip_lch = '';
 DEF title = 'Sessions, Processes and Parallel Servers - Time Series3';
-DEF main_table = 'DBA_HIST_RESOURCE_LIMIT';
+DEF main_table = '&&awr_hist_prefix.RESOURCE_LIMIT';
 DEF vaxis = 'Count';
 DEF tit_01 = 'Sessions';
 DEF tit_02 = 'Processes';
@@ -996,8 +996,8 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        CAST(s.end_interval_time AS DATE) end_time,
        r.resource_name metric_name,
        MAX(r.current_utilization) value
-  FROM dba_hist_resource_limit r,
-       dba_hist_snapshot s
+  FROM &&awr_object_prefix.resource_limit r,
+       &&awr_object_prefix.snapshot s
  WHERE s.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND s.dbid = &&edb360_dbid.
    AND r.snap_id = s.snap_id
@@ -1020,7 +1020,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
        end_time,
        metric_name, 
        ROUND(maxval, 3) value
-  FROM dba_hist_sysmetric_summary
+  FROM &&awr_object_prefix.sysmetric_summary
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
    AND group_id = 2 /* 1 minute intervals */
@@ -1041,7 +1041,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
        end_time,
        metric_name, 
        ROUND(average, 3) value
-  FROM dba_hist_sysmetric_summary
+  FROM &&awr_object_prefix.sysmetric_summary
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
    AND group_id = 2 /* 1 minute intervals */
@@ -1086,7 +1086,7 @@ DEF vbaseline = '';
 DEF stacked = '';
 DEF skip_lch = '';
 DEF title = 'Sessions, Processes and Parallel Servers - Time Series4';
-DEF main_table = 'DBA_HIST_RESOURCE_LIMIT';
+DEF main_table = '&&awr_hist_prefix.RESOURCE_LIMIT';
 DEF vaxis = 'Count';
 DEF tit_01 = 'Sessions';
 DEF tit_02 = 'Processes';

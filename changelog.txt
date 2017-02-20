@@ -1,6 +1,10 @@
 Changelog
 =========
 
+v1706 (2017-02-19)
+=====
+1. edb360 supports now an optional repository
+
 v1705 (2017-02-15)
 =====
 1. Improve performance on 2.a "Libraries calling DBMS_STATS"

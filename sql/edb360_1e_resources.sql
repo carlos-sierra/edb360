@@ -152,7 +152,7 @@ END;
 @@&&skip_diagnostics.&&edb360_skip_ash_mem.edb360_9a_pre_one.sql
 
 DEF title = 'CPU Demand Percentiles (AWR)';
-DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
+DEF main_table = '&&awr_hist_prefix.ACTIVE_SESS_HISTORY';
 DEF abstract = 'Number of Sessions on CPU or RESMGR. Includes Max (Peak), Percentiles, Median and Average.<br />'
 BEGIN
   :sql_text := '
@@ -169,8 +169,8 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
        SUM(CASE h.event WHEN ''resmgr:cpu quantum'' THEN 1 ELSE 0 END) aas_resmgr_cpu_quantum,
        MIN(s.begin_interval_time) begin_interval_time,
        MAX(s.end_interval_time) end_interval_time      
-  FROM dba_hist_active_sess_history h, 
-       dba_hist_snapshot s
+  FROM &&awr_object_prefix.active_sess_history h, 
+       &&awr_object_prefix.snapshot s
  WHERE h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND h.dbid = &&edb360_dbid.
    AND (h.session_state = ''ON CPU'' OR h.event = ''resmgr:cpu quantum'')
@@ -299,7 +299,7 @@ END;
 /
 @@&&skip_diagnostics.edb360_9a_pre_one.sql
 
-DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
+DEF main_table = '&&awr_hist_prefix.ACTIVE_SESS_HISTORY';
 DEF chartype = 'LineChart';
 DEF stacked = '';
 DEF vaxis = 'Sessions on CPU or RESMGR';
@@ -331,7 +331,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
        SUM(CASE session_state WHEN ''ON CPU'' THEN 1 ELSE 0 END) on_cpu,
        SUM(CASE event WHEN ''resmgr:cpu quantum'' THEN 1 ELSE 0 END) resmgr,
        COUNT(*) on_cpu_and_resmgr
-  FROM dba_hist_active_sess_history h
+  FROM &&awr_object_prefix.active_sess_history h
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
    AND instance_number = @instance_number@
@@ -472,7 +472,7 @@ DEF skip_pch = 'Y';
 
 /*****************************************************************************************/
 
-DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
+DEF main_table = '&&awr_hist_prefix.ACTIVE_SESS_HISTORY';
 DEF chartype = 'LineChart';
 DEF stacked = '';
 DEF vaxis = 'Sessions on CPU';
@@ -502,7 +502,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
        instance_number,
        MIN(sample_time) sample_time,
        COUNT(*) on_cpu
-  FROM dba_hist_active_sess_history h
+  FROM &&awr_object_prefix.active_sess_history h
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
    AND instance_number = @instance_number@
@@ -658,7 +658,7 @@ COL sga_gb FOR 99990.0 HEA "SGA GB";
 COL pga_gb FOR 99990.0 HEA "PGA GB";
 
 DEF title = 'Memory Size Percentiles (AWR)';
-DEF main_table = 'DBA_HIST_SGA';
+DEF main_table = '&&awr_hist_prefix.SGA';
 BEGIN
   :sql_text := '
 WITH mem_per_inst_and_snap AS (
@@ -671,9 +671,9 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
        SUM(g.value) + MAX(p.value) mem_bytes,
        MIN(s.begin_interval_time) begin_interval_time,
        MAX(s.end_interval_time) end_interval_time      
-  FROM dba_hist_snapshot s,
-       dba_hist_sga g,
-       dba_hist_pgastat p
+  FROM &&awr_object_prefix.snapshot s,
+       &&awr_object_prefix.sga g,
+       &&awr_object_prefix.pgastat p
  WHERE s.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND s.dbid = &&edb360_dbid.
    AND g.snap_id = s.snap_id
@@ -979,7 +979,7 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Memory Size (AWR)';
-DEF main_table = 'DBA_HIST_PARAMETER';
+DEF main_table = '&&awr_hist_prefix.PARAMETER';
 DEF abstract = 'Consolidated view of Memory requirements.<br />'
 DEF abstract2 = 'It considers AMM if setup, else ASMM if setup, else no memory management settings (individual pools size).<br />'
 DEF foot = 'Consider "Giga Bytes (GB)" column for sizing. Instance Number -1 means aggregated values (SUM) while -2 means over all instances (combined).'
@@ -992,9 +992,9 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        dbid,
        instance_number,
        parameter_name
-  FROM dba_hist_parameter
+  FROM &&awr_object_prefix.parameter
  WHERE parameter_name IN (''memory_target'', ''memory_max_target'', ''sga_target'', ''sga_max_size'', ''pga_aggregate_target'')
-   AND (snap_id, dbid, instance_number) IN (SELECT s.snap_id, s.dbid, s.instance_number FROM dba_hist_snapshot s)
+   AND (snap_id, dbid, instance_number) IN (SELECT s.snap_id, s.dbid, s.instance_number FROM &&awr_object_prefix.snapshot s)
    AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
  GROUP BY
@@ -1010,7 +1010,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        s.parameter_name,
        p.value
   FROM max_snap s,
-       dba_hist_parameter p
+       &&awr_object_prefix.parameter p
  WHERE p.snap_id = s.snap_id
    AND p.dbid = s.dbid
    AND p.instance_number = s.instance_number
@@ -1027,7 +1027,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        p.value,
        s.startup_time
   FROM last_value p,
-       dba_hist_snapshot s
+       &&awr_object_prefix.snapshot s
  WHERE s.snap_id = p.snap_id
    AND s.dbid = p.dbid
    AND s.instance_number = p.instance_number
@@ -1048,7 +1048,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        SUM(CASE p.parameter_name WHEN ''sga_max_size'' THEN TO_NUMBER(p.value) ELSE 0 END) sga_max_size,
        SUM(CASE p.parameter_name WHEN ''pga_aggregate_target'' THEN TO_NUMBER(p.value) ELSE 0 END) pga_aggregate_target
   FROM last_snap p,
-       dba_hist_database_instance di
+       &&awr_object_prefix.database_instance di
  WHERE di.dbid = p.dbid
    AND di.instance_number = p.instance_number
    AND di.startup_time = p.startup_time
@@ -1066,7 +1066,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        dbid,
        instance_number,
        SUM(value) sga_size
-  FROM dba_hist_sga
+  FROM &&awr_object_prefix.sga
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
  GROUP BY
@@ -1089,7 +1089,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        dbid,
        instance_number,
        MAX(value) bytes
-  FROM dba_hist_pgastat
+  FROM &&awr_object_prefix.pgastat
  WHERE name = ''maximum PGA allocated''
    AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
@@ -1233,7 +1233,7 @@ END;
 /
 @@&&skip_diagnostics.edb360_9a_pre_one.sql
 
-DEF main_table = 'DBA_HIST_SGA';
+DEF main_table = '&&awr_hist_prefix.SGA';
 DEF chartype = 'LineChart';
 DEF stacked = '';
 DEF vbaseline = '';
@@ -1263,7 +1263,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        dbid,
        instance_number,
        SUM(value) bytes
-  FROM dba_hist_sga
+  FROM &&awr_object_prefix.sga
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
    AND instance_number = @instance_number@
@@ -1278,7 +1278,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        dbid,
        instance_number,
        value bytes
-  FROM dba_hist_pgastat
+  FROM &&awr_object_prefix.pgastat
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
    AND instance_number = @instance_number@
@@ -1294,7 +1294,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        sga.bytes sga_bytes,
        pga.bytes pga_bytes,
        (sga.bytes + pga.bytes) mem_bytes
-  FROM sga, pga, dba_hist_snapshot snp
+  FROM sga, pga, &&awr_object_prefix.snapshot snp
  WHERE pga.snap_id = sga.snap_id
    AND pga.dbid = sga.dbid
    AND pga.instance_number = sga.instance_number
@@ -1496,7 +1496,7 @@ END;
 
 /*****************************************************************************************/
 
-DEF main_table = 'DBA_HIST_TBSPC_SPACE_USAGE';
+DEF main_table = '&&awr_hist_prefix.TBSPC_SPACE_USAGE';
 DEF chartype = 'LineChart';
 DEF stacked = '';
 DEF vbaseline = '';
@@ -1529,8 +1529,8 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        SUM(CASE ts.contents WHEN ''PERMANENT'' THEN us.tablespace_size * ts.block_size ELSE 0 END) perm_tablespaces_bytes,
        SUM(CASE ts.contents WHEN ''UNDO''      THEN us.tablespace_size * ts.block_size ELSE 0 END) undo_tablespaces_bytes,
        SUM(CASE ts.contents WHEN ''TEMPORARY'' THEN us.tablespace_size * ts.block_size ELSE 0 END) temp_tablespaces_bytes
-  FROM dba_hist_tbspc_space_usage us,
-       dba_hist_snapshot sn,
+  FROM &&awr_object_prefix.tbspc_space_usage us,
+       &&awr_object_prefix.snapshot sn,
        v$tablespace vt,
        dba_tablespaces ts
  WHERE us.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
@@ -1583,7 +1583,7 @@ DEF skip_pch = 'Y';
 /*****************************************************************************************/
 
 DEF title = 'IOPS and MBPS Percentiles';
-DEF main_table = 'DBA_HIST_SYSSTAT';
+DEF main_table = '&&awr_hist_prefix.SYSSTAT';
 DEF abstract = 'I/O Operations per Second (IOPS) and I/O Mega Bytes per Second (MBPS). Includes Peak (max), percentiles and average for read (R), write (W) and read+write (RW) operations.<br />'
 DEF foot = 'Consider Peak or high Percentile for sizing. Instance Number -1 means aggregated values (SUM) while -2 means over all instances (combined).'
 BEGIN
@@ -1598,7 +1598,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        SUM(CASE WHEN h.stat_name IN (''physical write total IO requests'', ''redo writes'') THEN value ELSE 0 END) w_reqs,
        SUM(CASE WHEN h.stat_name = ''physical read total bytes'' THEN value ELSE 0 END) r_bytes,
        SUM(CASE WHEN h.stat_name IN (''physical write total bytes'', ''redo size'') THEN value ELSE 0 END) w_bytes
-  FROM dba_hist_sysstat h
+  FROM &&awr_object_prefix.sysstat h
  WHERE h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND h.dbid = &&edb360_dbid.
    AND h.stat_name IN (''physical read total IO requests'', ''physical write total IO requests'', ''redo writes'', ''physical read total bytes'', ''physical write total bytes'', ''redo size'')
@@ -1620,9 +1620,9 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        CAST(s1.begin_interval_time AS DATE) begin_interval_time,
        CAST(s1.end_interval_time AS DATE) end_interval_time        
   FROM sysstat_io h0,
-       dba_hist_snapshot s0,
+       &&awr_object_prefix.snapshot s0,
        sysstat_io h1,
-       dba_hist_snapshot s1
+       &&awr_object_prefix.snapshot s1
  WHERE s0.snap_id = h0.snap_id
    AND s0.dbid = h0.dbid
    AND s0.instance_number = h0.instance_number
@@ -1852,7 +1852,7 @@ END;
 /
 @@&&skip_diagnostics.edb360_9a_pre_one.sql
 
-DEF main_table = 'DBA_HIST_SYSSTAT';
+DEF main_table = '&&awr_hist_prefix.SYSSTAT';
 DEF chartype = 'LineChart';
 DEF stacked = '';
 DEF vbaseline = '';
@@ -1880,7 +1880,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        SUM(CASE WHEN stat_name IN (''physical write total IO requests'', ''redo writes'') THEN value ELSE 0 END) w_reqs,
        SUM(CASE WHEN stat_name = ''physical read total bytes'' THEN value ELSE 0 END) r_bytes,
        SUM(CASE WHEN stat_name IN (''physical write total bytes'', ''redo size'') THEN value ELSE 0 END) w_bytes
-  FROM dba_hist_sysstat
+  FROM &&awr_object_prefix.sysstat
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
    AND instance_number = @instance_number@
@@ -1901,9 +1901,9 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        (h1.w_bytes - h0.w_bytes) w_bytes,
        (CAST(s1.end_interval_time AS DATE) - CAST(s1.begin_interval_time AS DATE)) * 86400 elapsed_sec
   FROM sysstat_io h0,
-       dba_hist_snapshot s0,
+       &&awr_object_prefix.snapshot s0,
        sysstat_io h1,
-       dba_hist_snapshot s1
+       &&awr_object_prefix.snapshot s1
  WHERE s0.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND s0.dbid = &&edb360_dbid.
    AND s0.snap_id = h0.snap_id
@@ -2168,7 +2168,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@column3@', 'w_mbps');
 
 /*****************************************************************************************/
 
-DEF main_table = 'DBA_HIST_SYSSTAT';
+DEF main_table = '&&awr_hist_prefix.SYSSTAT';
 DEF chartype = 'LineChart';
 DEF stacked = '';
 DEF vbaseline = '';
@@ -2212,7 +2212,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        SUM(CASE WHEN stat_name IN (''physical write total IO requests'', ''redo writes'') THEN value ELSE 0 END) w_reqs,
        SUM(CASE WHEN stat_name = ''physical read total bytes'' THEN value ELSE 0 END) r_bytes,
        SUM(CASE WHEN stat_name IN (''physical write total bytes'', ''redo size'') THEN value ELSE 0 END) w_bytes
-  FROM dba_hist_sysstat
+  FROM &&awr_object_prefix.sysstat
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
    AND instance_number = @instance_number@
@@ -2294,9 +2294,9 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        (h1.r_total_bytes - h0.r_total_bytes) - (&&database_block_size. * ((h1.r_total_IO_requests - h0.r_total_IO_requests) - (h1.r_total_multi_block_requests - h0.r_total_multi_block_requests))) r_total_bytes_multi_block_req,
        (CAST(s1.end_interval_time AS DATE) - CAST(s1.begin_interval_time AS DATE)) * 86400 elapsed_sec
   FROM sysstat_io h0,
-       dba_hist_snapshot s0,
+       &&awr_object_prefix.snapshot s0,
        sysstat_io h1,
-       dba_hist_snapshot s1
+       &&awr_object_prefix.snapshot s1
  WHERE s0.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND s0.dbid = &&edb360_dbid.
    AND s0.snap_id = h0.snap_id

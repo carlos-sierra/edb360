@@ -112,7 +112,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'inst_id = 8')
 
 /*****************************************************************************************/
 
-DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
+DEF main_table = '&&awr_hist_prefix.ACTIVE_SESS_HISTORY';
 BEGIN
   :sql_text_backup := '
 WITH
@@ -123,7 +123,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
        CASE session_state WHEN ''ON CPU'' THEN session_state ELSE wait_class||'' "''||event||''"'' END timed_class,
        ROW_NUMBER () OVER (ORDER BY COUNT(*) DESC) rn,
        COUNT(*) samples
-  FROM dba_hist_active_sess_history h
+  FROM &&awr_object_prefix.active_sess_history h
  WHERE @filter_predicate@
    AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.

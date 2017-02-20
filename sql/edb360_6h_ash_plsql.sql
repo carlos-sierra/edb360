@@ -7,7 +7,7 @@ PRO <h2>&&section_id.. &&section_name.</h2>
 PRO <ol start="&&report_sequence.">
 SPO OFF;
 
-DEF main_table = 'DBA_HIST_ACTIVE_SESS_HISTORY';
+DEF main_table = '&&awr_hist_prefix.ACTIVE_SESS_HISTORY';
 BEGIN
   :sql_text_backup := '
 WITH
@@ -22,7 +22,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
        p.owner plsql_owner,
        p.object_name plsql_object_name,
        p.procedure_name plsql_procedure_name
-  FROM dba_hist_active_sess_history h,
+  FROM &&awr_object_prefix.active_sess_history h,
        dba_procedures e,
        dba_procedures p
  WHERE @filter_predicate@

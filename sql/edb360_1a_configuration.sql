@@ -175,7 +175,7 @@ END;
 @@&&skip_10g.&&skip_11g.edb360_9a_pre_one.sql
 
 DEF title = 'Database and Instance History';
-DEF main_table = 'DBA_HIST_DATABASE_INSTANCE';
+DEF main_table = '&&awr_hist_prefix.DATABASE_INSTANCE';
 BEGIN
   :sql_text := '
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
@@ -187,7 +187,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        instance_name,		
        host_name			
        --platform_name not avail on 10g
-  FROM dba_hist_database_instance
+  FROM &&awr_object_prefix.database_instance
  ORDER BY
        dbid,				
        instance_number,	
@@ -497,7 +497,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
        isdefault,
        ismodified,
        lag(value) OVER (PARTITION BY dbid, instance_number, parameter_hash ORDER BY snap_id) prior_value
-  FROM dba_hist_parameter
+  FROM &&awr_object_prefix.parameter
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
 )
@@ -513,7 +513,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        p.ismodified,
        p.prior_value
   FROM all_parameters p,
-       dba_hist_snapshot s
+       &&awr_object_prefix.snapshot s
  WHERE p.value != p.prior_value
    AND s.snap_id = p.snap_id
    AND s.dbid = p.dbid
