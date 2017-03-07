@@ -1,6 +1,11 @@
 Changelog
 =========
 
+v1707 (2017-03-06)
+=====
+1. fixing planx failing due to SQL*Plus crash
+2. custom config files are removed the sql suffix
+
 v1706 (2017-02-19)
 =====
 1. edb360 supports now an optional repository

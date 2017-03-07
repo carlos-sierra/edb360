@@ -108,5 +108,5 @@ SET TERM ON;
 -- prefix&&edb360_sections.is to bypass meta360 when a section is requested
 DEF _md_top_schemas = '';
 DEF _md_tool = '';
---@@&&edb360_sections.&&edb360_skip_metadata.get_top_N_schemas.sql
---HOS&&edb360_sections. &&edb360_skip_metadata.zip -m &&edb360_main_filename._&&edb360_file_time. TOP_&&_md_top_schemas._&&_md_tool..zip
+@@&&edb360_sections.&&edb360_skip_metadata.get_top_N_schemas.sql
+HOS&&edb360_sections. &&edb360_skip_metadata.zip -m &&edb360_main_filename._&&edb360_file_time. TOP_&&_md_top_schemas._&&_md_tool..zip

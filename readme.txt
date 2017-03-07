@@ -1,4 +1,4 @@
-edb360 v1706 (2017-02-19) by Carlos Sierra
+edb360 v1707 (2017-03-06) by Carlos Sierra
 ~~~~~~~~~~~~
 edb360 is a "free to use" tool to perform an initial assessment of a remote system. 
 
@@ -64,7 +64,7 @@ Notes
 
    $ unzip edb360-master.zip
    $ cd edb360-master
-   $ sh run_db360.sh
+   $ sh run_edb360.sh
 
    note: this method requires Oracle Tuning pack license in all databases in such host.
 
