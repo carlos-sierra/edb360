@@ -10,7 +10,7 @@ SPO OFF;
 DEF title = 'Average Latency per Wait Class';
 DEF main_table = 'GV$WAITCLASSMETRIC';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 -- inspired by http://www.oraclerealworld.com/wait-event-and-wait-class-metrics-vs-vsystem_event/
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        c.wait_class,
@@ -24,10 +24,10 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
  WHERE m.wait_count > 0
    AND c.inst_id = m.inst_id
    AND c.wait_class# = m.wait_class#
-   AND c.wait_class <> ''Idle''
+   AND c.wait_class <> 'Idle'
  ORDER BY
        1, 2
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -35,7 +35,7 @@ END;
 DEF title = 'Average Latency per Wait Event';
 DEF main_table = 'GV$EVENTMETRIC';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 -- inspired by http://www.oraclerealworld.com/wait-event-and-wait-class-metrics-vs-vsystem_event/
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        e.wait_class,
@@ -50,10 +50,10 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
  WHERE m.wait_count > 0
    AND e.inst_id = m.inst_id
    AND e.event_id = m.event_id
-   AND e.wait_class <> ''Idle''
+   AND e.wait_class <> 'Idle'
  ORDER BY
        1,2,3
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -82,7 +82,7 @@ END;
 SPO OFF;
 SET SERVEROUT OFF;
 @99870_&&common_edb360_prefix._chart_setup_driver4.sql;
-HOS zip -m &&edb360_main_filename._&&edb360_file_time. 99870_&&common_edb360_prefix._chart_setup_driver4.sql >> &&edb360_log3..txt
+HOS zip -m &&edb360_zip_filename. 99870_&&common_edb360_prefix._chart_setup_driver4.sql >> &&edb360_log3..txt
 
 DEF main_table = '&&awr_hist_prefix.EVENT_HISTOGRAM';
 DEF vaxis = 'Wait Minutes (stacked)';
@@ -91,7 +91,7 @@ DEF chartype = 'AreaChart';
 DEF stacked = 'isStacked: true,';
 
 BEGIN
-  :sql_text_backup := '
+  :sql_text_backup := q'[
 WITH 
 histogram AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
@@ -134,8 +134,8 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
    AND s.instance_number = h.instance_number
 )
 SELECT snap_id,
-       TO_CHAR(MIN(begin_interval_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
-       TO_CHAR(MIN(end_interval_time), ''YYYY-MM-DD HH24:MI:SS'') end_time,
+       TO_CHAR(MIN(begin_interval_time), 'YYYY-MM-DD HH24:MI:SS') begin_time,
+       TO_CHAR(MIN(end_interval_time), 'YYYY-MM-DD HH24:MI:SS') end_time,
        ROUND(SUM(CASE instance_number WHEN 1 THEN wait_minutes ELSE 0 END), 1) inst_01,
        ROUND(SUM(CASE instance_number WHEN 2 THEN wait_minutes ELSE 0 END), 1) inst_02,
        ROUND(SUM(CASE instance_number WHEN 3 THEN wait_minutes ELSE 0 END), 1) inst_03,
@@ -156,7 +156,7 @@ SELECT snap_id,
        snap_id
  ORDER BY
        snap_id
-';
+]';
 END;
 /
 
@@ -278,7 +278,7 @@ DEF tit_14 = '% < 8.192s';
 DEF tit_15 = '% > 8.192s';
 
 BEGIN
-  :sql_text_backup := '
+  :sql_text_backup := q'[
 WITH 
 histogram AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
@@ -321,8 +321,8 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
    AND s.instance_number = h.instance_number
 )
 SELECT snap_id,
-       TO_CHAR(MIN(begin_interval_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
-       TO_CHAR(MIN(end_interval_time), ''YYYY-MM-DD HH24:MI:SS'') end_time,
+       TO_CHAR(MIN(begin_interval_time), 'YYYY-MM-DD HH24:MI:SS') begin_time,
+       TO_CHAR(MIN(end_interval_time), 'YYYY-MM-DD HH24:MI:SS') end_time,
        ROUND(100 * SUM(CASE wait_time_milli WHEN POWER(2,00) THEN wait_count_this_snap ELSE 0 END) / SUM(wait_count_this_snap), 1) less_1_ms,
        ROUND(100 * SUM(CASE wait_time_milli WHEN POWER(2,01) THEN wait_count_this_snap ELSE 0 END) / SUM(wait_count_this_snap), 1) less_2_ms,
        ROUND(100 * SUM(CASE wait_time_milli WHEN POWER(2,02) THEN wait_count_this_snap ELSE 0 END) / SUM(wait_count_this_snap), 1) less_4_ms,
@@ -344,7 +344,7 @@ SELECT snap_id,
 HAVING SUM(wait_count_this_snap) > 0
  ORDER BY
        snap_id
-';
+]';
 END;
 /
 

@@ -29,43 +29,43 @@ DEF tit_13 = 'total freeable PGA memory';
 DEF tit_14 = '';
 DEF tit_15 = '';
 BEGIN
-  :sql_text_backup := '
+  :sql_text_backup := q'[
 WITH 
 pgastat_denorm_1 AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
        dbid,
        instance_number,
-       SUM(CASE name WHEN ''PGA memory freed back to OS''           THEN value ELSE 0 END) pga_mem_freed_to_os,
-       SUM(CASE name WHEN ''aggregate PGA auto target''             THEN value ELSE 0 END) aggr_pga_auto_target,
-       SUM(CASE name WHEN ''aggregate PGA target parameter''        THEN value ELSE 0 END) aggr_pga_target_param,
-       SUM(CASE name WHEN ''bytes processed''                       THEN value ELSE 0 END) bytes_processed,
-       SUM(CASE name WHEN ''extra bytes read/written''              THEN value ELSE 0 END) extra_bytes_rw,
-       SUM(CASE name WHEN ''global memory bound''                   THEN value ELSE 0 END) global_memory_bound,
-       SUM(CASE name WHEN ''maximum PGA allocated''                 THEN value ELSE 0 END) max_pga_allocated,
-       SUM(CASE name WHEN ''maximum PGA used for auto workareas''   THEN value ELSE 0 END) max_pga_used_aut_wa,
-       SUM(CASE name WHEN ''maximum PGA used for manual workareas'' THEN value ELSE 0 END) max_pga_used_man_wa,
-       SUM(CASE name WHEN ''total PGA allocated''                   THEN value ELSE 0 END) tot_pga_allocated,
-       SUM(CASE name WHEN ''total PGA inuse''                       THEN value ELSE 0 END) tot_pga_inuse,
-       SUM(CASE name WHEN ''total PGA used for auto workareas''     THEN value ELSE 0 END) tot_pga_used_aut_wa,
-       SUM(CASE name WHEN ''total PGA used for manual workareas''   THEN value ELSE 0 END) tot_pga_used_man_wa,
-       SUM(CASE name WHEN ''total freeable PGA memory''             THEN value ELSE 0 END) tot_freeable_pga_mem
+       SUM(CASE name WHEN 'PGA memory freed back to OS'           THEN value ELSE 0 END) pga_mem_freed_to_os,
+       SUM(CASE name WHEN 'aggregate PGA auto target'             THEN value ELSE 0 END) aggr_pga_auto_target,
+       SUM(CASE name WHEN 'aggregate PGA target parameter'        THEN value ELSE 0 END) aggr_pga_target_param,
+       SUM(CASE name WHEN 'bytes processed'                       THEN value ELSE 0 END) bytes_processed,
+       SUM(CASE name WHEN 'extra bytes read/written'              THEN value ELSE 0 END) extra_bytes_rw,
+       SUM(CASE name WHEN 'global memory bound'                   THEN value ELSE 0 END) global_memory_bound,
+       SUM(CASE name WHEN 'maximum PGA allocated'                 THEN value ELSE 0 END) max_pga_allocated,
+       SUM(CASE name WHEN 'maximum PGA used for auto workareas'   THEN value ELSE 0 END) max_pga_used_aut_wa,
+       SUM(CASE name WHEN 'maximum PGA used for manual workareas' THEN value ELSE 0 END) max_pga_used_man_wa,
+       SUM(CASE name WHEN 'total PGA allocated'                   THEN value ELSE 0 END) tot_pga_allocated,
+       SUM(CASE name WHEN 'total PGA inuse'                       THEN value ELSE 0 END) tot_pga_inuse,
+       SUM(CASE name WHEN 'total PGA used for auto workareas'     THEN value ELSE 0 END) tot_pga_used_aut_wa,
+       SUM(CASE name WHEN 'total PGA used for manual workareas'   THEN value ELSE 0 END) tot_pga_used_man_wa,
+       SUM(CASE name WHEN 'total freeable PGA memory'             THEN value ELSE 0 END) tot_freeable_pga_mem
   FROM &&awr_object_prefix.pgastat
  WHERE name IN
-(''PGA memory freed back to OS''
-,''aggregate PGA auto target''
-,''aggregate PGA target parameter''
-,''bytes processed''
-,''extra bytes read/written''
-,''global memory bound''
-,''maximum PGA allocated''
-,''maximum PGA used for auto workareas''
-,''maximum PGA used for manual workareas''
-,''total PGA allocated''
-,''total PGA inuse''
-,''total PGA used for auto workareas''
-,''total PGA used for manual workareas''
-,''total freeable PGA memory''
+('PGA memory freed back to OS'
+,'aggregate PGA auto target'
+,'aggregate PGA target parameter'
+,'bytes processed'
+,'extra bytes read/written'
+,'global memory bound'
+,'maximum PGA allocated'
+,'maximum PGA used for auto workareas'
+,'maximum PGA used for manual workareas'
+,'total PGA allocated'
+,'total PGA inuse'
+,'total PGA used for auto workareas'
+,'total PGA used for manual workareas'
+,'total freeable PGA memory'
 )
    AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
@@ -141,8 +141,8 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
    AND min.startup_time = s1.startup_time
 )
 SELECT snap_id,
-       TO_CHAR(MIN(begin_interval_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
-       TO_CHAR(MIN(end_interval_time), ''YYYY-MM-DD HH24:MI:SS'') end_time,
+       TO_CHAR(MIN(begin_interval_time), 'YYYY-MM-DD HH24:MI:SS') begin_time,
+       TO_CHAR(MIN(end_interval_time), 'YYYY-MM-DD HH24:MI:SS') end_time,
        --ROUND(SUM(pga_mem_freed_to_os) / POWER(2,30), 3) pga_mem_freed_to_os,
        ROUND(SUM(aggr_pga_auto_target) / POWER(2,30), 3) aggr_pga_auto_target,
        ROUND(SUM(aggr_pga_target_param) / POWER(2,30), 3) aggr_pga_target_param,
@@ -164,13 +164,14 @@ SELECT snap_id,
        snap_id
  ORDER BY
        snap_id
-';
+]';
 END;
 /
 
 DEF skip_lch = '';
 DEF skip_all = '&&is_single_instance.';
 DEF title = 'PGA Statistics for Cluster';
+DEF abstract = '&&abstract_uom.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', 'instance_number');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
@@ -178,6 +179,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 1;
 DEF title = 'PGA Statistics for Instance 1';
+DEF abstract = '&&abstract_uom.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '1');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
@@ -185,6 +187,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 2;
 DEF title = 'PGA Statistics for Instance 2';
+DEF abstract = '&&abstract_uom.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '2');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
@@ -199,6 +202,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 4;
 DEF title = 'PGA Statistics for Instance 4';
+DEF abstract = '&&abstract_uom.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '4');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
@@ -206,6 +210,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 5;
 DEF title = 'PGA Statistics for Instance 5';
+DEF abstract = '&&abstract_uom.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '5');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
@@ -213,6 +218,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 6;
 DEF title = 'PGA Statistics for Instance 6';
+DEF abstract = '&&abstract_uom.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '6');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
@@ -220,6 +226,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 7;
 DEF title = 'PGA Statistics for Instance 7';
+DEF abstract = '&&abstract_uom.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '7');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
@@ -227,6 +234,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 8;
 DEF title = 'PGA Statistics for Instance 8';
+DEF abstract = '&&abstract_uom.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '8');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 

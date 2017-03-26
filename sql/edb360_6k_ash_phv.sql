@@ -9,7 +9,7 @@ SPO OFF;
 
 DEF main_table = 'GV$ACTIVE_SESSION_HISTORY';
 BEGIN
-  :sql_text_backup := '
+  :sql_text_backup := q'[
 WITH
 hist AS (
 SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
@@ -28,7 +28,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
 total AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */ SUM(samples) samples FROM hist
 )
-SELECT h.sql_plan_hash_value||''(''||h.distinct_sql_id||'')'' plan_hash_value,
+SELECT h.sql_plan_hash_value||'('||h.distinct_sql_id||')' plan_hash_value,
        h.samples,
        ROUND(100 * h.samples / t.samples, 1) percent,
        (SELECT v2.sql_text FROM gv$sql v2 WHERE v2.sql_id = h.sample_sql_id AND ROWNUM = 1) sample_sql_text
@@ -36,7 +36,7 @@ SELECT h.sql_plan_hash_value||''(''||h.distinct_sql_id||'')'' plan_hash_value,
        total t
  WHERE h.samples >= t.samples / 1000 AND rn <= 14
  UNION ALL
-SELECT ''Others'',
+SELECT 'Others',
        NVL(SUM(h.samples), 0) samples,
        NVL(ROUND(100 * SUM(h.samples) / AVG(t.samples), 1), 0) percent,
        NULL sample_sql_text
@@ -44,7 +44,7 @@ SELECT ''Others'',
        total t
  WHERE h.samples < t.samples / 1000 OR rn > 14
  ORDER BY 2 DESC NULLS LAST
-';
+]';
 END;
 /
 
@@ -115,7 +115,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'inst_id = 8')
 
 DEF main_table = '&&awr_hist_prefix.ACTIVE_SESS_HISTORY';
 BEGIN
-  :sql_text_backup := '
+  :sql_text_backup := q'[
 WITH
 hist AS (
 SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
@@ -139,7 +139,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
 total AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */ SUM(samples) samples FROM hist
 )
-SELECT h.sql_plan_hash_value||''(''||h.distinct_sql_id||'')'' plan_hash_value,
+SELECT h.sql_plan_hash_value||'('||h.distinct_sql_id||')' plan_hash_value,
        h.samples,
        ROUND(100 * h.samples / t.samples, 1) percent,
        (SELECT DBMS_LOB.SUBSTR(s.sql_text, 1000) FROM &&awr_object_prefix.sqltext s WHERE s.sql_id = h.sample_sql_id AND s.dbid = h.dbid AND ROWNUM = 1) sample_sql_text
@@ -147,7 +147,7 @@ SELECT h.sql_plan_hash_value||''(''||h.distinct_sql_id||'')'' plan_hash_value,
        total t
  WHERE h.samples >= t.samples / 1000 AND rn <= 14
  UNION ALL
-SELECT ''Others'',
+SELECT 'Others',
        NVL(SUM(h.samples), 0) samples,
        NVL(ROUND(100 * SUM(h.samples) / AVG(t.samples), 1), 0) percent,
        NULL sample_sql_text
@@ -155,7 +155,7 @@ SELECT ''Others'',
        total t
  WHERE h.samples < t.samples / 1000 OR rn > 14
  ORDER BY 2 DESC NULLS LAST
-';
+]';
 END;
 /
 

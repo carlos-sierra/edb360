@@ -67,4 +67,4 @@ SPO OFF;
 SET HEA ON;
 
 -- zip
-HOS zip -m &&edb360_main_filename._&&edb360_file_time. &&one_spool_filename..txt >> &&edb360_log3..txt
+HOS zip -m &&edb360_zip_filename. &&one_spool_filename..txt >> &&edb360_log3..txt

@@ -42,19 +42,6 @@ DECLARE
   l_end_time VARCHAR2(32);
   l_col_01 NUMBER;
   l_col_02 NUMBER;
-  l_col_03 NUMBER;
-  l_col_04 NUMBER;
-  l_col_05 NUMBER;
-  l_col_06 NUMBER;
-  l_col_07 NUMBER;
-  l_col_08 NUMBER;
-  l_col_09 NUMBER;
-  l_col_10 NUMBER;
-  l_col_11 NUMBER;
-  l_col_12 NUMBER;
-  l_col_13 NUMBER;
-  l_col_14 NUMBER;
-  l_col_15 NUMBER;
   l_line VARCHAR2(1000);
   l_sql_text VARCHAR2(32767);
 BEGIN
@@ -66,45 +53,6 @@ BEGIN
   IF '&&tit_02.' IS NOT NULL THEN
     l_line := l_line||', ''&&tit_02.'''; 
   END IF;
-  IF '&&tit_03.' IS NOT NULL THEN
-    l_line := l_line||', ''&&tit_03.'''; 
-  END IF;
-  IF '&&tit_04.' IS NOT NULL THEN
-    l_line := l_line||', ''&&tit_04.'''; 
-  END IF;
-  IF '&&tit_05.' IS NOT NULL THEN
-    l_line := l_line||', ''&&tit_05.'''; 
-  END IF;
-  IF '&&tit_06.' IS NOT NULL THEN
-    l_line := l_line||', ''&&tit_06.'''; 
-  END IF;
-  IF '&&tit_07.' IS NOT NULL THEN
-    l_line := l_line||', ''&&tit_07.'''; 
-  END IF;
-  IF '&&tit_08.' IS NOT NULL THEN
-    l_line := l_line||', ''&&tit_08.'''; 
-  END IF;
-  IF '&&tit_09.' IS NOT NULL THEN
-    l_line := l_line||', ''&&tit_09.'''; 
-  END IF;
-  IF '&&tit_10.' IS NOT NULL THEN
-    l_line := l_line||', ''&&tit_10.'''; 
-  END IF;
-  IF '&&tit_11.' IS NOT NULL THEN
-    l_line := l_line||', ''&&tit_11.'''; 
-  END IF;
-  IF '&&tit_12.' IS NOT NULL THEN
-    l_line := l_line||', ''&&tit_12.'''; 
-  END IF;
-  IF '&&tit_13.' IS NOT NULL THEN
-    l_line := l_line||', ''&&tit_13.'''; 
-  END IF;
-  IF '&&tit_14.' IS NOT NULL THEN
-    l_line := l_line||', ''&&tit_14.'''; 
-  END IF;
-  IF '&&tit_15.' IS NOT NULL THEN
-    l_line := l_line||', ''&&tit_15.'''; 
-  END IF;
   l_line := l_line||']';
   DBMS_OUTPUT.PUT_LINE(l_line);
   --OPEN cur FOR :sql_text;
@@ -112,11 +60,9 @@ BEGIN
   OPEN cur FOR l_sql_text; -- needed for 10g
   LOOP
     FETCH cur INTO l_snap_id, l_begin_time, l_end_time,
-    l_col_01, l_col_02, l_col_03, l_col_04, l_col_05,
-    l_col_06, l_col_07, l_col_08, l_col_09, l_col_10,
-    l_col_11, l_col_12, l_col_13, l_col_14, l_col_15;
+    l_col_01, l_col_02;
     EXIT WHEN cur%NOTFOUND;
-    IF l_col_01 IS NOT NULL AND l_col_02 IS NOT NULL AND l_col_03 IS NOT NULL AND l_col_04 IS NOT NULL AND l_col_05 IS NOT NULL AND l_col_06 IS NOT NULL AND l_col_07 IS NOT NULL AND l_col_08 IS NOT NULL AND l_col_09 IS NOT NULL AND l_col_10 IS NOT NULL AND l_col_11 IS NOT NULL AND l_col_12 IS NOT NULL AND l_col_13 IS NOT NULL AND l_col_14 IS NOT NULL AND l_col_15 IS NOT NULL THEN
+    IF l_col_01 IS NOT NULL AND l_col_02 IS NOT NULL THEN
       l_line := ', [new Date('||SUBSTR(l_end_time,1,4)||','||
       (TO_NUMBER(SUBSTR(l_end_time,6,2)) - 1)||','||
       SUBSTR(l_end_time,9,2)||','||
@@ -130,45 +76,6 @@ BEGIN
       IF '&&tit_02.' IS NOT NULL THEN
         l_line := l_line||', '||l_col_02; 
       END IF;
-      IF '&&tit_03.' IS NOT NULL THEN
-        l_line := l_line||', '||l_col_03; 
-      END IF;
-      IF '&&tit_04.' IS NOT NULL THEN
-        l_line := l_line||', '||l_col_04; 
-      END IF;
-      IF '&&tit_05.' IS NOT NULL THEN
-        l_line := l_line||', '||l_col_05; 
-      END IF;
-      IF '&&tit_06.' IS NOT NULL THEN
-        l_line := l_line||', '||l_col_06; 
-      END IF;
-      IF '&&tit_07.' IS NOT NULL THEN
-        l_line := l_line||', '||l_col_07; 
-      END IF;
-      IF '&&tit_08.' IS NOT NULL THEN
-        l_line := l_line||', '||l_col_08; 
-      END IF;
-      IF '&&tit_09.' IS NOT NULL THEN
-        l_line := l_line||', '||l_col_09; 
-      END IF;
-      IF '&&tit_10.' IS NOT NULL THEN
-        l_line := l_line||', '||l_col_10; 
-      END IF;
-      IF '&&tit_11.' IS NOT NULL THEN
-        l_line := l_line||', '||l_col_11; 
-      END IF;
-      IF '&&tit_12.' IS NOT NULL THEN
-        l_line := l_line||', '||l_col_12; 
-      END IF;
-      IF '&&tit_13.' IS NOT NULL THEN
-        l_line := l_line||', '||l_col_13; 
-      END IF;
-      IF '&&tit_14.' IS NOT NULL THEN
-        l_line := l_line||', '||l_col_14; 
-      END IF;
-      IF '&&tit_15.' IS NOT NULL THEN
-        l_line := l_line||', '||l_col_15; 
-      END IF;
       l_line := l_line||']';
       DBMS_OUTPUT.PUT_LINE(l_line);
     END IF;
@@ -181,20 +88,20 @@ SET SERVEROUT OFF;
 -- line chart footer
 PRO        ]);;
 PRO        
-PRO        var options = {&&stacked.
-PRO          chartArea:{left:90, top:75, width:'65%', height:'70%'},
+PRO        var options = {
+PRO          chartArea:{left:120, top:80, width:'70%', height:'70%'},
 PRO          backgroundColor: {fill: '#fcfcf0', stroke: '#336699', strokeWidth: 1},
 PRO          explorer: {actions: ['dragToZoom', 'rightClickToReset'], maxZoomIn: 0.01},
+PRO          series: { 0: {targetAxisIndex: 0}, 1: {targetAxisIndex: 1} },
+PRO          vAxes: { 0: {title: '&&vaxis1.', titleTextStyle: {fontSize: 16, bold: false}}, 1: {title: '&&vaxis2.', titleTextStyle: {fontSize: 16, bold: false}}},
+PRO          vAxes: { 0: {textStyle: {color: 'royalblue'}, title: '&&vaxis1.', titleTextStyle: {color: 'royalblue', fontSize: 16, bold: false}}, 
+PRO                   1: {textStyle: {color: 'red'},       title: '&&vaxis2.', titleTextStyle: {color: 'red',       fontSize: 16, bold: false}}},
 PRO          title: '&&section_id..&&report_sequence.. &&title.&&title_suffix.',
 PRO          titleTextStyle: {fontSize: 18, bold: false},
 PRO          focusTarget: 'category',
 PRO          legend: {position: 'right', textStyle: {fontSize: 14}},
 PRO          tooltip: {textStyle: {fontSize: 14}},
-PRO          hAxis: {title: '&&haxis.', gridlines: {count: -1}, titleTextStyle: {fontSize: 16, bold: false}},
-PRO          series: { 0: { &&series_01.}, 1: { &&series_02.},  2: { &&series_03.},  3: { &&series_04.},  4: { &&series_05.},  5: { &&series_06.},  6: { &&series_07.}, 7: {&&series_08.},
-PRO                    8: { &&series_09.}, 9: { &&series_10.}, 10: { &&series_11.}, 11: { &&series_12.}, 12: { &&series_13.}, 13: { &&series_14.}, 14: { &&series_15.}
-PRO          },
-PRO          vAxis: {title: '&&vaxis.', &&vbaseline. gridlines: {count: -1}, titleTextStyle: {fontSize: 16, bold: false}}
+PRO          hAxis: {title: '&&haxis.', gridlines: {count: -1}, titleTextStyle: {fontSize: 16, bold: false}}
 PRO        };
 PRO
 PRO        var chart = new google.visualization.&&chartype.(document.getElementById('linechart'));

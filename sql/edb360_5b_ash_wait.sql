@@ -31,7 +31,7 @@ END;
 SPO OFF;
 SET SERVEROUT OFF;
 @99830_&&common_edb360_prefix._chart_setup_driver2.sql;
-HOS zip -m &&edb360_main_filename._&&edb360_file_time. 99830_&&common_edb360_prefix._chart_setup_driver2.sql >> &&edb360_log3..txt
+HOS zip -m &&edb360_zip_filename. 99830_&&common_edb360_prefix._chart_setup_driver2.sql >> &&edb360_log3..txt
 
 DEF main_table = '&&awr_hist_prefix.ACTIVE_SESS_HISTORY';
 DEF chartype = 'AreaChart';
@@ -40,13 +40,13 @@ DEF vaxis = 'Average Active Sessions - AAS (stacked)';
 DEF vbaseline = '';
 
 BEGIN
-  :sql_text_backup := '
+  :sql_text_backup := q'[
 SELECT /*+ &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
        /* &&section_id..&&report_sequence. */
        snap_id,
-       --TO_CHAR(LAG(MAX(sample_time)) OVER (ORDER BY snap_id), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
-       TO_CHAR(MIN(sample_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
-       TO_CHAR(MAX(sample_time), ''YYYY-MM-DD HH24:MI:SS'') end_time,
+       --TO_CHAR(LAG(MAX(sample_time)) OVER (ORDER BY snap_id), 'YYYY-MM-DD HH24:MI:SS') begin_time,
+       TO_CHAR(MIN(sample_time), 'YYYY-MM-DD HH24:MI:SS') begin_time,
+       TO_CHAR(MAX(sample_time), 'YYYY-MM-DD HH24:MI:SS') end_time,
        ROUND(SUM(CASE instance_number WHEN 1 THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), (1/24/3600)) * 24 * 3600), 3) inst_01,
        ROUND(SUM(CASE instance_number WHEN 2 THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), (1/24/3600)) * 24 * 3600), 3) inst_02,
        ROUND(SUM(CASE instance_number WHEN 3 THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), (1/24/3600)) * 24 * 3600), 3) inst_03,
@@ -70,7 +70,7 @@ SELECT /*+ &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */
        snap_id
  ORDER BY
        snap_id
-';
+]';
 END;
 /
 -- end from 5a

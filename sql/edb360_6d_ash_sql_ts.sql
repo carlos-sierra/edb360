@@ -9,42 +9,42 @@ SPO OFF;
 
 DEF main_table = '&&awr_hist_prefix.ACTIVE_SESS_HISTORY';
 BEGIN
-  :sql_text_backup := '
+  :sql_text_backup := q'[
 SELECT /*+ &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
        /* &&section_id..&&report_sequence. */
        snap_id,
-       TO_CHAR(MIN(sample_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
-       TO_CHAR(MAX(sample_time), ''YYYY-MM-DD HH24:MI:SS'') end_time,
+       TO_CHAR(MIN(sample_time), 'YYYY-MM-DD HH24:MI:SS') begin_time,
+       TO_CHAR(MAX(sample_time), 'YYYY-MM-DD HH24:MI:SS') end_time,
        ROUND(SUM(CASE WHEN sql_id IN 
-       (''@sql_id_01@'', 
-       ''@sql_id_02@'', 
-       ''@sql_id_03@'', 
-       ''@sql_id_04@'', 
-       ''@sql_id_05@'', 
-       ''@sql_id_06@'', 
-       ''@sql_id_07@'', 
-       ''@sql_id_08@'', 
-       ''@sql_id_09@'', 
-       ''@sql_id_10@'', 
-       ''@sql_id_11@'', 
-       ''@sql_id_12@'', 
-       ''@sql_id_13@'', 
-       ''@sql_id_14@'') 
+       ('@sql_id_01@', 
+       '@sql_id_02@', 
+       '@sql_id_03@', 
+       '@sql_id_04@', 
+       '@sql_id_05@', 
+       '@sql_id_06@', 
+       '@sql_id_07@', 
+       '@sql_id_08@', 
+       '@sql_id_09@', 
+       '@sql_id_10@', 
+       '@sql_id_11@', 
+       '@sql_id_12@', 
+       '@sql_id_13@', 
+       '@sql_id_14@') 
        THEN 0 ELSE 10 END) / ROUND(GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(MIN(sample_time) AS DATE), (1/24/3600)) * 24 * 60 * 60), 3) "Others",
-       ROUND(SUM(CASE sql_id WHEN ''@sql_id_01@'' THEN 10 ELSE 0 END) / ROUND(GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(MIN(sample_time) AS DATE), (1/24/3600)) * 24 * 60 * 60), 3) "@sql_id_01@",
-       ROUND(SUM(CASE sql_id WHEN ''@sql_id_02@'' THEN 10 ELSE 0 END) / ROUND(GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(MIN(sample_time) AS DATE), (1/24/3600)) * 24 * 60 * 60), 3) "@sql_id_02@",
-       ROUND(SUM(CASE sql_id WHEN ''@sql_id_03@'' THEN 10 ELSE 0 END) / ROUND(GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(MIN(sample_time) AS DATE), (1/24/3600)) * 24 * 60 * 60), 3) "@sql_id_03@",
-       ROUND(SUM(CASE sql_id WHEN ''@sql_id_04@'' THEN 10 ELSE 0 END) / ROUND(GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(MIN(sample_time) AS DATE), (1/24/3600)) * 24 * 60 * 60), 3) "@sql_id_04@",
-       ROUND(SUM(CASE sql_id WHEN ''@sql_id_05@'' THEN 10 ELSE 0 END) / ROUND(GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(MIN(sample_time) AS DATE), (1/24/3600)) * 24 * 60 * 60), 3) "@sql_id_05@",
-       ROUND(SUM(CASE sql_id WHEN ''@sql_id_06@'' THEN 10 ELSE 0 END) / ROUND(GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(MIN(sample_time) AS DATE), (1/24/3600)) * 24 * 60 * 60), 3) "@sql_id_06@",
-       ROUND(SUM(CASE sql_id WHEN ''@sql_id_07@'' THEN 10 ELSE 0 END) / ROUND(GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(MIN(sample_time) AS DATE), (1/24/3600)) * 24 * 60 * 60), 3) "@sql_id_07@",
-       ROUND(SUM(CASE sql_id WHEN ''@sql_id_08@'' THEN 10 ELSE 0 END) / ROUND(GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(MIN(sample_time) AS DATE), (1/24/3600)) * 24 * 60 * 60), 3) "@sql_id_08@",
-       ROUND(SUM(CASE sql_id WHEN ''@sql_id_09@'' THEN 10 ELSE 0 END) / ROUND(GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(MIN(sample_time) AS DATE), (1/24/3600)) * 24 * 60 * 60), 3) "@sql_id_09@",
-       ROUND(SUM(CASE sql_id WHEN ''@sql_id_10@'' THEN 10 ELSE 0 END) / ROUND(GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(MIN(sample_time) AS DATE), (1/24/3600)) * 24 * 60 * 60), 3) "@sql_id_10@",
-       ROUND(SUM(CASE sql_id WHEN ''@sql_id_11@'' THEN 10 ELSE 0 END) / ROUND(GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(MIN(sample_time) AS DATE), (1/24/3600)) * 24 * 60 * 60), 3) "@sql_id_11@",
-       ROUND(SUM(CASE sql_id WHEN ''@sql_id_12@'' THEN 10 ELSE 0 END) / ROUND(GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(MIN(sample_time) AS DATE), (1/24/3600)) * 24 * 60 * 60), 3) "@sql_id_12@",
-       ROUND(SUM(CASE sql_id WHEN ''@sql_id_13@'' THEN 10 ELSE 0 END) / ROUND(GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(MIN(sample_time) AS DATE), (1/24/3600)) * 24 * 60 * 60), 3) "@sql_id_13@",
-       ROUND(SUM(CASE sql_id WHEN ''@sql_id_14@'' THEN 10 ELSE 0 END) / ROUND(GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(MIN(sample_time) AS DATE), (1/24/3600)) * 24 * 60 * 60), 3) "@sql_id_14@"
+       ROUND(SUM(CASE sql_id WHEN '@sql_id_01@' THEN 10 ELSE 0 END) / ROUND(GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(MIN(sample_time) AS DATE), (1/24/3600)) * 24 * 60 * 60), 3) "@sql_id_01@",
+       ROUND(SUM(CASE sql_id WHEN '@sql_id_02@' THEN 10 ELSE 0 END) / ROUND(GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(MIN(sample_time) AS DATE), (1/24/3600)) * 24 * 60 * 60), 3) "@sql_id_02@",
+       ROUND(SUM(CASE sql_id WHEN '@sql_id_03@' THEN 10 ELSE 0 END) / ROUND(GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(MIN(sample_time) AS DATE), (1/24/3600)) * 24 * 60 * 60), 3) "@sql_id_03@",
+       ROUND(SUM(CASE sql_id WHEN '@sql_id_04@' THEN 10 ELSE 0 END) / ROUND(GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(MIN(sample_time) AS DATE), (1/24/3600)) * 24 * 60 * 60), 3) "@sql_id_04@",
+       ROUND(SUM(CASE sql_id WHEN '@sql_id_05@' THEN 10 ELSE 0 END) / ROUND(GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(MIN(sample_time) AS DATE), (1/24/3600)) * 24 * 60 * 60), 3) "@sql_id_05@",
+       ROUND(SUM(CASE sql_id WHEN '@sql_id_06@' THEN 10 ELSE 0 END) / ROUND(GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(MIN(sample_time) AS DATE), (1/24/3600)) * 24 * 60 * 60), 3) "@sql_id_06@",
+       ROUND(SUM(CASE sql_id WHEN '@sql_id_07@' THEN 10 ELSE 0 END) / ROUND(GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(MIN(sample_time) AS DATE), (1/24/3600)) * 24 * 60 * 60), 3) "@sql_id_07@",
+       ROUND(SUM(CASE sql_id WHEN '@sql_id_08@' THEN 10 ELSE 0 END) / ROUND(GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(MIN(sample_time) AS DATE), (1/24/3600)) * 24 * 60 * 60), 3) "@sql_id_08@",
+       ROUND(SUM(CASE sql_id WHEN '@sql_id_09@' THEN 10 ELSE 0 END) / ROUND(GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(MIN(sample_time) AS DATE), (1/24/3600)) * 24 * 60 * 60), 3) "@sql_id_09@",
+       ROUND(SUM(CASE sql_id WHEN '@sql_id_10@' THEN 10 ELSE 0 END) / ROUND(GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(MIN(sample_time) AS DATE), (1/24/3600)) * 24 * 60 * 60), 3) "@sql_id_10@",
+       ROUND(SUM(CASE sql_id WHEN '@sql_id_11@' THEN 10 ELSE 0 END) / ROUND(GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(MIN(sample_time) AS DATE), (1/24/3600)) * 24 * 60 * 60), 3) "@sql_id_11@",
+       ROUND(SUM(CASE sql_id WHEN '@sql_id_12@' THEN 10 ELSE 0 END) / ROUND(GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(MIN(sample_time) AS DATE), (1/24/3600)) * 24 * 60 * 60), 3) "@sql_id_12@",
+       ROUND(SUM(CASE sql_id WHEN '@sql_id_13@' THEN 10 ELSE 0 END) / ROUND(GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(MIN(sample_time) AS DATE), (1/24/3600)) * 24 * 60 * 60), 3) "@sql_id_13@",
+       ROUND(SUM(CASE sql_id WHEN '@sql_id_14@' THEN 10 ELSE 0 END) / ROUND(GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(MIN(sample_time) AS DATE), (1/24/3600)) * 24 * 60 * 60), 3) "@sql_id_14@"
   FROM &&awr_object_prefix.active_sess_history h
  WHERE @filter_predicate@
    AND sql_id IS NOT NULL
@@ -54,7 +54,7 @@ SELECT /*+ &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */
        snap_id
  ORDER BY
        snap_id
-';
+]';
 END;
 /
 

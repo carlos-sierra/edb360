@@ -1,26 +1,28 @@
-edb360 v1707 (2017-03-06) by Carlos Sierra
+edb360 v1708 (2017-03-25) by Carlos Sierra
 ~~~~~~~~~~~~
-edb360 is a "free to use" tool to perform an initial assessment of a remote system. 
+edb360 is a "free to use" tool to perform an initial assessment of an Oracle database. 
 
-It gives a glance of an Oracle database state. It also helps to document any findings.
+eDB360 works on Oracle 10g to 12c databases. 
 
-eDB360 works on Oracle 10g to 12c databases. eDB360 works on Linus and UNIX systems. 
+eDB360 works on Linus and UNIX systems. 
+
 For Windows systems you may want to install first UNIX Utilities (UnxUtils) and a zip 
-program, else a few OS commands may not properly work.
+program, else a few OS commands may not properly work. Besides that it works on Windows.
 
 edb360 installs nothing on the database. 
 
-For better results execute connected as DBA or user with access to data dictionary.
+For better results execute connected as DBA, or as a user with access to data dictionary.
 
-edb360 takes up to 24 hours to execute. 
-
-Output ZIP file can be large (over 100 MBs), so you may want to place and execute edb360
-from a system directory with at least 1 GB of free space. 
-
-Best time to execute edb360 is overnight or over a weekend.
+edb360 may take up to 24 hours to execute if your AWR data is not properly partitioned or
+purged. 
 
 Before executing edb360 please perform a pre-check of ASH on AWR by reviewing output of 
 included script edb360-master/sql/awr_ash_pre_check.sql.
+
+Best time to execute edb360 is overnight or over a weekend.
+
+Output ZIP file can be large (over 100 MBs), so you may want to place and execute edb360
+on a system directory with at least 1 GB of free space. 
 
 ****************************************************************************************
 
@@ -42,15 +44,22 @@ Steps
    
    Indicate if your database is licensed for the Oracle Tuning Pack, 
    the Diagnostics Pack or None [ T | D | N ]. Example below specifies Tuning Pack. If 
-   both Tuning and Diagnostics pass then T.
+   licensed for both Tuning and Diagnostics pass then T.
    
    Parameter 2: Custom edb360 configuration filename (optional)
 
-   note: This parameter is for advanced users, thus a NULL value is common.
+   note: This parameter is for advanced users, thus a NULL value is common. 2nd param
+         can also accept a column, range of columns, section or range of sections;
+         for example: 7, 6-7, 7a, 7a-7b, 1b-2b
 
-   Execution sample:
+   Execution samples:
 
-   SQL> @edb360.sql T NULL
+   SQL> @edb360.sql T NULL          normal execution when Tuning pack is licensed
+   
+   SQL> @edb360.sql T custom.sql    passing a custom configuration file changing value
+                                    of some configuration parameters
+
+   SQL> @edb360.sql T 7a            generate only section 7a (AWR, ADDM and ASH reports)
    
 4. Unzip output edb360_<NNNNNN>_<NNNNNN>_YYYYMMDD_HH24MI.zip into a directory on your PC
 
@@ -71,6 +80,8 @@ Notes
 2. If you need to generate edb360 for a range of dates other than last 31 days; or change
    default "working hours" between 7:30AM and 7:30PM; or suppress an output format such as
    text or csv; set a custom configuration file based on edb360_00_config.sql.
+   
+   note: eDB360 defaults to 31 days if your AWR retention is larger than 31 days.
    
 3. How to find the license pack option that you have installed?
 
@@ -95,7 +106,7 @@ edb360 takes up to 24 hours to execute on a large database. On smaller ones or o
 it may take a few hours or less. In rare cases it may require even more than 24 hrs.
 
 If you think edb360 takes too long on your database, the first suspect is usually the 
-state of the CBO stats on Tables behind AWR. Validate with sql/awr_ash_pre_check.sql.
+state of AWR tables. Use sql/awr_ash_pre_check.sql to validate AWR state.
 
 Troubleshooting steps below are for improving performance of edb360 based on known issues.
 
@@ -112,7 +123,7 @@ Steps:
 ****************************************************************************************
    
     edb360 - Enkitec's Oracle Database 360-degree View
-    Copyright (C) 2016  Carlos Sierra
+    Copyright (C) 2017  Carlos Sierra
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

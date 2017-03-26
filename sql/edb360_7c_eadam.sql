@@ -71,7 +71,7 @@ SELECT /*+ &&ds_hint.
     * FROM dba_hist_active_sess_history h
 WHERE h.dbid = &&edb360_dbid. 
 AND h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
-AND h.sql_id IN (SELECT operation FROM plan_table WHERE statement_id = 'SQLD360_SQLID');
+AND (h.sql_id IN (SELECT operation FROM plan_table WHERE statement_id = 'SQLD360_SQLID') OR h.snap_id IN (&&edb360_eadam_snaps.));
 SPO OFF;
 HOS gzip dba_hist_active_sess_history.txt
 HOS tar -rf &&edb360_tar_filename..tar dba_hist_active_sess_history.txt.gz
@@ -81,4 +81,4 @@ HOS rm dba_hist_active_sess_history.txt.gz
 
 SET TERM ON COLSEP '';
 
-HOS zip -m &&edb360_main_filename._&&edb360_file_time. &&edb360_tar_filename..tar >> &&edb360_log3..txt
+HOS zip -m &&edb360_zip_filename. &&edb360_tar_filename..tar >> &&edb360_log3..txt

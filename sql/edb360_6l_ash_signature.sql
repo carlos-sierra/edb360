@@ -9,7 +9,7 @@ SPO OFF;
 
 DEF main_table = 'GV$ACTIVE_SESSION_HISTORY';
 BEGIN
-  :sql_text_backup := '
+  :sql_text_backup := q'[
 WITH
 hist AS (
 SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
@@ -29,7 +29,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
 total AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */ SUM(samples) samples FROM hist
 )
-SELECT h.force_matching_signature||''(''||h.distinct_sql_id||'')'' force_matching_signature,
+SELECT h.force_matching_signature||'('||h.distinct_sql_id||')' force_matching_signature,
        h.samples,
        ROUND(100 * h.samples / t.samples, 1) percent,
        h.min_sql_id,
@@ -39,7 +39,7 @@ SELECT h.force_matching_signature||''(''||h.distinct_sql_id||'')'' force_matchin
        total t
  WHERE h.samples >= t.samples / 1000 AND rn <= 14
  UNION ALL
-SELECT ''Others'',
+SELECT 'Others',
        NVL(SUM(h.samples), 0) samples,
        NVL(ROUND(100 * SUM(h.samples) / AVG(t.samples), 1), 0) percent,
        NULL min_sql_id,
@@ -49,7 +49,7 @@ SELECT ''Others'',
        total t
  WHERE h.samples < t.samples / 1000 OR rn > 14
  ORDER BY 2 DESC NULLS LAST
-';
+]';
 END;
 /
 
@@ -120,7 +120,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'inst_id = 8')
 
 DEF main_table = '&&awr_hist_prefix.ACTIVE_SESS_HISTORY';
 BEGIN
-  :sql_text_backup := '
+  :sql_text_backup := q'[
 WITH
 hist AS (
 SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
@@ -145,7 +145,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
 total AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */ SUM(samples) samples FROM hist
 )
-SELECT h.force_matching_signature||''(''||h.distinct_sql_id||'')'' force_matching_signature,
+SELECT h.force_matching_signature||'('||h.distinct_sql_id||')' force_matching_signature,
        h.samples,
        ROUND(100 * h.samples / t.samples, 1) percent,
        --h.min_sql_id,
@@ -155,7 +155,7 @@ SELECT h.force_matching_signature||''(''||h.distinct_sql_id||'')'' force_matchin
        total t
  WHERE h.samples >= t.samples / 1000 AND rn <= 14
  UNION ALL
-SELECT ''Others'',
+SELECT 'Others',
        NVL(SUM(h.samples), 0) samples,
        NVL(ROUND(100 * SUM(h.samples) / AVG(t.samples), 1), 0) percent,
        --NULL min_sql_id,
@@ -165,7 +165,7 @@ SELECT ''Others'',
        total t
  WHERE h.samples < t.samples / 1000 OR rn > 14
  ORDER BY 2 DESC NULLS LAST
-';
+]';
 END;
 /
 

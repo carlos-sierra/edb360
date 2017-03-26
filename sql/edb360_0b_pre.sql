@@ -1,5 +1,5 @@
-DEF edb360_vYYNN = 'v1707';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2017-03-06)';
+DEF edb360_vYYNN = 'v1708';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2017-03-25)';
 DEF edb360_copyright = ' (c) 2017';
 
 SET TERM OFF;
@@ -11,7 +11,7 @@ SELECT 'Tool Execution Hours so far: '||ROUND((DBMS_UTILITY.GET_TIME - :edb360_m
 /
 EXEC :edb360_max_seconds := &&edb360_conf_max_hours. * 3600;
 COL edb360_bypass NEW_V edb360_bypass;
-SELECT '' edb360_bypass FROM DUAL;
+SELECT NULL edb360_bypass FROM DUAL;
 
 -- snaps
 SELECT startup_time, dbid, instance_number, COUNT(*) snaps,
@@ -55,44 +55,63 @@ BEGIN
   END LOOP;
 END;
 /
-PRINT :hist_work_days;
-PRINT :hist_days;
+PRINT hist_work_days;
+PRINT hist_days;
 COL hist_work_days NEW_V hist_work_days;
 SELECT TO_CHAR(:hist_work_days) hist_work_days FROM DUAL;
 
--- hidden parameter edb360_sections: report column, or section, or range of columns or range of sections i.e. 3, 3-4, 3a, 3a-4c, 3-4c, 3c-4
+-- parameter edb360_sections: report column, or section, or range of columns or range of sections i.e. 3, 3-4, 3a, 3a-4c, 3-4c, 3c-4 (max length of 5)
 VAR edb360_sec_from VARCHAR2(2);
 VAR edb360_sec_to   VARCHAR2(2);
+VAR edb360_sections VARCHAR2(32);
+PRO
 BEGIN
-  IF LENGTH('&&edb360_sections.') > 5 THEN -- no hidden parameter passed
+  IF '&&edb360_sections.' IS NULL THEN -- no sections were selected as per config parameter on edb360_00_config.sql or custom file passed
+    IF LOWER(NVL(TRIM('&&custom_config_filename.'), 'null')) = 'null' THEN -- 2nd execution parameter is null
+      :edb360_sections := NULL; -- all sections
+    ELSIF LENGTH(TRIM('&&custom_config_filename.')) <= 5 AND TRIM('&&custom_config_filename.') BETWEEN '1' AND '9' THEN -- assume 2nd execution parameter is a section selection
+      :edb360_sections := LOWER(TRIM('&&custom_config_filename.')); -- second parameter becomes potential sections selection
+    ELSE
+      :edb360_sections := NULL; -- 2nd parameter was indeed a custom config file
+    END IF;      
+  ELSE -- an actual selection of sections was passed on config parameter
+    :edb360_sections := LOWER(TRIM('&&edb360_sections.'));
+  END IF;
+  IF LENGTH(:edb360_sections) > 5 THEN -- wrong value of parameter passed (too long), then select all sections
     :edb360_sec_from := '1a';
     :edb360_sec_to := '9z';
-  ELSIF LENGTH('&&edb360_sections.') = 5 AND SUBSTR('&&edb360_sections.', 3, 1) = '-' AND LOWER(SUBSTR('&&edb360_sections.', 1, 2)) BETWEEN '1a' AND '9z' AND LOWER(SUBSTR('&&edb360_sections.', 4, 2)) BETWEEN '1a' AND '9z' THEN -- i.e. 1a-7b
-    :edb360_sec_from := LOWER(SUBSTR('&&edb360_sections.', 1, 2));
-    :edb360_sec_to := LOWER(SUBSTR('&&edb360_sections.', 4, 2));
-  ELSIF LENGTH('&&edb360_sections.') = 4 AND SUBSTR('&&edb360_sections.', 3, 1) = '-' AND LOWER(SUBSTR('&&edb360_sections.', 1, 2)) BETWEEN '1a' AND '9z' AND LOWER(SUBSTR('&&edb360_sections.', 4, 1)) BETWEEN '1' AND '9' THEN -- i.e. 3b-7
-    :edb360_sec_from := LOWER(SUBSTR('&&edb360_sections.', 1, 2));
-    :edb360_sec_to := LOWER(SUBSTR('&&edb360_sections.', 4, 1))||'z';
-  ELSIF LENGTH('&&edb360_sections.') = 4 AND SUBSTR('&&edb360_sections.', 2, 1) = '-' AND LOWER(SUBSTR('&&edb360_sections.', 1, 1)) BETWEEN '1' AND '9' AND LOWER(SUBSTR('&&edb360_sections.', 3, 2)) BETWEEN '1a' AND '9z' THEN -- i.e. 3-5b
-    :edb360_sec_from := LOWER(SUBSTR('&&edb360_sections.', 1, 1))||'a';
-    :edb360_sec_to := LOWER(SUBSTR('&&edb360_sections.', 3, 2));
-  ELSIF LENGTH('&&edb360_sections.') = 3 AND SUBSTR('&&edb360_sections.', 2, 1) = '-' AND LOWER(SUBSTR('&&edb360_sections.', 1, 1)) BETWEEN '1' AND '9' AND LOWER(SUBSTR('&&edb360_sections.', 3, 1)) BETWEEN '1' AND '9' THEN -- i.e. 3-5
-    :edb360_sec_from := LOWER(SUBSTR('&&edb360_sections.', 1, 1))||'a';
-    :edb360_sec_to := LOWER(SUBSTR('&&edb360_sections.', 3, 1))||'z';
-  ELSIF LENGTH('&&edb360_sections.') = 2 AND LOWER(SUBSTR('&&edb360_sections.', 1, 2)) BETWEEN '1a' AND '9z' THEN -- i.e. 7b
-    :edb360_sec_from := LOWER(SUBSTR('&&edb360_sections.', 1, 2));
+  ELSIF LENGTH(:edb360_sections) = 5 AND SUBSTR(:edb360_sections, 3, 1) = '-' AND SUBSTR(:edb360_sections, 1, 2) BETWEEN '1a' AND '9z' AND SUBSTR(:edb360_sections, 4, 2) BETWEEN '1a' AND '9z' THEN -- i.e. 1a-7b
+    :edb360_sec_from := SUBSTR(:edb360_sections, 1, 2);
+    :edb360_sec_to := SUBSTR(:edb360_sections, 4, 2);
+  ELSIF LENGTH(:edb360_sections) = 4 AND SUBSTR(:edb360_sections, 3, 1) = '-' AND SUBSTR(:edb360_sections, 1, 2) BETWEEN '1a' AND '9z' AND SUBSTR(:edb360_sections, 4, 1) BETWEEN '1' AND '9' THEN -- i.e. 3b-7
+    :edb360_sec_from := SUBSTR(:edb360_sections, 1, 2);
+    :edb360_sec_to := SUBSTR(:edb360_sections, 4, 1)||'z';
+  ELSIF LENGTH(:edb360_sections) = 4 AND SUBSTR(:edb360_sections, 2, 1) = '-' AND SUBSTR(:edb360_sections, 1, 1) BETWEEN '1' AND '9' AND SUBSTR(:edb360_sections, 3, 2) BETWEEN '1a' AND '9z' THEN -- i.e. 3-5b
+    :edb360_sec_from := SUBSTR(:edb360_sections, 1, 1)||'a';
+    :edb360_sec_to := SUBSTR(:edb360_sections, 3, 2);
+  ELSIF LENGTH(:edb360_sections) = 3 AND SUBSTR(:edb360_sections, 2, 1) = '-' AND SUBSTR(:edb360_sections, 1, 1) BETWEEN '1' AND '9' AND SUBSTR(:edb360_sections, 3, 1) BETWEEN '1' AND '9' THEN -- i.e. 3-5
+    :edb360_sec_from := SUBSTR(:edb360_sections, 1, 1)||'a';
+    :edb360_sec_to := SUBSTR(:edb360_sections, 3, 1)||'z';
+  ELSIF LENGTH(:edb360_sections) = 2 AND SUBSTR(:edb360_sections, 1, 2) BETWEEN '1a' AND '9z' THEN -- i.e. 7b
+    :edb360_sec_from := SUBSTR(:edb360_sections, 1, 2);
     :edb360_sec_to := :edb360_sec_from;
-  ELSIF LENGTH('&&edb360_sections.') = 1 AND LOWER(SUBSTR('&&edb360_sections.', 1, 1)) BETWEEN '1' AND '9' THEN -- i.e. 7
-    :edb360_sec_from := LOWER(SUBSTR('&&edb360_sections.', 1, 1))||'a';
-    :edb360_sec_to := LOWER(SUBSTR('&&edb360_sections.', 1, 1))||'z';
-  ELSE -- wrong use of hidden parameter
+  ELSIF LENGTH(:edb360_sections) = 1 AND SUBSTR(:edb360_sections, 1, 1) BETWEEN '1' AND '9' THEN -- i.e. 7
+    :edb360_sec_from := SUBSTR(:edb360_sections, 1, 1)||'a';
+    :edb360_sec_to := SUBSTR(:edb360_sections, 1, 1)||'z';
+  ELSE -- wrong value of parameter passed (incorrect syntax), or nothing was passed
     :edb360_sec_from := '1a';
     :edb360_sec_to := '9z';
   END IF;
 END;
 /
+PRO edb360_sec_from edb360_sec_to edb360_sections
 PRINT edb360_sec_from;
 PRINT edb360_sec_to;
+PRINT edb360_sections;
+PRO
+COL skip_extras NEW_V skip_extras;
+SELECT CASE WHEN :edb360_sections IS NOT NULL THEN ' echo skip ' END skip_extras FROM DUAL;
+PRO
 COL edb360_0g NEW_V edb360_0g;
 COL edb360_1a NEW_V edb360_1a;
 COL edb360_1b NEW_V edb360_1b;
@@ -127,6 +146,7 @@ COL edb360_4h NEW_V edb360_4h;
 COL edb360_4i NEW_V edb360_4i;
 COL edb360_4j NEW_V edb360_4j;
 COL edb360_4k NEW_V edb360_4k;
+COL edb360_4l NEW_V edb360_4l;
 COL edb360_5a NEW_V edb360_5a;
 COL edb360_5b NEW_V edb360_5b;
 COL edb360_5c NEW_V edb360_5c;
@@ -149,62 +169,63 @@ COL edb360_6l NEW_V edb360_6l;
 COL edb360_7a NEW_V edb360_7a;
 COL edb360_7b NEW_V edb360_7b;
 COL edb360_7c NEW_V edb360_7c;
-SELECT CASE '&&edb360_conf_incl_tkprof.' WHEN 'Y' THEN 'edb360_0g_' ELSE '--' END edb360_0g FROM DUAL;
-SELECT CASE WHEN '1a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_1a_' ELSE '--' END edb360_1a FROM DUAL;
-SELECT CASE WHEN '1b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_1b_' ELSE '--' END edb360_1b FROM DUAL;
-SELECT CASE WHEN '1c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_1c_' ELSE '--' END edb360_1c FROM DUAL;
-SELECT CASE WHEN '1d' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_1d_' ELSE '--' END edb360_1d FROM DUAL;
-SELECT CASE WHEN '1e' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_1e_' ELSE '--' END edb360_1e FROM DUAL;
-SELECT CASE WHEN '1f' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_1f_' ELSE '--' END edb360_1f FROM DUAL;
-SELECT CASE WHEN '1g' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_1g_' ELSE '--' END edb360_1g FROM DUAL;
-SELECT CASE WHEN '2a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_2a_' ELSE '--' END edb360_2a FROM DUAL;
-SELECT CASE WHEN '2b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_2b_' ELSE '--' END edb360_2b FROM DUAL;
-SELECT CASE WHEN '2c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_2c_' ELSE '--' END edb360_2c FROM DUAL;
-SELECT CASE WHEN '2d' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_2d_' ELSE '--' END edb360_2d FROM DUAL;
-SELECT CASE WHEN '3a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3a_' ELSE '--' END edb360_3a FROM DUAL;
-SELECT CASE WHEN '3b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3b_' ELSE '--' END edb360_3b FROM DUAL;
-SELECT CASE WHEN '3c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3c_' ELSE '--' END edb360_3c FROM DUAL;
-SELECT CASE WHEN '3d' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3d_' ELSE '--' END edb360_3d FROM DUAL;
-SELECT CASE WHEN '3e' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3e_' ELSE '--' END edb360_3e FROM DUAL;
-SELECT CASE WHEN '3f' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3f_' ELSE '--' END edb360_3f FROM DUAL;
-SELECT CASE WHEN '3g' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3g_' ELSE '--' END edb360_3g FROM DUAL;
-SELECT CASE WHEN '3h' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3h_' ELSE '--' END edb360_3h FROM DUAL;
-SELECT CASE WHEN '3i' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3i_' ELSE '--' END edb360_3i FROM DUAL;
-SELECT CASE WHEN '3j' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3j_' ELSE '--' END edb360_3j FROM DUAL;
-SELECT CASE WHEN '3k' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3k_' ELSE '--' END edb360_3k FROM DUAL;
-SELECT CASE WHEN '4a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4a_' ELSE '--' END edb360_4a FROM DUAL;
-SELECT CASE WHEN '4b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4b_' ELSE '--' END edb360_4b FROM DUAL;
-SELECT CASE WHEN '4c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4c_' ELSE '--' END edb360_4c FROM DUAL;
-SELECT CASE WHEN '4d' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4d_' ELSE '--' END edb360_4d FROM DUAL;
-SELECT CASE WHEN '4e' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4e_' ELSE '--' END edb360_4e FROM DUAL;
-SELECT CASE WHEN '4f' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4f_' ELSE '--' END edb360_4f FROM DUAL;
-SELECT CASE WHEN '4g' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4g_' ELSE '--' END edb360_4g FROM DUAL;
-SELECT CASE WHEN '4h' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4h_' ELSE '--' END edb360_4h FROM DUAL;
-SELECT CASE WHEN '4i' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4i_' ELSE '--' END edb360_4i FROM DUAL;
-SELECT CASE WHEN '4j' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4j_' ELSE '--' END edb360_4j FROM DUAL;
-SELECT CASE WHEN '4k' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4k_' ELSE '--' END edb360_4k FROM DUAL;
-SELECT CASE WHEN '5a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_5a_' ELSE '--' END edb360_5a FROM DUAL;
-SELECT CASE WHEN '5b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_5b_' ELSE '--' END edb360_5b FROM DUAL;
-SELECT CASE WHEN '5c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_5c_' ELSE '--' END edb360_5c FROM DUAL;
-SELECT CASE WHEN '5d' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_5d_' ELSE '--' END edb360_5d FROM DUAL;
-SELECT CASE WHEN '5e' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_5e_' ELSE '--' END edb360_5e FROM DUAL;
-SELECT CASE WHEN '5f' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_5f_' ELSE '--' END edb360_5f FROM DUAL;
-SELECT CASE WHEN '5g' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_5g_' ELSE '--' END edb360_5g FROM DUAL;
-SELECT CASE WHEN '6a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6a_' ELSE '--' END edb360_6a FROM DUAL;
-SELECT CASE WHEN '6b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6b_' ELSE '--' END edb360_6b FROM DUAL;
-SELECT CASE WHEN '6c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6c_' ELSE '--' END edb360_6c FROM DUAL;
-SELECT CASE WHEN '6d' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6d_' ELSE '--' END edb360_6d FROM DUAL;
-SELECT CASE WHEN '6e' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6e_' ELSE '--' END edb360_6e FROM DUAL;
-SELECT CASE WHEN '6f' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6f_' ELSE '--' END edb360_6f FROM DUAL;
-SELECT CASE WHEN '6g' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6g_' ELSE '--' END edb360_6g FROM DUAL;
-SELECT CASE WHEN '6h' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6h_' ELSE '--' END edb360_6h FROM DUAL;
-SELECT CASE WHEN '6i' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6i_' ELSE '--' END edb360_6i FROM DUAL;
-SELECT CASE WHEN '6j' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6j_' ELSE '--' END edb360_6j FROM DUAL;
-SELECT CASE WHEN '6k' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6k_' ELSE '--' END edb360_6k FROM DUAL;
-SELECT CASE WHEN '6l' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6l_' ELSE '--' END edb360_6l FROM DUAL;
-SELECT CASE WHEN '7a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_7a_' ELSE '--' END edb360_7a FROM DUAL;
-SELECT CASE WHEN '7b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_7b_' ELSE '--' END edb360_7b FROM DUAL;
-SELECT CASE WHEN '7c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_7c_' ELSE '--' END edb360_7c FROM DUAL;
+SELECT CASE '&&edb360_conf_incl_tkprof.' WHEN 'Y'                 THEN 'edb360_0g_' ELSE ' echo skip ' END edb360_0g FROM DUAL;
+SELECT CASE WHEN '1a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_1a_' ELSE ' echo skip ' END edb360_1a FROM DUAL;
+SELECT CASE WHEN '1b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_1b_' ELSE ' echo skip ' END edb360_1b FROM DUAL;
+SELECT CASE WHEN '1c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_1c_' ELSE ' echo skip ' END edb360_1c FROM DUAL;
+SELECT CASE WHEN '1d' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_1d_' ELSE ' echo skip ' END edb360_1d FROM DUAL;
+SELECT CASE WHEN '1e' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_1e_' ELSE ' echo skip ' END edb360_1e FROM DUAL;
+SELECT CASE WHEN '1f' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_1f_' ELSE ' echo skip ' END edb360_1f FROM DUAL;
+SELECT CASE WHEN '1g' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_1g_' ELSE ' echo skip ' END edb360_1g FROM DUAL;
+SELECT CASE WHEN '2a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_2a_' ELSE ' echo skip ' END edb360_2a FROM DUAL;
+SELECT CASE WHEN '2b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_2b_' ELSE ' echo skip ' END edb360_2b FROM DUAL;
+SELECT CASE WHEN '2c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_2c_' ELSE ' echo skip ' END edb360_2c FROM DUAL;
+SELECT CASE WHEN '2d' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_2d_' ELSE ' echo skip ' END edb360_2d FROM DUAL;
+SELECT CASE WHEN '3a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3a_' ELSE ' echo skip ' END edb360_3a FROM DUAL;
+SELECT CASE WHEN '3b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3b_' ELSE ' echo skip ' END edb360_3b FROM DUAL;
+SELECT CASE WHEN '3c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3c_' ELSE ' echo skip ' END edb360_3c FROM DUAL;
+SELECT CASE WHEN '3d' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3d_' ELSE ' echo skip ' END edb360_3d FROM DUAL;
+SELECT CASE WHEN '3e' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3e_' ELSE ' echo skip ' END edb360_3e FROM DUAL;
+SELECT CASE WHEN '3f' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3f_' ELSE ' echo skip ' END edb360_3f FROM DUAL;
+SELECT CASE WHEN '3g' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3g_' ELSE ' echo skip ' END edb360_3g FROM DUAL;
+SELECT CASE WHEN '3h' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3h_' ELSE ' echo skip ' END edb360_3h FROM DUAL;
+SELECT CASE WHEN '3i' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3i_' ELSE ' echo skip ' END edb360_3i FROM DUAL;
+SELECT CASE WHEN '3j' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3j_' ELSE ' echo skip ' END edb360_3j FROM DUAL;
+SELECT CASE WHEN '3k' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3k_' ELSE ' echo skip ' END edb360_3k FROM DUAL;
+SELECT CASE WHEN '4a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4a_' ELSE ' echo skip ' END edb360_4a FROM DUAL;
+SELECT CASE WHEN '4b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4b_' ELSE ' echo skip ' END edb360_4b FROM DUAL;
+SELECT CASE WHEN '4c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4c_' ELSE ' echo skip ' END edb360_4c FROM DUAL;
+SELECT CASE WHEN '4d' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4d_' ELSE ' echo skip ' END edb360_4d FROM DUAL;
+SELECT CASE WHEN '4e' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4e_' ELSE ' echo skip ' END edb360_4e FROM DUAL;
+SELECT CASE WHEN '4f' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4f_' ELSE ' echo skip ' END edb360_4f FROM DUAL;
+SELECT CASE WHEN '4g' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4g_' ELSE ' echo skip ' END edb360_4g FROM DUAL;
+SELECT CASE WHEN '4h' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4h_' ELSE ' echo skip ' END edb360_4h FROM DUAL;
+SELECT CASE WHEN '4i' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4i_' ELSE ' echo skip ' END edb360_4i FROM DUAL;
+SELECT CASE WHEN '4j' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4j_' ELSE ' echo skip ' END edb360_4j FROM DUAL;
+SELECT CASE WHEN '4k' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4k_' ELSE ' echo skip ' END edb360_4k FROM DUAL;
+SELECT CASE WHEN '4l' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4l_' ELSE ' echo skip ' END edb360_4l FROM DUAL;
+SELECT CASE WHEN '5a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_5a_' ELSE ' echo skip ' END edb360_5a FROM DUAL;
+SELECT CASE WHEN '5b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_5b_' ELSE ' echo skip ' END edb360_5b FROM DUAL;
+SELECT CASE WHEN '5c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_5c_' ELSE ' echo skip ' END edb360_5c FROM DUAL;
+SELECT CASE WHEN '5d' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_5d_' ELSE ' echo skip ' END edb360_5d FROM DUAL;
+SELECT CASE WHEN '5e' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_5e_' ELSE ' echo skip ' END edb360_5e FROM DUAL;
+SELECT CASE WHEN '5f' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_5f_' ELSE ' echo skip ' END edb360_5f FROM DUAL;
+SELECT CASE WHEN '5g' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_5g_' ELSE ' echo skip ' END edb360_5g FROM DUAL;
+SELECT CASE WHEN '6a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6a_' ELSE ' echo skip ' END edb360_6a FROM DUAL;
+SELECT CASE WHEN '6b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6b_' ELSE ' echo skip ' END edb360_6b FROM DUAL;
+SELECT CASE WHEN '6c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6c_' ELSE ' echo skip ' END edb360_6c FROM DUAL;
+SELECT CASE WHEN '6d' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6d_' ELSE ' echo skip ' END edb360_6d FROM DUAL;
+SELECT CASE WHEN '6e' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6e_' ELSE ' echo skip ' END edb360_6e FROM DUAL;
+SELECT CASE WHEN '6f' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6f_' ELSE ' echo skip ' END edb360_6f FROM DUAL;
+SELECT CASE WHEN '6g' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6g_' ELSE ' echo skip ' END edb360_6g FROM DUAL;
+SELECT CASE WHEN '6h' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6h_' ELSE ' echo skip ' END edb360_6h FROM DUAL;
+SELECT CASE WHEN '6i' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6i_' ELSE ' echo skip ' END edb360_6i FROM DUAL;
+SELECT CASE WHEN '6j' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6j_' ELSE ' echo skip ' END edb360_6j FROM DUAL;
+SELECT CASE WHEN '6k' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6k_' ELSE ' echo skip ' END edb360_6k FROM DUAL;
+SELECT CASE WHEN '6l' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6l_' ELSE ' echo skip ' END edb360_6l FROM DUAL;
+SELECT CASE WHEN '7a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_7a_' ELSE ' echo skip ' END edb360_7a FROM DUAL;
+SELECT CASE WHEN '7b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_7b_' ELSE ' echo skip ' END edb360_7b FROM DUAL;
+SELECT CASE WHEN '7c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_7c_' ELSE ' echo skip ' END edb360_7c FROM DUAL;
 
 -- filename prefix
 COL edb360_prefix NEW_V edb360_prefix;
@@ -279,9 +300,16 @@ DEF edb360_log = '00002_&&common_edb360_prefix._log';
 DEF edb360_log2 = '00003_&&common_edb360_prefix._log2';
 DEF edb360_log3 = '00004_&&common_edb360_prefix._log3';
 DEF edb360_tkprof = '00005_&&common_edb360_prefix._tkprof';
-DEF edb360_main_filename = '&&common_edb360_prefix._&&host_hash.';
+--DEF edb360_main_filename = '&&common_edb360_prefix._&&host_hash.';
+COL edb360_main_filename NEW_V edb360_main_filename;
+SELECT '&&common_edb360_prefix.'||(CASE '&&edb360_conf_incl_dbname_file.' WHEN 'Y' THEN '_&&database_name_short.' ELSE '_&&host_hash.' END) edb360_main_filename FROM DUAL
+/
+COL edb360_zip_filename NEW_V edb360_zip_filename;
+SELECT '&&edb360_main_filename._&&edb360_file_time.' edb360_zip_filename FROM DUAL
+/
 DEF edb360_tracefile_identifier = '&&common_edb360_prefix.';
-DEF edb360_tar_filename = '00008_&&edb360_main_filename._&&edb360_file_time.';
+DEF edb360_tar_filename = '00008_&&edb360_zip_filename.';
+DEF edb360_mv_host_command = '';
 
 -- mont info
 HOS dcli -g ~/dbs_group -l oracle mount >> &&edb360_log3..txt
@@ -337,7 +365,7 @@ BEGIN
 END;
 /
 -- esp collection. note: skip if executing for one section
-@&&skip_diagnostics.&&edb360_sections.sql/esp_master.sql
+@&&skip_diagnostics.&&skip_extras.sql/esp_master.sql
 SET TERM OFF; 
 
 -- nls (2nd time as esp may change them)
@@ -355,15 +383,23 @@ COL row_num NEW_V row_num HEA '#' PRI;
 -- get rdbms version
 COL db_version NEW_V db_version;
 SELECT version db_version FROM v$instance;
-DEF skip_10g = '';
-COL skip_10g NEW_V skip_10g;
-SELECT '--' skip_10g FROM v$instance WHERE version LIKE '10%';
-DEF skip_11g = '';
-COL skip_11g NEW_V skip_11g;
-SELECT '--' skip_11g FROM v$instance WHERE version LIKE '11%';
-DEF skip_11r1 = '';
-COL skip_11r1 NEW_V skip_11r1;
-SELECT '--' skip_11r1 FROM v$instance WHERE version LIKE '11.1%';
+
+-- skip
+DEF skip_10g_column = '';
+COL skip_10g_column NEW_V skip_10g_column;
+DEF skip_10g_script = '';
+COL skip_10g_script NEW_V skip_10g_script;
+SELECT ' -- skip 10g ' skip_10g_column, ' echo skip 10g ' skip_10g_script FROM v$instance WHERE version LIKE '10%';
+DEF skip_11g_column = '';
+COL skip_11g_column NEW_V skip_11g_column;
+DEF skip_11g_script = '';
+COL skip_11g_script NEW_V skip_11g_script;
+SELECT ' -- skip 11g ' skip_11g_column, ' echo skip 11g ' skip_11g_script FROM v$instance WHERE version LIKE '11%';
+DEF skip_11r1_column = '';
+COL skip_11r1_column NEW_V skip_11r1_column;
+DEF skip_11r1_script = '';
+COL skip_11r1_script NEW_V skip_11r1_script;
+SELECT ' -- skip 11gR1 ' skip_11r1_column, ' echo skip 11gR1 ' skip_11r1_script FROM v$instance WHERE version LIKE '11.1%';
 
 -- get average number of CPUs
 COL avg_cpu_count NEW_V avg_cpu_count FOR A6;
@@ -411,6 +447,9 @@ COL maximum_snap_id NEW_V maximum_snap_id;
 SELECT NVL(TO_CHAR(MAX(snap_id)), '&&minimum_snap_id.') maximum_snap_id FROM &&awr_object_prefix.snapshot WHERE '&&diagnostics_pack.' = 'Y' AND dbid = &&edb360_dbid. AND end_interval_time < TO_DATE('&&edb360_date_to.', '&&edb360_date_format.');
 SELECT '-1' maximum_snap_id FROM DUAL WHERE TRIM('&&maximum_snap_id.') IS NULL;
 
+-- eAdam
+DEF edb360_eadam_snaps = '-666';
+
 -- ebs
 DEF ebs_release = '';
 DEF ebs_system_name = '';
@@ -419,20 +458,20 @@ COL ebs_system_name NEW_V ebs_system_name;
 SELECT release_name ebs_release, applications_system_name ebs_system_name FROM applsys.fnd_product_groups WHERE ROWNUM = 1;
 
 -- siebel
-DEF siebel_schema = '';
+DEF siebel_schema = 'siebel_schema';
 DEF siebel_app_ver = '';
 COL siebel_schema NEW_V siebel_schema;
 COL siebel_app_ver NEW_V siebel_app_ver;
 SELECT owner siebel_schema FROM sys.dba_tab_columns WHERE table_name = 'S_REPOSITORY' AND column_name = 'ROW_ID' AND data_type = 'VARCHAR2' AND ROWNUM = 1;
-SELECT app_ver siebel_app_ver FROM &&siebel_schema..s_app_ver WHERE ROWNUM = 1;
+SELECT /* ignore if it fails to parse */ app_ver siebel_app_ver FROM &&siebel_schema..s_app_ver WHERE ROWNUM = 1;
 
 -- psft
-DEF psft_schema = '';
+DEF psft_schema = 'psft_schema';
 DEF psft_tools_rel = '';
 COL psft_schema NEW_V psft_schema;
 COL psft_tools_rel NEW_V psft_tools_rel;
 SELECT owner psft_schema FROM sys.dba_tab_columns WHERE table_name = 'PSSTATUS' AND column_name = 'TOOLSREL' AND data_type = 'VARCHAR2' AND ROWNUM = 1;
-SELECT toolsrel psft_tools_rel FROM &&psft_schema..psstatus WHERE ROWNUM = 1;
+SELECT /* ignore if it fails to parse */ toolsrel psft_tools_rel FROM &&psft_schema..psstatus WHERE ROWNUM = 1;
 
 -- inclusion config determine skip flags
 COL edb360_skip_html NEW_V edb360_skip_html;
@@ -443,24 +482,24 @@ COL edb360_skip_line NEW_V edb360_skip_line;
 COL edb360_skip_pie  NEW_V edb360_skip_pie;
 COL edb360_skip_bar  NEW_V edb360_skip_bar;
 COL edb360_skip_metadata  NEW_V edb360_skip_metadata;
-SELECT CASE '&&edb360_conf_incl_html.'     WHEN 'N' THEN '--' END edb360_skip_html     FROM DUAL;
-SELECT CASE '&&edb360_conf_incl_xml.'      WHEN 'N' THEN '--' END edb360_skip_xml      FROM DUAL;
-SELECT CASE '&&edb360_conf_incl_text.'     WHEN 'N' THEN '--' END edb360_skip_text     FROM DUAL;
-SELECT CASE '&&edb360_conf_incl_csv.'      WHEN 'N' THEN '--' END edb360_skip_csv      FROM DUAL;
-SELECT CASE '&&edb360_conf_incl_line.'     WHEN 'N' THEN '--' END edb360_skip_line     FROM DUAL;
-SELECT CASE '&&edb360_conf_incl_pie.'      WHEN 'N' THEN '--' END edb360_skip_pie      FROM DUAL;
-SELECT CASE '&&edb360_conf_incl_bar.'      WHEN 'N' THEN '--' END edb360_skip_bar      FROM DUAL;
-SELECT CASE '&&edb360_conf_incl_metadata.' WHEN 'N' THEN '--' END edb360_skip_metadata FROM DUAL;
+SELECT CASE '&&edb360_conf_incl_html.'     WHEN 'N' THEN ' echo skip html ' END edb360_skip_html     FROM DUAL;
+SELECT CASE '&&edb360_conf_incl_xml.'      WHEN 'N' THEN ' echo skip xml '  END edb360_skip_xml      FROM DUAL;
+SELECT CASE '&&edb360_conf_incl_text.'     WHEN 'N' THEN ' echo skip text ' END edb360_skip_text     FROM DUAL;
+SELECT CASE '&&edb360_conf_incl_csv.'      WHEN 'N' THEN ' echo skip csv '  END edb360_skip_csv      FROM DUAL;
+SELECT CASE '&&edb360_conf_incl_line.'     WHEN 'N' THEN ' echo skip line ' END edb360_skip_line     FROM DUAL;
+SELECT CASE '&&edb360_conf_incl_pie.'      WHEN 'N' THEN ' echo skip pie '  END edb360_skip_pie      FROM DUAL;
+SELECT CASE '&&edb360_conf_incl_bar.'      WHEN 'N' THEN ' echo skip bar '  END edb360_skip_bar      FROM DUAL;
+SELECT CASE '&&edb360_conf_incl_metadata.' WHEN 'N' THEN ' echo skip meta ' END edb360_skip_metadata FROM DUAL;
 
 -- inclusion of some diagnostics from memory (not from history)
 COL edb360_skip_ash_mem NEW_V edb360_skip_ash_mem;
 COL edb360_skip_sql_mon NEW_V edb360_skip_sql_mon;
 COL edb360_skip_stat_mem NEW_V edb360_skip_stat_mem;
 COL edb360_skip_px_mem NEW_V edb360_skip_px_mem;
-SELECT CASE '&&edb360_conf_incl_ash_mem.' WHEN 'N' THEN '--' END edb360_skip_ash_mem FROM DUAL;
-SELECT CASE '&&edb360_conf_incl_sql_mon.' WHEN 'N' THEN '--' END edb360_skip_sql_mon FROM DUAL;
-SELECT CASE '&&edb360_conf_incl_stat_mem.' WHEN 'N' THEN '--' END edb360_skip_stat_mem FROM DUAL;
-SELECT CASE '&&edb360_conf_incl_px_mem.' WHEN 'N' THEN '--' END edb360_skip_px_mem FROM DUAL;
+SELECT CASE '&&edb360_conf_incl_ash_mem.'  WHEN 'N' THEN ' echo skip ash mem '  END edb360_skip_ash_mem  FROM DUAL;
+SELECT CASE '&&edb360_conf_incl_sql_mon.'  WHEN 'N' THEN ' echo skip sql mon '  END edb360_skip_sql_mon  FROM DUAL;
+SELECT CASE '&&edb360_conf_incl_stat_mem.' WHEN 'N' THEN ' echo skip stat mem ' END edb360_skip_stat_mem FROM DUAL;
+SELECT CASE '&&edb360_conf_incl_px_mem.'   WHEN 'N' THEN ' echo skip px mem '   END edb360_skip_px_mem   FROM DUAL;
 
 DEF top_level_hints = ' NO_MERGE ';
 DEF sq_fact_hints = ' MATERIALIZE NO_MERGE ';
@@ -470,22 +509,20 @@ DEF ash_hints2 = ' FULL(h.INT$&&awr_hist_prefix.ACT_SESS_HISTORY.sn) FULL(h.INT$
 DEF ash_hints3 = ' USE_HASH(h.INT$&&awr_hist_prefix.ACT_SESS_HISTORY.sn h.INT$&&awr_hist_prefix.ACT_SESS_HISTORY.ash h.INT$&&awr_hist_prefix.ACT_SESS_HISTORY.evt) ';
 DEF def_max_rows = '10000';
 DEF max_rows = '1e4';
-DEF exclusion_list = "(''ANONYMOUS'',''APEX_030200'',''APEX_040000'',''APEX_SSO'',''APPQOSSYS'',''CTXSYS'',''DBSNMP'',''DIP'',''EXFSYS'',''FLOWS_FILES'',''MDSYS'',''OLAPSYS'',''ORACLE_OCM'',''ORDDATA'',''ORDPLUGINS'',''ORDSYS'',''OUTLN'',''OWBSYS'')";
-DEF exclusion_list2 = "(''SI_INFORMTN_SCHEMA'',''SQLTXADMIN'',''SQLTXPLAIN'',''SYS'',''SYSMAN'',''SYSTEM'',''TRCANLZR'',''WMSYS'',''XDB'',''XS$NULL'',''PERFSTAT'',''STDBYPERF'',''MGDSYS'',''OJVMSYS'')";
-COL exclusion_list_single_quote NEW_V exclusion_list_single_quote;
-COL exclusion_list2_single_quote NEW_V exclusion_list2_single_quote;
-SELECT REPLACE('&&exclusion_list.', '''''', '''') exclusion_list_single_quote FROM DUAL;
-SELECT REPLACE('&&exclusion_list2.', '''''', '''') exclusion_list2_single_quote FROM DUAL;
+DEF exclusion_list = "('ANONYMOUS','APEX_030200','APEX_040000','APEX_SSO','APPQOSSYS','CTXSYS','DBSNMP','DIP','EXFSYS','FLOWS_FILES','MDSYS','OLAPSYS','ORACLE_OCM','ORDDATA','ORDPLUGINS','ORDSYS','OUTLN','OWBSYS')";
+DEF exclusion_list2 = "('SI_INFORMTN_SCHEMA','SQLTXADMIN','SQLTXPLAIN','SYS','SYSMAN','SYSTEM','TRCANLZR','WMSYS','XDB','XS$NULL','PERFSTAT','STDBYPERF','MGDSYS','OJVMSYS')";
 DEF skip_html = '';
 DEF skip_text = '';
 DEF skip_csv = '';
 DEF skip_lch = 'Y';
+DEF skip_lch2 = 'Y';
 DEF skip_pch = 'Y';
 DEF skip_bch = 'Y';
 DEF skip_all = '';
 DEF abstract = '';
 DEF abstract2 = '';
 DEF foot = '';
+DEF abstract_uom = 'Memory is accounted as power of two (binary) while storage and network traffic as power of ten (decimal). <br />';
 --DEF sql_text = '';
 COL sql_text FOR A100;
 DEF chartype = '';
@@ -559,6 +596,7 @@ COL skip_html NEW_V skip_html;
 COL skip_text NEW_V skip_text;
 COL skip_csv NEW_V skip_csv;
 COL skip_lch NEW_V skip_lch;
+COL skip_lch2 NEW_V skip_lch2;
 COL skip_pch NEW_V skip_pch;
 COL skip_bch NEW_V skip_bch;
 COL skip_all NEW_V skip_all;
@@ -605,20 +643,24 @@ DEF exact_matching_signature = '';
 DEF force_matching_signature = '';
 —- this gives you two level of “indirection”, aka it goes into PL/SQL that dumps a script that is later on executed 
 —- I use this for bar charts on sqld360
-DEF wait_class_colors = 'CASE wait_class WHEN ''''''''CPU'''''''' THEN ''''''''34CF27'''''''' WHEN ''''''''Scheduler'''''''' THEN ''''''''9FFA9D'''''''' WHEN ''''''''User I/O'''''''' THEN ''''''''0252D7'''''''' WHEN ''''''''System I/O'''''''' THEN ''''''''1E96DD'''''''' ';
-DEF wait_class_colors2 = ' WHEN ''''''''Concurrency'''''''' THEN ''''''''871C12'''''''' WHEN ''''''''Application'''''''' THEN ''''''''C42A05'''''''' WHEN ''''''''Commit'''''''' THEN ''''''''EA6A05'''''''' WHEN ''''''''Configuration'''''''' THEN ''''''''594611''''''''  ';
-DEF wait_class_colors3 = ' WHEN ''''''''Administrative'''''''' THEN ''''''''75763E''''''''  WHEN ''''''''Network'''''''' THEN ''''''''989779'''''''' WHEN ''''''''Other'''''''' THEN ''''''''F571A0'''''''' ';
-DEF wait_class_colors4 = ' WHEN ''''''''Cluster'''''''' THEN ''''''''CEC3B5'''''''' WHEN ''''''''Queueing'''''''' THEN ''''''''C6BAA5'''''''' ELSE ''''''''000000'''''''' END';
+--DEF wait_class_colors = 'CASE wait_class WHEN ''''''''CPU'''''''' THEN ''''''''34CF27'''''''' WHEN ''''''''Scheduler'''''''' THEN ''''''''9FFA9D'''''''' WHEN ''''''''User I/O'''''''' THEN ''''''''0252D7'''''''' WHEN ''''''''System I/O'''''''' THEN ''''''''1E96DD'''''''' ';
+--DEF wait_class_colors2 = ' WHEN ''''''''Concurrency'''''''' THEN ''''''''871C12'''''''' WHEN ''''''''Application'''''''' THEN ''''''''C42A05'''''''' WHEN ''''''''Commit'''''''' THEN ''''''''EA6A05'''''''' WHEN ''''''''Configuration'''''''' THEN ''''''''594611''''''''  ';
+--DEF wait_class_colors3 = ' WHEN ''''''''Administrative'''''''' THEN ''''''''75763E''''''''  WHEN ''''''''Network'''''''' THEN ''''''''989779'''''''' WHEN ''''''''Other'''''''' THEN ''''''''F571A0'''''''' ';
+--DEF wait_class_colors4 = ' WHEN ''''''''Cluster'''''''' THEN ''''''''CEC3B5'''''''' WHEN ''''''''Queueing'''''''' THEN ''''''''C6BAA5'''''''' ELSE ''''''''000000'''''''' END';
 —- I use this for bar charts on edb360
-DEF wait_class_colors = " CASE wait_class WHEN ''ON CPU'' THEN ''34CF27'' WHEN ''Scheduler'' THEN ''9FFA9D'' WHEN ''User I/O'' THEN ''0252D7'' WHEN ''System I/O'' THEN ''1E96DD'' ";
-DEF wait_class_colors2 = " WHEN ''Concurrency'' THEN ''871C12'' WHEN ''Application'' THEN ''C42A05'' WHEN ''Commit'' THEN ''EA6A05'' WHEN ''Configuration'' THEN ''594611''  ";
-DEF wait_class_colors3 = " WHEN ''Administrative'' THEN ''75763E''  WHEN ''Network'' THEN ''989779'' WHEN ''Other'' THEN ''F571A0'' ";
-DEF wait_class_colors4 = " WHEN ''Cluster'' THEN ''CEC3B5'' WHEN ''Queueing'' THEN ''C6BAA5'' ELSE ''000000'' END ";
+--DEF wait_class_colors = " CASE wait_class WHEN ''ON CPU'' THEN ''34CF27'' WHEN ''Scheduler'' THEN ''9FFA9D'' WHEN ''User I/O'' THEN ''0252D7'' WHEN ''System I/O'' THEN ''1E96DD'' ";
+--DEF wait_class_colors2 = " WHEN ''Concurrency'' THEN ''871C12'' WHEN ''Application'' THEN ''C42A05'' WHEN ''Commit'' THEN ''EA6A05'' WHEN ''Configuration'' THEN ''594611''  ";
+--DEF wait_class_colors3 = " WHEN ''Administrative'' THEN ''75763E''  WHEN ''Network'' THEN ''989779'' WHEN ''Other'' THEN ''F571A0'' ";
+--DEF wait_class_colors4 = " WHEN ''Cluster'' THEN ''CEC3B5'' WHEN ''Queueing'' THEN ''C6BAA5'' ELSE ''000000'' END ";
+DEF wait_class_colors = " CASE wait_class WHEN 'ON CPU' THEN '34CF27' WHEN 'Scheduler' THEN '9FFA9D' WHEN 'User I/O' THEN '0252D7' WHEN 'System I/O' THEN '1E96DD' ";
+DEF wait_class_colors2 = " WHEN 'Concurrency' THEN '871C12' WHEN 'Application' THEN 'C42A05' WHEN 'Commit' THEN 'EA6A05' WHEN 'Configuration' THEN '594611'  ";
+DEF wait_class_colors3 = " WHEN 'Administrative' THEN '75763E'  WHEN 'Network' THEN '989779' WHEN 'Other' THEN 'F571A0' ";
+DEF wait_class_colors4 = " WHEN 'Cluster' THEN 'CEC3B5' WHEN 'Queueing' THEN 'C6BAA5' ELSE '000000' END ";
 —-this one gives you one level of indirection indirection AND it builds the string in the way the line charts needs it (color: ‘#FFFFFF’) 
-DEF wait_class_colors_s = 'CASE wait_class WHEN ''''CPU'''' THEN ''''color: ''''''''#34CF27'''''''''''' WHEN ''''Scheduler'''' THEN ''''color: ''''''''#9FFA9D'''''''''''' WHEN ''''User I/O'''' THEN ''''color: ''''''''#0252D7'''''''''''' WHEN ''''System I/O'''' THEN ''''color: ''''''''#1E96DD'''''''''''' ';
-DEF wait_class_colors2_s = ' WHEN ''''Concurrency'''' THEN ''''color: ''''''''#871C12'''''''''''' WHEN ''''Application'''' THEN ''''color: ''''''''#C42A05'''''''''''' WHEN ''''Commit'''' THEN ''''color: ''''''''#EA6A05'''''''''''' WHEN ''''Configuration'''' THEN ''''color: ''''''''#594611''''''''''''  ';
-DEF wait_class_colors3_s = ' WHEN ''''Administrative'''' THEN ''''color: ''''''''#75763E''''''''''''  WHEN ''''Network'''' THEN ''''color: ''''''''#989779'''''''''''' WHEN ''''Other'''' THEN ''''color: ''''''''#F571A0'''''''''''' ';
-DEF wait_class_colors4_s = ' WHEN ''''Cluster'''' THEN ''''color: ''''''''#CEC3B5'''''''''''' WHEN ''''Queueing'''' THEN ''''color: ''''''''#C6BAA5'''''''''''' ELSE ''''color: ''''''''#000000'''''''''''' END';
+--DEF wait_class_colors_s = 'CASE wait_class WHEN ''''CPU'''' THEN ''''color: ''''''''#34CF27'''''''''''' WHEN ''''Scheduler'''' THEN ''''color: ''''''''#9FFA9D'''''''''''' WHEN ''''User I/O'''' THEN ''''color: ''''''''#0252D7'''''''''''' WHEN ''''System I/O'''' THEN ''''color: ''''''''#1E96DD'''''''''''' ';
+--DEF wait_class_colors2_s = ' WHEN ''''Concurrency'''' THEN ''''color: ''''''''#871C12'''''''''''' WHEN ''''Application'''' THEN ''''color: ''''''''#C42A05'''''''''''' WHEN ''''Commit'''' THEN ''''color: ''''''''#EA6A05'''''''''''' WHEN ''''Configuration'''' THEN ''''color: ''''''''#594611''''''''''''  ';
+--DEF wait_class_colors3_s = ' WHEN ''''Administrative'''' THEN ''''color: ''''''''#75763E''''''''''''  WHEN ''''Network'''' THEN ''''color: ''''''''#989779'''''''''''' WHEN ''''Other'''' THEN ''''color: ''''''''#F571A0'''''''''''' ';
+--DEF wait_class_colors4_s = ' WHEN ''''Cluster'''' THEN ''''color: ''''''''#CEC3B5'''''''''''' WHEN ''''Queueing'''' THEN ''''color: ''''''''#C6BAA5'''''''''''' ELSE ''''color: ''''''''#000000'''''''''''' END';
 --
 COL series_01 NEW_V series_01; 
 COL series_02 NEW_V series_02; 
@@ -722,7 +764,7 @@ HOS ps -ef >> &&edb360_log3..txt
 
 -- main header
 COL report_dbname NEW_V report_dbname;
-SELECT CASE '&&edb360_conf_incl_dbname.' WHEN 'Y' THEN 'Database:&&database_name_short..' END report_dbname FROM DUAL
+SELECT CASE '&&edb360_conf_incl_dbname_index.' WHEN 'Y' THEN 'Database:&&database_name_short..' END report_dbname FROM DUAL
 /
 SPO &&edb360_main_report..html;
 @@edb360_0d_html_header.sql
@@ -739,15 +781,15 @@ PRO
 SPO OFF;
 
 -- ash
-HOS zip -m &&edb360_main_filename._&&edb360_file_time. awr_ash_pre_check_*.txt >> &&edb360_log3..txt
-HOS zip -m &&edb360_main_filename._&&edb360_file_time. verify_stats_wr_sys_*.txt >> &&edb360_log3..txt
+HOS zip -m &&edb360_zip_filename. awr_ash_pre_check_*.txt >> &&edb360_log3..txt
+HOS zip -m &&edb360_zip_filename. verify_stats_wr_sys_*.txt >> &&edb360_log3..txt
 -- osw
 --HOS zip -r osw_&&esp_host_name_short..zip `ps -ef | grep OSW | grep FM | awk -F 'OSW' '{print $2}' | cut -f 3 -d ' '`
---HOS zip -mT &&edb360_main_filename._&&edb360_file_time. osw_&&esp_host_name_short..zip
+--HOS zip -mT &&edb360_zip_filename. osw_&&esp_host_name_short..zip
 -- zip esp into main
-HOS zip -m &&edb360_main_filename._&&edb360_file_time. escp_output_&&esp_host_name_short._&&esp_collection_yyyymmdd..zip >> &&edb360_log3..txt
+HOS zip -m &&edb360_zip_filename. escp_output_&&esp_host_name_short._&&esp_collection_yyyymmdd..zip >> &&edb360_log3..txt
 -- zip other files
-HOS zip -m &&edb360_main_filename._&&edb360_file_time. 00000_readme_first_&&my_sid..txt >> &&edb360_log3..txt
-HOS zip -j &&edb360_main_filename._&&edb360_file_time. js/sorttable.js >> &&edb360_log3..txt
-HOS zip -j &&edb360_main_filename._&&edb360_file_time. js/edb360_img.jpg >> &&edb360_log3..txt
-HOS zip -j &&edb360_main_filename._&&edb360_file_time. js/edb360_favicon.ico >> &&edb360_log3..txt
+HOS zip -m &&edb360_zip_filename. 00000_readme_first_&&my_sid..txt >> &&edb360_log3..txt
+HOS zip -j &&edb360_zip_filename. js/sorttable.js >> &&edb360_log3..txt
+HOS zip -j &&edb360_zip_filename. js/edb360_img.jpg >> &&edb360_log3..txt
+HOS zip -j &&edb360_zip_filename. js/edb360_favicon.ico >> &&edb360_log3..txt

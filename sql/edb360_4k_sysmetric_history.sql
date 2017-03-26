@@ -1,5 +1,5 @@
 @@&&edb360_0g.tkprof.sql
-DEF section_id = '4j';
+DEF section_id = '4k';
 DEF section_name = 'System Metric History per Snap Interval';
 EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
 SPO &&edb360_main_report..html APP;
@@ -28,7 +28,7 @@ DEF tit_14 = '';
 DEF tit_15 = '';
 
 BEGIN
-  :sql_text_backup := '
+  :sql_text_backup := q'[
 WITH 
 per_instance_and_hour AS (
 SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
@@ -48,7 +48,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
    AND group_id = 2 /* 1 minute intervals */
-   AND metric_name = ''@metric_name@''
+   AND metric_name = '@metric_name@'
    AND value >= 0
  GROUP BY
        snap_id,
@@ -56,8 +56,8 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
 )
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
-       TO_CHAR(MIN(begin_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
-       TO_CHAR(MIN(end_time), ''YYYY-MM-DD HH24:MI:SS'') end_time,
+       TO_CHAR(MIN(begin_time), 'YYYY-MM-DD HH24:MI:SS') begin_time,
+       TO_CHAR(MIN(end_time), 'YYYY-MM-DD HH24:MI:SS') end_time,
        ROUND(SUM(value_max), 1) "Max",
        ROUND(SUM(value_95p), 1) "95th Percentile",
        ROUND(SUM(value_90p), 1) "90th Percentile",
@@ -78,7 +78,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        snap_id
  ORDER BY
        snap_id
-';
+]';
 END;
 /
 

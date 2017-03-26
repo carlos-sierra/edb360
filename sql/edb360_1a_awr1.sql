@@ -96,7 +96,7 @@ DEF tit_14 = '';
 DEF tit_15 = '';
 
 BEGIN
-  :sql_text_backup := '
+  :sql_text_backup := q'[
 WITH 
 cpu_per_inst_and_sample AS (
 SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
@@ -104,14 +104,14 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
        snap_id,
        instance_number,
        MIN(sample_time) sample_time,
-       SUM(CASE session_state WHEN ''ON CPU'' THEN 1 ELSE 0 END) on_cpu,
-       SUM(CASE event WHEN ''resmgr:cpu quantum'' THEN 1 ELSE 0 END) resmgr,
+       SUM(CASE session_state WHEN 'ON CPU' THEN 1 ELSE 0 END) on_cpu,
+       SUM(CASE event WHEN 'resmgr:cpu quantum' THEN 1 ELSE 0 END) resmgr,
        COUNT(*) on_cpu_and_resmgr
   FROM &&awr_object_prefix.active_sess_history h
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
    AND instance_number = @instance_number@
-   AND (session_state = ''ON CPU'' OR event = ''resmgr:cpu quantum'')
+   AND (session_state = 'ON CPU' OR event = 'resmgr:cpu quantum')
  GROUP BY
        snap_id,
        instance_number,
@@ -132,8 +132,8 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        instance_number
 )
 SELECT snap_id,
-       TO_CHAR(MIN(min_sample_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
-       TO_CHAR(MAX(max_sample_time), ''YYYY-MM-DD HH24:MI:SS'') end_time,
+       TO_CHAR(MIN(min_sample_time), 'YYYY-MM-DD HH24:MI:SS') begin_time,
+       TO_CHAR(MAX(max_sample_time), 'YYYY-MM-DD HH24:MI:SS') end_time,
        SUM(on_cpu_and_resmgr) on_cpu_and_resmgr,
        SUM(on_cpu) on_cpu,
        SUM(resmgr) resmgr,
@@ -154,7 +154,7 @@ SELECT snap_id,
        snap_id
  ORDER BY
        snap_id
-';
+]';
 END;
 /
 
@@ -194,7 +194,7 @@ DEF tit_14 = '';
 DEF tit_15 = '';
 
 BEGIN
-  :sql_text_backup := '
+  :sql_text_backup := q'[
 WITH
 per_instance AS (
 SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
@@ -207,13 +207,13 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
    AND group_id = 2 /* 1 minute intervals */
-   AND metric_name = ''@metric_name@''
+   AND metric_name = '@metric_name@'
    AND maxval >= 0
 )
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
-       TO_CHAR(MIN(begin_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
-       TO_CHAR(MIN(end_time), ''YYYY-MM-DD HH24:MI:SS'') end_time,
+       TO_CHAR(MIN(begin_time), 'YYYY-MM-DD HH24:MI:SS') begin_time,
+       TO_CHAR(MIN(end_time), 'YYYY-MM-DD HH24:MI:SS') end_time,
        ROUND(SUM(maxval), 1) "Max Value",
        0 dummy_02,
        0 dummy_03,
@@ -234,7 +234,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        snap_id
  ORDER BY
        snap_id
-';
+]';
 END;
 /
 
@@ -263,10 +263,10 @@ BEGIN
     SELECT COUNT(*) INTO l_count FROM gv$instance WHERE instance_number = i;
     IF l_count = 0 THEN
       DBMS_OUTPUT.PUT_LINE('COL inst_'||LPAD(i, 2, '0')||' NOPRI;');
-      DBMS_OUTPUT.PUT_LINE('DEF tit_'||LPAD(i, 2, '0')||' = '''';');
+      DBMS_OUTPUT.PUT_LINE('DEF tit_'||LPAD(i, 2, '0')||' = '';');
     ELSE
-      DBMS_OUTPUT.PUT_LINE('COL inst_'||LPAD(i, 2, '0')||' HEA ''Inst '||i||''' FOR 999990.000 PRI;');
-      DBMS_OUTPUT.PUT_LINE('DEF tit_'||LPAD(i, 2, '0')||' = ''Inst '||i||''';');
+      DBMS_OUTPUT.PUT_LINE('COL inst_'||LPAD(i, 2, '0')||' HEA 'Inst '||i||'' FOR 999990.000 PRI;');
+      DBMS_OUTPUT.PUT_LINE('DEF tit_'||LPAD(i, 2, '0')||' = 'Inst '||i||'';');
     END IF;
   END LOOP;
 END;
@@ -274,7 +274,7 @@ END;
 SPO OFF;
 SET SERVEROUT OFF;
 @99840_&&common_edb360_prefix._chart_setup_driver2.sql;
-HOS zip -m &&edb360_main_filename._&&edb360_file_time. 99840_&&common_edb360_prefix._chart_setup_driver2.sql >> &&edb360_log3..txt
+HOS zip -m &&edb360_zip_filename. 99840_&&common_edb360_prefix._chart_setup_driver2.sql >> &&edb360_log3..txt
 
 DEF main_table = '&&awr_hist_prefix.ACTIVE_SESS_HISTORY';
 DEF chartype = 'AreaChart';
@@ -283,13 +283,13 @@ DEF vaxis = 'Average Active Sessions - AAS (stacked)';
 DEF vbaseline = '';
 
 BEGIN
-  :sql_text_backup := '
+  :sql_text_backup := q'[
 SELECT /*+ &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
        /* &&section_id..&&report_sequence. */
        snap_id,
-       --TO_CHAR(LAG(MAX(sample_time)) OVER (ORDER BY snap_id), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
-       TO_CHAR(MIN(sample_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
-       TO_CHAR(MAX(sample_time), ''YYYY-MM-DD HH24:MI:SS'') end_time,
+       --TO_CHAR(LAG(MAX(sample_time)) OVER (ORDER BY snap_id), 'YYYY-MM-DD HH24:MI:SS') begin_time,
+       TO_CHAR(MIN(sample_time), 'YYYY-MM-DD HH24:MI:SS') begin_time,
+       TO_CHAR(MAX(sample_time), 'YYYY-MM-DD HH24:MI:SS') end_time,
        ROUND(SUM(CASE instance_number WHEN 1 THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), (1/24/3600)) * 24 * 3600), 3) inst_01,
        ROUND(SUM(CASE instance_number WHEN 2 THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), (1/24/3600)) * 24 * 3600), 3) inst_02,
        ROUND(SUM(CASE instance_number WHEN 3 THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), (1/24/3600)) * 24 * 3600), 3) inst_03,
@@ -313,7 +313,7 @@ SELECT /*+ &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */
        snap_id
  ORDER BY
        snap_id
-';
+]';
 END;
 /
 -- end from 5a
@@ -464,7 +464,7 @@ SELECT CHR(38)||' recovery' recovery FROM DUAL;
 -- this above is to handle event "RMAN backup & recovery I/O"
 
 BEGIN
-  :sql_text_backup2 := '
+  :sql_text_backup2 := q'[
 WITH
 hist AS (
 SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
@@ -480,7 +480,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
    AND @filter_predicate@
    AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
-   AND (session_state = ''ON CPU'' OR event IN (''log file sync'', ''log file parallel write''))
+   AND (session_state = 'ON CPU' OR event IN ('log file sync', 'log file parallel write'))
  GROUP BY
        sql_id,
        dbid,
@@ -490,7 +490,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
 total AS (
 SELECT SUM(samples) samples FROM hist
 )
-SELECT SUBSTR(TRIM(h.sql_id||'' ''||h.program||'' ''||
+SELECT SUBSTR(TRIM(h.sql_id||' '||h.program||' '||
        CASE h.module WHEN h.program THEN NULL ELSE h.module END), 1, 128) source,
        h.samples,
        ROUND(100 * h.samples / t.samples, 1) percent,
@@ -499,7 +499,7 @@ SELECT SUBSTR(TRIM(h.sql_id||'' ''||h.program||'' ''||
        total t
  WHERE h.samples >= t.samples / 1000 AND rn <= 14
  UNION ALL
-SELECT ''Others'' source,
+SELECT 'Others' source,
        NVL(SUM(h.samples), 0) samples,
        NVL(ROUND(100 * SUM(h.samples) / AVG(t.samples), 1), 0) percent,
        NULL sql_text
@@ -507,7 +507,7 @@ SELECT ''Others'' source,
        total t
  WHERE h.samples < t.samples / 1000 OR rn > 14
  ORDER BY 2 DESC NULLS LAST
-';
+]';
 END;
 /
 
@@ -598,10 +598,10 @@ SPO OFF;
 EXEC DBMS_APPLICATION_INFO.SET_MODULE(NULL,NULL);
 
 -- list of generated files
---HOS unzip -l &&edb360_main_filename._&&edb360_file_time. >> &&edb360_log3..txt
+--HOS unzip -l &&edb360_zip_filename. >> &&edb360_log3..txt
 
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-HOS unzip -l &&edb360_main_filename._&&edb360_file_time.
-PRO "End edb360. Output: &&edb360_main_filename._&&edb360_file_time..zip"
+HOS unzip -l &&edb360_zip_filename.
+PRO "End edb360. Output: &&edb360_zip_filename..zip"
 

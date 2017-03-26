@@ -9,7 +9,7 @@ SPO OFF;
 
 DEF main_table = '&&awr_hist_prefix.ACTIVE_SESS_HISTORY';
 BEGIN
-  :sql_text_backup := '
+  :sql_text_backup := q'[
 WITH
 hist AS (
 SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
@@ -31,7 +31,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
 total AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */ SUM(samples) samples FROM hist
 )
-SELECT NVL((SELECT s.service_name FROM &&awr_object_prefix.service_name s WHERE s.dbid = &&edb360_dbid. AND s.service_name_hash = h.service_hash AND ROWNUM = 1), h.service_hash)||'' ''||
+SELECT NVL((SELECT s.service_name FROM &&awr_object_prefix.service_name s WHERE s.dbid = &&edb360_dbid. AND s.service_name_hash = h.service_hash AND ROWNUM = 1), h.service_hash)||' '||
        NVL((SELECT u.username FROM dba_users u WHERE u.user_id = h.user_id AND ROWNUM = 1), h.user_id) service_username,
        h.samples,
        ROUND(100 * h.samples / t.samples, 1) percent,
@@ -40,7 +40,7 @@ SELECT NVL((SELECT s.service_name FROM &&awr_object_prefix.service_name s WHERE 
        total t
  WHERE h.samples >= t.samples / 1000 AND rn <= 14
  UNION ALL
-SELECT ''Others'',
+SELECT 'Others',
        NVL(SUM(h.samples), 0) samples,
        NVL(ROUND(100 * SUM(h.samples) / AVG(t.samples), 1), 0) percent,
        NULL dummy_01
@@ -48,7 +48,7 @@ SELECT ''Others'',
        total t
  WHERE h.samples < t.samples / 1000 OR rn > 14
  ORDER BY 3 DESC NULLS LAST
-';
+]';
 END;
 /
 

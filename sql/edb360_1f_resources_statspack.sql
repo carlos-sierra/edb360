@@ -15,7 +15,8 @@ DEF statspack_user = 'perfstat';
 -- set snapshot ranges to STATSPACK ranges !!
 DEF sp_minimum_snap_id = '';
 COL sp_minimum_snap_id NEW_V sp_minimum_snap_id NOPRI;
-SELECT NVL(TO_CHAR(MIN(snap_id)), '0') sp_minimum_snap_id 
+SELECT /* ignore if it fails to parse */
+NVL(TO_CHAR(MIN(snap_id)), '0') sp_minimum_snap_id 
 FROM &&statspack_user..stats$snapshot s
 WHERE 1=1 
 AND begin_interval_time > TO_DATE('&&edb360_date_from.', '&&edb360_date_format.');
@@ -23,13 +24,14 @@ SELECT '-1' sp_minimum_snap_id FROM DUAL WHERE TRIM('&&sp_minimum_snap_id.') IS 
 
 DEF sp_maximum_snap_id = '';
 COL sp_maximum_snap_id NEW_V sp_maximum_snap_id NOPRI;
-SELECT NVL(TO_CHAR(MAX(snap_id)), '&&sp_minimum_snap_id.') sp_maximum_snap_id 
+SELECT /* ignore if it fails to parse */
+NVL(TO_CHAR(MAX(snap_id)), '&&sp_minimum_snap_id.') sp_maximum_snap_id 
 FROM &&statspack_user..stats$snapshot s
 WHERE 1=1
 AND end_interval_time < TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') + 1;
 SELECT '-1' sp_maximum_snap_id FROM DUAL WHERE TRIM('&&sp_maximum_snap_id.') IS NULL;
 
-DEF skip_if_missing = '--';
+DEF skip_if_missing = ' echo skip ';
 COL skip_if_missing NEW_V skip_if_missing;
 SELECT NULL skip_if_missing FROM DUAL WHERE TO_NUMBER('&&sp_minimum_snap_id.') > -1 AND TO_NUMBER('&&sp_maximum_snap_id.') > -1;
 
@@ -39,28 +41,28 @@ DEF abstract = 'Consolidated view of Memory requirements.<br />'
 DEF abstract2 = 'It considers AMM if setup, else ASMM if setup, else no memory management settings (individual pools size).<br />'
 DEF foot = 'Consider "Giga Bytes (GB)" column for sizing.'
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 WITH
 par AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        d.dbid,
        d.name,
        i.inst_id,
-       /* LOWER(SUBSTR(i.host_name||''.'', 1, INSTR(i.host_name||''.'', ''.'') - 1)) */ 
-       LPAD(ORA_HASH(SYS_CONTEXT(''USERENV'', ''SERVER_HOST''),999999),6,''6'') host_name,
+       /* LOWER(SUBSTR(i.host_name||'.', 1, INSTR(i.host_name||'.', '.') - 1)) */ 
+       LPAD(ORA_HASH(SYS_CONTEXT('USERENV', 'SERVER_HOST'),999999),6,'6') host_name,
        i.instance_number,
        i.instance_name,
-       SUM(CASE p.name WHEN ''memory_target'' THEN TO_NUMBER(value) END) memory_target,
-       SUM(CASE p.name WHEN ''memory_max_target'' THEN TO_NUMBER(value) END) memory_max_target,
-       SUM(CASE p.name WHEN ''sga_target'' THEN TO_NUMBER(value) END) sga_target,
-       SUM(CASE p.name WHEN ''sga_max_size'' THEN TO_NUMBER(value) END) sga_max_size,
-       SUM(CASE p.name WHEN ''pga_aggregate_target'' THEN TO_NUMBER(value) END) pga_aggregate_target
+       SUM(CASE p.name WHEN 'memory_target' THEN TO_NUMBER(value) END) memory_target,
+       SUM(CASE p.name WHEN 'memory_max_target' THEN TO_NUMBER(value) END) memory_max_target,
+       SUM(CASE p.name WHEN 'sga_target' THEN TO_NUMBER(value) END) sga_target,
+       SUM(CASE p.name WHEN 'sga_max_size' THEN TO_NUMBER(value) END) sga_max_size,
+       SUM(CASE p.name WHEN 'pga_aggregate_target' THEN TO_NUMBER(value) END) pga_aggregate_target
   FROM gv$instance i,
        gv$database d,
        gv$system_parameter2 p
  WHERE d.inst_id = i.inst_id
    AND p.inst_id = i.inst_id
-   AND p.name IN (''memory_target'', ''memory_max_target'', ''sga_target'', ''sga_max_size'', ''pga_aggregate_target'')
+   AND p.name IN ('memory_target', 'memory_max_target', 'sga_target', 'sga_max_size', 'pga_aggregate_target')
  GROUP BY
        d.dbid,
        d.name,
@@ -74,14 +76,14 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        inst_id,
        bytes
   FROM gv$sgainfo
- WHERE name = ''Maximum SGA Size''
+ WHERE name = 'Maximum SGA Size'
 ),
 pga_max AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        inst_id,
        value bytes
   FROM gv$pgastat
- WHERE name = ''maximum PGA allocated''
+ WHERE name = 'maximum PGA allocated'
 ),
 pga AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
@@ -174,68 +176,68 @@ SELECT dbid,
        instance_name,
        bytes required,
        CASE 
-       WHEN bytes > POWER(2,50) THEN ROUND(bytes/POWER(2,50),3)||'' P''
-       WHEN bytes > POWER(2,40) THEN ROUND(bytes/POWER(2,40),3)||'' T''
-       WHEN bytes > POWER(2,30) THEN ROUND(bytes/POWER(2,30),3)||'' G''
-       WHEN bytes > POWER(2,20) THEN ROUND(bytes/POWER(2,20),3)||'' M''
-       WHEN bytes > POWER(2,10) THEN ROUND(bytes/POWER(2,10),3)||'' K''
-       WHEN bytes > 0 THEN bytes||'' B'' END approx1,
+       WHEN bytes > POWER(2,50) THEN ROUND(bytes/POWER(2,50),3)||' P'
+       WHEN bytes > POWER(2,40) THEN ROUND(bytes/POWER(2,40),3)||' T'
+       WHEN bytes > POWER(2,30) THEN ROUND(bytes/POWER(2,30),3)||' G'
+       WHEN bytes > POWER(2,20) THEN ROUND(bytes/POWER(2,20),3)||' M'
+       WHEN bytes > POWER(2,10) THEN ROUND(bytes/POWER(2,10),3)||' K'
+       WHEN bytes > 0 THEN bytes||' B' END approx1,
        memory_target,
        CASE 
-       WHEN memory_target > POWER(2,50) THEN ROUND(memory_target/POWER(2,50),3)||'' P''
-       WHEN memory_target > POWER(2,40) THEN ROUND(memory_target/POWER(2,40),3)||'' T''
-       WHEN memory_target > POWER(2,30) THEN ROUND(memory_target/POWER(2,30),3)||'' G''
-       WHEN memory_target > POWER(2,20) THEN ROUND(memory_target/POWER(2,20),3)||'' M''
-       WHEN memory_target > POWER(2,10) THEN ROUND(memory_target/POWER(2,10),3)||'' K''
-       WHEN memory_target > 0 THEN memory_target||'' B'' END approx2,
+       WHEN memory_target > POWER(2,50) THEN ROUND(memory_target/POWER(2,50),3)||' P'
+       WHEN memory_target > POWER(2,40) THEN ROUND(memory_target/POWER(2,40),3)||' T'
+       WHEN memory_target > POWER(2,30) THEN ROUND(memory_target/POWER(2,30),3)||' G'
+       WHEN memory_target > POWER(2,20) THEN ROUND(memory_target/POWER(2,20),3)||' M'
+       WHEN memory_target > POWER(2,10) THEN ROUND(memory_target/POWER(2,10),3)||' K'
+       WHEN memory_target > 0 THEN memory_target||' B' END approx2,
        memory_max_target,
        CASE 
-       WHEN memory_max_target > POWER(2,50) THEN ROUND(memory_max_target/POWER(2,50),3)||'' P''
-       WHEN memory_max_target > POWER(2,40) THEN ROUND(memory_max_target/POWER(2,40),3)||'' T''
-       WHEN memory_max_target > POWER(2,30) THEN ROUND(memory_max_target/POWER(2,30),3)||'' G''
-       WHEN memory_max_target > POWER(2,20) THEN ROUND(memory_max_target/POWER(2,20),3)||'' M''
-       WHEN memory_max_target > POWER(2,10) THEN ROUND(memory_max_target/POWER(2,10),3)||'' K''
-       WHEN memory_max_target > 0 THEN memory_max_target||'' B'' END approx3,
+       WHEN memory_max_target > POWER(2,50) THEN ROUND(memory_max_target/POWER(2,50),3)||' P'
+       WHEN memory_max_target > POWER(2,40) THEN ROUND(memory_max_target/POWER(2,40),3)||' T'
+       WHEN memory_max_target > POWER(2,30) THEN ROUND(memory_max_target/POWER(2,30),3)||' G'
+       WHEN memory_max_target > POWER(2,20) THEN ROUND(memory_max_target/POWER(2,20),3)||' M'
+       WHEN memory_max_target > POWER(2,10) THEN ROUND(memory_max_target/POWER(2,10),3)||' K'
+       WHEN memory_max_target > 0 THEN memory_max_target||' B' END approx3,
        sga_target,
        CASE 
-       WHEN sga_target > POWER(2,50) THEN ROUND(sga_target/POWER(2,50),3)||'' P''
-       WHEN sga_target > POWER(2,40) THEN ROUND(sga_target/POWER(2,40),3)||'' T''
-       WHEN sga_target > POWER(2,30) THEN ROUND(sga_target/POWER(2,30),3)||'' G''
-       WHEN sga_target > POWER(2,20) THEN ROUND(sga_target/POWER(2,20),3)||'' M''
-       WHEN sga_target > POWER(2,10) THEN ROUND(sga_target/POWER(2,10),3)||'' K''
-       WHEN sga_target > 0 THEN sga_target||'' B'' END approx4,
+       WHEN sga_target > POWER(2,50) THEN ROUND(sga_target/POWER(2,50),3)||' P'
+       WHEN sga_target > POWER(2,40) THEN ROUND(sga_target/POWER(2,40),3)||' T'
+       WHEN sga_target > POWER(2,30) THEN ROUND(sga_target/POWER(2,30),3)||' G'
+       WHEN sga_target > POWER(2,20) THEN ROUND(sga_target/POWER(2,20),3)||' M'
+       WHEN sga_target > POWER(2,10) THEN ROUND(sga_target/POWER(2,10),3)||' K'
+       WHEN sga_target > 0 THEN sga_target||' B' END approx4,
        sga_max_size,
        CASE 
-       WHEN sga_max_size > POWER(2,50) THEN ROUND(sga_max_size/POWER(2,50),3)||'' P''
-       WHEN sga_max_size > POWER(2,40) THEN ROUND(sga_max_size/POWER(2,40),3)||'' T''
-       WHEN sga_max_size > POWER(2,30) THEN ROUND(sga_max_size/POWER(2,30),3)||'' G''
-       WHEN sga_max_size > POWER(2,20) THEN ROUND(sga_max_size/POWER(2,20),3)||'' M''
-       WHEN sga_max_size > POWER(2,10) THEN ROUND(sga_max_size/POWER(2,10),3)||'' K''
-       WHEN sga_max_size > 0 THEN sga_max_size||'' B'' END approx5,
+       WHEN sga_max_size > POWER(2,50) THEN ROUND(sga_max_size/POWER(2,50),3)||' P'
+       WHEN sga_max_size > POWER(2,40) THEN ROUND(sga_max_size/POWER(2,40),3)||' T'
+       WHEN sga_max_size > POWER(2,30) THEN ROUND(sga_max_size/POWER(2,30),3)||' G'
+       WHEN sga_max_size > POWER(2,20) THEN ROUND(sga_max_size/POWER(2,20),3)||' M'
+       WHEN sga_max_size > POWER(2,10) THEN ROUND(sga_max_size/POWER(2,10),3)||' K'
+       WHEN sga_max_size > 0 THEN sga_max_size||' B' END approx5,
        max_sga,
        CASE 
-       WHEN max_sga > POWER(2,50) THEN ROUND(max_sga/POWER(2,50),3)||'' P''
-       WHEN max_sga > POWER(2,40) THEN ROUND(max_sga/POWER(2,40),3)||'' T''
-       WHEN max_sga > POWER(2,30) THEN ROUND(max_sga/POWER(2,30),3)||'' G''
-       WHEN max_sga > POWER(2,20) THEN ROUND(max_sga/POWER(2,20),3)||'' M''
-       WHEN max_sga > POWER(2,10) THEN ROUND(max_sga/POWER(2,10),3)||'' K''
-       WHEN max_sga > 0 THEN max_sga||'' B'' END approx6,
+       WHEN max_sga > POWER(2,50) THEN ROUND(max_sga/POWER(2,50),3)||' P'
+       WHEN max_sga > POWER(2,40) THEN ROUND(max_sga/POWER(2,40),3)||' T'
+       WHEN max_sga > POWER(2,30) THEN ROUND(max_sga/POWER(2,30),3)||' G'
+       WHEN max_sga > POWER(2,20) THEN ROUND(max_sga/POWER(2,20),3)||' M'
+       WHEN max_sga > POWER(2,10) THEN ROUND(max_sga/POWER(2,10),3)||' K'
+       WHEN max_sga > 0 THEN max_sga||' B' END approx6,
        pga_aggregate_target,
        CASE 
-       WHEN pga_aggregate_target > POWER(2,50) THEN ROUND(pga_aggregate_target/POWER(2,50),3)||'' P''
-       WHEN pga_aggregate_target > POWER(2,40) THEN ROUND(pga_aggregate_target/POWER(2,40),3)||'' T''
-       WHEN pga_aggregate_target > POWER(2,30) THEN ROUND(pga_aggregate_target/POWER(2,30),3)||'' G''
-       WHEN pga_aggregate_target > POWER(2,20) THEN ROUND(pga_aggregate_target/POWER(2,20),3)||'' M''
-       WHEN pga_aggregate_target > POWER(2,10) THEN ROUND(pga_aggregate_target/POWER(2,10),3)||'' K''
-       WHEN pga_aggregate_target > 0 THEN pga_aggregate_target||'' B'' END approx7,
+       WHEN pga_aggregate_target > POWER(2,50) THEN ROUND(pga_aggregate_target/POWER(2,50),3)||' P'
+       WHEN pga_aggregate_target > POWER(2,40) THEN ROUND(pga_aggregate_target/POWER(2,40),3)||' T'
+       WHEN pga_aggregate_target > POWER(2,30) THEN ROUND(pga_aggregate_target/POWER(2,30),3)||' G'
+       WHEN pga_aggregate_target > POWER(2,20) THEN ROUND(pga_aggregate_target/POWER(2,20),3)||' M'
+       WHEN pga_aggregate_target > POWER(2,10) THEN ROUND(pga_aggregate_target/POWER(2,10),3)||' K'
+       WHEN pga_aggregate_target > 0 THEN pga_aggregate_target||' B' END approx7,
        max_pga,
        CASE
-       WHEN max_pga > POWER(2,50) THEN ROUND(max_pga/POWER(2,50),3)||'' P''
-       WHEN max_pga > POWER(2,40) THEN ROUND(max_pga/POWER(2,40),3)||'' T''
-       WHEN max_pga > POWER(2,30) THEN ROUND(max_pga/POWER(2,30),3)||'' G''
-       WHEN max_pga > POWER(2,20) THEN ROUND(max_pga/POWER(2,20),3)||'' M''
-       WHEN max_pga > POWER(2,10) THEN ROUND(max_pga/POWER(2,10),3)||'' K''
-       WHEN max_pga > 0 THEN max_pga||'' B'' END approx8
+       WHEN max_pga > POWER(2,50) THEN ROUND(max_pga/POWER(2,50),3)||' P'
+       WHEN max_pga > POWER(2,40) THEN ROUND(max_pga/POWER(2,40),3)||' T'
+       WHEN max_pga > POWER(2,30) THEN ROUND(max_pga/POWER(2,30),3)||' G'
+       WHEN max_pga > POWER(2,20) THEN ROUND(max_pga/POWER(2,20),3)||' M'
+       WHEN max_pga > POWER(2,10) THEN ROUND(max_pga/POWER(2,10),3)||' K'
+       WHEN max_pga > 0 THEN max_pga||' B' END approx8
   FROM them_all
  UNION ALL
 SELECT TO_NUMBER(NULL) dbid,
@@ -245,70 +247,70 @@ SELECT TO_NUMBER(NULL) dbid,
        NULL instance_name,
        SUM(bytes) required,      
        CASE 
-       WHEN SUM(bytes) > POWER(2,50) THEN ROUND(SUM(bytes)/POWER(2,50),3)||'' P''
-       WHEN SUM(bytes) > POWER(2,40) THEN ROUND(SUM(bytes)/POWER(2,40),3)||'' T''
-       WHEN SUM(bytes) > POWER(2,30) THEN ROUND(SUM(bytes)/POWER(2,30),3)||'' G''
-       WHEN SUM(bytes) > POWER(2,20) THEN ROUND(SUM(bytes)/POWER(2,20),3)||'' M''
-       WHEN SUM(bytes) > POWER(2,10) THEN ROUND(SUM(bytes)/POWER(2,10),3)||'' K''
-       WHEN SUM(bytes) > 0 THEN SUM(bytes)||'' B'' END approx1,
+       WHEN SUM(bytes) > POWER(2,50) THEN ROUND(SUM(bytes)/POWER(2,50),3)||' P'
+       WHEN SUM(bytes) > POWER(2,40) THEN ROUND(SUM(bytes)/POWER(2,40),3)||' T'
+       WHEN SUM(bytes) > POWER(2,30) THEN ROUND(SUM(bytes)/POWER(2,30),3)||' G'
+       WHEN SUM(bytes) > POWER(2,20) THEN ROUND(SUM(bytes)/POWER(2,20),3)||' M'
+       WHEN SUM(bytes) > POWER(2,10) THEN ROUND(SUM(bytes)/POWER(2,10),3)||' K'
+       WHEN SUM(bytes) > 0 THEN SUM(bytes)||' B' END approx1,
        SUM(memory_target) memory_target,
        CASE 
-       WHEN SUM(memory_target) > POWER(2,50) THEN ROUND(SUM(memory_target)/POWER(2,50),3)||'' P''
-       WHEN SUM(memory_target) > POWER(2,40) THEN ROUND(SUM(memory_target)/POWER(2,40),3)||'' T''
-       WHEN SUM(memory_target) > POWER(2,30) THEN ROUND(SUM(memory_target)/POWER(2,30),3)||'' G''
-       WHEN SUM(memory_target) > POWER(2,20) THEN ROUND(SUM(memory_target)/POWER(2,20),3)||'' M''
-       WHEN SUM(memory_target) > POWER(2,10) THEN ROUND(SUM(memory_target)/POWER(2,10),3)||'' K''
-       WHEN SUM(memory_target) > 0 THEN SUM(memory_target)||'' B'' END approx2,
+       WHEN SUM(memory_target) > POWER(2,50) THEN ROUND(SUM(memory_target)/POWER(2,50),3)||' P'
+       WHEN SUM(memory_target) > POWER(2,40) THEN ROUND(SUM(memory_target)/POWER(2,40),3)||' T'
+       WHEN SUM(memory_target) > POWER(2,30) THEN ROUND(SUM(memory_target)/POWER(2,30),3)||' G'
+       WHEN SUM(memory_target) > POWER(2,20) THEN ROUND(SUM(memory_target)/POWER(2,20),3)||' M'
+       WHEN SUM(memory_target) > POWER(2,10) THEN ROUND(SUM(memory_target)/POWER(2,10),3)||' K'
+       WHEN SUM(memory_target) > 0 THEN SUM(memory_target)||' B' END approx2,
        SUM(memory_max_target) memory_max_target,
        CASE 
-       WHEN SUM(memory_max_target) > POWER(2,50) THEN ROUND(SUM(memory_max_target)/POWER(2,50),3)||'' P''
-       WHEN SUM(memory_max_target) > POWER(2,40) THEN ROUND(SUM(memory_max_target)/POWER(2,40),3)||'' T''
-       WHEN SUM(memory_max_target) > POWER(2,30) THEN ROUND(SUM(memory_max_target)/POWER(2,30),3)||'' G''
-       WHEN SUM(memory_max_target) > POWER(2,20) THEN ROUND(SUM(memory_max_target)/POWER(2,20),3)||'' M''
-       WHEN SUM(memory_max_target) > POWER(2,10) THEN ROUND(SUM(memory_max_target)/POWER(2,10),3)||'' K''
-       WHEN SUM(memory_max_target) > 0 THEN SUM(memory_max_target)||'' B'' END approx3,
+       WHEN SUM(memory_max_target) > POWER(2,50) THEN ROUND(SUM(memory_max_target)/POWER(2,50),3)||' P'
+       WHEN SUM(memory_max_target) > POWER(2,40) THEN ROUND(SUM(memory_max_target)/POWER(2,40),3)||' T'
+       WHEN SUM(memory_max_target) > POWER(2,30) THEN ROUND(SUM(memory_max_target)/POWER(2,30),3)||' G'
+       WHEN SUM(memory_max_target) > POWER(2,20) THEN ROUND(SUM(memory_max_target)/POWER(2,20),3)||' M'
+       WHEN SUM(memory_max_target) > POWER(2,10) THEN ROUND(SUM(memory_max_target)/POWER(2,10),3)||' K'
+       WHEN SUM(memory_max_target) > 0 THEN SUM(memory_max_target)||' B' END approx3,
        SUM(sga_target) sga_target,
        CASE 
-       WHEN SUM(sga_target) > POWER(2,50) THEN ROUND(SUM(sga_target)/POWER(2,50),3)||'' P''
-       WHEN SUM(sga_target) > POWER(2,40) THEN ROUND(SUM(sga_target)/POWER(2,40),3)||'' T''
-       WHEN SUM(sga_target) > POWER(2,30) THEN ROUND(SUM(sga_target)/POWER(2,30),3)||'' G''
-       WHEN SUM(sga_target) > POWER(2,20) THEN ROUND(SUM(sga_target)/POWER(2,20),3)||'' M''
-       WHEN SUM(sga_target) > POWER(2,10) THEN ROUND(SUM(sga_target)/POWER(2,10),3)||'' K''
-       WHEN SUM(sga_target) > 0 THEN SUM(sga_target)||'' B'' END approx4,
+       WHEN SUM(sga_target) > POWER(2,50) THEN ROUND(SUM(sga_target)/POWER(2,50),3)||' P'
+       WHEN SUM(sga_target) > POWER(2,40) THEN ROUND(SUM(sga_target)/POWER(2,40),3)||' T'
+       WHEN SUM(sga_target) > POWER(2,30) THEN ROUND(SUM(sga_target)/POWER(2,30),3)||' G'
+       WHEN SUM(sga_target) > POWER(2,20) THEN ROUND(SUM(sga_target)/POWER(2,20),3)||' M'
+       WHEN SUM(sga_target) > POWER(2,10) THEN ROUND(SUM(sga_target)/POWER(2,10),3)||' K'
+       WHEN SUM(sga_target) > 0 THEN SUM(sga_target)||' B' END approx4,
        SUM(sga_max_size) sga_max_size,
        CASE
-       WHEN SUM(sga_max_size) > POWER(2,50) THEN ROUND(SUM(sga_max_size)/POWER(2,50),3)||'' P''
-       WHEN SUM(sga_max_size) > POWER(2,40) THEN ROUND(SUM(sga_max_size)/POWER(2,40),3)||'' T''
-       WHEN SUM(sga_max_size) > POWER(2,30) THEN ROUND(SUM(sga_max_size)/POWER(2,30),3)||'' G''
-       WHEN SUM(sga_max_size) > POWER(2,20) THEN ROUND(SUM(sga_max_size)/POWER(2,20),3)||'' M''
-       WHEN SUM(sga_max_size) > POWER(2,10) THEN ROUND(SUM(sga_max_size)/POWER(2,10),3)||'' K''
-       WHEN SUM(sga_max_size) > 0 THEN SUM(sga_max_size)||'' B'' END approx5,
+       WHEN SUM(sga_max_size) > POWER(2,50) THEN ROUND(SUM(sga_max_size)/POWER(2,50),3)||' P'
+       WHEN SUM(sga_max_size) > POWER(2,40) THEN ROUND(SUM(sga_max_size)/POWER(2,40),3)||' T'
+       WHEN SUM(sga_max_size) > POWER(2,30) THEN ROUND(SUM(sga_max_size)/POWER(2,30),3)||' G'
+       WHEN SUM(sga_max_size) > POWER(2,20) THEN ROUND(SUM(sga_max_size)/POWER(2,20),3)||' M'
+       WHEN SUM(sga_max_size) > POWER(2,10) THEN ROUND(SUM(sga_max_size)/POWER(2,10),3)||' K'
+       WHEN SUM(sga_max_size) > 0 THEN SUM(sga_max_size)||' B' END approx5,
        SUM(max_sga) max_sga,
        CASE 
-       WHEN SUM(max_sga) > POWER(2,50) THEN ROUND(SUM(max_sga)/POWER(2,50),3)||'' P''
-       WHEN SUM(max_sga) > POWER(2,40) THEN ROUND(SUM(max_sga)/POWER(2,40),3)||'' T''
-       WHEN SUM(max_sga) > POWER(2,30) THEN ROUND(SUM(max_sga)/POWER(2,30),3)||'' G''
-       WHEN SUM(max_sga) > POWER(2,20) THEN ROUND(SUM(max_sga)/POWER(2,20),3)||'' M''
-       WHEN SUM(max_sga) > POWER(2,10) THEN ROUND(SUM(max_sga)/POWER(2,10),3)||'' K''
-       WHEN SUM(max_sga) > 0 THEN SUM(max_sga)||'' B'' END approx6,
+       WHEN SUM(max_sga) > POWER(2,50) THEN ROUND(SUM(max_sga)/POWER(2,50),3)||' P'
+       WHEN SUM(max_sga) > POWER(2,40) THEN ROUND(SUM(max_sga)/POWER(2,40),3)||' T'
+       WHEN SUM(max_sga) > POWER(2,30) THEN ROUND(SUM(max_sga)/POWER(2,30),3)||' G'
+       WHEN SUM(max_sga) > POWER(2,20) THEN ROUND(SUM(max_sga)/POWER(2,20),3)||' M'
+       WHEN SUM(max_sga) > POWER(2,10) THEN ROUND(SUM(max_sga)/POWER(2,10),3)||' K'
+       WHEN SUM(max_sga) > 0 THEN SUM(max_sga)||' B' END approx6,
        SUM(pga_aggregate_target) pga_aggregate_target,
        CASE 
-       WHEN SUM(pga_aggregate_target) > POWER(2,50) THEN ROUND(SUM(pga_aggregate_target)/POWER(2,50),3)||'' P''
-       WHEN SUM(pga_aggregate_target) > POWER(2,40) THEN ROUND(SUM(pga_aggregate_target)/POWER(2,40),3)||'' T''
-       WHEN SUM(pga_aggregate_target) > POWER(2,30) THEN ROUND(SUM(pga_aggregate_target)/POWER(2,30),3)||'' G''
-       WHEN SUM(pga_aggregate_target) > POWER(2,20) THEN ROUND(SUM(pga_aggregate_target)/POWER(2,20),3)||'' M''
-       WHEN SUM(pga_aggregate_target) > POWER(2,10) THEN ROUND(SUM(pga_aggregate_target)/POWER(2,10),3)||'' K''
-       WHEN SUM(pga_aggregate_target) > 0 THEN SUM(pga_aggregate_target)||'' B'' END approx7,
+       WHEN SUM(pga_aggregate_target) > POWER(2,50) THEN ROUND(SUM(pga_aggregate_target)/POWER(2,50),3)||' P'
+       WHEN SUM(pga_aggregate_target) > POWER(2,40) THEN ROUND(SUM(pga_aggregate_target)/POWER(2,40),3)||' T'
+       WHEN SUM(pga_aggregate_target) > POWER(2,30) THEN ROUND(SUM(pga_aggregate_target)/POWER(2,30),3)||' G'
+       WHEN SUM(pga_aggregate_target) > POWER(2,20) THEN ROUND(SUM(pga_aggregate_target)/POWER(2,20),3)||' M'
+       WHEN SUM(pga_aggregate_target) > POWER(2,10) THEN ROUND(SUM(pga_aggregate_target)/POWER(2,10),3)||' K'
+       WHEN SUM(pga_aggregate_target) > 0 THEN SUM(pga_aggregate_target)||' B' END approx7,
        SUM(max_pga) max_pga,
        CASE 
-       WHEN SUM(max_pga) > POWER(2,50) THEN ROUND(SUM(max_pga)/POWER(2,50),3)||'' P''
-       WHEN SUM(max_pga) > POWER(2,40) THEN ROUND(SUM(max_pga)/POWER(2,40),3)||'' T''
-       WHEN SUM(max_pga) > POWER(2,30) THEN ROUND(SUM(max_pga)/POWER(2,30),3)||'' G''
-       WHEN SUM(max_pga) > POWER(2,20) THEN ROUND(SUM(max_pga)/POWER(2,20),3)||'' M''
-       WHEN SUM(max_pga) > POWER(2,10) THEN ROUND(SUM(max_pga)/POWER(2,10),3)||'' K''
-       WHEN SUM(max_pga) > 0 THEN SUM(max_pga)||'' B'' END approx8
+       WHEN SUM(max_pga) > POWER(2,50) THEN ROUND(SUM(max_pga)/POWER(2,50),3)||' P'
+       WHEN SUM(max_pga) > POWER(2,40) THEN ROUND(SUM(max_pga)/POWER(2,40),3)||' T'
+       WHEN SUM(max_pga) > POWER(2,30) THEN ROUND(SUM(max_pga)/POWER(2,30),3)||' G'
+       WHEN SUM(max_pga) > POWER(2,20) THEN ROUND(SUM(max_pga)/POWER(2,20),3)||' M'
+       WHEN SUM(max_pga) > POWER(2,10) THEN ROUND(SUM(max_pga)/POWER(2,10),3)||' K'
+       WHEN SUM(max_pga) > 0 THEN SUM(max_pga)||' B' END approx8
   FROM them_all
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -319,17 +321,18 @@ DEF abstract = 'Consolidated view of Memory requirements.<br />'
 DEF abstract2 = 'It considers AMM if setup, else ASMM if setup, else no memory management settings (individual pools size).<br />'
 DEF foot = 'Consider "Giga Bytes (GB)" column for sizing.'
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 WITH
 max_snap AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
+       /* ignore if it fails to parse */
        MAX(snap_id) snap_id,
        dbid,
        instance_number,
        name 
   FROM &&statspack_user..stats$parameter
  WHERE 1 = 1
-   AND name IN (''memory_target'', ''memory_max_target'', ''sga_target'', ''sga_max_size'', ''pga_aggregate_target'')
+   AND name IN ('memory_target', 'memory_max_target', 'sga_target', 'sga_max_size', 'pga_aggregate_target')
    AND snap_id BETWEEN &&sp_minimum_snap_id. AND &&sp_maximum_snap_id.
  GROUP BY
        dbid,
@@ -370,15 +373,15 @@ par AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        p.dbid,
        di.db_name,
-       /* LOWER(SUBSTR(di.host_name||''.'', 1, INSTR(di.host_name||''.'', ''.'') - 1)) */ 
-       LPAD(ORA_HASH(SYS_CONTEXT(''USERENV'', ''SERVER_HOST''),999999),6,''6'') host_name,
+       /* LOWER(SUBSTR(di.host_name||'.', 1, INSTR(di.host_name||'.', '.') - 1)) */ 
+       LPAD(ORA_HASH(SYS_CONTEXT('USERENV', 'SERVER_HOST'),999999),6,'6') host_name,
        p.instance_number,
        di.instance_name,
-       SUM(CASE p.name WHEN ''memory_target'' THEN TO_NUMBER(p.value) ELSE 0 END) memory_target,
-       SUM(CASE p.name WHEN ''memory_max_target'' THEN TO_NUMBER(p.value) ELSE 0 END) memory_max_target,
-       SUM(CASE p.name WHEN ''sga_target'' THEN TO_NUMBER(p.value) ELSE 0 END) sga_target,
-       SUM(CASE p.name WHEN ''sga_max_size'' THEN TO_NUMBER(p.value) ELSE 0 END) sga_max_size,
-       SUM(CASE p.name WHEN ''pga_aggregate_target'' THEN TO_NUMBER(p.value) ELSE 0 END) pga_aggregate_target
+       SUM(CASE p.name WHEN 'memory_target' THEN TO_NUMBER(p.value) ELSE 0 END) memory_target,
+       SUM(CASE p.name WHEN 'memory_max_target' THEN TO_NUMBER(p.value) ELSE 0 END) memory_max_target,
+       SUM(CASE p.name WHEN 'sga_target' THEN TO_NUMBER(p.value) ELSE 0 END) sga_target,
+       SUM(CASE p.name WHEN 'sga_max_size' THEN TO_NUMBER(p.value) ELSE 0 END) sga_max_size,
+       SUM(CASE p.name WHEN 'pga_aggregate_target' THEN TO_NUMBER(p.value) ELSE 0 END) pga_aggregate_target
   FROM last_snap p,
        &&statspack_user..stats$database_instance di
  WHERE di.dbid = p.dbid
@@ -422,7 +425,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        MAX(value) bytes
   FROM &&statspack_user..stats$pgastat
  WHERE 1=1
-   AND name = ''maximum PGA allocated''
+   AND name = 'maximum PGA allocated'
    AND snap_id BETWEEN &&sp_minimum_snap_id. AND &&sp_maximum_snap_id.
  GROUP BY
        dbid,
@@ -520,68 +523,68 @@ SELECT dbid,
        instance_name,
        bytes required,
        CASE 
-       WHEN bytes > POWER(2,50) THEN ROUND(bytes/POWER(2,50),3)||'' P''
-       WHEN bytes > POWER(2,40) THEN ROUND(bytes/POWER(2,40),3)||'' T''
-       WHEN bytes > POWER(2,30) THEN ROUND(bytes/POWER(2,30),3)||'' G''
-       WHEN bytes > POWER(2,20) THEN ROUND(bytes/POWER(2,20),3)||'' M''
-       WHEN bytes > POWER(2,10) THEN ROUND(bytes/POWER(2,10),3)||'' K''
-       WHEN bytes > 0 THEN bytes||'' B'' END approx1,
+       WHEN bytes > POWER(2,50) THEN ROUND(bytes/POWER(2,50),3)||' P'
+       WHEN bytes > POWER(2,40) THEN ROUND(bytes/POWER(2,40),3)||' T'
+       WHEN bytes > POWER(2,30) THEN ROUND(bytes/POWER(2,30),3)||' G'
+       WHEN bytes > POWER(2,20) THEN ROUND(bytes/POWER(2,20),3)||' M'
+       WHEN bytes > POWER(2,10) THEN ROUND(bytes/POWER(2,10),3)||' K'
+       WHEN bytes > 0 THEN bytes||' B' END approx1,
        memory_target,
        CASE 
-       WHEN memory_target > POWER(2,50) THEN ROUND(memory_target/POWER(2,50),3)||'' P''
-       WHEN memory_target > POWER(2,40) THEN ROUND(memory_target/POWER(2,40),3)||'' T''
-       WHEN memory_target > POWER(2,30) THEN ROUND(memory_target/POWER(2,30),3)||'' G''
-       WHEN memory_target > POWER(2,20) THEN ROUND(memory_target/POWER(2,20),3)||'' M''
-       WHEN memory_target > POWER(2,10) THEN ROUND(memory_target/POWER(2,10),3)||'' K''
-       WHEN memory_target > 0 THEN memory_target||'' B'' END approx2,
+       WHEN memory_target > POWER(2,50) THEN ROUND(memory_target/POWER(2,50),3)||' P'
+       WHEN memory_target > POWER(2,40) THEN ROUND(memory_target/POWER(2,40),3)||' T'
+       WHEN memory_target > POWER(2,30) THEN ROUND(memory_target/POWER(2,30),3)||' G'
+       WHEN memory_target > POWER(2,20) THEN ROUND(memory_target/POWER(2,20),3)||' M'
+       WHEN memory_target > POWER(2,10) THEN ROUND(memory_target/POWER(2,10),3)||' K'
+       WHEN memory_target > 0 THEN memory_target||' B' END approx2,
        memory_max_target,
        CASE 
-       WHEN memory_max_target > POWER(2,50) THEN ROUND(memory_max_target/POWER(2,50),3)||'' P''
-       WHEN memory_max_target > POWER(2,40) THEN ROUND(memory_max_target/POWER(2,40),3)||'' T''
-       WHEN memory_max_target > POWER(2,30) THEN ROUND(memory_max_target/POWER(2,30),3)||'' G''
-       WHEN memory_max_target > POWER(2,20) THEN ROUND(memory_max_target/POWER(2,20),3)||'' M''
-       WHEN memory_max_target > POWER(2,10) THEN ROUND(memory_max_target/POWER(2,10),3)||'' K''
-       WHEN memory_max_target > 0 THEN memory_max_target||'' B'' END approx3,
+       WHEN memory_max_target > POWER(2,50) THEN ROUND(memory_max_target/POWER(2,50),3)||' P'
+       WHEN memory_max_target > POWER(2,40) THEN ROUND(memory_max_target/POWER(2,40),3)||' T'
+       WHEN memory_max_target > POWER(2,30) THEN ROUND(memory_max_target/POWER(2,30),3)||' G'
+       WHEN memory_max_target > POWER(2,20) THEN ROUND(memory_max_target/POWER(2,20),3)||' M'
+       WHEN memory_max_target > POWER(2,10) THEN ROUND(memory_max_target/POWER(2,10),3)||' K'
+       WHEN memory_max_target > 0 THEN memory_max_target||' B' END approx3,
        sga_target,
        CASE 
-       WHEN sga_target > POWER(2,50) THEN ROUND(sga_target/POWER(2,50),3)||'' P''
-       WHEN sga_target > POWER(2,40) THEN ROUND(sga_target/POWER(2,40),3)||'' T''
-       WHEN sga_target > POWER(2,30) THEN ROUND(sga_target/POWER(2,30),3)||'' G''
-       WHEN sga_target > POWER(2,20) THEN ROUND(sga_target/POWER(2,20),3)||'' M''
-       WHEN sga_target > POWER(2,10) THEN ROUND(sga_target/POWER(2,10),3)||'' K''
-       WHEN sga_target > 0 THEN sga_target||'' B'' END approx4,
+       WHEN sga_target > POWER(2,50) THEN ROUND(sga_target/POWER(2,50),3)||' P'
+       WHEN sga_target > POWER(2,40) THEN ROUND(sga_target/POWER(2,40),3)||' T'
+       WHEN sga_target > POWER(2,30) THEN ROUND(sga_target/POWER(2,30),3)||' G'
+       WHEN sga_target > POWER(2,20) THEN ROUND(sga_target/POWER(2,20),3)||' M'
+       WHEN sga_target > POWER(2,10) THEN ROUND(sga_target/POWER(2,10),3)||' K'
+       WHEN sga_target > 0 THEN sga_target||' B' END approx4,
        sga_max_size,
        CASE 
-       WHEN sga_max_size > POWER(2,50) THEN ROUND(sga_max_size/POWER(2,50),3)||'' P''
-       WHEN sga_max_size > POWER(2,40) THEN ROUND(sga_max_size/POWER(2,40),3)||'' T''
-       WHEN sga_max_size > POWER(2,30) THEN ROUND(sga_max_size/POWER(2,30),3)||'' G''
-       WHEN sga_max_size > POWER(2,20) THEN ROUND(sga_max_size/POWER(2,20),3)||'' M''
-       WHEN sga_max_size > POWER(2,10) THEN ROUND(sga_max_size/POWER(2,10),3)||'' K''
-       WHEN sga_max_size > 0 THEN sga_max_size||'' B'' END approx5,
+       WHEN sga_max_size > POWER(2,50) THEN ROUND(sga_max_size/POWER(2,50),3)||' P'
+       WHEN sga_max_size > POWER(2,40) THEN ROUND(sga_max_size/POWER(2,40),3)||' T'
+       WHEN sga_max_size > POWER(2,30) THEN ROUND(sga_max_size/POWER(2,30),3)||' G'
+       WHEN sga_max_size > POWER(2,20) THEN ROUND(sga_max_size/POWER(2,20),3)||' M'
+       WHEN sga_max_size > POWER(2,10) THEN ROUND(sga_max_size/POWER(2,10),3)||' K'
+       WHEN sga_max_size > 0 THEN sga_max_size||' B' END approx5,
        max_sga,
        CASE 
-       WHEN max_sga > POWER(2,50) THEN ROUND(max_sga/POWER(2,50),3)||'' P''
-       WHEN max_sga > POWER(2,40) THEN ROUND(max_sga/POWER(2,40),3)||'' T''
-       WHEN max_sga > POWER(2,30) THEN ROUND(max_sga/POWER(2,30),3)||'' G''
-       WHEN max_sga > POWER(2,20) THEN ROUND(max_sga/POWER(2,20),3)||'' M''
-       WHEN max_sga > POWER(2,10) THEN ROUND(max_sga/POWER(2,10),3)||'' K''
-       WHEN max_sga > 0 THEN max_sga||'' B'' END approx6,
+       WHEN max_sga > POWER(2,50) THEN ROUND(max_sga/POWER(2,50),3)||' P'
+       WHEN max_sga > POWER(2,40) THEN ROUND(max_sga/POWER(2,40),3)||' T'
+       WHEN max_sga > POWER(2,30) THEN ROUND(max_sga/POWER(2,30),3)||' G'
+       WHEN max_sga > POWER(2,20) THEN ROUND(max_sga/POWER(2,20),3)||' M'
+       WHEN max_sga > POWER(2,10) THEN ROUND(max_sga/POWER(2,10),3)||' K'
+       WHEN max_sga > 0 THEN max_sga||' B' END approx6,
        pga_aggregate_target,
        CASE 
-       WHEN pga_aggregate_target > POWER(2,50) THEN ROUND(pga_aggregate_target/POWER(2,50),3)||'' P''
-       WHEN pga_aggregate_target > POWER(2,40) THEN ROUND(pga_aggregate_target/POWER(2,40),3)||'' T''
-       WHEN pga_aggregate_target > POWER(2,30) THEN ROUND(pga_aggregate_target/POWER(2,30),3)||'' G''
-       WHEN pga_aggregate_target > POWER(2,20) THEN ROUND(pga_aggregate_target/POWER(2,20),3)||'' M''
-       WHEN pga_aggregate_target > POWER(2,10) THEN ROUND(pga_aggregate_target/POWER(2,10),3)||'' K''
-       WHEN pga_aggregate_target > 0 THEN pga_aggregate_target||'' B'' END approx7,
+       WHEN pga_aggregate_target > POWER(2,50) THEN ROUND(pga_aggregate_target/POWER(2,50),3)||' P'
+       WHEN pga_aggregate_target > POWER(2,40) THEN ROUND(pga_aggregate_target/POWER(2,40),3)||' T'
+       WHEN pga_aggregate_target > POWER(2,30) THEN ROUND(pga_aggregate_target/POWER(2,30),3)||' G'
+       WHEN pga_aggregate_target > POWER(2,20) THEN ROUND(pga_aggregate_target/POWER(2,20),3)||' M'
+       WHEN pga_aggregate_target > POWER(2,10) THEN ROUND(pga_aggregate_target/POWER(2,10),3)||' K'
+       WHEN pga_aggregate_target > 0 THEN pga_aggregate_target||' B' END approx7,
        max_pga,
        CASE
-       WHEN max_pga > POWER(2,50) THEN ROUND(max_pga/POWER(2,50),3)||'' P''
-       WHEN max_pga > POWER(2,40) THEN ROUND(max_pga/POWER(2,40),3)||'' T''
-       WHEN max_pga > POWER(2,30) THEN ROUND(max_pga/POWER(2,30),3)||'' G''
-       WHEN max_pga > POWER(2,20) THEN ROUND(max_pga/POWER(2,20),3)||'' M''
-       WHEN max_pga > POWER(2,10) THEN ROUND(max_pga/POWER(2,10),3)||'' K''
-       WHEN max_pga > 0 THEN max_pga||'' B'' END approx8
+       WHEN max_pga > POWER(2,50) THEN ROUND(max_pga/POWER(2,50),3)||' P'
+       WHEN max_pga > POWER(2,40) THEN ROUND(max_pga/POWER(2,40),3)||' T'
+       WHEN max_pga > POWER(2,30) THEN ROUND(max_pga/POWER(2,30),3)||' G'
+       WHEN max_pga > POWER(2,20) THEN ROUND(max_pga/POWER(2,20),3)||' M'
+       WHEN max_pga > POWER(2,10) THEN ROUND(max_pga/POWER(2,10),3)||' K'
+       WHEN max_pga > 0 THEN max_pga||' B' END approx8
   FROM them_all
  UNION ALL
 SELECT TO_NUMBER(NULL) dbid,
@@ -591,70 +594,70 @@ SELECT TO_NUMBER(NULL) dbid,
        NULL instance_name,
        SUM(bytes) required,      
        CASE 
-       WHEN SUM(bytes) > POWER(2,50) THEN ROUND(SUM(bytes)/POWER(2,50),3)||'' P''
-       WHEN SUM(bytes) > POWER(2,40) THEN ROUND(SUM(bytes)/POWER(2,40),3)||'' T''
-       WHEN SUM(bytes) > POWER(2,30) THEN ROUND(SUM(bytes)/POWER(2,30),3)||'' G''
-       WHEN SUM(bytes) > POWER(2,20) THEN ROUND(SUM(bytes)/POWER(2,20),3)||'' M''
-       WHEN SUM(bytes) > POWER(2,10) THEN ROUND(SUM(bytes)/POWER(2,10),3)||'' K''
-       WHEN SUM(bytes) > 0 THEN SUM(bytes)||'' B'' END approx1,
+       WHEN SUM(bytes) > POWER(2,50) THEN ROUND(SUM(bytes)/POWER(2,50),3)||' P'
+       WHEN SUM(bytes) > POWER(2,40) THEN ROUND(SUM(bytes)/POWER(2,40),3)||' T'
+       WHEN SUM(bytes) > POWER(2,30) THEN ROUND(SUM(bytes)/POWER(2,30),3)||' G'
+       WHEN SUM(bytes) > POWER(2,20) THEN ROUND(SUM(bytes)/POWER(2,20),3)||' M'
+       WHEN SUM(bytes) > POWER(2,10) THEN ROUND(SUM(bytes)/POWER(2,10),3)||' K'
+       WHEN SUM(bytes) > 0 THEN SUM(bytes)||' B' END approx1,
        SUM(memory_target) memory_target,
        CASE 
-       WHEN SUM(memory_target) > POWER(2,50) THEN ROUND(SUM(memory_target)/POWER(2,50),3)||'' P''
-       WHEN SUM(memory_target) > POWER(2,40) THEN ROUND(SUM(memory_target)/POWER(2,40),3)||'' T''
-       WHEN SUM(memory_target) > POWER(2,30) THEN ROUND(SUM(memory_target)/POWER(2,30),3)||'' G''
-       WHEN SUM(memory_target) > POWER(2,20) THEN ROUND(SUM(memory_target)/POWER(2,20),3)||'' M''
-       WHEN SUM(memory_target) > POWER(2,10) THEN ROUND(SUM(memory_target)/POWER(2,10),3)||'' K''
-       WHEN SUM(memory_target) > 0 THEN SUM(memory_target)||'' B'' END approx2,
+       WHEN SUM(memory_target) > POWER(2,50) THEN ROUND(SUM(memory_target)/POWER(2,50),3)||' P'
+       WHEN SUM(memory_target) > POWER(2,40) THEN ROUND(SUM(memory_target)/POWER(2,40),3)||' T'
+       WHEN SUM(memory_target) > POWER(2,30) THEN ROUND(SUM(memory_target)/POWER(2,30),3)||' G'
+       WHEN SUM(memory_target) > POWER(2,20) THEN ROUND(SUM(memory_target)/POWER(2,20),3)||' M'
+       WHEN SUM(memory_target) > POWER(2,10) THEN ROUND(SUM(memory_target)/POWER(2,10),3)||' K'
+       WHEN SUM(memory_target) > 0 THEN SUM(memory_target)||' B' END approx2,
        SUM(memory_max_target) memory_max_target,
        CASE 
-       WHEN SUM(memory_max_target) > POWER(2,50) THEN ROUND(SUM(memory_max_target)/POWER(2,50),3)||'' P''
-       WHEN SUM(memory_max_target) > POWER(2,40) THEN ROUND(SUM(memory_max_target)/POWER(2,40),3)||'' T''
-       WHEN SUM(memory_max_target) > POWER(2,30) THEN ROUND(SUM(memory_max_target)/POWER(2,30),3)||'' G''
-       WHEN SUM(memory_max_target) > POWER(2,20) THEN ROUND(SUM(memory_max_target)/POWER(2,20),3)||'' M''
-       WHEN SUM(memory_max_target) > POWER(2,10) THEN ROUND(SUM(memory_max_target)/POWER(2,10),3)||'' K''
-       WHEN SUM(memory_max_target) > 0 THEN SUM(memory_max_target)||'' B'' END approx3,
+       WHEN SUM(memory_max_target) > POWER(2,50) THEN ROUND(SUM(memory_max_target)/POWER(2,50),3)||' P'
+       WHEN SUM(memory_max_target) > POWER(2,40) THEN ROUND(SUM(memory_max_target)/POWER(2,40),3)||' T'
+       WHEN SUM(memory_max_target) > POWER(2,30) THEN ROUND(SUM(memory_max_target)/POWER(2,30),3)||' G'
+       WHEN SUM(memory_max_target) > POWER(2,20) THEN ROUND(SUM(memory_max_target)/POWER(2,20),3)||' M'
+       WHEN SUM(memory_max_target) > POWER(2,10) THEN ROUND(SUM(memory_max_target)/POWER(2,10),3)||' K'
+       WHEN SUM(memory_max_target) > 0 THEN SUM(memory_max_target)||' B' END approx3,
        SUM(sga_target) sga_target,
        CASE 
-       WHEN SUM(sga_target) > POWER(2,50) THEN ROUND(SUM(sga_target)/POWER(2,50),3)||'' P''
-       WHEN SUM(sga_target) > POWER(2,40) THEN ROUND(SUM(sga_target)/POWER(2,40),3)||'' T''
-       WHEN SUM(sga_target) > POWER(2,30) THEN ROUND(SUM(sga_target)/POWER(2,30),3)||'' G''
-       WHEN SUM(sga_target) > POWER(2,20) THEN ROUND(SUM(sga_target)/POWER(2,20),3)||'' M''
-       WHEN SUM(sga_target) > POWER(2,10) THEN ROUND(SUM(sga_target)/POWER(2,10),3)||'' K''
-       WHEN SUM(sga_target) > 0 THEN SUM(sga_target)||'' B'' END approx4,
+       WHEN SUM(sga_target) > POWER(2,50) THEN ROUND(SUM(sga_target)/POWER(2,50),3)||' P'
+       WHEN SUM(sga_target) > POWER(2,40) THEN ROUND(SUM(sga_target)/POWER(2,40),3)||' T'
+       WHEN SUM(sga_target) > POWER(2,30) THEN ROUND(SUM(sga_target)/POWER(2,30),3)||' G'
+       WHEN SUM(sga_target) > POWER(2,20) THEN ROUND(SUM(sga_target)/POWER(2,20),3)||' M'
+       WHEN SUM(sga_target) > POWER(2,10) THEN ROUND(SUM(sga_target)/POWER(2,10),3)||' K'
+       WHEN SUM(sga_target) > 0 THEN SUM(sga_target)||' B' END approx4,
        SUM(sga_max_size) sga_max_size,
        CASE
-       WHEN SUM(sga_max_size) > POWER(2,50) THEN ROUND(SUM(sga_max_size)/POWER(2,50),3)||'' P''
-       WHEN SUM(sga_max_size) > POWER(2,40) THEN ROUND(SUM(sga_max_size)/POWER(2,40),3)||'' T''
-       WHEN SUM(sga_max_size) > POWER(2,30) THEN ROUND(SUM(sga_max_size)/POWER(2,30),3)||'' G''
-       WHEN SUM(sga_max_size) > POWER(2,20) THEN ROUND(SUM(sga_max_size)/POWER(2,20),3)||'' M''
-       WHEN SUM(sga_max_size) > POWER(2,10) THEN ROUND(SUM(sga_max_size)/POWER(2,10),3)||'' K''
-       WHEN SUM(sga_max_size) > 0 THEN SUM(sga_max_size)||'' B'' END approx5,
+       WHEN SUM(sga_max_size) > POWER(2,50) THEN ROUND(SUM(sga_max_size)/POWER(2,50),3)||' P'
+       WHEN SUM(sga_max_size) > POWER(2,40) THEN ROUND(SUM(sga_max_size)/POWER(2,40),3)||' T'
+       WHEN SUM(sga_max_size) > POWER(2,30) THEN ROUND(SUM(sga_max_size)/POWER(2,30),3)||' G'
+       WHEN SUM(sga_max_size) > POWER(2,20) THEN ROUND(SUM(sga_max_size)/POWER(2,20),3)||' M'
+       WHEN SUM(sga_max_size) > POWER(2,10) THEN ROUND(SUM(sga_max_size)/POWER(2,10),3)||' K'
+       WHEN SUM(sga_max_size) > 0 THEN SUM(sga_max_size)||' B' END approx5,
        SUM(max_sga) max_sga,
        CASE 
-       WHEN SUM(max_sga) > POWER(2,50) THEN ROUND(SUM(max_sga)/POWER(2,50),3)||'' P''
-       WHEN SUM(max_sga) > POWER(2,40) THEN ROUND(SUM(max_sga)/POWER(2,40),3)||'' T''
-       WHEN SUM(max_sga) > POWER(2,30) THEN ROUND(SUM(max_sga)/POWER(2,30),3)||'' G''
-       WHEN SUM(max_sga) > POWER(2,20) THEN ROUND(SUM(max_sga)/POWER(2,20),3)||'' M''
-       WHEN SUM(max_sga) > POWER(2,10) THEN ROUND(SUM(max_sga)/POWER(2,10),3)||'' K''
-       WHEN SUM(max_sga) > 0 THEN SUM(max_sga)||'' B'' END approx6,
+       WHEN SUM(max_sga) > POWER(2,50) THEN ROUND(SUM(max_sga)/POWER(2,50),3)||' P'
+       WHEN SUM(max_sga) > POWER(2,40) THEN ROUND(SUM(max_sga)/POWER(2,40),3)||' T'
+       WHEN SUM(max_sga) > POWER(2,30) THEN ROUND(SUM(max_sga)/POWER(2,30),3)||' G'
+       WHEN SUM(max_sga) > POWER(2,20) THEN ROUND(SUM(max_sga)/POWER(2,20),3)||' M'
+       WHEN SUM(max_sga) > POWER(2,10) THEN ROUND(SUM(max_sga)/POWER(2,10),3)||' K'
+       WHEN SUM(max_sga) > 0 THEN SUM(max_sga)||' B' END approx6,
        SUM(pga_aggregate_target) pga_aggregate_target,
        CASE 
-       WHEN SUM(pga_aggregate_target) > POWER(2,50) THEN ROUND(SUM(pga_aggregate_target)/POWER(2,50),3)||'' P''
-       WHEN SUM(pga_aggregate_target) > POWER(2,40) THEN ROUND(SUM(pga_aggregate_target)/POWER(2,40),3)||'' T''
-       WHEN SUM(pga_aggregate_target) > POWER(2,30) THEN ROUND(SUM(pga_aggregate_target)/POWER(2,30),3)||'' G''
-       WHEN SUM(pga_aggregate_target) > POWER(2,20) THEN ROUND(SUM(pga_aggregate_target)/POWER(2,20),3)||'' M''
-       WHEN SUM(pga_aggregate_target) > POWER(2,10) THEN ROUND(SUM(pga_aggregate_target)/POWER(2,10),3)||'' K''
-       WHEN SUM(pga_aggregate_target) > 0 THEN SUM(pga_aggregate_target)||'' B'' END approx7,
+       WHEN SUM(pga_aggregate_target) > POWER(2,50) THEN ROUND(SUM(pga_aggregate_target)/POWER(2,50),3)||' P'
+       WHEN SUM(pga_aggregate_target) > POWER(2,40) THEN ROUND(SUM(pga_aggregate_target)/POWER(2,40),3)||' T'
+       WHEN SUM(pga_aggregate_target) > POWER(2,30) THEN ROUND(SUM(pga_aggregate_target)/POWER(2,30),3)||' G'
+       WHEN SUM(pga_aggregate_target) > POWER(2,20) THEN ROUND(SUM(pga_aggregate_target)/POWER(2,20),3)||' M'
+       WHEN SUM(pga_aggregate_target) > POWER(2,10) THEN ROUND(SUM(pga_aggregate_target)/POWER(2,10),3)||' K'
+       WHEN SUM(pga_aggregate_target) > 0 THEN SUM(pga_aggregate_target)||' B' END approx7,
        SUM(max_pga) max_pga,
        CASE 
-       WHEN SUM(max_pga) > POWER(2,50) THEN ROUND(SUM(max_pga)/POWER(2,50),3)||'' P''
-       WHEN SUM(max_pga) > POWER(2,40) THEN ROUND(SUM(max_pga)/POWER(2,40),3)||'' T''
-       WHEN SUM(max_pga) > POWER(2,30) THEN ROUND(SUM(max_pga)/POWER(2,30),3)||'' G''
-       WHEN SUM(max_pga) > POWER(2,20) THEN ROUND(SUM(max_pga)/POWER(2,20),3)||'' M''
-       WHEN SUM(max_pga) > POWER(2,10) THEN ROUND(SUM(max_pga)/POWER(2,10),3)||'' K''
-       WHEN SUM(max_pga) > 0 THEN SUM(max_pga)||'' B'' END approx8
+       WHEN SUM(max_pga) > POWER(2,50) THEN ROUND(SUM(max_pga)/POWER(2,50),3)||' P'
+       WHEN SUM(max_pga) > POWER(2,40) THEN ROUND(SUM(max_pga)/POWER(2,40),3)||' T'
+       WHEN SUM(max_pga) > POWER(2,30) THEN ROUND(SUM(max_pga)/POWER(2,30),3)||' G'
+       WHEN SUM(max_pga) > POWER(2,20) THEN ROUND(SUM(max_pga)/POWER(2,20),3)||' M'
+       WHEN SUM(max_pga) > POWER(2,10) THEN ROUND(SUM(max_pga)/POWER(2,10),3)||' K'
+       WHEN SUM(max_pga) > 0 THEN SUM(max_pga)||' B' END approx8
   FROM them_all
-';
+]';
 END;
 /
 @@&&skip_if_missing.edb360_9a_pre_one.sql
@@ -664,29 +667,29 @@ DEF main_table = 'GV$DATABASE';
 DEF abstract = 'Displays Space on Disk including datafiles, tempfiles, log and control files.<br />'
 DEF foot = 'Consider "Tera Bytes (TB)" column for sizing.'
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 WITH 
 sizes AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
-       ''Data'' file_type,
+       'Data' file_type,
        SUM(bytes) bytes
   FROM v$datafile
  UNION ALL
-SELECT ''Temp'' file_type,
+SELECT 'Temp' file_type,
        SUM(bytes) bytes
   FROM v$tempfile
  UNION ALL
-SELECT ''Log'' file_type,
+SELECT 'Log' file_type,
        SUM(bytes) * MAX(members) bytes
   FROM v$log
  UNION ALL
-SELECT ''Control'' file_type,
+SELECT 'Control' file_type,
        SUM(block_size * file_size_blks) bytes
   FROM v$controlfile
 ),
 dbsize AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
-       ''Total'' file_type,
+       'Total' file_type,
        SUM(bytes) bytes
   FROM sizes
 )
@@ -695,12 +698,12 @@ SELECT d.dbid,
        s.file_type,
        s.bytes,
        CASE 
-       WHEN s.bytes > POWER(10,15) THEN ROUND(s.bytes/POWER(10,15),3)||'' P''
-       WHEN s.bytes > POWER(10,12) THEN ROUND(s.bytes/POWER(10,12),3)||'' T''
-       WHEN s.bytes > POWER(10,9) THEN ROUND(s.bytes/POWER(10,9),3)||'' G''
-       WHEN s.bytes > POWER(10,6) THEN ROUND(s.bytes/POWER(10,6),3)||'' M''
-       WHEN s.bytes > POWER(10,3) THEN ROUND(s.bytes/POWER(10,3),3)||'' K''
-       WHEN s.bytes > 0 THEN s.bytes||'' B'' END approx
+       WHEN s.bytes > POWER(10,15) THEN ROUND(s.bytes/POWER(10,15),3)||' P'
+       WHEN s.bytes > POWER(10,12) THEN ROUND(s.bytes/POWER(10,12),3)||' T'
+       WHEN s.bytes > POWER(10,9) THEN ROUND(s.bytes/POWER(10,9),3)||' G'
+       WHEN s.bytes > POWER(10,6) THEN ROUND(s.bytes/POWER(10,6),3)||' M'
+       WHEN s.bytes > POWER(10,3) THEN ROUND(s.bytes/POWER(10,3),3)||' K'
+       WHEN s.bytes > 0 THEN s.bytes||' B' END approx
   FROM v$database d,
        sizes s
  UNION ALL
@@ -709,15 +712,15 @@ SELECT d.dbid,
        s.file_type,
        s.bytes,
        CASE 
-       WHEN s.bytes > POWER(10,15) THEN ROUND(s.bytes/POWER(10,15),3)||'' P''
-       WHEN s.bytes > POWER(10,12) THEN ROUND(s.bytes/POWER(10,12),3)||'' T''
-       WHEN s.bytes > POWER(10,9) THEN ROUND(s.bytes/POWER(10,9),3)||'' G''
-       WHEN s.bytes > POWER(10,6) THEN ROUND(s.bytes/POWER(10,6),3)||'' M''
-       WHEN s.bytes > POWER(10,3) THEN ROUND(s.bytes/POWER(10,3),3)||'' K''
-       WHEN s.bytes > 0 THEN s.bytes||'' B'' END approx
+       WHEN s.bytes > POWER(10,15) THEN ROUND(s.bytes/POWER(10,15),3)||' P'
+       WHEN s.bytes > POWER(10,12) THEN ROUND(s.bytes/POWER(10,12),3)||' T'
+       WHEN s.bytes > POWER(10,9) THEN ROUND(s.bytes/POWER(10,9),3)||' G'
+       WHEN s.bytes > POWER(10,6) THEN ROUND(s.bytes/POWER(10,6),3)||' M'
+       WHEN s.bytes > POWER(10,3) THEN ROUND(s.bytes/POWER(10,3),3)||' K'
+       WHEN s.bytes > 0 THEN s.bytes||' B' END approx
   FROM v$database d,
        dbsize s
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -727,21 +730,22 @@ DEF main_table = 'STATS$SYSSTAT';
 DEF abstract = 'I/O Operations per Second (IOPS) and I/O Mega Bytes per Second (MBPS). Includes Peak (max), percentiles and average for read (R), write (W) and read+write (RW) operations.<br />'
 DEF foot = 'Consider Peak or high Percentile for sizing.'
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 WITH 
 sysstat_io AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
+       /* ignore if it fails to parse */
        snap_id,
        dbid,
        instance_number,
-       SUM(CASE WHEN name = ''physical read total IO requests'' THEN value ELSE 0 END) r_reqs,
-       SUM(CASE WHEN name IN (''physical write total IO requests'', ''redo writes'') THEN value ELSE 0 END) w_reqs,
-       SUM(CASE WHEN name = ''physical read total bytes'' THEN value ELSE 0 END) r_bytes,
-       SUM(CASE WHEN name IN (''physical write total bytes'', ''redo size'') THEN value ELSE 0 END) w_bytes
+       SUM(CASE WHEN name = 'physical read total IO requests' THEN value ELSE 0 END) r_reqs,
+       SUM(CASE WHEN name IN ('physical write total IO requests', 'redo writes') THEN value ELSE 0 END) w_reqs,
+       SUM(CASE WHEN name = 'physical read total bytes' THEN value ELSE 0 END) r_bytes,
+       SUM(CASE WHEN name IN ('physical write total bytes', 'redo size') THEN value ELSE 0 END) w_bytes
   FROM &&statspack_user..stats$sysstat
  WHERE 1=1
    AND snap_id BETWEEN &&sp_minimum_snap_id. AND &&sp_maximum_snap_id.
-   AND name IN (''physical read total IO requests'', ''physical write total IO requests'', ''redo writes'', ''physical read total bytes'', ''physical write total bytes'', ''redo size'')
+   AND name IN ('physical read total IO requests', 'physical write total IO requests', 'redo writes', 'physical read total bytes', 'physical write total bytes', 'redo size')
  GROUP BY
        snap_id,
        dbid,
@@ -770,8 +774,8 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        t1.instance_number,
        di.instance_name,
        di.db_name,
-       /* LOWER(SUBSTR(di.host_name||''.'', 1, INSTR(di.host_name||''.'', ''.'') - 1)) */ 
-       LPAD(ORA_HASH(SYS_CONTEXT(''USERENV'', ''SERVER_HOST''),999999),6,''6'') host_name,
+       /* LOWER(SUBSTR(di.host_name||'.', 1, INSTR(di.host_name||'.', '.') - 1)) */ 
+       LPAD(ORA_HASH(SYS_CONTEXT('USERENV', 'SERVER_HOST'),999999),6,'6') host_name,
        ROUND((t1.r_reqs - t0.r_reqs) / s1.elapsed_sec) r_iops,
        ROUND((t1.w_reqs - t0.w_reqs) / s1.elapsed_sec) w_iops,
        ROUND((t1.r_bytes - t0.r_bytes) / POWER(10,6) / s1.elapsed_sec) r_mbps,
@@ -1430,7 +1434,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
 SELECT * FROM per_instance
  UNION ALL
 SELECT * FROM per_cluster
-';
+]';
 END;
 /
 @@&&skip_if_missing.edb360_9a_pre_one.sql
@@ -1440,18 +1444,19 @@ DEF main_table = 'STATS$SYS_TIME_MODEL';
 DEF abstract = 'CPU usage as reported in stats$sys_time_model. Includes Peak (max), percentiles and average for CPU operations.<br />'
 DEF foot = 'Consider Peak or high Percentile for sizing.'
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 WITH 
 sys_cpu AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
+       /* ignore if it fails to parse */
        ss.snap_id snap_id,
        ss.dbid dbid,
        ss.instance_number instance_number,
-       SUM(CASE WHEN vs.stat_name IN (''DB CPU'',''background cpu time'') THEN ss.value ELSE 0 END) cpu
+       SUM(CASE WHEN vs.stat_name IN ('DB CPU','background cpu time') THEN ss.value ELSE 0 END) cpu
  FROM &&statspack_user..stats$sys_time_model ss, v$sys_time_model vs
  WHERE 1=1
    AND ss.snap_id BETWEEN &&sp_minimum_snap_id. AND &&sp_maximum_snap_id.
-   AND vs.stat_name IN (''DB CPU'',''background cpu time'')
+   AND vs.stat_name IN ('DB CPU','background cpu time')
    AND ss.stat_id = vs.stat_id
  GROUP BY
        snap_id,
@@ -1481,8 +1486,8 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        t1.instance_number,
        di.instance_name,
        di.db_name,
-       /* LOWER(SUBSTR(di.host_name||''.'', 1, INSTR(di.host_name||''.'', ''.'') - 1)) */ 
-       LPAD(ORA_HASH(SYS_CONTEXT(''USERENV'', ''SERVER_HOST''),999999),6,''6'') host_name,
+       /* LOWER(SUBSTR(di.host_name||'.', 1, INSTR(di.host_name||'.', '.') - 1)) */ 
+       LPAD(ORA_HASH(SYS_CONTEXT('USERENV', 'SERVER_HOST'),999999),6,'6') host_name,
        ROUND((t1.cpu - t0.cpu) / 1000000 / s1.elapsed_sec) cpu_s
   FROM sys_cpu t0,
        sys_cpu t1,
@@ -1779,13 +1784,13 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
 SELECT * FROM per_instance
  UNION ALL
 SELECT * FROM per_cluster
-';
+]';
 END;
 /
 @@&&skip_if_missing.edb360_9a_pre_one.sql
 
-DEF abstract = ''
-DEF foot = ''
+DEF abstract = '';
+DEF foot = '';
 
 SPO &&edb360_main_report..html APP;
 PRO </ol>

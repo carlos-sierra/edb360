@@ -10,11 +10,11 @@ SPO OFF;
 DEF title = 'Operating System (OS) Statistics';
 DEF main_table = 'GV$OSSTAT';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM gv$osstat
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -42,16 +42,16 @@ DEF tit_15 = '';
 COL load FOR 999990.00;
 
 BEGIN
-  :sql_text_backup := '
+  :sql_text_backup := q'[
 WITH 
 osstat_denorm AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        s.snap_id,
        s.instance_number,
-       SUM(CASE s.stat_name WHEN ''LOAD''          THEN value ELSE 0 END) load,
-       SUM(CASE s.stat_name WHEN ''NUM_CPU_CORES'' THEN value ELSE 0 END) num_cpu_cores
+       SUM(CASE s.stat_name WHEN 'LOAD'          THEN value ELSE 0 END) load,
+       SUM(CASE s.stat_name WHEN 'NUM_CPU_CORES' THEN value ELSE 0 END) num_cpu_cores
   FROM &&awr_object_prefix.osstat s
- WHERE s.stat_name IN (''LOAD'', ''NUM_CPUS'', ''NUM_CPU_CORES'')
+ WHERE s.stat_name IN ('LOAD', 'NUM_CPUS', 'NUM_CPU_CORES')
    AND s.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND s.dbid = &&edb360_dbid.
    AND s.instance_number = @instance_number@
@@ -82,8 +82,8 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        s.end_interval_time
 )
 SELECT snap_id,
-       TO_CHAR(MIN(begin_interval_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
-       TO_CHAR(MIN(end_interval_time), ''YYYY-MM-DD HH24:MI:SS'') end_time,
+       TO_CHAR(MIN(begin_interval_time), 'YYYY-MM-DD HH24:MI:SS') begin_time,
+       TO_CHAR(MIN(end_interval_time), 'YYYY-MM-DD HH24:MI:SS') end_time,
        ROUND(SUM(load), 2) load,
        SUM(num_cpu_cores) num_cpu_cores,
        0 dummy_03,
@@ -104,7 +104,7 @@ SELECT snap_id,
        snap_id
  ORDER BY
        snap_id
-';
+]';
 END;
 /
 
@@ -200,27 +200,27 @@ COL os_cpu_wait_time_secs FOR 999990.0;
 COL rsrc_mgr_cpu_wait_perc FOR 999990.0;
 COL iowait_perc FOR 999990.0;
 BEGIN
-  :sql_text_backup := '
+  :sql_text_backup := q'[
 WITH 
 osstat_denorm_2 AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
        dbid,
        instance_number,
-       SUM(CASE stat_name WHEN ''NUM_CPUS''               THEN value       ELSE 0 END) num_cpus,
-       SUM(CASE stat_name WHEN ''LOAD''                   THEN value       ELSE 0 END) load,
-       SUM(CASE stat_name WHEN ''IDLE_TIME''              THEN value / 100 ELSE 0 END) idle_time_secs,
-       SUM(CASE stat_name WHEN ''BUSY_TIME''              THEN value / 100 ELSE 0 END) busy_time_secs,
-       SUM(CASE stat_name WHEN ''USER_TIME''              THEN value / 100 ELSE 0 END) user_time_secs,
-       SUM(CASE stat_name WHEN ''NICE_TIME''              THEN value / 100 ELSE 0 END) nice_time_secs,
-       SUM(CASE stat_name WHEN ''SYS_TIME''               THEN value / 100 ELSE 0 END) sys_time_secs,
-       SUM(CASE stat_name WHEN ''OS_CPU_WAIT_TIME''       THEN value / 100 ELSE 0 END) os_cpu_wait_time_secs,
-       SUM(CASE stat_name WHEN ''RSRC_MGR_CPU_WAIT_TIME'' THEN value / 100 ELSE 0 END) rsrc_mgr_cpu_wait_time_secs,
-       SUM(CASE stat_name WHEN ''IOWAIT_TIME''            THEN value / 100 ELSE 0 END) iowait_time_secs,
-       SUM(CASE stat_name WHEN ''VM_IN_BYTES''            THEN value       ELSE 0 END) vm_in_bytes,
-       SUM(CASE stat_name WHEN ''VM_OUT_BYTES''           THEN value       ELSE 0 END) vm_out_bytes
+       SUM(CASE stat_name WHEN 'NUM_CPUS'               THEN value       ELSE 0 END) num_cpus,
+       SUM(CASE stat_name WHEN 'LOAD'                   THEN value       ELSE 0 END) load,
+       SUM(CASE stat_name WHEN 'IDLE_TIME'              THEN value / 100 ELSE 0 END) idle_time_secs,
+       SUM(CASE stat_name WHEN 'BUSY_TIME'              THEN value / 100 ELSE 0 END) busy_time_secs,
+       SUM(CASE stat_name WHEN 'USER_TIME'              THEN value / 100 ELSE 0 END) user_time_secs,
+       SUM(CASE stat_name WHEN 'NICE_TIME'              THEN value / 100 ELSE 0 END) nice_time_secs,
+       SUM(CASE stat_name WHEN 'SYS_TIME'               THEN value / 100 ELSE 0 END) sys_time_secs,
+       SUM(CASE stat_name WHEN 'OS_CPU_WAIT_TIME'       THEN value / 100 ELSE 0 END) os_cpu_wait_time_secs,
+       SUM(CASE stat_name WHEN 'RSRC_MGR_CPU_WAIT_TIME' THEN value / 100 ELSE 0 END) rsrc_mgr_cpu_wait_time_secs,
+       SUM(CASE stat_name WHEN 'IOWAIT_TIME'            THEN value / 100 ELSE 0 END) iowait_time_secs,
+       SUM(CASE stat_name WHEN 'VM_IN_BYTES'            THEN value       ELSE 0 END) vm_in_bytes,
+       SUM(CASE stat_name WHEN 'VM_OUT_BYTES'           THEN value       ELSE 0 END) vm_out_bytes
   FROM &&awr_object_prefix.osstat
- WHERE stat_name IN (''NUM_CPUS'', ''LOAD'', ''IDLE_TIME'', ''BUSY_TIME'', ''USER_TIME'', ''NICE_TIME'', ''SYS_TIME'', ''OS_CPU_WAIT_TIME'', ''RSRC_MGR_CPU_WAIT_TIME'', ''IOWAIT_TIME'', ''VM_IN_BYTES'', ''VM_OUT_BYTES'')
+ WHERE stat_name IN ('NUM_CPUS', 'LOAD', 'IDLE_TIME', 'BUSY_TIME', 'USER_TIME', 'NICE_TIME', 'SYS_TIME', 'OS_CPU_WAIT_TIME', 'RSRC_MGR_CPU_WAIT_TIME', 'IOWAIT_TIME', 'VM_IN_BYTES', 'VM_OUT_BYTES')
    AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
    AND instance_number = @instance_number@
@@ -269,8 +269,8 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
    AND s1.begin_interval_time > (s0.begin_interval_time + (1 / (24 * 60))) /* filter out snaps apart < 1 min */
 )
 SELECT snap_id,
-       TO_CHAR(MIN(begin_interval_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
-       TO_CHAR(MIN(end_interval_time), ''YYYY-MM-DD HH24:MI:SS'') end_time,
+       TO_CHAR(MIN(begin_interval_time), 'YYYY-MM-DD HH24:MI:SS') begin_time,
+       TO_CHAR(MIN(end_interval_time), 'YYYY-MM-DD HH24:MI:SS') end_time,
        SUM(num_cpus) num_cpus,
        ROUND(SUM(load), 1) load,
        ROUND(100 * SUM(idle_time_secs / num_cpus) / SUM(interval_secs), 1) idle_time_perc,
@@ -291,13 +291,14 @@ SELECT snap_id,
        snap_id
  ORDER BY
        snap_id
-';
+]';
 END;
 /
 
 DEF skip_lch = '';
 DEF skip_all = '&&is_single_instance.';
 DEF title = 'CPU Time Percent for Cluster';
+DEF abstract = '&&abstract_uom.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', 'instance_number');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
@@ -305,6 +306,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 1;
 DEF title = 'CPU Time Percent for Instance 1';
+DEF abstract = '&&abstract_uom.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '1');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
@@ -312,6 +314,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 2;
 DEF title = 'CPU Time Percent for Instance 2';
+DEF abstract = '&&abstract_uom.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '2');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
@@ -319,6 +322,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 3;
 DEF title = 'CPU Time Percent for Instance 3';
+DEF abstract = '&&abstract_uom.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '3');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
@@ -326,6 +330,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 4;
 DEF title = 'CPU Time Percent for Instance 4';
+DEF abstract = '&&abstract_uom.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '4');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
@@ -333,6 +338,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 5;
 DEF title = 'CPU Time Percent for Instance 5';
+DEF abstract = '&&abstract_uom.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '5');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
@@ -340,6 +346,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 6;
 DEF title = 'CPU Time Percent for Instance 6';
+DEF abstract = '&&abstract_uom.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '6');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
@@ -347,6 +354,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 7;
 DEF title = 'CPU Time Percent for Instance 7';
+DEF abstract = '&&abstract_uom.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '7');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
@@ -354,6 +362,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 8;
 DEF title = 'CPU Time Percent for Instance 8';
+DEF abstract = '&&abstract_uom.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '8');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
@@ -398,10 +407,10 @@ BEGIN
     SELECT COUNT(*) INTO l_count FROM gv$instance WHERE instance_number = i;
     IF l_count = 0 THEN
       DBMS_OUTPUT.PUT_LINE('COL inst_'||LPAD(i, 2, '0')||' NOPRI;');
-      DBMS_OUTPUT.PUT_LINE('DEF tit_'||LPAD(i, 2, '0')||' = '''';');
+      DBMS_OUTPUT.PUT_LINE('DEF tit_'||LPAD(i + 2, 2, '0')||' = '''';');
     ELSE
       DBMS_OUTPUT.PUT_LINE('COL inst_'||LPAD(i, 2, '0')||' HEA ''Inst '||i||''' FOR 999990.0 PRI;');
-      DBMS_OUTPUT.PUT_LINE('DEF tit_'||LPAD(i, 2, '0')||' = ''Inst '||i||''';');
+      DBMS_OUTPUT.PUT_LINE('DEF tit_'||LPAD(i + 2, 2, '0')||' = ''Inst '||i||''';');
     END IF;
   END LOOP;
 END;
@@ -409,34 +418,34 @@ END;
 SPO OFF;
 SET SERVEROUT OFF;
 @99810_&&common_edb360_prefix._chart_setup_driver1.sql;
-HOS zip -m &&edb360_main_filename._&&edb360_file_time. 99810_&&common_edb360_prefix._chart_setup_driver1.sql >> &&edb360_log3..txt
+HOS zip -m &&edb360_zip_filename. 99810_&&common_edb360_prefix._chart_setup_driver1.sql >> &&edb360_log3..txt
 
 DEF main_table = '&&awr_hist_prefix.OSSTAT';
 DEF vaxis = 'Time as a Percent of Number of CPUs';
 --DEF vbaseline = 'baseline: 100,';
 BEGIN
-  :sql_text_backup := '
+  :sql_text_backup := q'[
 WITH 
 osstat_denorm_2 AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
        dbid,
        instance_number,
-       SUM(CASE stat_name WHEN ''NUM_CPUS''               THEN value       ELSE 0 END) num_cpus,
-       SUM(CASE stat_name WHEN ''LOAD''                   THEN value       ELSE 0 END) load,
-       SUM(CASE stat_name WHEN ''IDLE_TIME''              THEN value / 100 ELSE 0 END) idle_time_secs,
-       SUM(CASE stat_name WHEN ''BUSY_TIME''              THEN value / 100 ELSE 0 END) busy_time_secs,
-       SUM(CASE stat_name WHEN ''USER_TIME''              THEN value / 100 ELSE 0 END) user_time_secs,
-       SUM(CASE stat_name WHEN ''NICE_TIME''              THEN value / 100 ELSE 0 END) nice_time_secs,
-       SUM(CASE stat_name WHEN ''SYS_TIME''               THEN value / 100 ELSE 0 END) sys_time_secs,
-       SUM(CASE stat_name WHEN ''OS_CPU_WAIT_TIME''       THEN value / 100 ELSE 0 END) os_cpu_wait_time_secs,
-       SUM(CASE stat_name WHEN ''RSRC_MGR_CPU_WAIT_TIME'' THEN value / 100 ELSE 0 END) rsrc_mgr_cpu_wait_time_secs,
-       SUM(CASE stat_name WHEN ''IOWAIT_TIME''            THEN value / 100 ELSE 0 END) iowait_time_secs,
-       SUM(CASE stat_name WHEN ''VM_IN_BYTES''            THEN value       ELSE 0 END) vm_in_bytes,
-       SUM(CASE stat_name WHEN ''VM_OUT_BYTES''           THEN value       ELSE 0 END) vm_out_bytes
+       SUM(CASE stat_name WHEN 'NUM_CPUS'               THEN value       ELSE 0 END) num_cpus,
+       SUM(CASE stat_name WHEN 'LOAD'                   THEN value       ELSE 0 END) load,
+       SUM(CASE stat_name WHEN 'IDLE_TIME'              THEN value / 100 ELSE 0 END) idle_time_secs,
+       SUM(CASE stat_name WHEN 'BUSY_TIME'              THEN value / 100 ELSE 0 END) busy_time_secs,
+       SUM(CASE stat_name WHEN 'USER_TIME'              THEN value / 100 ELSE 0 END) user_time_secs,
+       SUM(CASE stat_name WHEN 'NICE_TIME'              THEN value / 100 ELSE 0 END) nice_time_secs,
+       SUM(CASE stat_name WHEN 'SYS_TIME'               THEN value / 100 ELSE 0 END) sys_time_secs,
+       SUM(CASE stat_name WHEN 'OS_CPU_WAIT_TIME'       THEN value / 100 ELSE 0 END) os_cpu_wait_time_secs,
+       SUM(CASE stat_name WHEN 'RSRC_MGR_CPU_WAIT_TIME' THEN value / 100 ELSE 0 END) rsrc_mgr_cpu_wait_time_secs,
+       SUM(CASE stat_name WHEN 'IOWAIT_TIME'            THEN value / 100 ELSE 0 END) iowait_time_secs,
+       SUM(CASE stat_name WHEN 'VM_IN_BYTES'            THEN value       ELSE 0 END) vm_in_bytes,
+       SUM(CASE stat_name WHEN 'VM_OUT_BYTES'           THEN value       ELSE 0 END) vm_out_bytes
   FROM &&awr_object_prefix.osstat
- --WHERE stat_name IN (''NUM_CPUS'', ''LOAD'', ''IDLE_TIME'', ''BUSY_TIME'', ''USER_TIME'', ''NICE_TIME'', ''SYS_TIME'', ''OS_CPU_WAIT_TIME'', ''RSRC_MGR_CPU_WAIT_TIME'', ''IOWAIT_TIME'', ''VM_IN_BYTES'', ''VM_OUT_BYTES'')
- WHERE stat_name IN (''NUM_CPUS'', UPPER(''@stat_name@''))
+ --WHERE stat_name IN ('NUM_CPUS', 'LOAD', 'IDLE_TIME', 'BUSY_TIME', 'USER_TIME', 'NICE_TIME', 'SYS_TIME', 'OS_CPU_WAIT_TIME', 'RSRC_MGR_CPU_WAIT_TIME', 'IOWAIT_TIME', 'VM_IN_BYTES', 'VM_OUT_BYTES')
+ WHERE stat_name IN ('NUM_CPUS', UPPER('@stat_name@'))
    AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
  GROUP BY
@@ -487,8 +496,8 @@ osstat_inst AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        instance_number,
        snap_id,
-       TO_CHAR(begin_interval_time, ''YYYY-MM-DD HH24:MI:SS'') begin_time,
-       TO_CHAR(end_interval_time, ''YYYY-MM-DD HH24:MI:SS'') end_time,
+       TO_CHAR(begin_interval_time, 'YYYY-MM-DD HH24:MI:SS') begin_time,
+       TO_CHAR(end_interval_time, 'YYYY-MM-DD HH24:MI:SS') end_time,
        num_cpus,
        ROUND(load, 1) load,
        ROUND(100 * idle_time_secs / num_cpus / interval_secs, 1) idle_time_perc,
@@ -541,47 +550,55 @@ SELECT snap_id,
        snap_id
  ORDER BY
        snap_id
-';
+]';
 END;
 /
 
 DEF skip_lch = '';
 DEF title = 'CPU Idle Time Percent per Instance';
+DEF abstract = '&&abstract_uom.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name@', 'idle_time');
 @@&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'CPU Busy Time Percent per Instance';
+DEF abstract = '&&abstract_uom.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name@', 'busy_time');
 @@&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'CPU User Time Percent per Instance';
+DEF abstract = '&&abstract_uom.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name@', 'user_time');
 @@&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'CPU Nice Time Percent per Instance';
+DEF abstract = '&&abstract_uom.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name@', 'nice_time');
 @@&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'CPU Sys Time Percent per Instance';
+DEF abstract = '&&abstract_uom.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name@', 'sys_time');
 @@&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'OS CPU Wait Time Percent per Instance';
+DEF abstract = '&&abstract_uom.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name@', 'os_cpu_wait_time');
 @@&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'Resource Manager (RM) CPU Wait Time Percent per Instance';
+DEF abstract = '&&abstract_uom.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name@', 'rsrc_mgr_cpu_wait_time');
 @@&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'CPU IO Wait Time Percent per Instance';
+DEF abstract = '&&abstract_uom.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name@', 'iowait_time');
 @@&&skip_diagnostics.edb360_9a_pre_one.sql
 

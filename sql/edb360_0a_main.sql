@@ -81,7 +81,7 @@ PRO If no custom configuration file is needed, simply hit the "return" key.
 PRO
 PRO Custom configuration filename? (optional)
 COL custom_config_filename NEW_V custom_config_filename NOPRI;
-SELECT NVL(TRIM('&2.'), 'NULL') custom_config_filename FROM DUAL;
+SELECT NVL(TRIM('&2.'), 'null') custom_config_filename FROM DUAL;
 
 SPO OFF;
 
@@ -117,7 +117,9 @@ PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 PRO
 PRO custom configuration filename: "&&custom_config_filename."
 PRO
+SET SUF '';
 @@&&custom_config_filename.
+SET SUF sql;
 -- dba_hist or awr repository. do not change awr_hist_prefix.
 DEF awr_hist_prefix = 'DBA_HIST_';
 DEF awr_object_prefix = 'dba_hist_';
@@ -222,12 +224,13 @@ SPO OFF;
 @@&&skip_diagnostics.&&edb360_4c.mem_stats.sql
 @@&&skip_diagnostics.&&edb360_4d.time_model.sql
 @@&&skip_diagnostics.&&edb360_4e.time_model_comp.sql
-@@&&skip_diagnostics.&&skip_10g.&&edb360_4f.io_waits.sql
-@@&&skip_diagnostics.&&skip_10g.&&edb360_4g.io_waits_top_histog.sql
-@@&&skip_diagnostics.&&skip_10g.&&edb360_4h.io_waits_top_trend.sql
-@@&&edb360_4i.parallel_execution.sql
-@@&&skip_diagnostics.&&edb360_4j.sysmetric_history.sql
-@@&&skip_diagnostics.&&edb360_4k.sysmetric_summary.sql
+@@&&skip_diagnostics.&&skip_10g_script.&&edb360_4f.io_waits.sql
+@@&&skip_diagnostics.&&skip_10g_script.&&edb360_4g.io_waits_top_histog.sql
+@@&&skip_diagnostics.&&skip_10g_script.&&edb360_4h.io_waits_top_trend.sql
+@@&&skip_diagnostics.&&skip_10g_script.&&edb360_4i.io_waits_top_relation.sql
+@@&&edb360_4j.parallel_execution.sql
+@@&&skip_diagnostics.&&edb360_4k.sysmetric_history.sql
+@@&&skip_diagnostics.&&edb360_4l.sysmetric_summary.sql
 
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -268,7 +271,7 @@ SPO OFF;
 @@&&skip_diagnostics.&&edb360_6i.ash_objects.sql
 @@&&skip_diagnostics.&&edb360_6j.ash_services.sql
 @@&&skip_diagnostics.&&edb360_6k.ash_phv.sql
-@@&&skip_diagnostics.&&skip_10g.&&edb360_6l.ash_signature.sql
+@@&&skip_diagnostics.&&skip_10g_script.&&edb360_6l.ash_signature.sql
 
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

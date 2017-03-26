@@ -10,7 +10,7 @@ SPO OFF;
 DEF title = 'Latches';
 DEF main_table = 'GV$LATCH';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
 select v.*
 from 
@@ -35,7 +35,7 @@ from
   ) v
 where
    misses_rank <= 25
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -43,16 +43,16 @@ END;
 DEF title = 'Invalid Objects';
 DEF main_table = 'DBA_OBJECTS';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_objects
- WHERE status = ''INVALID''
+ WHERE status = 'INVALID'
  ORDER BY
        owner,
        object_name
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -60,19 +60,19 @@ END;
 DEF title = 'Disabled Constraints';
 DEF main_table = 'DBA_CONSTRAINTS';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_constraints
- WHERE status = ''DISABLED''
-   AND NOT (owner = ''SYSTEM'' AND constraint_name LIKE ''LOGMNR%'')
+ WHERE status = 'DISABLED'
+   AND NOT (owner = 'SYSTEM' AND constraint_name LIKE 'LOGMNR%')
    AND owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
  ORDER BY
        owner,
        constraint_name
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -80,20 +80,20 @@ END;
 DEF title = 'Enabled and not Validated Constraints';
 DEF main_table = 'DBA_CONSTRAINTS';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_constraints
- WHERE status = ''ENABLED''
-   AND validated = ''NOT VALIDATED''
-   AND constraint_type != ''O''
-   AND NOT (owner = ''SYSTEM'' AND constraint_name LIKE ''LOGMNR%'')
+ WHERE status = 'ENABLED'
+   AND validated = 'NOT VALIDATED'
+   AND constraint_type != 'O'
+   AND NOT (owner = 'SYSTEM' AND constraint_name LIKE 'LOGMNR%')
    AND owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
  ORDER BY
        owner,
        constraint_name
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -102,7 +102,7 @@ DEF title = 'Non-indexed FK Constraints';
 DEF main_table = 'DBA_CONSTRAINTS';
 COL constraint_columns FOR A200;
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 -- based on "Oracle Database Transactions and Locking Revealed" book by Thomas Kyte  
 WITH
 ref_int_constraints AS (
@@ -136,7 +136,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
   FROM dba_constraints  con,
        dba_cons_columns col,
        dba_constraints par
- WHERE con.constraint_type = ''R''
+ WHERE con.constraint_type = 'R'
    AND con.owner NOT IN &&exclusion_list.
    AND con.owner NOT IN &&exclusion_list2.
    AND col.owner = con.owner
@@ -176,7 +176,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
    AND i.index_name = c.index_name
    AND i.table_owner = c.table_owner
    AND i.table_name = c.table_name
-   AND i.index_type != ''BITMAP''
+   AND i.index_type != 'BITMAP'
  GROUP BY
        r.owner,
        r.constraint_name,
@@ -198,7 +198,7 @@ SELECT NULL
 )
  ORDER BY
        1, 2, 3
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -206,18 +206,18 @@ END;
 DEF title = 'Unusable Indexes';
 DEF main_table = 'DBA_INDEXES';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_indexes
- WHERE status = ''UNUSABLE''
+ WHERE status = 'UNUSABLE'
    AND owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
  ORDER BY
        owner,
        index_name
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -225,35 +225,35 @@ END;
 DEF title = 'Invisible Indexes';
 DEF main_table = 'DBA_INDEXES';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_indexes
- WHERE visibility = ''INVISIBLE''
+ WHERE visibility = 'INVISIBLE'
    AND owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
  ORDER BY
        owner,
        index_name
-';
+]';
 END;
 /
-@@&&skip_10g.edb360_9a_pre_one.sql
+@@&&skip_10g_script.edb360_9a_pre_one.sql
 
 DEF title = 'Function-based Indexes';
 DEF main_table = 'DBA_INDEXES';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_indexes
- WHERE index_type LIKE ''FUNCTION-BASED%''
+ WHERE index_type LIKE 'FUNCTION-BASED%'
    AND owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
  ORDER BY
        owner,
        index_name
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -261,17 +261,17 @@ END;
 DEF title = 'Bitmap Indexes';
 DEF main_table = 'DBA_INDEXES';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_indexes
- WHERE index_type LIKE ''%BITMAP''
+ WHERE index_type LIKE '%BITMAP'
    AND owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
  ORDER BY
        owner,
        index_name
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -279,17 +279,17 @@ END;
 DEF title = 'Reversed Indexes';
 DEF main_table = 'DBA_INDEXES';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_indexes
- WHERE index_type LIKE ''%REV''
+ WHERE index_type LIKE '%REV'
    AND owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
  ORDER BY
        owner,
        index_name
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -297,7 +297,7 @@ END;
 DEF title = 'Fat Indexes';
 DEF main_table = 'DBA_IND_COLUMNS';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 WITH 
 indexes_list AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
@@ -356,7 +356,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        owner
  ORDER BY
        owner
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -364,18 +364,18 @@ END;
 DEF title = 'Columns with Histogram on Long String';
 DEF main_table = 'DBA_TAB_COLS';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_tab_cols
  WHERE num_buckets BETWEEN 2 AND 253
-   AND data_type LIKE ''%CHAR%''
+   AND data_type LIKE '%CHAR%'
    AND char_length > 32
    AND avg_col_len > 6
    AND data_length > 32
  ORDER BY 
        owner, table_name, column_id
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -383,18 +383,18 @@ END;
 DEF title = 'Hidden Columns';
 DEF main_table = 'DBA_TAB_COLS';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_tab_cols
- WHERE hidden_column = ''YES''
+ WHERE hidden_column = 'YES'
    AND owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
  ORDER BY
        owner,
        table_name,
        column_name
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -402,18 +402,18 @@ END;
 DEF title = 'Virtual Columns';
 DEF main_table = 'DBA_TAB_COLS';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_tab_cols
- WHERE virtual_column = ''YES''
+ WHERE virtual_column = 'YES'
    AND owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
  ORDER BY
        owner,
        table_name,
        column_name
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -422,7 +422,7 @@ DEF title = 'Tables not recently used';
 DEF main_table = 'DBA_TABLES';
 DEF abstract = 'Be aware of false positives. List of tables not referenced in &&history_days. days.<br />';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 WITH 
 obj AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
@@ -431,7 +431,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        object_id,
        last_ddl_time
   FROM dba_objects
- WHERE object_type LIKE ''TABLE%''
+ WHERE object_type LIKE 'TABLE%'
    AND last_ddl_time IS NOT NULL
    AND owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
@@ -443,7 +443,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
        MAX(CAST(sample_time AS DATE)) sample_date
   FROM &&awr_object_prefix.active_sess_history h
  WHERE current_obj# > 0
-   AND sql_plan_operation LIKE ''%TABLE%''
+   AND sql_plan_operation LIKE '%TABLE%'
    AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
  GROUP BY
@@ -530,16 +530,16 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
 HAVING MAX(last_date) < SYSDATE - &&history_days.
  ORDER BY
        1, 2, 3
-';
+]';
 END;
 /
-@@&&skip_diagnostics.&&skip_10g.edb360_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_10g_script.edb360_9a_pre_one.sql
 
 DEF title = 'Indexes not recently used';
 DEF main_table = 'DBA_INDEXES';
 DEF abstract = 'Be aware of false positives. Turn index monitoring on for further analysis.<br />';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 WITH
 objects AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
@@ -547,7 +547,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        owner,
        object_name
   FROM dba_objects
- WHERE object_type LIKE ''INDEX%''
+ WHERE object_type LIKE 'INDEX%'
    AND owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
 ),
@@ -556,7 +556,7 @@ ash_mem AS (
 SELECT /*+ &&sq_fact_hints. * /
        DISTINCT current_obj# 
   FROM gv$active_session_history
- WHERE sql_plan_operation = ''INDEX''
+ WHERE sql_plan_operation = 'INDEX'
    AND current_obj# > 0
 ),
 */
@@ -565,7 +565,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
        /* &&section_id..&&report_sequence. */
        DISTINCT current_obj# 
   FROM &&awr_object_prefix.active_sess_history h
- WHERE sql_plan_operation = ''INDEX''
+ WHERE sql_plan_operation = 'INDEX'
    AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
    AND current_obj# > 0
@@ -575,21 +575,21 @@ sql_mem AS (
 SELECT /*+ &&sq_fact_hints. &&ds_hint. * /
        DISTINCT object_owner, object_name
   FROM gv$sql_plan 
-WHERE operation = ''INDEX''
+WHERE operation = 'INDEX'
 ),
 */
 sql_awr AS (
 SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
        DISTINCT object_owner, object_name
   FROM &&awr_object_prefix.sql_plan
- WHERE operation = ''INDEX'' AND dbid = &&edb360_dbid.
+ WHERE operation = 'INDEX' AND dbid = &&edb360_dbid.
 )
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        i.table_owner,
        i.table_name,
        i.index_name
   FROM dba_indexes i
- WHERE (index_type LIKE ''NORMAL%'' OR index_type = ''BITMAP''  OR index_type LIKE ''FUNCTION%'')
+ WHERE (index_type LIKE 'NORMAL%' OR index_type = 'BITMAP'  OR index_type LIKE 'FUNCTION%')
    AND i.table_owner NOT IN &&exclusion_list.
    AND i.table_owner NOT IN &&exclusion_list2.
    --AND (i.owner, i.index_name) NOT IN ( SELECT o.owner, o.object_name FROM ash_mem a, objects o WHERE o.object_id = a.current_obj# )
@@ -600,17 +600,17 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        i.table_owner,
        i.table_name,
        i.index_name
-';
+]';
 END;
 /
-@@&&skip_diagnostics.&&skip_10g.edb360_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_10g_script.edb360_9a_pre_one.sql
 
 DEF title = 'Redundant Indexes(1)';
 DEF main_table = 'DBA_INDEXES';
 COL redundant_index FOR A200;
 COL superset_index FOR A200;
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 WITH
 indexed_columns AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
@@ -621,21 +621,21 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        idx.index_type,
        idx.uniqueness,
        MAX(CASE col.column_position WHEN 01 THEN      col.column_name END)||
-       MAX(CASE col.column_position WHEN 02 THEN '':''||col.column_name END)||
-       MAX(CASE col.column_position WHEN 03 THEN '':''||col.column_name END)||
-       MAX(CASE col.column_position WHEN 04 THEN '':''||col.column_name END)||
-       MAX(CASE col.column_position WHEN 05 THEN '':''||col.column_name END)||
-       MAX(CASE col.column_position WHEN 06 THEN '':''||col.column_name END)||
-       MAX(CASE col.column_position WHEN 07 THEN '':''||col.column_name END)||
-       MAX(CASE col.column_position WHEN 08 THEN '':''||col.column_name END)||
-       MAX(CASE col.column_position WHEN 09 THEN '':''||col.column_name END)||
-       MAX(CASE col.column_position WHEN 10 THEN '':''||col.column_name END)||
-       MAX(CASE col.column_position WHEN 11 THEN '':''||col.column_name END)||
-       MAX(CASE col.column_position WHEN 12 THEN '':''||col.column_name END)||
-       MAX(CASE col.column_position WHEN 13 THEN '':''||col.column_name END)||
-       MAX(CASE col.column_position WHEN 14 THEN '':''||col.column_name END)||
-       MAX(CASE col.column_position WHEN 15 THEN '':''||col.column_name END)||
-       MAX(CASE col.column_position WHEN 16 THEN '':''||col.column_name END)
+       MAX(CASE col.column_position WHEN 02 THEN ':'||col.column_name END)||
+       MAX(CASE col.column_position WHEN 03 THEN ':'||col.column_name END)||
+       MAX(CASE col.column_position WHEN 04 THEN ':'||col.column_name END)||
+       MAX(CASE col.column_position WHEN 05 THEN ':'||col.column_name END)||
+       MAX(CASE col.column_position WHEN 06 THEN ':'||col.column_name END)||
+       MAX(CASE col.column_position WHEN 07 THEN ':'||col.column_name END)||
+       MAX(CASE col.column_position WHEN 08 THEN ':'||col.column_name END)||
+       MAX(CASE col.column_position WHEN 09 THEN ':'||col.column_name END)||
+       MAX(CASE col.column_position WHEN 10 THEN ':'||col.column_name END)||
+       MAX(CASE col.column_position WHEN 11 THEN ':'||col.column_name END)||
+       MAX(CASE col.column_position WHEN 12 THEN ':'||col.column_name END)||
+       MAX(CASE col.column_position WHEN 13 THEN ':'||col.column_name END)||
+       MAX(CASE col.column_position WHEN 14 THEN ':'||col.column_name END)||
+       MAX(CASE col.column_position WHEN 15 THEN ':'||col.column_name END)||
+       MAX(CASE col.column_position WHEN 16 THEN ':'||col.column_name END)
        indexed_columns
   FROM dba_ind_columns col,
        dba_indexes idx
@@ -655,22 +655,22 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        r.table_owner,
        r.table_name,
        r.index_type,
-       r.index_name||'' (''||r.indexed_columns||'')'' redundant_index,
-       i.index_name||'' (''||i.indexed_columns||'')'' superset_index
+       r.index_name||' ('||r.indexed_columns||')' redundant_index,
+       i.index_name||' ('||i.indexed_columns||')' superset_index
   FROM indexed_columns r,
        indexed_columns i
  WHERE i.table_owner = r.table_owner
    AND i.table_name = r.table_name
    AND i.index_type = r.index_type
    AND i.index_name != r.index_name
-   AND i.indexed_columns LIKE r.indexed_columns||'':%''
-   AND r.uniqueness = ''NONUNIQUE''
+   AND i.indexed_columns LIKE r.indexed_columns||':%'
+   AND r.uniqueness = 'NONUNIQUE'
  ORDER BY
        r.table_owner,
        r.table_name,
        r.index_name,
        i.index_name
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -679,13 +679,13 @@ DEF title = 'Redundant Indexes(2)';
 DEF main_table = 'DBA_INDEXES';
 DEF abstract = 'Considers descending indexes (function-based), visibility of redundant indexes, and whether there are extended statistics.<br />';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 -- requested by David Kurtz
 WITH f AS ( /*function expressions*/
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */ 
        owner, table_name, extension, extension_name
 FROM   dba_stat_extensions
-where  creator = ''SYSTEM'' /*exclude extended stats*/
+where  creator = 'SYSTEM' /*exclude extended stats*/
 ), ic AS ( /*list indexed columns getting expressions from stat_extensions*/
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        i.table_owner, i.table_name,
@@ -693,7 +693,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        i.index_type, i.uniqueness, i.visibility,
        c.column_position,
        CASE WHEN f.extension IS NULL THEN c.column_name
-            ELSE CAST(SUBSTR(REPLACE(SUBSTR(f.extension,2,LENGTH(f.extension)-2),''"'',''''),1,128) AS VARCHAR2(128))
+            ELSE CAST(SUBSTR(REPLACE(SUBSTR(f.extension,2,LENGTH(f.extension)-2),'"',''),1,128) AS VARCHAR2(128))
        END column_name
   FROM dba_indexes i
      , dba_ind_columns c
@@ -706,14 +706,14 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
    AND i.table_name = c.table_name
    AND i.owner = c.index_owner
    AND i.index_name = c.index_name
-   AND i.index_type like ''%NORMAL''
+   AND i.index_type like '%NORMAL'
 ), i AS ( /*construct column list*/
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        ic.table_owner, ic.table_name,
        ic.index_owner, ic.index_name,
        ic.index_type, ic.uniqueness, ic.visibility,
-       listagg(ic.column_name,'','') within group (order by ic.column_position) AS column_list,
-       ''(''||listagg(''"''||ic.column_name||''"'','','') within group (order by ic.column_position)||'')'' AS extension,
+       listagg(ic.column_name,',') within group (order by ic.column_position) AS column_list,
+       '('||listagg('"'||ic.column_name||'"',',') within group (order by ic.column_position)||')' AS extension,
        count(*) num_columns
 FROM ic
 GROUP BY 
@@ -724,11 +724,11 @@ GROUP BY
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        owner, table_name, CAST(SUBSTR(extension,1,128) AS VARCHAR2(128)) extension, extension_name
 FROM   dba_stat_extensions
-where  creator = ''USER'' /*extended stats not function based indexes*/
+where  creator = 'USER' /*extended stats not function based indexes*/
 ) 
 SELECT r.table_owner, r.table_name,
-       i.index_name||'' (''||i.column_list||'')'' superset_index,
-       r.index_name||'' (''||r.column_list||'')'' redundant_index,
+       i.index_name||' ('||i.column_list||')' superset_index,
+       r.index_name||' ('||r.column_list||')' redundant_index,
        c.constraint_type, c.constraint_name,
        r.index_type, r.visibility, e.extension_name
   FROM i r
@@ -741,15 +741,15 @@ SELECT r.table_owner, r.table_name,
          AND c.index_owner = r.index_owner
          AND c.index_name = r.index_name
          AND c.owner = r.table_owner
-         AND c.constraint_type IN(''P'',''U'')
+         AND c.constraint_type IN('P','U')
      , i
  WHERE i.table_owner = r.table_owner
    AND i.table_name = r.table_name
    AND i.index_name != r.index_name
-   AND i.column_list LIKE r.column_list||'',%''
+   AND i.column_list LIKE r.column_list||',%'
    AND i.num_columns > r.num_columns
  ORDER BY r.table_owner, r.table_name, r.index_name, i.index_name
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -757,27 +757,27 @@ END;
 DEF title = 'Tables with more than 5 Indexes';
 DEF main_table = 'DBA_INDEXES';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        COUNT(*) indexes,
        table_owner,
        table_name,
-       SUM(CASE WHEN index_type LIKE ''NORMAL%'' THEN 1 ELSE 0 END) type_normal,
-       SUM(CASE WHEN index_type LIKE ''BITMAP%'' THEN 1 ELSE 0 END) type_bitmap,
-       SUM(CASE WHEN index_type LIKE ''FUNCTION-BASED%'' THEN 1 ELSE 0 END) type_fbi,
-       SUM(CASE WHEN index_type LIKE ''CLUSTER%'' THEN 1 ELSE 0 END) type_cluster,
-       SUM(CASE WHEN index_type LIKE ''IOT%'' THEN 1 ELSE 0 END) type_iot,
-       SUM(CASE WHEN index_type LIKE ''DOMAIN%'' THEN 1 ELSE 0 END) type_domain,
-       SUM(CASE WHEN index_type LIKE ''LOB%'' THEN 1 ELSE 0 END) type_lob,
-       SUM(CASE WHEN partitioned LIKE ''YES%'' THEN 1 ELSE 0 END) partitioned,
-       SUM(CASE WHEN temporary LIKE ''Y%'' THEN 1 ELSE 0 END) temporary,
-       SUM(CASE WHEN uniqueness LIKE ''UNIQUE%'' THEN 1 ELSE 0 END) is_unique,
-       SUM(CASE WHEN uniqueness LIKE ''NONUNIQUE%'' THEN 1 ELSE 0 END) non_unique,
-       SUM(CASE WHEN status LIKE ''VALID%'' THEN 1 ELSE 0 END) valid,
-       SUM(CASE WHEN status LIKE ''N/A%'' THEN 1 ELSE 0 END) status_na,
-       &&skip_10g.SUM(CASE WHEN visibility LIKE ''VISIBLE%'' THEN 1 ELSE 0 END) visible,
-       &&skip_10g.SUM(CASE WHEN visibility LIKE ''INVISIBLE%'' THEN 1 ELSE 0 END) invisible,
-       SUM(CASE WHEN status LIKE ''UNUSABLE%'' THEN 1 ELSE 0 END) unusable
+       SUM(CASE WHEN index_type LIKE 'NORMAL%' THEN 1 ELSE 0 END) type_normal,
+       SUM(CASE WHEN index_type LIKE 'BITMAP%' THEN 1 ELSE 0 END) type_bitmap,
+       SUM(CASE WHEN index_type LIKE 'FUNCTION-BASED%' THEN 1 ELSE 0 END) type_fbi,
+       SUM(CASE WHEN index_type LIKE 'CLUSTER%' THEN 1 ELSE 0 END) type_cluster,
+       SUM(CASE WHEN index_type LIKE 'IOT%' THEN 1 ELSE 0 END) type_iot,
+       SUM(CASE WHEN index_type LIKE 'DOMAIN%' THEN 1 ELSE 0 END) type_domain,
+       SUM(CASE WHEN index_type LIKE 'LOB%' THEN 1 ELSE 0 END) type_lob,
+       SUM(CASE WHEN partitioned LIKE 'YES%' THEN 1 ELSE 0 END) partitioned,
+       SUM(CASE WHEN temporary LIKE 'Y%' THEN 1 ELSE 0 END) temporary,
+       SUM(CASE WHEN uniqueness LIKE 'UNIQUE%' THEN 1 ELSE 0 END) is_unique,
+       SUM(CASE WHEN uniqueness LIKE 'NONUNIQUE%' THEN 1 ELSE 0 END) non_unique,
+       SUM(CASE WHEN status LIKE 'VALID%' THEN 1 ELSE 0 END) valid,
+       SUM(CASE WHEN status LIKE 'N/A%' THEN 1 ELSE 0 END) status_na,
+       &&skip_10g_column.SUM(CASE WHEN visibility LIKE 'VISIBLE%' THEN 1 ELSE 0 END) visible,
+       &&skip_10g_column.SUM(CASE WHEN visibility LIKE 'INVISIBLE%' THEN 1 ELSE 0 END) invisible,
+       SUM(CASE WHEN status LIKE 'UNUSABLE%' THEN 1 ELSE 0 END) unusable
   FROM dba_indexes
  WHERE table_owner NOT IN &&exclusion_list.
    AND table_owner NOT IN &&exclusion_list2.
@@ -787,7 +787,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
 HAVING COUNT(*) > 5 
  ORDER BY
        1 DESC
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -795,7 +795,7 @@ END;
 DEF title = 'Tables on KEEP Buffer Pool';
 DEF main_table = 'DBA_TABLES';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        owner,
        table_name,
@@ -804,11 +804,11 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
   FROM dba_tables
  WHERE owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
-   AND buffer_pool = ''KEEP''
+   AND buffer_pool = 'KEEP'
  ORDER BY
        owner,
        table_name
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -816,7 +816,7 @@ END;
 DEF title = 'Tables on RECYCLE Buffer Pool';
 DEF main_table = 'DBA_TABLES';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        owner,
        table_name,
@@ -825,11 +825,11 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
   FROM dba_tables
  WHERE owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
-   AND buffer_pool = ''RECYCLE''
+   AND buffer_pool = 'RECYCLE'
  ORDER BY
        owner,
        table_name
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -837,7 +837,7 @@ END;
 DEF title = 'Tables to be CACHED in Buffer Cache';
 DEF main_table = 'DBA_TABLES';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 -- requested by Milton Quinteros
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        owner,
@@ -847,11 +847,11 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
   FROM dba_tables
  WHERE owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
-   AND TRIM(cache) = ''Y''
+   AND TRIM(cache) = 'Y'
  ORDER BY
        owner,
        table_name
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -859,7 +859,7 @@ END;
 DEF title = 'Tables on KEEP Flash Cache';
 DEF main_table = 'DBA_TABLES';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        owner,
        table_name,
@@ -868,19 +868,19 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
   FROM dba_tables
  WHERE owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
-   AND flash_cache = ''KEEP''
+   AND flash_cache = 'KEEP'
  ORDER BY
        owner,
        table_name
-';
+]';
 END;
 /
-@@&&skip_10g.&&skip_11r1.edb360_9a_pre_one.sql
+@@&&skip_10g_script.&&skip_11r1_script.edb360_9a_pre_one.sql
 
 DEF title = 'Tables on KEEP Cell Flash Cache';
 DEF main_table = 'DBA_TABLES';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        owner,
        table_name,
@@ -889,19 +889,19 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
   FROM dba_tables
  WHERE owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
-   AND cell_flash_cache = ''KEEP''
+   AND cell_flash_cache = 'KEEP'
  ORDER BY
        owner,
        table_name
-';
+]';
 END;
 /
-@@&&skip_10g.&&skip_11r1.edb360_9a_pre_one.sql
+@@&&skip_10g_script.&&skip_11r1_script.edb360_9a_pre_one.sql
 
 DEF title = 'Tables set for Compression';
 DEF main_table = 'DBA_TABLES';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        owner,
        table_name,
@@ -911,19 +911,19 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
   FROM dba_tables
  WHERE owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
-   AND compression = ''ENABLED''
+   AND compression = 'ENABLED'
  ORDER BY
        owner,
        table_name
-';
+]';
 END;
 /
-@@&&skip_10g.&&skip_11r1.edb360_9a_pre_one.sql
+@@&&skip_10g_script.&&skip_11r1_script.edb360_9a_pre_one.sql
 
 DEF title = 'Partitions set for Compression';
 DEF main_table = 'DBA_TAB_PARTITIONS';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        table_owner,
        table_name,
@@ -934,7 +934,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
   FROM dba_tab_partitions
  WHERE table_owner NOT IN &&exclusion_list.
    AND table_owner NOT IN &&exclusion_list2.
-   AND compression = ''ENABLED''
+   AND compression = 'ENABLED'
  GROUP BY
        table_owner,
        table_name,
@@ -943,15 +943,15 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        table_owner,
        table_name,
        compress_for
-';
+]';
 END;
 /
-@@&&skip_10g.&&skip_11r1.edb360_9a_pre_one.sql
+@@&&skip_10g_script.&&skip_11r1_script.edb360_9a_pre_one.sql
 
 DEF title = 'Subpartitions set for Compression';
 DEF main_table = 'DBA_TAB_SUBPARTITIONS';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        table_owner,
        table_name,
@@ -962,7 +962,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
   FROM dba_tab_subpartitions
  WHERE table_owner NOT IN &&exclusion_list.
    AND table_owner NOT IN &&exclusion_list2.
-   AND compression = ''ENABLED''
+   AND compression = 'ENABLED'
  GROUP BY
        table_owner,
        table_name,
@@ -971,29 +971,29 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        table_owner,
        table_name,
        compress_for
-';
+]';
 END;
 /
-@@&&skip_10g.&&skip_11r1.edb360_9a_pre_one.sql
+@@&&skip_10g_script.&&skip_11r1_script.edb360_9a_pre_one.sql
 
 DEF title = 'Segments with non-default Buffer Pool';
 DEF main_table = 'DBA_SEGMENTS';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 -- requested by Milton Quinteros
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        buffer_pool, owner, segment_name, partition_name, segment_type, blocks
   FROM dba_segments
- WHERE ''&&edb360_conf_incl_segments.'' = ''Y''
+ WHERE '&&edb360_conf_incl_segments.' = 'Y'
    AND owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
-   AND TRIM(buffer_pool) != ''DEFAULT''
+   AND TRIM(buffer_pool) != 'DEFAULT'
  ORDER BY
        buffer_pool,
        owner,
        segment_name,
        partition_name
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -1001,77 +1001,77 @@ END;
 DEF title = 'Segments with non-default Flash Cache';
 DEF main_table = 'DBA_SEGMENTS';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 -- requested by Milton Quinteros
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        flash_cache, owner, segment_name, partition_name, segment_type, blocks
   FROM dba_segments
- WHERE ''&&edb360_conf_incl_segments.'' = ''Y''
+ WHERE '&&edb360_conf_incl_segments.' = 'Y'
    AND owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
-   AND TRIM(flash_cache) != ''DEFAULT''
+   AND TRIM(flash_cache) != 'DEFAULT'
  ORDER BY
        flash_cache,
        owner,
        segment_name,
        partition_name
-';
+]';
 END;
 /
-@@&&skip_10g.&&skip_11r1.edb360_9a_pre_one.sql
+@@&&skip_10g_script.&&skip_11r1_script.edb360_9a_pre_one.sql
 
 DEF title = 'Segments with non-default Cell Flash Cache';
 DEF main_table = 'DBA_SEGMENTS';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 -- requested by Milton Quinteros
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        cell_flash_cache, owner, segment_name, partition_name, segment_type, blocks
   FROM dba_segments
- WHERE ''&&edb360_conf_incl_segments.'' = ''Y''
+ WHERE '&&edb360_conf_incl_segments.' = 'Y'
    AND owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
-   AND TRIM(cell_flash_cache) != ''DEFAULT''
+   AND TRIM(cell_flash_cache) != 'DEFAULT'
  ORDER BY
        cell_flash_cache,
        owner,
        segment_name,
        partition_name
-';
+]';
 END;
 /
-@@&&skip_10g.&&skip_11r1.edb360_9a_pre_one.sql
+@@&&skip_10g_script.&&skip_11r1_script.edb360_9a_pre_one.sql
 
 DEF title = 'Degree of Parallelism DOP on Tables';
 DEF main_table = 'DBA_TABLES';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        owner,
-       SUM(CASE WHEN TRIM(degree) = ''DEFAULT'' THEN 1 ELSE 0 END) "DEFAULT",
-       SUM(CASE WHEN TRIM(degree) = ''0'' THEN 1 ELSE 0 END) "0",
-       SUM(CASE WHEN TRIM(degree) = ''1'' THEN 1 ELSE 0 END) "1",
-       SUM(CASE WHEN TRIM(degree) = ''2'' THEN 1 ELSE 0 END) "2",
-       SUM(CASE WHEN TRIM(degree) IN (''3'', ''4'') THEN 1 ELSE 0 END) "3-4",
-       SUM(CASE WHEN TRIM(degree) IN (''5'', ''6'', ''7'', ''8'') THEN 1 ELSE 0 END) "5-8",
-       SUM(CASE WHEN TRIM(degree) IN (''9'', ''10'', ''11'', ''12'', ''13'', ''14'', ''15'', ''16'') THEN 1 ELSE 0 END) "9-16",
-       SUM(CASE WHEN LENGTH(TRIM(degree)) = 2 AND TRIM(degree) BETWEEN ''17'' AND ''32'' THEN 1 ELSE 0 END) "17-32",
-       SUM(CASE WHEN LENGTH(TRIM(degree)) = 2 AND TRIM(degree) BETWEEN ''33'' AND ''64'' THEN 1 ELSE 0 END) "33-64",
-       SUM(CASE WHEN (LENGTH(TRIM(degree)) = 2 AND TRIM(degree) BETWEEN ''65'' AND ''99'') OR
-                     (LENGTH(TRIM(degree)) = 3 AND TRIM(degree) BETWEEN ''100'' AND ''128'') THEN 1 ELSE 0 END) "65-128",
-       SUM(CASE WHEN LENGTH(TRIM(degree)) = 3 AND TRIM(degree) BETWEEN ''129'' AND ''256'' THEN 1 ELSE 0 END) "129-256",
-       SUM(CASE WHEN LENGTH(TRIM(degree)) = 3 AND TRIM(degree) BETWEEN ''257'' AND ''512'' THEN 1 ELSE 0 END) "257-512",
-       SUM(CASE WHEN (LENGTH(TRIM(degree)) = 3 AND TRIM(degree) > ''512'') OR
-                     (LENGTH(TRIM(degree)) > 3 AND TRIM(degree) != ''DEFAULT'') THEN 1 ELSE 0 END) "HIGHER"
+       SUM(CASE WHEN TRIM(degree) = 'DEFAULT' THEN 1 ELSE 0 END) "DEFAULT",
+       SUM(CASE WHEN TRIM(degree) = '0' THEN 1 ELSE 0 END) "0",
+       SUM(CASE WHEN TRIM(degree) = '1' THEN 1 ELSE 0 END) "1",
+       SUM(CASE WHEN TRIM(degree) = '2' THEN 1 ELSE 0 END) "2",
+       SUM(CASE WHEN TRIM(degree) IN ('3', '4') THEN 1 ELSE 0 END) "3-4",
+       SUM(CASE WHEN TRIM(degree) IN ('5', '6', '7', '8') THEN 1 ELSE 0 END) "5-8",
+       SUM(CASE WHEN TRIM(degree) IN ('9', '10', '11', '12', '13', '14', '15', '16') THEN 1 ELSE 0 END) "9-16",
+       SUM(CASE WHEN LENGTH(TRIM(degree)) = 2 AND TRIM(degree) BETWEEN '17' AND '32' THEN 1 ELSE 0 END) "17-32",
+       SUM(CASE WHEN LENGTH(TRIM(degree)) = 2 AND TRIM(degree) BETWEEN '33' AND '64' THEN 1 ELSE 0 END) "33-64",
+       SUM(CASE WHEN (LENGTH(TRIM(degree)) = 2 AND TRIM(degree) BETWEEN '65' AND '99') OR
+                     (LENGTH(TRIM(degree)) = 3 AND TRIM(degree) BETWEEN '100' AND '128') THEN 1 ELSE 0 END) "65-128",
+       SUM(CASE WHEN LENGTH(TRIM(degree)) = 3 AND TRIM(degree) BETWEEN '129' AND '256' THEN 1 ELSE 0 END) "129-256",
+       SUM(CASE WHEN LENGTH(TRIM(degree)) = 3 AND TRIM(degree) BETWEEN '257' AND '512' THEN 1 ELSE 0 END) "257-512",
+       SUM(CASE WHEN (LENGTH(TRIM(degree)) = 3 AND TRIM(degree) > '512') OR
+                     (LENGTH(TRIM(degree)) > 3 AND TRIM(degree) != 'DEFAULT') THEN 1 ELSE 0 END) "HIGHER"
   FROM dba_tables
  WHERE owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
-HAVING COUNT(*) > SUM(CASE WHEN TRIM(degree) IN (''0'', ''1'') THEN 1 ELSE 0 END)
+HAVING COUNT(*) > SUM(CASE WHEN TRIM(degree) IN ('0', '1') THEN 1 ELSE 0 END)
  GROUP BY
        owner
  ORDER BY
        owner
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -1079,7 +1079,7 @@ END;
 DEF title = 'Tables with DOP Set';
 DEF main_table = 'DBA_TABLES';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        degree,
        owner,
@@ -1089,13 +1089,13 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
   FROM dba_tables
  WHERE owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
-   AND TRIM(degree) NOT IN (''0'', ''1'')
+   AND TRIM(degree) NOT IN ('0', '1')
  ORDER BY
        LENGTH(TRIM(degree)) DESC,
        degree DESC,
        owner,
        table_name
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -1103,34 +1103,34 @@ END;
 DEF title = 'Degree of Parallelism DOP on Indexes';
 DEF main_table = 'DBA_INDEXES';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        owner,
-       SUM(CASE WHEN TRIM(degree) = ''DEFAULT'' THEN 1 ELSE 0 END) "DEFAULT",
-       SUM(CASE WHEN TRIM(degree) = ''0'' THEN 1 ELSE 0 END) "0",
-       SUM(CASE WHEN TRIM(degree) = ''1'' THEN 1 ELSE 0 END) "1",
-       SUM(CASE WHEN TRIM(degree) = ''2'' THEN 1 ELSE 0 END) "2",
-       SUM(CASE WHEN TRIM(degree) IN (''3'', ''4'') THEN 1 ELSE 0 END) "3-4",
-       SUM(CASE WHEN TRIM(degree) IN (''5'', ''6'', ''7'', ''8'') THEN 1 ELSE 0 END) "5-8",
-       SUM(CASE WHEN TRIM(degree) IN (''9'', ''10'', ''11'', ''12'', ''13'', ''14'', ''15'', ''16'') THEN 1 ELSE 0 END) "9-16",
-       SUM(CASE WHEN LENGTH(TRIM(degree)) = 2 AND TRIM(degree) BETWEEN ''17'' AND ''32'' THEN 1 ELSE 0 END) "17-32",
-       SUM(CASE WHEN LENGTH(TRIM(degree)) = 2 AND TRIM(degree) BETWEEN ''33'' AND ''64'' THEN 1 ELSE 0 END) "33-64",
-       SUM(CASE WHEN (LENGTH(TRIM(degree)) = 2 AND TRIM(degree) BETWEEN ''65'' AND ''99'') OR
-                     (LENGTH(TRIM(degree)) = 3 AND TRIM(degree) BETWEEN ''100'' AND ''128'') THEN 1 ELSE 0 END) "65-128",
-       SUM(CASE WHEN LENGTH(TRIM(degree)) = 3 AND TRIM(degree) BETWEEN ''129'' AND ''256'' THEN 1 ELSE 0 END) "129-256",
-       SUM(CASE WHEN LENGTH(TRIM(degree)) = 3 AND TRIM(degree) BETWEEN ''257'' AND ''512'' THEN 1 ELSE 0 END) "257-512",
-       SUM(CASE WHEN (LENGTH(TRIM(degree)) = 3 AND TRIM(degree) > ''512'') OR
-                     (LENGTH(TRIM(degree)) > 3 AND TRIM(degree) != ''DEFAULT'') THEN 1 ELSE 0 END) "HIGHER"
+       SUM(CASE WHEN TRIM(degree) = 'DEFAULT' THEN 1 ELSE 0 END) "DEFAULT",
+       SUM(CASE WHEN TRIM(degree) = '0' THEN 1 ELSE 0 END) "0",
+       SUM(CASE WHEN TRIM(degree) = '1' THEN 1 ELSE 0 END) "1",
+       SUM(CASE WHEN TRIM(degree) = '2' THEN 1 ELSE 0 END) "2",
+       SUM(CASE WHEN TRIM(degree) IN ('3', '4') THEN 1 ELSE 0 END) "3-4",
+       SUM(CASE WHEN TRIM(degree) IN ('5', '6', '7', '8') THEN 1 ELSE 0 END) "5-8",
+       SUM(CASE WHEN TRIM(degree) IN ('9', '10', '11', '12', '13', '14', '15', '16') THEN 1 ELSE 0 END) "9-16",
+       SUM(CASE WHEN LENGTH(TRIM(degree)) = 2 AND TRIM(degree) BETWEEN '17' AND '32' THEN 1 ELSE 0 END) "17-32",
+       SUM(CASE WHEN LENGTH(TRIM(degree)) = 2 AND TRIM(degree) BETWEEN '33' AND '64' THEN 1 ELSE 0 END) "33-64",
+       SUM(CASE WHEN (LENGTH(TRIM(degree)) = 2 AND TRIM(degree) BETWEEN '65' AND '99') OR
+                     (LENGTH(TRIM(degree)) = 3 AND TRIM(degree) BETWEEN '100' AND '128') THEN 1 ELSE 0 END) "65-128",
+       SUM(CASE WHEN LENGTH(TRIM(degree)) = 3 AND TRIM(degree) BETWEEN '129' AND '256' THEN 1 ELSE 0 END) "129-256",
+       SUM(CASE WHEN LENGTH(TRIM(degree)) = 3 AND TRIM(degree) BETWEEN '257' AND '512' THEN 1 ELSE 0 END) "257-512",
+       SUM(CASE WHEN (LENGTH(TRIM(degree)) = 3 AND TRIM(degree) > '512') OR
+                     (LENGTH(TRIM(degree)) > 3 AND TRIM(degree) != 'DEFAULT') THEN 1 ELSE 0 END) "HIGHER"
   FROM dba_indexes
  WHERE owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
-   AND index_type != ''LOB''
+   AND index_type != 'LOB'
  GROUP BY
        owner
-HAVING COUNT(*) > SUM(CASE WHEN TRIM(degree) IN (''0'', ''1'') THEN 1 ELSE 0 END)
+HAVING COUNT(*) > SUM(CASE WHEN TRIM(degree) IN ('0', '1') THEN 1 ELSE 0 END)
  ORDER BY
        owner
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -1138,7 +1138,7 @@ END;
 DEF title = 'Indexes with DOP Set';
 DEF main_table = 'DBA_INDEXES';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        degree,
        owner,
@@ -1148,14 +1148,14 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
   FROM dba_indexes
  WHERE owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
-   AND index_type != ''LOB''
-   AND TRIM(degree) NOT IN (''0'', ''1'')
+   AND index_type != 'LOB'
+   AND TRIM(degree) NOT IN ('0', '1')
  ORDER BY
        LENGTH(TRIM(degree)) DESC,
        degree DESC,
        owner,
        index_name
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -1163,7 +1163,7 @@ END;
 DEF title = 'Unused Columns';
 DEF main_table = 'DBA_UNUSED_COL_TABS';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 -- requested by Mike Moehlman
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
@@ -1172,7 +1172,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
    AND owner NOT IN &&exclusion_list2.
  ORDER BY
        1, 2
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -1180,7 +1180,7 @@ END;
 DEF title = 'Columns with multiple Data Types';
 DEF main_table = 'DBA_TAB_COLUMNS';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 WITH 
 tables AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
@@ -1189,7 +1189,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
   FROM dba_tables t
  WHERE t.owner NOT IN &&exclusion_list.
    AND t.owner NOT IN &&exclusion_list2.
-   AND t.table_name NOT LIKE ''BIN%''
+   AND t.table_name NOT LIKE 'BIN%'
 ),
 columns AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
@@ -1200,15 +1200,15 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
   FROM dba_tab_columns c
  WHERE c.owner NOT IN &&exclusion_list.
    AND c.owner NOT IN &&exclusion_list2.
-   AND c.data_type != ''UNDEFINED''
-   AND c.table_name NOT LIKE ''BIN%''
-   AND c.data_type != ''UNDEFINED''
+   AND c.data_type != 'UNDEFINED'
+   AND c.table_name NOT LIKE 'BIN%'
+   AND c.data_type != 'UNDEFINED'
 ),
 table_columns AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        c.column_name, COUNT(*) typ_cnt, c.data_type,  
-       MIN(c.owner||''.''||c.table_name) min_table_name, 
-       MAX(c.owner||''.''||c.table_name) max_table_name
+       MIN(c.owner||'.'||c.table_name) min_table_name, 
+       MAX(c.owner||'.'||c.table_name) max_table_name
   FROM columns c,
        tables t
  WHERE t.owner = c.owner -- this to filter out views
@@ -1234,7 +1234,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        c.column_name,
        c.typ_cnt DESC,
        c.data_type
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -1242,14 +1242,14 @@ END;
 DEF title = 'Jobs';
 DEF main_table = 'DBA_JOBS';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_jobs
  ORDER BY
        job
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -1257,14 +1257,14 @@ END;
 DEF title = 'Jobs Running';
 DEF main_table = 'DBA_JOBS_RUNNING';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_jobs_running
  ORDER BY
        job
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -1272,14 +1272,14 @@ END;
 DEF title = 'Scheduler Jobs';
 DEF main_table = 'DBA_SCHEDULER_JOBS';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_scheduler_jobs
  ORDER BY
        owner,
        job_name
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -1287,7 +1287,7 @@ END;
 DEF title = 'Scheduler Job Log for past 7 days';
 DEF main_table = 'DBA_SCHEDULER_JOB_LOG';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_scheduler_job_log
@@ -1295,7 +1295,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
  ORDER BY
        log_id DESC,
        log_date DESC
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -1303,13 +1303,13 @@ END;
 DEF title = 'Scheduler Windows';
 DEF main_table = 'DBA_SCHEDULER_WINDOWS';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_scheduler_windows
  ORDER BY
        window_name
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -1317,13 +1317,13 @@ END;
 DEF title = 'Scheduler Window Group Members';
 DEF main_table = 'DBA_SCHEDULER_WINGROUP_MEMBERS';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_scheduler_wingroup_members
  ORDER BY
        1,2
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -1331,35 +1331,35 @@ END;
 DEF title = 'Automated Maintenance Tasks';
 DEF main_table = 'DBA_AUTOTASK_CLIENT';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_autotask_client
  ORDER BY
        client_name
-';
+]';
 END;
 /
-@@&&skip_10g.edb360_9a_pre_one.sql
+@@&&skip_10g_script.edb360_9a_pre_one.sql
 
 DEF title = 'Automated Maintenance Tasks History';
 DEF main_table = 'DBA_AUTOTASK_CLIENT_HISTORY';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_autotask_client_history
  ORDER BY
        window_start_time DESC 
-';
+]';
 END;
 /
-@@&&skip_10g.edb360_9a_pre_one.sql
+@@&&skip_10g_script.edb360_9a_pre_one.sql
 
 DEF title = 'Current Blocking Activity';
 DEF main_table = 'GV$SESSION';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
 a.sid, a.sql_id sql_id_a, a.state, a.blocking_session, b.sql_id sql_id_b, b.prev_sql_id, 
@@ -1367,7 +1367,7 @@ a.blocking_session_status, a.seconds_in_wait
  from gv$session a, gv$session b
 where a.blocking_session is not null
 and a.blocking_session = b.sid
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -1375,7 +1375,7 @@ END;
 DEF title = 'Sequences';
 DEF main_table = 'DBA_SEQUENCES';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        s.*,
@@ -1386,7 +1386,7 @@ where
 and s.sequence_owner not in &&exclusion_list2.
 and s.max_value > 0
 order by s.sequence_owner, s.sequence_name
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -1394,7 +1394,7 @@ END;
 DEF title = 'Sequences used over 20%';
 DEF main_table = 'DBA_SEQUENCES';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        ROUND(100 * (s.last_number - s.min_value) / GREATEST((s.max_value - s.min_value), 1), 1) percent_used, /* requested by Mike Moehlman */
@@ -1408,7 +1408,7 @@ and ROUND(100 * (s.last_number - s.min_value) / GREATEST((s.max_value - s.min_va
 order by 
 ROUND(100 * (s.last_number - s.min_value) / GREATEST((s.max_value - s.min_value), 1), 1) DESC, /* requested by Mike Moehlman */
 s.sequence_owner, s.sequence_name
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -1416,18 +1416,18 @@ END;
 DEF title = 'Sequences prone to contention';
 DEF main_table = 'DBA_SEQUENCES';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        (s.last_number - CASE WHEN s.increment_by > 0 THEN s.min_value ELSE s.max_value END) / s.increment_by times_used, s.*
   FROM dba_sequences s
  WHERE s.sequence_owner not in &&exclusion_list.
    AND s.sequence_owner not in &&exclusion_list2.
-   AND (s.cache_size <= 1000 OR s.order_flag = ''Y'')
+   AND (s.cache_size <= 1000 OR s.order_flag = 'Y')
    AND s.min_value != s.last_number
    AND s.max_value != s.last_number
    AND (s.last_number - CASE WHEN s.increment_by > 0 THEN s.min_value ELSE s.max_value END) / s.increment_by >= 10000
  ORDER BY 1 DESC
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -1436,7 +1436,7 @@ DEF title = 'Tables with more than 255 Columns';
 DEF main_table = 'DBA_TAB_COLUMNS';
 DEF abstract = 'Tables with more than 255 Columns are subject to intra-block chained rows. Continuation pieces could be stored on other blocks, even on different storage units. See MOS 9373758 and 18940497<br />';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        COUNT(*) columns,
        c.owner,
@@ -1445,7 +1445,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
   FROM dba_tab_columns c
  WHERE c.owner NOT IN &&exclusion_list.
    AND c.owner NOT IN &&exclusion_list2.
-   AND c.table_name NOT LIKE ''BIN%''
+   AND c.table_name NOT LIKE 'BIN%'
    AND NOT EXISTS
        (SELECT NULL FROM dba_views v WHERE v.owner = c.owner AND v.view_name = c.table_name)
  GROUP BY
@@ -1455,7 +1455,7 @@ HAVING COUNT(*) > 255
        1 DESC, 
        c.owner,
        c.table_name
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -1464,21 +1464,21 @@ DEF title = 'SQL using Literals or many children (by COUNT)';
 DEF main_table = 'GV$SQL';
 COL force_matching_signature FOR 99999999999999999999 HEA "SIGNATURE";
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 WITH
 lit AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        force_matching_signature, COUNT(*) cnt, MIN(sql_id) min_sql_id, MAX(sql_id) max_sql_id
   FROM gv$sql
  WHERE force_matching_signature > 0
-   AND UPPER(sql_text) NOT LIKE ''%EDB360%''
+   AND UPPER(sql_text) NOT LIKE '%EDB360%'
  GROUP BY
        force_matching_signature
 HAVING COUNT(*) > 99
 )
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        DISTINCT lit.cnt, s.force_matching_signature, s.parsing_schema_name owner,
-       CASE WHEN o.object_name IS NOT NULL THEN o.object_name||''(''||s.program_line#||'')'' END source,
+       CASE WHEN o.object_name IS NOT NULL THEN o.object_name||'('||s.program_line#||')' END source,
        lit.min_sql_id,
        lit.max_sql_id,
        s.sql_text
@@ -1488,7 +1488,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
    AND o.object_id(+) = s.program_id
  ORDER BY 
        1 DESC, 2
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -1497,21 +1497,21 @@ DEF title = 'SQL using Literals or many children (by OWNER)';
 DEF main_table = 'GV$SQL';
 COL force_matching_signature FOR 99999999999999999999 HEA "SIGNATURE";
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 WITH
 lit AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        force_matching_signature, COUNT(*) cnt, MIN(sql_id) min_sql_id, MAX(sql_id) max_sql_id
   FROM gv$sql
  WHERE force_matching_signature > 0
-   AND UPPER(sql_text) NOT LIKE ''%EDB360%''
+   AND UPPER(sql_text) NOT LIKE '%EDB360%'
  GROUP BY
        force_matching_signature
 HAVING COUNT(*) > 99
 )
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        DISTINCT s.parsing_schema_name owner, lit.cnt, s.force_matching_signature,
-       CASE WHEN o.object_name IS NOT NULL THEN o.object_name||''(''||s.program_line#||'')'' END source,
+       CASE WHEN o.object_name IS NOT NULL THEN o.object_name||'('||s.program_line#||')' END source,
        lit.min_sql_id,
        lit.max_sql_id,
        s.sql_text
@@ -1521,7 +1521,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
    AND o.object_id(+) = s.program_id
  ORDER BY 
        1, 2 DESC, 3
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -1529,7 +1529,7 @@ END;
 DEF title = 'SQL consuming over 10GB of TEMP space';
 DEF main_table = '&&awr_hist_prefix.ACTIVE_SESS_HISTORY';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
        /* &&section_id..&&report_sequence. */
        h.sql_id,
@@ -1544,15 +1544,16 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
        h.sql_id 
  ORDER BY
        2 DESC, 1
-';
+]';
 END;
 /
-@@&&skip_10g.&&skip_11r1.edb360_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_10g_script.&&skip_11r1_script.edb360_9a_pre_one.sql
 
 DEF title = 'SQL with over 2GB of PGA allocated memory';
 DEF main_table = '&&awr_hist_prefix.ACTIVE_SESS_HISTORY';
+DEF abstract = '&&abstract_uom.';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
        /* &&section_id..&&report_sequence. */
        h.sql_id,
@@ -1567,15 +1568,15 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
        h.sql_id 
  ORDER BY
        2 DESC, 1
-';
+]';
 END;
 /
-@@&&skip_10g.&&skip_11r1.edb360_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_10g_script.&&skip_11r1_script.edb360_9a_pre_one.sql
 
 DEF title = 'Open Cursors Count per Session';
 DEF main_table = 'GV$OPEN_CURSOR';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        COUNT(*) open_cursors, inst_id, sid, user_name
   FROM gv$open_cursor
@@ -1583,7 +1584,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        inst_id, sid, user_name
  ORDER BY 
        1 DESC
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -1592,26 +1593,26 @@ DEF title = 'Open Cursors Count per SQL_ID';
 DEF main_table = 'GV$OPEN_CURSOR';
 DEF abstract = 'SQL statements with more than 50 Open Cursors<br />';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
-       COUNT(*) open_cursors, COUNT(DISTINCT inst_id||''.''||sid) sessions, sql_id, hash_value, sql_text, cursor_type,
+       COUNT(*) open_cursors, COUNT(DISTINCT inst_id||'.'||sid) sessions, sql_id, hash_value, sql_text, cursor_type,
        MIN(user_name) min_user_name, MAX(user_name) max_user_name, MAX(last_sql_active_time) last_sql_active_time
   FROM gv$open_cursor
  GROUP BY
        sql_id, hash_value, sql_text, cursor_type
 HAVING COUNT(*) >= 50
-   AND COUNT(*) > COUNT(DISTINCT inst_id||''.''||sid)
+   AND COUNT(*) > COUNT(DISTINCT inst_id||'.'||sid)
  ORDER BY 
        1 DESC
-';
+]';
 END;
 /
-@@&&skip_10g.edb360_9a_pre_one.sql
+@@&&skip_10g_script.edb360_9a_pre_one.sql
 
 DEF title = 'High Cursor Count';
 DEF main_table = 'GV$SQL';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        v1.sql_id,
        COUNT(*) child_cursors,
@@ -1627,7 +1628,7 @@ HAVING COUNT(*) > 99
  ORDER BY
        child_cursors DESC,
        v1.sql_id
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -1635,7 +1636,7 @@ END;
 DEF title = 'SQL with 100 or more unshared child cursors';
 DEF main_table = 'GV$SQL_SHARED_CURSOR';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 WITH
 not_shared AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
@@ -1656,7 +1657,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        ns.sql_rank,
        ns.child_cursors DESC,
        ns.sql_id
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -1667,7 +1668,7 @@ COL total_buffer_gets NEW_V total_buffer_gets;
 COL total_disk_reads NEW_V total_disk_reads;
 SELECT SUM(buffer_gets) total_buffer_gets, SUM(disk_reads) total_disk_reads FROM gv$sql;
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
    FORCE_MATCHING_SIGNATURE,
@@ -1720,7 +1721,7 @@ from
   ) v1
 where
    sql_rank < 101
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -1731,7 +1732,7 @@ COL total_buffer_gets NEW_V total_buffer_gets;
 COL total_disk_reads NEW_V total_disk_reads;
 SELECT SUM(buffer_gets) total_buffer_gets, SUM(disk_reads) total_disk_reads FROM gv$sql;
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
    FORCE_MATCHING_SIGNATURE,
@@ -1780,7 +1781,7 @@ from
   ) v1
 where
    sql_rank < 101
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -1788,7 +1789,7 @@ END;
 DEF title = 'Active SQL (sql_id)';
 DEF main_table = 'GV$SQL';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 WITH /* active_sql */ 
 unique_sql AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
@@ -1796,17 +1797,17 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        sq.sql_text
   FROM gv$session se,
        gv$sql sq
- WHERE se.status = ''ACTIVE''
+ WHERE se.status = 'ACTIVE'
    AND sq.inst_id = se.inst_id
    AND sq.sql_id = se.sql_id
    AND sq.child_number = se.sql_child_number
-   AND sq.sql_text NOT LIKE ''WITH /* active_sql */%''
+   AND sq.sql_text NOT LIKE 'WITH /* active_sql */%'
 )
 SELECT sql_id, sql_text
   FROM unique_sql
  ORDER BY
        sql_id
-';
+]';
 END;
 /
 --@@edb360_9a_pre_one.sql (removed for performance)
@@ -1814,20 +1815,20 @@ END;
 DEF title = 'Active SQL (full text)';
 DEF main_table = 'GV$SQL';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 SELECT /* active_sql */ 
        sq.inst_id, sq.sql_id, sq.child_number,
        sq.sql_fulltext
   FROM gv$session se,
        gv$sql sq
- WHERE se.status = ''ACTIVE''
+ WHERE se.status = 'ACTIVE'
    AND sq.inst_id = se.inst_id
    AND sq.sql_id = se.sql_id
    AND sq.child_number = se.sql_child_number
-   AND sq.sql_text NOT LIKE ''SELECT /* active_sql */%''
+   AND sq.sql_text NOT LIKE 'SELECT /* active_sql */%'
  ORDER BY
        sq.inst_id, sq.sql_id, sq.child_number
-';
+]';
 END;
 /
 --@@edb360_9a_pre_one.sql (removed for performance)
@@ -1835,19 +1836,19 @@ END;
 DEF title = 'Active SQL (detail)';
 DEF main_table = 'GV$SQL';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 SELECT /* active_sql */ 
        sq.*
   FROM gv$session se,
        gv$sql sq
- WHERE se.status = ''ACTIVE''
+ WHERE se.status = 'ACTIVE'
    AND sq.inst_id = se.inst_id
    AND sq.sql_id = se.sql_id
    AND sq.child_number = se.sql_child_number
-   AND sq.sql_text NOT LIKE ''SELECT /* active_sql */%''
+   AND sq.sql_text NOT LIKE 'SELECT /* active_sql */%'
  ORDER BY
        sq.inst_id, sq.sql_id, sq.child_number
-';
+]';
 END;
 /
 --@@edb360_9a_pre_one.sql (removed for performance)
@@ -1855,13 +1856,13 @@ END;
 DEF title = 'Libraries calling DBMS_STATS';
 DEF main_table = 'DBA_SOURCE';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 WITH
 lines_with_api AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */ *
   FROM dba_source
- WHERE REPLACE(UPPER(text), '' '') LIKE ''%DBMS_STATS.%''
-   AND UPPER(text) NOT LIKE ''%--%DBMS_STATS%''
+ WHERE REPLACE(UPPER(text), ' ') LIKE '%DBMS_STATS.%'
+   AND UPPER(text) NOT LIKE '%--%DBMS_STATS%'
    AND owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
 ),
@@ -1878,11 +1879,11 @@ SELECT a.owner,
        a.name,
        a.type,
        a.line,
-       CASE WHEN REPLACE(UPPER(a.text), '' '') LIKE ''%DBMS_STATS.%'' AND UPPER(a.text) NOT LIKE ''%--%DBMS_STATS%'' THEN ''*'' END dbms_stats,
-       REPLACE(a.text, ''  '', ''..'') text
+       CASE WHEN REPLACE(UPPER(a.text), ' ') LIKE '%DBMS_STATS.%' AND UPPER(a.text) NOT LIKE '%--%DBMS_STATS%' THEN '*' END dbms_stats,
+       REPLACE(a.text, '  ', '..') text
   FROM include_nearby_lines a
  ORDER BY 1, 2, 3, 4
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -1890,16 +1891,16 @@ END;
 DEF title = 'Libraries doing ALTER SESSION';
 DEF main_table = 'DBA_SOURCE';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 SELECT *
   FROM dba_source
- WHERE UPPER(text) LIKE ''%ALTER%SESSION%''
-   AND UPPER(text) NOT LIKE ''%--%ALTER%SESSION%''
+ WHERE UPPER(text) LIKE '%ALTER%SESSION%'
+   AND UPPER(text) NOT LIKE '%--%ALTER%SESSION%'
    AND owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
  ORDER BY
        owner, name, type, line
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -1907,15 +1908,15 @@ END;
 DEF title = 'Libraries calling ANALYZE';
 DEF main_table = 'DBA_SOURCE';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 SELECT *
   FROM dba_source
- WHERE (REPLACE(UPPER(text), '' '') LIKE ''%''''ANALYZETABLE%'' OR REPLACE(UPPER(text), '' '') LIKE ''%''''ANALYZEINDEX%'')
-   AND UPPER(text) NOT LIKE ''%--%ANALYZE %''
+ WHERE (REPLACE(UPPER(text), ' ') LIKE '%''ANALYZETABLE%' OR REPLACE(UPPER(text), ' ') LIKE '%''ANALYZEINDEX%')
+   AND UPPER(text) NOT LIKE '%--%ANALYZE %'
    AND owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
  ORDER BY owner, name, type, line
-';
+]';
 END;
 /
 -- taking long and of little use, 
@@ -1925,11 +1926,11 @@ END;
 DEF title = 'Workload Repository Control';
 DEF main_table = '&&awr_hist_prefix.WR_CONTROL';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        *
   FROM &&awr_object_prefix.wr_control
-';
+]';
 END;
 /
 @@&&skip_diagnostics.edb360_9a_pre_one.sql
@@ -1937,19 +1938,19 @@ END;
 DEF title = 'ASH Info';
 DEF main_table = 'V$ASH_INFO';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        *
   FROM v$ash_info
-';
+]';
 END;
 /
-@@&&skip_diagnostics.&&skip_10g.edb360_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_10g_script.edb360_9a_pre_one.sql
 
 DEF title = 'ASH Retention ';
 DEF main_table = '&&awr_hist_prefix.ACTIVE_SESS_HISTORY';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 -- from http://jhdba.wordpress.com/tag/purge-wrh-tables/
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
  sysdate - a.sample_time ash,
@@ -1973,7 +1974,7 @@ group by db.dbid
 ) s
 where a.dbid = s.dbid
 and c.dbid = a.dbid
-';
+]';
 END;
 /
 @@&&skip_diagnostics.edb360_9a_pre_one.sql
@@ -1981,15 +1982,15 @@ END;
 DEF title = 'WRH$ Partitions ';
 DEF main_table = 'DBA_TAB_PARTITIONS';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 -- from http://jhdba.wordpress.com/tag/purge-wrh-tables/
 select table_name, count(*)
 from dba_tab_partitions
-where table_name like ''WRH$%''
-and table_owner = ''SYS''
+where table_name like 'WRH$%'
+and table_owner = 'SYS'
 group by table_name
 order by 1
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -1997,7 +1998,7 @@ END;
 DEF title = 'Segments with Next Extent at Risk';
 DEF main_table = 'DBA_SEGMENTS';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 -- requested by Milton Quinteros
 with 
 max_free AS (
@@ -2008,13 +2009,13 @@ group by tablespace_name )
 select /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
 s.owner, s.segment_name, s.partition_name, s.tablespace_name, s.next_extent, max_free.bytes max_free_bytes 
 from dba_segments s, max_free
-where ''&&edb360_conf_incl_segments.'' = ''Y''
+where '&&edb360_conf_incl_segments.' = 'Y'
 and s.owner NOT IN &&exclusion_list.
 and s.owner NOT IN &&exclusion_list2.
 and s.next_extent > max_free.bytes 
 and s.tablespace_name=max_free.tablespace_name
 order by 1,2
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -2022,15 +2023,15 @@ END;
 DEF title = 'Libraries Version';
 DEF main_table = 'DBA_SOURCE';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM dba_source
  WHERE line < 21
-   AND text LIKE ''%$Header%''
+   AND text LIKE '%$Header%'
  ORDER BY
        1, 2, 3, 4
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -2038,7 +2039,7 @@ END;
 DEF title = 'Orphaned Synonyms';
 DEF main_table = 'DBA_SYNONYMS';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 -- provided by Simon Pane
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        s.owner, s.table_owner, COUNT(1)
@@ -2054,7 +2055,8 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
    AND s.table_owner NOT IN &&exclusion_list.
    AND s.table_owner NOT IN &&exclusion_list2.
  GROUP BY s.owner, s.table_owner
- ORDER BY s.owner';
+ ORDER BY s.owner
+]';
 END;
 /
 @@edb360_9a_pre_one.sql

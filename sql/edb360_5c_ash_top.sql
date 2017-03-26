@@ -31,7 +31,7 @@ END;
 SPO OFF;
 SET SERVEROUT OFF;
 @99840_&&common_edb360_prefix._chart_setup_driver2.sql;
-HOS zip -m &&edb360_main_filename._&&edb360_file_time. 99840_&&common_edb360_prefix._chart_setup_driver2.sql >> &&edb360_log3..txt
+HOS zip -m &&edb360_zip_filename. 99840_&&common_edb360_prefix._chart_setup_driver2.sql >> &&edb360_log3..txt
 
 DEF main_table = '&&awr_hist_prefix.ACTIVE_SESS_HISTORY';
 DEF chartype = 'AreaChart';
@@ -40,13 +40,13 @@ DEF vaxis = 'Average Active Sessions - AAS (stacked)';
 DEF vbaseline = '';
 
 BEGIN
-  :sql_text_backup := '
+  :sql_text_backup := q'[
 SELECT /*+ &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
        /* &&section_id..&&report_sequence. */
        snap_id,
-       --TO_CHAR(LAG(MAX(sample_time)) OVER (ORDER BY snap_id), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
-       TO_CHAR(MIN(sample_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
-       TO_CHAR(MAX(sample_time), ''YYYY-MM-DD HH24:MI:SS'') end_time,
+       --TO_CHAR(LAG(MAX(sample_time)) OVER (ORDER BY snap_id), 'YYYY-MM-DD HH24:MI:SS') begin_time,
+       TO_CHAR(MIN(sample_time), 'YYYY-MM-DD HH24:MI:SS') begin_time,
+       TO_CHAR(MAX(sample_time), 'YYYY-MM-DD HH24:MI:SS') end_time,
        ROUND(SUM(CASE instance_number WHEN 1 THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), (1/24/3600)) * 24 * 3600), 3) inst_01,
        ROUND(SUM(CASE instance_number WHEN 2 THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), (1/24/3600)) * 24 * 3600), 3) inst_02,
        ROUND(SUM(CASE instance_number WHEN 3 THEN 10 ELSE 0 END) / (GREATEST(CAST(MAX(sample_time) AS DATE) - CAST(LAG(MAX(sample_time)) OVER (ORDER BY snap_id) AS DATE), (1/24/3600)) * 24 * 3600), 3) inst_03,
@@ -70,7 +70,7 @@ SELECT /*+ &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */
        snap_id
  ORDER BY
        snap_id
-';
+]';
 END;
 /
 -- end from 5a
@@ -78,7 +78,7 @@ END;
 DEF title = 'Top 24 Wait Events';
 DEF main_table = '&&awr_hist_prefix.ACTIVE_SESS_HISTORY';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 WITH
 ranked AS (
 SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
@@ -88,10 +88,10 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
        COUNT(*) samples,
        ROW_NUMBER () OVER (ORDER BY COUNT(*) DESC) wrank
   FROM &&awr_object_prefix.active_sess_history h
- WHERE ''&&diagnostics_pack.'' = ''Y''
+ WHERE '&&diagnostics_pack.' = 'Y'
    AND h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND h.dbid = &&edb360_dbid.
-   AND h.session_state = ''WAITING''
+   AND h.session_state = 'WAITING'
  GROUP BY
        h.wait_class,
        event
@@ -103,7 +103,7 @@ SELECT ROUND(samples * 10 / 3600, 1) hours_waited,
  WHERE wrank < 25
  ORDER BY
        wrank
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -254,7 +254,7 @@ SELECT CHR(38)||' recovery' recovery FROM DUAL;
 -- this above is to handle event "RMAN backup & recovery I/O"
 
 BEGIN
-  :sql_text_backup2 := '
+  :sql_text_backup2 := q'[
 WITH
 hist AS (
 SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
@@ -279,7 +279,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
 total AS (
 SELECT SUM(samples) samples FROM hist
 )
-SELECT SUBSTR(TRIM(h.sql_id||'' ''||h.program||'' ''||
+SELECT SUBSTR(TRIM(h.sql_id||' '||h.program||' '||
        CASE h.module WHEN h.program THEN NULL ELSE h.module END), 1, 128) source,
        h.samples,
        ROUND(100 * h.samples / t.samples, 1) percent,
@@ -288,7 +288,7 @@ SELECT SUBSTR(TRIM(h.sql_id||'' ''||h.program||'' ''||
        total t
  WHERE h.samples >= t.samples / 1000 AND rn <= 14
  UNION ALL
-SELECT ''Others'' source,
+SELECT 'Others' source,
        NVL(SUM(h.samples), 0) samples,
        NVL(ROUND(100 * SUM(h.samples) / AVG(t.samples), 1), 0) percent,
        NULL sql_text
@@ -296,7 +296,7 @@ SELECT ''Others'' source,
        total t
  WHERE h.samples < t.samples / 1000 OR rn > 14
  ORDER BY 2 DESC NULLS LAST
-';
+]';
 END;
 /
 

@@ -44,47 +44,47 @@ COL plsql_compilation FOR 999990.0;
 COL java_execution FOR 999990.0;
 COL repeated_bind FOR 999990.0;
 BEGIN
-  :sql_text_backup := '
+  :sql_text_backup := q'[
 WITH
 sys_time_model_denorm_2 AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
        dbid,
        instance_number,
-       SUM(CASE stat_name WHEN ''background elapsed time'' THEN value / 1e6 ELSE 0 END) background_time,
-       SUM(CASE stat_name WHEN ''background cpu time''  THEN value / 1e6 ELSE 0 END) background_cpu,       
-       SUM(CASE stat_name WHEN ''RMAN cpu time (backup/restore)'' THEN value / 1e6 ELSE 0 END) rman_cpu,
-       SUM(CASE stat_name WHEN ''DB time'' THEN value / 1e6 ELSE 0 END) db_time,
-       SUM(CASE stat_name WHEN ''DB CPU'' THEN value / 1e6 ELSE 0 END) db_cpu,
-       SUM(CASE stat_name WHEN ''connection management call elapsed time'' THEN value / 1e6 ELSE 0 END) connection_management_call,
-       SUM(CASE stat_name WHEN ''sequence load elapsed time'' THEN value / 1e6 ELSE 0 END) sequence_load,
-       SUM(CASE stat_name WHEN ''sql execute elapsed time'' THEN value / 1e6 ELSE 0 END) sql_execute,
-       SUM(CASE stat_name WHEN ''parse time elapsed'' THEN value / 1e6 ELSE 0 END) parse_time,
-       SUM(CASE stat_name WHEN ''hard parse elapsed time'' THEN value / 1e6 ELSE 0 END) hard_parse,
-       SUM(CASE stat_name WHEN ''PL/SQL execution elapsed time'' THEN value / 1e6 ELSE 0 END) plsql_execution,
-       SUM(CASE stat_name WHEN ''inbound PL/SQL rpc elapsed time'' THEN value / 1e6 ELSE 0 END) inbound_plsql_rpc,
-       SUM(CASE stat_name WHEN ''PL/SQL compilation elapsed time'' THEN value / 1e6 ELSE 0 END) plsql_compilation,
-       SUM(CASE stat_name WHEN ''Java execution elapsed time'' THEN value / 1e6 ELSE 0 END) java_execution,
-       SUM(CASE stat_name WHEN ''repeated bind elapsed time'' THEN value / 1e6 ELSE 0 END) repeated_bind
+       SUM(CASE stat_name WHEN 'background elapsed time' THEN value / 1e6 ELSE 0 END) background_time,
+       SUM(CASE stat_name WHEN 'background cpu time'  THEN value / 1e6 ELSE 0 END) background_cpu,       
+       SUM(CASE stat_name WHEN 'RMAN cpu time (backup/restore)' THEN value / 1e6 ELSE 0 END) rman_cpu,
+       SUM(CASE stat_name WHEN 'DB time' THEN value / 1e6 ELSE 0 END) db_time,
+       SUM(CASE stat_name WHEN 'DB CPU' THEN value / 1e6 ELSE 0 END) db_cpu,
+       SUM(CASE stat_name WHEN 'connection management call elapsed time' THEN value / 1e6 ELSE 0 END) connection_management_call,
+       SUM(CASE stat_name WHEN 'sequence load elapsed time' THEN value / 1e6 ELSE 0 END) sequence_load,
+       SUM(CASE stat_name WHEN 'sql execute elapsed time' THEN value / 1e6 ELSE 0 END) sql_execute,
+       SUM(CASE stat_name WHEN 'parse time elapsed' THEN value / 1e6 ELSE 0 END) parse_time,
+       SUM(CASE stat_name WHEN 'hard parse elapsed time' THEN value / 1e6 ELSE 0 END) hard_parse,
+       SUM(CASE stat_name WHEN 'PL/SQL execution elapsed time' THEN value / 1e6 ELSE 0 END) plsql_execution,
+       SUM(CASE stat_name WHEN 'inbound PL/SQL rpc elapsed time' THEN value / 1e6 ELSE 0 END) inbound_plsql_rpc,
+       SUM(CASE stat_name WHEN 'PL/SQL compilation elapsed time' THEN value / 1e6 ELSE 0 END) plsql_compilation,
+       SUM(CASE stat_name WHEN 'Java execution elapsed time' THEN value / 1e6 ELSE 0 END) java_execution,
+       SUM(CASE stat_name WHEN 'repeated bind elapsed time' THEN value / 1e6 ELSE 0 END) repeated_bind
   FROM &&awr_object_prefix.sys_time_model
  WHERE stat_name IN (
-''background elapsed time'',
-''background cpu time'',
-''RMAN cpu time (backup/restore)'',
-''DB time'',
-''DB CPU'',
-''connection management call elapsed time'',
-''sequence load elapsed time'',
-''sql execute elapsed time'',
-''parse time elapsed'',
-''hard parse elapsed time'',
-''PL/SQL execution elapsed time'',
-''inbound PL/SQL rpc elapsed time'',
-''PL/SQL compilation elapsed time'',
-''Java execution elapsed time'',
-''repeated bind elapsed time''
+'background elapsed time',
+'background cpu time',
+'RMAN cpu time (backup/restore)',
+'DB time',
+'DB CPU',
+'connection management call elapsed time',
+'sequence load elapsed time',
+'sql execute elapsed time',
+'parse time elapsed',
+'hard parse elapsed time',
+'PL/SQL execution elapsed time',
+'inbound PL/SQL rpc elapsed time',
+'PL/SQL compilation elapsed time',
+'Java execution elapsed time',
+'repeated bind elapsed time'
 )
-   AND ''&&diagnostics_pack.'' = ''Y''
+   AND '&&diagnostics_pack.' = 'Y'
    AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
    AND instance_number = @instance_number@
@@ -141,8 +141,8 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
 sys_time_model_denorm_4 AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
-       TO_CHAR(MIN(begin_interval_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
-       TO_CHAR(MIN(end_interval_time), ''YYYY-MM-DD HH24:MI:SS'') end_time,
+       TO_CHAR(MIN(begin_interval_time), 'YYYY-MM-DD HH24:MI:SS') begin_time,
+       TO_CHAR(MIN(end_interval_time), 'YYYY-MM-DD HH24:MI:SS') end_time,
        ROUND(SUM(background_time / interval_secs), 3) background_time,
        ROUND(SUM(background_cpu / interval_secs), 3) background_cpu,
        ROUND(SUM(rman_cpu / interval_secs), 3) rman_cpu,
@@ -183,7 +183,7 @@ SELECT snap_id,
   FROM sys_time_model_denorm_4
  ORDER BY
        snap_id
-';
+]';
 END;
 /
 

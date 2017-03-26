@@ -27,19 +27,19 @@ DEF title = 'CPU Demand Percentiles (MEM)';
 DEF main_table = 'GV$ACTIVE_SESSION_HISTORY';
 DEF abstract = 'Number of Sessions on CPU or RESMGR. Includes Max (Peak), Percentiles, Median and Average.<br />'
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 WITH 
 cpu_per_inst_and_sample AS (
 SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
        inst_id,
        sample_id,
        COUNT(*) aas_on_cpu_and_resmgr,
-       SUM(CASE session_state WHEN ''ON CPU'' THEN 1 ELSE 0 END) aas_on_cpu,
-       SUM(CASE event WHEN ''resmgr:cpu quantum'' THEN 1 ELSE 0 END) aas_resmgr_cpu_quantum,
+       SUM(CASE session_state WHEN 'ON CPU' THEN 1 ELSE 0 END) aas_on_cpu,
+       SUM(CASE event WHEN 'resmgr:cpu quantum' THEN 1 ELSE 0 END) aas_resmgr_cpu_quantum,
        MIN(sample_time) min_sample_time,
        MAX(sample_time) max_sample_time           
   FROM gv$active_session_history
- WHERE (session_state = ''ON CPU'' OR event = ''resmgr:cpu quantum'')
+ WHERE (session_state = 'ON CPU' OR event = 'resmgr:cpu quantum')
  GROUP BY
        inst_id,
        sample_id
@@ -85,25 +85,25 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        inst_id
 ),
 cpu_per_inst_and_perc AS (
-SELECT 01 order_by, ''Maximum or peak'' metric, inst_id, aas_on_cpu_max  on_cpu, aas_on_cpu_and_resmgr_max  on_cpu_and_resmgr, aas_resmgr_cpu_quantum_max  resmgr_cpu_quantum, min_sample_time, max_sample_time, samples FROM cpu_per_inst
+SELECT 01 order_by, 'Maximum or peak' metric, inst_id, aas_on_cpu_max  on_cpu, aas_on_cpu_and_resmgr_max  on_cpu_and_resmgr, aas_resmgr_cpu_quantum_max  resmgr_cpu_quantum, min_sample_time, max_sample_time, samples FROM cpu_per_inst
 UNION ALL
-SELECT 02 order_by, ''99.99th percntl'' metric, inst_id, aas_on_cpu_9999 on_cpu, aas_on_cpu_and_resmgr_9999 on_cpu_and_resmgr, aas_resmgr_cpu_quantum_9999 resmgr_cpu_quantum, min_sample_time, max_sample_time, samples FROM cpu_per_inst
+SELECT 02 order_by, '99.99th percntl' metric, inst_id, aas_on_cpu_9999 on_cpu, aas_on_cpu_and_resmgr_9999 on_cpu_and_resmgr, aas_resmgr_cpu_quantum_9999 resmgr_cpu_quantum, min_sample_time, max_sample_time, samples FROM cpu_per_inst
 UNION ALL
-SELECT 03 order_by, ''99.9th percentl'' metric, inst_id, aas_on_cpu_999  on_cpu, aas_on_cpu_and_resmgr_999  on_cpu_and_resmgr, aas_resmgr_cpu_quantum_999  resmgr_cpu_quantum, min_sample_time, max_sample_time, samples FROM cpu_per_inst
+SELECT 03 order_by, '99.9th percentl' metric, inst_id, aas_on_cpu_999  on_cpu, aas_on_cpu_and_resmgr_999  on_cpu_and_resmgr, aas_resmgr_cpu_quantum_999  resmgr_cpu_quantum, min_sample_time, max_sample_time, samples FROM cpu_per_inst
 UNION ALL
-SELECT 04 order_by, ''99th percentile'' metric, inst_id, aas_on_cpu_99   on_cpu, aas_on_cpu_and_resmgr_99   on_cpu_and_resmgr, aas_resmgr_cpu_quantum_99   resmgr_cpu_quantum, min_sample_time, max_sample_time, samples FROM cpu_per_inst
+SELECT 04 order_by, '99th percentile' metric, inst_id, aas_on_cpu_99   on_cpu, aas_on_cpu_and_resmgr_99   on_cpu_and_resmgr, aas_resmgr_cpu_quantum_99   resmgr_cpu_quantum, min_sample_time, max_sample_time, samples FROM cpu_per_inst
 UNION ALL
-SELECT 05 order_by, ''97th percentile'' metric, inst_id, aas_on_cpu_97   on_cpu, aas_on_cpu_and_resmgr_97   on_cpu_and_resmgr, aas_resmgr_cpu_quantum_97   resmgr_cpu_quantum, min_sample_time, max_sample_time, samples FROM cpu_per_inst
+SELECT 05 order_by, '97th percentile' metric, inst_id, aas_on_cpu_97   on_cpu, aas_on_cpu_and_resmgr_97   on_cpu_and_resmgr, aas_resmgr_cpu_quantum_97   resmgr_cpu_quantum, min_sample_time, max_sample_time, samples FROM cpu_per_inst
 UNION ALL
-SELECT 06 order_by, ''95th percentile'' metric, inst_id, aas_on_cpu_95   on_cpu, aas_on_cpu_and_resmgr_95   on_cpu_and_resmgr, aas_resmgr_cpu_quantum_95   resmgr_cpu_quantum, min_sample_time, max_sample_time, samples FROM cpu_per_inst
+SELECT 06 order_by, '95th percentile' metric, inst_id, aas_on_cpu_95   on_cpu, aas_on_cpu_and_resmgr_95   on_cpu_and_resmgr, aas_resmgr_cpu_quantum_95   resmgr_cpu_quantum, min_sample_time, max_sample_time, samples FROM cpu_per_inst
 UNION ALL
-SELECT 07 order_by, ''90th percentile'' metric, inst_id, aas_on_cpu_90   on_cpu, aas_on_cpu_and_resmgr_90   on_cpu_and_resmgr, aas_resmgr_cpu_quantum_90   resmgr_cpu_quantum, min_sample_time, max_sample_time, samples FROM cpu_per_inst
+SELECT 07 order_by, '90th percentile' metric, inst_id, aas_on_cpu_90   on_cpu, aas_on_cpu_and_resmgr_90   on_cpu_and_resmgr, aas_resmgr_cpu_quantum_90   resmgr_cpu_quantum, min_sample_time, max_sample_time, samples FROM cpu_per_inst
 UNION ALL
-SELECT 08 order_by, ''75th percentile'' metric, inst_id, aas_on_cpu_75   on_cpu, aas_on_cpu_and_resmgr_75   on_cpu_and_resmgr, aas_resmgr_cpu_quantum_75   resmgr_cpu_quantum, min_sample_time, max_sample_time, samples FROM cpu_per_inst
+SELECT 08 order_by, '75th percentile' metric, inst_id, aas_on_cpu_75   on_cpu, aas_on_cpu_and_resmgr_75   on_cpu_and_resmgr, aas_resmgr_cpu_quantum_75   resmgr_cpu_quantum, min_sample_time, max_sample_time, samples FROM cpu_per_inst
 UNION ALL
-SELECT 09 order_by, ''Median''          metric, inst_id, aas_on_cpu_med  on_cpu, aas_on_cpu_and_resmgr_med  on_cpu_and_resmgr, aas_resmgr_cpu_quantum_med  resmgr_cpu_quantum, min_sample_time, max_sample_time, samples FROM cpu_per_inst
+SELECT 09 order_by, 'Median'          metric, inst_id, aas_on_cpu_med  on_cpu, aas_on_cpu_and_resmgr_med  on_cpu_and_resmgr, aas_resmgr_cpu_quantum_med  resmgr_cpu_quantum, min_sample_time, max_sample_time, samples FROM cpu_per_inst
 UNION ALL
-SELECT 10 order_by, ''Average''         metric, inst_id, aas_on_cpu_avg  on_cpu, aas_on_cpu_and_resmgr_avg  on_cpu_and_resmgr, aas_resmgr_cpu_quantum_avg  resmgr_cpu_quantum, min_sample_time, max_sample_time, samples FROM cpu_per_inst
+SELECT 10 order_by, 'Average'         metric, inst_id, aas_on_cpu_avg  on_cpu, aas_on_cpu_and_resmgr_avg  on_cpu_and_resmgr, aas_resmgr_cpu_quantum_avg  resmgr_cpu_quantum, min_sample_time, max_sample_time, samples FROM cpu_per_inst
 ),
 cpu_per_db_and_perc AS (
 SELECT order_by,
@@ -126,8 +126,8 @@ SELECT order_by,
        on_cpu,
        on_cpu_and_resmgr,
        resmgr_cpu_quantum,
-       TO_CHAR(CAST(min_sample_time AS DATE), ''YYYY-MM-DD HH24:MI:SS'') min_sample_time,
-       TO_CHAR(CAST(max_sample_time AS DATE), ''YYYY-MM-DD HH24:MI:SS'') max_sample_time,
+       TO_CHAR(CAST(min_sample_time AS DATE), 'YYYY-MM-DD HH24:MI:SS') min_sample_time,
+       TO_CHAR(CAST(max_sample_time AS DATE), 'YYYY-MM-DD HH24:MI:SS') max_sample_time,
        samples,
        ROUND((CAST(max_sample_time AS DATE) - CAST(min_sample_time AS DATE)) * 24, 1) hours
   FROM cpu_per_inst_and_perc
@@ -138,15 +138,15 @@ SELECT order_by,
        on_cpu,
        on_cpu_and_resmgr,
        resmgr_cpu_quantum,
-       TO_CHAR(CAST(min_sample_time AS DATE), ''YYYY-MM-DD HH24:MI:SS'') min_sample_time,
-       TO_CHAR(CAST(max_sample_time AS DATE), ''YYYY-MM-DD HH24:MI:SS'') max_sample_time,
+       TO_CHAR(CAST(min_sample_time AS DATE), 'YYYY-MM-DD HH24:MI:SS') min_sample_time,
+       TO_CHAR(CAST(max_sample_time AS DATE), 'YYYY-MM-DD HH24:MI:SS') max_sample_time,
        samples,
        ROUND((CAST(max_sample_time AS DATE) - CAST(min_sample_time AS DATE)) * 24, 1) hours
   FROM cpu_per_db_and_perc
  ORDER BY
        order_by,
        inst_id NULLS LAST
-';
+]';
 END;
 /
 @@&&skip_diagnostics.&&edb360_skip_ash_mem.edb360_9a_pre_one.sql
@@ -155,7 +155,7 @@ DEF title = 'CPU Demand Percentiles (AWR)';
 DEF main_table = '&&awr_hist_prefix.ACTIVE_SESS_HISTORY';
 DEF abstract = 'Number of Sessions on CPU or RESMGR. Includes Max (Peak), Percentiles, Median and Average.<br />'
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 WITH 
 cpu_per_inst_and_sample AS (
 SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
@@ -165,15 +165,15 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
        h.instance_number,
        h.sample_id,
        COUNT(*) aas_on_cpu_and_resmgr,
-       SUM(CASE h.session_state WHEN ''ON CPU'' THEN 1 ELSE 0 END) aas_on_cpu,
-       SUM(CASE h.event WHEN ''resmgr:cpu quantum'' THEN 1 ELSE 0 END) aas_resmgr_cpu_quantum,
+       SUM(CASE h.session_state WHEN 'ON CPU' THEN 1 ELSE 0 END) aas_on_cpu,
+       SUM(CASE h.event WHEN 'resmgr:cpu quantum' THEN 1 ELSE 0 END) aas_resmgr_cpu_quantum,
        MIN(s.begin_interval_time) begin_interval_time,
        MAX(s.end_interval_time) end_interval_time      
   FROM &&awr_object_prefix.active_sess_history h, 
        &&awr_object_prefix.snapshot s
  WHERE h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND h.dbid = &&edb360_dbid.
-   AND (h.session_state = ''ON CPU'' OR h.event = ''resmgr:cpu quantum'')
+   AND (h.session_state = 'ON CPU' OR h.event = 'resmgr:cpu quantum')
    AND s.snap_id = h.snap_id
    AND s.dbid = h.dbid
    AND s.instance_number = h.instance_number
@@ -226,25 +226,25 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        instance_number
 ),
 cpu_per_inst_and_perc AS (
-SELECT dbid, 01 order_by, ''Maximum or peak'' metric, instance_number, aas_on_cpu_max  on_cpu, aas_on_cpu_and_resmgr_max  on_cpu_and_resmgr, aas_resmgr_cpu_quantum_max  resmgr_cpu_quantum, begin_interval_time, end_interval_time, snap_shots FROM cpu_per_db_and_inst
+SELECT dbid, 01 order_by, 'Maximum or peak' metric, instance_number, aas_on_cpu_max  on_cpu, aas_on_cpu_and_resmgr_max  on_cpu_and_resmgr, aas_resmgr_cpu_quantum_max  resmgr_cpu_quantum, begin_interval_time, end_interval_time, snap_shots FROM cpu_per_db_and_inst
 UNION ALL
-SELECT dbid, 02 order_by, ''99.99th percntl'' metric, instance_number, aas_on_cpu_9999 on_cpu, aas_on_cpu_and_resmgr_9999 on_cpu_and_resmgr, aas_resmgr_cpu_quantum_9999 resmgr_cpu_quantum, begin_interval_time, end_interval_time, snap_shots FROM cpu_per_db_and_inst
+SELECT dbid, 02 order_by, '99.99th percntl' metric, instance_number, aas_on_cpu_9999 on_cpu, aas_on_cpu_and_resmgr_9999 on_cpu_and_resmgr, aas_resmgr_cpu_quantum_9999 resmgr_cpu_quantum, begin_interval_time, end_interval_time, snap_shots FROM cpu_per_db_and_inst
 UNION ALL
-SELECT dbid, 03 order_by, ''99.9th percentl'' metric, instance_number, aas_on_cpu_999  on_cpu, aas_on_cpu_and_resmgr_999  on_cpu_and_resmgr, aas_resmgr_cpu_quantum_999  resmgr_cpu_quantum, begin_interval_time, end_interval_time, snap_shots FROM cpu_per_db_and_inst
+SELECT dbid, 03 order_by, '99.9th percentl' metric, instance_number, aas_on_cpu_999  on_cpu, aas_on_cpu_and_resmgr_999  on_cpu_and_resmgr, aas_resmgr_cpu_quantum_999  resmgr_cpu_quantum, begin_interval_time, end_interval_time, snap_shots FROM cpu_per_db_and_inst
 UNION ALL
-SELECT dbid, 04 order_by, ''99th percentile'' metric, instance_number, aas_on_cpu_99   on_cpu, aas_on_cpu_and_resmgr_99   on_cpu_and_resmgr, aas_resmgr_cpu_quantum_99   resmgr_cpu_quantum, begin_interval_time, end_interval_time, snap_shots FROM cpu_per_db_and_inst
+SELECT dbid, 04 order_by, '99th percentile' metric, instance_number, aas_on_cpu_99   on_cpu, aas_on_cpu_and_resmgr_99   on_cpu_and_resmgr, aas_resmgr_cpu_quantum_99   resmgr_cpu_quantum, begin_interval_time, end_interval_time, snap_shots FROM cpu_per_db_and_inst
 UNION ALL
-SELECT dbid, 05 order_by, ''97th percentile'' metric, instance_number, aas_on_cpu_97   on_cpu, aas_on_cpu_and_resmgr_97   on_cpu_and_resmgr, aas_resmgr_cpu_quantum_97   resmgr_cpu_quantum, begin_interval_time, end_interval_time, snap_shots FROM cpu_per_db_and_inst
+SELECT dbid, 05 order_by, '97th percentile' metric, instance_number, aas_on_cpu_97   on_cpu, aas_on_cpu_and_resmgr_97   on_cpu_and_resmgr, aas_resmgr_cpu_quantum_97   resmgr_cpu_quantum, begin_interval_time, end_interval_time, snap_shots FROM cpu_per_db_and_inst
 UNION ALL
-SELECT dbid, 06 order_by, ''95th percentile'' metric, instance_number, aas_on_cpu_95   on_cpu, aas_on_cpu_and_resmgr_95   on_cpu_and_resmgr, aas_resmgr_cpu_quantum_95   resmgr_cpu_quantum, begin_interval_time, end_interval_time, snap_shots FROM cpu_per_db_and_inst
+SELECT dbid, 06 order_by, '95th percentile' metric, instance_number, aas_on_cpu_95   on_cpu, aas_on_cpu_and_resmgr_95   on_cpu_and_resmgr, aas_resmgr_cpu_quantum_95   resmgr_cpu_quantum, begin_interval_time, end_interval_time, snap_shots FROM cpu_per_db_and_inst
 UNION ALL
-SELECT dbid, 07 order_by, ''90th percentile'' metric, instance_number, aas_on_cpu_90   on_cpu, aas_on_cpu_and_resmgr_90   on_cpu_and_resmgr, aas_resmgr_cpu_quantum_90   resmgr_cpu_quantum, begin_interval_time, end_interval_time, snap_shots FROM cpu_per_db_and_inst
+SELECT dbid, 07 order_by, '90th percentile' metric, instance_number, aas_on_cpu_90   on_cpu, aas_on_cpu_and_resmgr_90   on_cpu_and_resmgr, aas_resmgr_cpu_quantum_90   resmgr_cpu_quantum, begin_interval_time, end_interval_time, snap_shots FROM cpu_per_db_and_inst
 UNION ALL
-SELECT dbid, 08 order_by, ''75th percentile'' metric, instance_number, aas_on_cpu_75   on_cpu, aas_on_cpu_and_resmgr_75   on_cpu_and_resmgr, aas_resmgr_cpu_quantum_75   resmgr_cpu_quantum, begin_interval_time, end_interval_time, snap_shots FROM cpu_per_db_and_inst
+SELECT dbid, 08 order_by, '75th percentile' metric, instance_number, aas_on_cpu_75   on_cpu, aas_on_cpu_and_resmgr_75   on_cpu_and_resmgr, aas_resmgr_cpu_quantum_75   resmgr_cpu_quantum, begin_interval_time, end_interval_time, snap_shots FROM cpu_per_db_and_inst
 UNION ALL
-SELECT dbid, 09 order_by, ''Median''          metric, instance_number, aas_on_cpu_med  on_cpu, aas_on_cpu_and_resmgr_med  on_cpu_and_resmgr, aas_resmgr_cpu_quantum_med  resmgr_cpu_quantum, begin_interval_time, end_interval_time, snap_shots FROM cpu_per_db_and_inst
+SELECT dbid, 09 order_by, 'Median'          metric, instance_number, aas_on_cpu_med  on_cpu, aas_on_cpu_and_resmgr_med  on_cpu_and_resmgr, aas_resmgr_cpu_quantum_med  resmgr_cpu_quantum, begin_interval_time, end_interval_time, snap_shots FROM cpu_per_db_and_inst
 UNION ALL
-SELECT dbid, 10 order_by, ''Average''         metric, instance_number, aas_on_cpu_avg  on_cpu, aas_on_cpu_and_resmgr_avg  on_cpu_and_resmgr, aas_resmgr_cpu_quantum_avg  resmgr_cpu_quantum, begin_interval_time, end_interval_time, snap_shots FROM cpu_per_db_and_inst
+SELECT dbid, 10 order_by, 'Average'         metric, instance_number, aas_on_cpu_avg  on_cpu, aas_on_cpu_and_resmgr_avg  on_cpu_and_resmgr, aas_resmgr_cpu_quantum_avg  resmgr_cpu_quantum, begin_interval_time, end_interval_time, snap_shots FROM cpu_per_db_and_inst
 ),
 cpu_per_db_and_perc AS (
 SELECT dbid,
@@ -270,8 +270,8 @@ SELECT dbid,
        on_cpu,
        on_cpu_and_resmgr,
        resmgr_cpu_quantum,
-       TO_CHAR(CAST(begin_interval_time AS DATE), ''YYYY-MM-DD HH24:MI:SS'') begin_interval_time,
-       TO_CHAR(CAST(end_interval_time AS DATE), ''YYYY-MM-DD HH24:MI:SS'') end_interval_time,
+       TO_CHAR(CAST(begin_interval_time AS DATE), 'YYYY-MM-DD HH24:MI:SS') begin_interval_time,
+       TO_CHAR(CAST(end_interval_time AS DATE), 'YYYY-MM-DD HH24:MI:SS') end_interval_time,
        snap_shots,
        ROUND(CAST(end_interval_time AS DATE) - CAST(begin_interval_time AS DATE), 1) days,
        ROUND(snap_shots / (CAST(end_interval_time AS DATE) - CAST(begin_interval_time AS DATE)), 1) avg_snaps_per_day
@@ -284,8 +284,8 @@ SELECT dbid,
        on_cpu,
        on_cpu_and_resmgr,
        resmgr_cpu_quantum,
-       TO_CHAR(CAST(begin_interval_time AS DATE), ''YYYY-MM-DD HH24:MI:SS'') begin_interval_time,
-       TO_CHAR(CAST(end_interval_time AS DATE), ''YYYY-MM-DD HH24:MI:SS'') end_interval_time,
+       TO_CHAR(CAST(begin_interval_time AS DATE), 'YYYY-MM-DD HH24:MI:SS') begin_interval_time,
+       TO_CHAR(CAST(end_interval_time AS DATE), 'YYYY-MM-DD HH24:MI:SS') end_interval_time,
        snap_shots,
        ROUND(CAST(end_interval_time AS DATE) - CAST(begin_interval_time AS DATE), 1) days,
        ROUND(snap_shots / (CAST(end_interval_time AS DATE) - CAST(begin_interval_time AS DATE)), 1) avg_snaps_per_day
@@ -294,9 +294,10 @@ SELECT dbid,
        dbid,
        order_by,
        instance_number NULLS LAST
-';
+]';
 END;
 /
+
 @@&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF main_table = '&&awr_hist_prefix.ACTIVE_SESS_HISTORY';
@@ -320,7 +321,7 @@ DEF tit_14 = '';
 DEF tit_15 = '';
 
 BEGIN
-  :sql_text_backup := '
+  :sql_text_backup := q'[
 WITH 
 cpu_per_inst_and_sample AS (
 SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
@@ -328,14 +329,14 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
        snap_id,
        instance_number,
        MIN(sample_time) sample_time,
-       SUM(CASE session_state WHEN ''ON CPU'' THEN 1 ELSE 0 END) on_cpu,
-       SUM(CASE event WHEN ''resmgr:cpu quantum'' THEN 1 ELSE 0 END) resmgr,
+       SUM(CASE session_state WHEN 'ON CPU' THEN 1 ELSE 0 END) on_cpu,
+       SUM(CASE event WHEN 'resmgr:cpu quantum' THEN 1 ELSE 0 END) resmgr,
        COUNT(*) on_cpu_and_resmgr
   FROM &&awr_object_prefix.active_sess_history h
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
    AND instance_number = @instance_number@
-   AND (session_state = ''ON CPU'' OR event = ''resmgr:cpu quantum'')
+   AND (session_state = 'ON CPU' OR event = 'resmgr:cpu quantum')
  GROUP BY
        snap_id,
        instance_number,
@@ -356,8 +357,8 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        instance_number
 )
 SELECT snap_id,
-       TO_CHAR(MIN(min_sample_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
-       TO_CHAR(MAX(max_sample_time), ''YYYY-MM-DD HH24:MI:SS'') end_time,
+       TO_CHAR(MIN(min_sample_time), 'YYYY-MM-DD HH24:MI:SS') begin_time,
+       TO_CHAR(MAX(max_sample_time), 'YYYY-MM-DD HH24:MI:SS') end_time,
        SUM(on_cpu_and_resmgr) on_cpu_and_resmgr,
        SUM(on_cpu) on_cpu,
        SUM(resmgr) resmgr,
@@ -378,7 +379,7 @@ SELECT snap_id,
        snap_id
  ORDER BY
        snap_id
-';
+]';
 END;
 /
 --DEF vbaseline = 'baseline:&&sum_cpu_count.,'; 
@@ -493,7 +494,7 @@ DEF tit_14 = '';
 DEF tit_15 = '';
 
 BEGIN
-  :sql_text_backup := '
+  :sql_text_backup := q'[
 WITH 
 cpu_per_inst_and_sample AS (
 SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
@@ -506,7 +507,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
    AND instance_number = @instance_number@
-   AND session_state = ''ON CPU''
+   AND session_state = 'ON CPU'
  GROUP BY
        snap_id,
        instance_number,
@@ -532,8 +533,8 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        instance_number
 )
 SELECT snap_id,
-       TO_CHAR(MIN(min_sample_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
-       TO_CHAR(MAX(max_sample_time), ''YYYY-MM-DD HH24:MI:SS'') end_time,
+       TO_CHAR(MIN(min_sample_time), 'YYYY-MM-DD HH24:MI:SS') begin_time,
+       TO_CHAR(MAX(max_sample_time), 'YYYY-MM-DD HH24:MI:SS') end_time,
        SUM(on_cpu_max) on_cpu_max,
        SUM(on_cpu_99p) on_cpu_99p,
        SUM(on_cpu_97p) on_cpu_97p,
@@ -554,7 +555,7 @@ SELECT snap_id,
        snap_id
  ORDER BY
        snap_id
-';
+]';
 END;
 /
 --DEF vbaseline = 'baseline:&&sum_cpu_count.,'; 
@@ -659,8 +660,9 @@ COL pga_gb FOR 99990.0 HEA "PGA GB";
 
 DEF title = 'Memory Size Percentiles (AWR)';
 DEF main_table = '&&awr_hist_prefix.SGA';
+DEF abstract = '&&abstract_uom.';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 WITH mem_per_inst_and_snap AS (
 SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
        s.snap_id,
@@ -682,7 +684,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
    AND p.snap_id = s.snap_id
    AND p.dbid = s.dbid
    AND p.instance_number = s.instance_number
-   AND p.name = ''total PGA allocated''
+   AND p.name = 'total PGA allocated'
  GROUP BY
        s.snap_id,
        s.dbid,
@@ -725,21 +727,21 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        instance_number
 ),
 mem_per_inst_and_perc AS (
-SELECT dbid, 01 order_by, ''Maximum or peak'' metric, instance_number, mem_bytes_max mem_bytes, sga_bytes_max sga_bytes, pga_bytes_max pga_bytes, begin_interval_time, end_interval_time, snap_shots FROM mem_per_db_and_inst
+SELECT dbid, 01 order_by, 'Maximum or peak' metric, instance_number, mem_bytes_max mem_bytes, sga_bytes_max sga_bytes, pga_bytes_max pga_bytes, begin_interval_time, end_interval_time, snap_shots FROM mem_per_db_and_inst
  UNION ALL
-SELECT dbid, 02 order_by, ''99th percentile'' metric, instance_number, mem_bytes_99  mem_bytes, sga_bytes_99  sga_bytes, pga_bytes_99  pga_bytes, begin_interval_time, end_interval_time, snap_shots FROM mem_per_db_and_inst
+SELECT dbid, 02 order_by, '99th percentile' metric, instance_number, mem_bytes_99  mem_bytes, sga_bytes_99  sga_bytes, pga_bytes_99  pga_bytes, begin_interval_time, end_interval_time, snap_shots FROM mem_per_db_and_inst
  UNION ALL
-SELECT dbid, 03 order_by, ''97th percentile'' metric, instance_number, mem_bytes_97  mem_bytes, sga_bytes_97  sga_bytes, pga_bytes_97  pga_bytes, begin_interval_time, end_interval_time, snap_shots FROM mem_per_db_and_inst
+SELECT dbid, 03 order_by, '97th percentile' metric, instance_number, mem_bytes_97  mem_bytes, sga_bytes_97  sga_bytes, pga_bytes_97  pga_bytes, begin_interval_time, end_interval_time, snap_shots FROM mem_per_db_and_inst
  UNION ALL
-SELECT dbid, 04 order_by, ''95th percentile'' metric, instance_number, mem_bytes_95  mem_bytes, sga_bytes_95  sga_bytes, pga_bytes_95  pga_bytes, begin_interval_time, end_interval_time, snap_shots FROM mem_per_db_and_inst
+SELECT dbid, 04 order_by, '95th percentile' metric, instance_number, mem_bytes_95  mem_bytes, sga_bytes_95  sga_bytes, pga_bytes_95  pga_bytes, begin_interval_time, end_interval_time, snap_shots FROM mem_per_db_and_inst
  UNION ALL
-SELECT dbid, 05 order_by, ''90th percentile'' metric, instance_number, mem_bytes_90  mem_bytes, sga_bytes_90  sga_bytes, pga_bytes_90  pga_bytes, begin_interval_time, end_interval_time, snap_shots FROM mem_per_db_and_inst
+SELECT dbid, 05 order_by, '90th percentile' metric, instance_number, mem_bytes_90  mem_bytes, sga_bytes_90  sga_bytes, pga_bytes_90  pga_bytes, begin_interval_time, end_interval_time, snap_shots FROM mem_per_db_and_inst
  UNION ALL
-SELECT dbid, 06 order_by, ''75th percentile'' metric, instance_number, mem_bytes_75  mem_bytes, sga_bytes_75  sga_bytes, pga_bytes_75  pga_bytes, begin_interval_time, end_interval_time, snap_shots FROM mem_per_db_and_inst
+SELECT dbid, 06 order_by, '75th percentile' metric, instance_number, mem_bytes_75  mem_bytes, sga_bytes_75  sga_bytes, pga_bytes_75  pga_bytes, begin_interval_time, end_interval_time, snap_shots FROM mem_per_db_and_inst
  UNION ALL
-SELECT dbid, 07 order_by, ''Median''          metric, instance_number, mem_bytes_med mem_bytes, sga_bytes_med sga_bytes, pga_bytes_med pga_bytes, begin_interval_time, end_interval_time, snap_shots FROM mem_per_db_and_inst
+SELECT dbid, 07 order_by, 'Median'          metric, instance_number, mem_bytes_med mem_bytes, sga_bytes_med sga_bytes, pga_bytes_med pga_bytes, begin_interval_time, end_interval_time, snap_shots FROM mem_per_db_and_inst
  UNION ALL
-SELECT dbid, 08 order_by, ''Average''         metric, instance_number, mem_bytes_avg mem_bytes, sga_bytes_avg sga_bytes, pga_bytes_avg pga_bytes, begin_interval_time, end_interval_time, snap_shots FROM mem_per_db_and_inst
+SELECT dbid, 08 order_by, 'Average'         metric, instance_number, mem_bytes_avg mem_bytes, sga_bytes_avg sga_bytes, pga_bytes_avg pga_bytes, begin_interval_time, end_interval_time, snap_shots FROM mem_per_db_and_inst
 ),
 mem_per_db_and_perc AS (
 SELECT dbid,
@@ -765,8 +767,8 @@ SELECT dbid,
        ROUND(mem_bytes / POWER(2,30), 1) mem_gb,
        ROUND(sga_bytes / POWER(2,30), 1) sga_gb,
        ROUND(pga_bytes / POWER(2,30), 1) pga_gb,
-       TO_CHAR(CAST(begin_interval_time AS DATE), ''YYYY-MM-DD HH24:MI:SS'') begin_interval_time,
-       TO_CHAR(CAST(end_interval_time AS DATE), ''YYYY-MM-DD HH24:MI:SS'') end_interval_time,
+       TO_CHAR(CAST(begin_interval_time AS DATE), 'YYYY-MM-DD HH24:MI:SS') begin_interval_time,
+       TO_CHAR(CAST(end_interval_time AS DATE), 'YYYY-MM-DD HH24:MI:SS') end_interval_time,
        snap_shots,
        ROUND(CAST(end_interval_time AS DATE) - CAST(begin_interval_time AS DATE), 1) days,
        ROUND(snap_shots / (CAST(end_interval_time AS DATE) - CAST(begin_interval_time AS DATE)), 1) avg_snaps_per_day
@@ -779,8 +781,8 @@ SELECT dbid,
        ROUND(mem_bytes / POWER(2,30), 1) mem_gb,
        ROUND(sga_bytes / POWER(2,30), 1) sga_gb,
        ROUND(pga_bytes / POWER(2,30), 1) pga_gb,
-       TO_CHAR(CAST(begin_interval_time AS DATE), ''YYYY-MM-DD HH24:MI:SS'') begin_interval_time,
-       TO_CHAR(CAST(end_interval_time AS DATE), ''YYYY-MM-DD HH24:MI:SS'') end_interval_time,
+       TO_CHAR(CAST(begin_interval_time AS DATE), 'YYYY-MM-DD HH24:MI:SS') begin_interval_time,
+       TO_CHAR(CAST(end_interval_time AS DATE), 'YYYY-MM-DD HH24:MI:SS') end_interval_time,
        snap_shots,
        ROUND(CAST(end_interval_time AS DATE) - CAST(begin_interval_time AS DATE), 1) days,
        ROUND(snap_shots / (CAST(end_interval_time AS DATE) - CAST(begin_interval_time AS DATE)), 1) avg_snaps_per_day
@@ -789,7 +791,7 @@ SELECT dbid,
        dbid,
        order_by,
        instance_number NULLS LAST
-';
+]';
 END;
 /
 @@&&skip_diagnostics.edb360_9a_pre_one.sql
@@ -800,28 +802,28 @@ DEF abstract = 'Consolidated view of Memory requirements.'
 DEF abstract2 = 'It considers AMM if setup, else ASMM if setup, else no memory management settings (individual pools size).<br />'
 DEF foot = 'Consider "Giga Bytes (GB)" column for sizing. Instance Number -1 means aggregated values (SUM) while -2 means over all instances (combined).<br />'
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 WITH
 par AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        d.dbid,
        d.name db_name,
        i.inst_id,
-       /* LOWER(SUBSTR(i.host_name||''.'', 1, INSTR(i.host_name||''.'', ''.'') - 1)) */
-       LPAD(ORA_HASH(SYS_CONTEXT(''USERENV'', ''SERVER_HOST''),999999),6,''6'') host_name,
+       /* LOWER(SUBSTR(i.host_name||'.', 1, INSTR(i.host_name||'.', '.') - 1)) */
+       LPAD(ORA_HASH(SYS_CONTEXT('USERENV', 'SERVER_HOST'),999999),6,'6') host_name,
        i.instance_number,
        i.instance_name,
-       SUM(CASE p.name WHEN ''memory_target'' THEN TO_NUMBER(value) END) memory_target,
-       SUM(CASE p.name WHEN ''memory_max_target'' THEN TO_NUMBER(value) END) memory_max_target,
-       SUM(CASE p.name WHEN ''sga_target'' THEN TO_NUMBER(value) END) sga_target,
-       SUM(CASE p.name WHEN ''sga_max_size'' THEN TO_NUMBER(value) END) sga_max_size,
-       SUM(CASE p.name WHEN ''pga_aggregate_target'' THEN TO_NUMBER(value) END) pga_aggregate_target
+       SUM(CASE p.name WHEN 'memory_target' THEN TO_NUMBER(value) END) memory_target,
+       SUM(CASE p.name WHEN 'memory_max_target' THEN TO_NUMBER(value) END) memory_max_target,
+       SUM(CASE p.name WHEN 'sga_target' THEN TO_NUMBER(value) END) sga_target,
+       SUM(CASE p.name WHEN 'sga_max_size' THEN TO_NUMBER(value) END) sga_max_size,
+       SUM(CASE p.name WHEN 'pga_aggregate_target' THEN TO_NUMBER(value) END) pga_aggregate_target
   FROM gv$instance i,
        gv$database d,
        gv$system_parameter2 p
  WHERE d.inst_id = i.inst_id
    AND p.inst_id = i.inst_id
-   AND p.name IN (''memory_target'', ''memory_max_target'', ''sga_target'', ''sga_max_size'', ''pga_aggregate_target'')
+   AND p.name IN ('memory_target', 'memory_max_target', 'sga_target', 'sga_max_size', 'pga_aggregate_target')
  GROUP BY
        d.dbid,
        d.name,
@@ -835,14 +837,14 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        inst_id,
        bytes
   FROM gv$sgainfo
- WHERE name = ''Maximum SGA Size''
+ WHERE name = 'Maximum SGA Size'
 ),
 pga_max AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        inst_id,
        value bytes
   FROM gv$pgastat
- WHERE name = ''maximum PGA allocated''
+ WHERE name = 'maximum PGA allocated'
 ),
 pga AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
@@ -973,7 +975,7 @@ SELECT TO_NUMBER(NULL) dbid,
        SUM(max_pga) max_pga_alloc,
        ROUND(SUM(max_pga)/POWER(2,30),3) max_pga_alloc_gb
   FROM them_all
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -984,7 +986,7 @@ DEF abstract = 'Consolidated view of Memory requirements.<br />'
 DEF abstract2 = 'It considers AMM if setup, else ASMM if setup, else no memory management settings (individual pools size).<br />'
 DEF foot = 'Consider "Giga Bytes (GB)" column for sizing. Instance Number -1 means aggregated values (SUM) while -2 means over all instances (combined).'
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 WITH
 max_snap AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
@@ -993,7 +995,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        instance_number,
        parameter_name
   FROM &&awr_object_prefix.parameter
- WHERE parameter_name IN (''memory_target'', ''memory_max_target'', ''sga_target'', ''sga_max_size'', ''pga_aggregate_target'')
+ WHERE parameter_name IN ('memory_target', 'memory_max_target', 'sga_target', 'sga_max_size', 'pga_aggregate_target')
    AND (snap_id, dbid, instance_number) IN (SELECT s.snap_id, s.dbid, s.instance_number FROM &&awr_object_prefix.snapshot s)
    AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
@@ -1038,15 +1040,15 @@ par AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        p.dbid,
        di.db_name,
-       /* LOWER(SUBSTR(di.host_name||''.'', 1, INSTR(di.host_name||''.'', ''.'') - 1)) */
-       LPAD(ORA_HASH(SYS_CONTEXT(''USERENV'', ''SERVER_HOST''),999999),6,''6'') host_name,
+       /* LOWER(SUBSTR(di.host_name||'.', 1, INSTR(di.host_name||'.', '.') - 1)) */
+       LPAD(ORA_HASH(SYS_CONTEXT('USERENV', 'SERVER_HOST'),999999),6,'6') host_name,
        p.instance_number,
        di.instance_name,
-       SUM(CASE p.parameter_name WHEN ''memory_target'' THEN TO_NUMBER(p.value) ELSE 0 END) memory_target,
-       SUM(CASE p.parameter_name WHEN ''memory_max_target'' THEN TO_NUMBER(p.value) ELSE 0 END) memory_max_target,
-       SUM(CASE p.parameter_name WHEN ''sga_target'' THEN TO_NUMBER(p.value) ELSE 0 END) sga_target,
-       SUM(CASE p.parameter_name WHEN ''sga_max_size'' THEN TO_NUMBER(p.value) ELSE 0 END) sga_max_size,
-       SUM(CASE p.parameter_name WHEN ''pga_aggregate_target'' THEN TO_NUMBER(p.value) ELSE 0 END) pga_aggregate_target
+       SUM(CASE p.parameter_name WHEN 'memory_target' THEN TO_NUMBER(p.value) ELSE 0 END) memory_target,
+       SUM(CASE p.parameter_name WHEN 'memory_max_target' THEN TO_NUMBER(p.value) ELSE 0 END) memory_max_target,
+       SUM(CASE p.parameter_name WHEN 'sga_target' THEN TO_NUMBER(p.value) ELSE 0 END) sga_target,
+       SUM(CASE p.parameter_name WHEN 'sga_max_size' THEN TO_NUMBER(p.value) ELSE 0 END) sga_max_size,
+       SUM(CASE p.parameter_name WHEN 'pga_aggregate_target' THEN TO_NUMBER(p.value) ELSE 0 END) pga_aggregate_target
   FROM last_snap p,
        &&awr_object_prefix.database_instance di
  WHERE di.dbid = p.dbid
@@ -1090,7 +1092,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        instance_number,
        MAX(value) bytes
   FROM &&awr_object_prefix.pgastat
- WHERE name = ''maximum PGA allocated''
+ WHERE name = 'maximum PGA allocated'
    AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
  GROUP BY
@@ -1144,8 +1146,8 @@ no_mm AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        pga.dbid,
        pga.db_name,
-       /* LOWER(SUBSTR(pga.host_name||''.'', 1, INSTR(pga.host_name||''.'', ''.'') - 1)) */
-       LPAD(ORA_HASH(SYS_CONTEXT(''USERENV'', ''SERVER_HOST''),999999),6,''6'') host_name,
+       /* LOWER(SUBSTR(pga.host_name||'.', 1, INSTR(pga.host_name||'.', '.') - 1)) */
+       LPAD(ORA_HASH(SYS_CONTEXT('USERENV', 'SERVER_HOST'),999999),6,'6') host_name,
        pga.instance_number,
        pga.instance_name,
        sga_max.bytes max_sga,
@@ -1228,7 +1230,7 @@ SELECT TO_NUMBER(NULL) dbid,
        SUM(max_pga) max_pga_alloc,
        ROUND(SUM(max_pga)/POWER(2,30),3) max_pga_alloc_gb
   FROM them_all
-';
+]';
 END;
 /
 @@&&skip_diagnostics.edb360_9a_pre_one.sql
@@ -1253,9 +1255,10 @@ DEF tit_12 = '';
 DEF tit_13 = '';
 DEF tit_14 = '';
 DEF tit_15 = '';
+DEF abstract = '&&abstract_uom.';
 
 BEGIN
-  :sql_text_backup := '
+  :sql_text_backup := q'[
 WITH
 sga AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
@@ -1282,7 +1285,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
    AND instance_number = @instance_number@
-   AND name = ''total PGA allocated''
+   AND name = 'total PGA allocated'
 ),
 mem AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
@@ -1323,8 +1326,8 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
 hourly AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
-       TO_CHAR(MIN(begin_interval_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
-       TO_CHAR(MIN(end_interval_time), ''YYYY-MM-DD HH24:MI:SS'') end_time,
+       TO_CHAR(MIN(begin_interval_time), 'YYYY-MM-DD HH24:MI:SS') begin_time,
+       TO_CHAR(MIN(end_interval_time), 'YYYY-MM-DD HH24:MI:SS') end_time,
        ROUND(SUM(sga_bytes) / POWER(2,30), 3) sga_gb,
        ROUND(SUM(pga_bytes) / POWER(2,30), 3) pga_gb,
        ROUND(SUM(mem_bytes) / POWER(2,30), 3) mem_gb,
@@ -1356,7 +1359,7 @@ SELECT snap_id,
   FROM hourly
  ORDER BY
        snap_id
-';
+]';
 END;
 /
 DEF skip_lch = '';
@@ -1430,33 +1433,34 @@ DEF skip_pch = 'Y';
 
 DEF title = 'Database Size on Disk';
 DEF main_table = 'GV$DATABASE';
-DEF abstract = 'Displays Space on Disk including datafiles, tempfiles, log and control files.<br />'
+DEF abstract = 'Displays Space on Disk including datafiles, tempfiles, log and control files.'
+DEF abstract2 = '&&abstract_uom.';
 DEF foot = 'Consider "Tera Bytes (TB)" column for sizing.'
 COL gb FOR 999990.000;
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 WITH 
 sizes AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
-       ''Data'' file_type,
+       'Data' file_type,
        SUM(bytes) bytes
   FROM v$datafile
  UNION ALL
-SELECT ''Temp'' file_type,
+SELECT 'Temp' file_type,
        SUM(bytes) bytes
   FROM v$tempfile
  UNION ALL
-SELECT ''Log'' file_type,
+SELECT 'Log' file_type,
        SUM(bytes) * MAX(members) bytes
   FROM v$log
  UNION ALL
-SELECT ''Control'' file_type,
+SELECT 'Control' file_type,
        SUM(block_size * file_size_blks) bytes
   FROM v$controlfile
 ),
 dbsize AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
-       ''Total'' file_type,
+       'Total' file_type,
        SUM(bytes) bytes
   FROM sizes
 )
@@ -1466,12 +1470,12 @@ SELECT d.dbid,
        s.bytes,
        ROUND(s.bytes/POWER(10,9),3) gb,
        CASE 
-       WHEN s.bytes > POWER(10,15) THEN ROUND(s.bytes/POWER(10,15),3)||'' P''
-       WHEN s.bytes > POWER(10,12) THEN ROUND(s.bytes/POWER(10,12),3)||'' T''
-       WHEN s.bytes > POWER(10,9) THEN ROUND(s.bytes/POWER(10,9),3)||'' G''
-       WHEN s.bytes > POWER(10,6) THEN ROUND(s.bytes/POWER(10,6),3)||'' M''
-       WHEN s.bytes > POWER(10,3) THEN ROUND(s.bytes/POWER(10,3),3)||'' K''
-       WHEN s.bytes > 0 THEN s.bytes||'' B'' END display
+       WHEN s.bytes > POWER(10,15) THEN ROUND(s.bytes/POWER(10,15),3)||' P'
+       WHEN s.bytes > POWER(10,12) THEN ROUND(s.bytes/POWER(10,12),3)||' T'
+       WHEN s.bytes > POWER(10,9) THEN ROUND(s.bytes/POWER(10,9),3)||' G'
+       WHEN s.bytes > POWER(10,6) THEN ROUND(s.bytes/POWER(10,6),3)||' M'
+       WHEN s.bytes > POWER(10,3) THEN ROUND(s.bytes/POWER(10,3),3)||' K'
+       WHEN s.bytes > 0 THEN s.bytes||' B' END display
   FROM v$database d,
        sizes s
  UNION ALL
@@ -1481,15 +1485,15 @@ SELECT d.dbid,
        s.bytes,
        ROUND(s.bytes/POWER(10,9),3) gb,
        CASE 
-       WHEN s.bytes > POWER(10,15) THEN ROUND(s.bytes/POWER(10,15),3)||'' P''
-       WHEN s.bytes > POWER(10,12) THEN ROUND(s.bytes/POWER(10,12),3)||'' T''
-       WHEN s.bytes > POWER(10,9) THEN ROUND(s.bytes/POWER(10,9),3)||'' G''
-       WHEN s.bytes > POWER(10,6) THEN ROUND(s.bytes/POWER(10,6),3)||'' M''
-       WHEN s.bytes > POWER(10,3) THEN ROUND(s.bytes/POWER(10,3),3)||'' K''
-       WHEN s.bytes > 0 THEN s.bytes||'' B'' END display
+       WHEN s.bytes > POWER(10,15) THEN ROUND(s.bytes/POWER(10,15),3)||' P'
+       WHEN s.bytes > POWER(10,12) THEN ROUND(s.bytes/POWER(10,12),3)||' T'
+       WHEN s.bytes > POWER(10,9) THEN ROUND(s.bytes/POWER(10,9),3)||' G'
+       WHEN s.bytes > POWER(10,6) THEN ROUND(s.bytes/POWER(10,6),3)||' M'
+       WHEN s.bytes > POWER(10,3) THEN ROUND(s.bytes/POWER(10,3),3)||' K'
+       WHEN s.bytes > 0 THEN s.bytes||' B' END display
   FROM v$database d,
        dbsize s
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -1516,9 +1520,10 @@ DEF tit_12 = '';
 DEF tit_13 = '';
 DEF tit_14 = '';
 DEF tit_15 = '';
+DEF abstract = '&&abstract_uom.';
 
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 WITH
 ts_per_snap_id AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
@@ -1526,9 +1531,9 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        MIN(sn.begin_interval_time) begin_interval_time,
        MIN(sn.end_interval_time) end_interval_time,
        SUM(us.tablespace_size * ts.block_size) all_tablespaces_bytes,
-       SUM(CASE ts.contents WHEN ''PERMANENT'' THEN us.tablespace_size * ts.block_size ELSE 0 END) perm_tablespaces_bytes,
-       SUM(CASE ts.contents WHEN ''UNDO''      THEN us.tablespace_size * ts.block_size ELSE 0 END) undo_tablespaces_bytes,
-       SUM(CASE ts.contents WHEN ''TEMPORARY'' THEN us.tablespace_size * ts.block_size ELSE 0 END) temp_tablespaces_bytes
+       SUM(CASE ts.contents WHEN 'PERMANENT' THEN us.tablespace_size * ts.block_size ELSE 0 END) perm_tablespaces_bytes,
+       SUM(CASE ts.contents WHEN 'UNDO'      THEN us.tablespace_size * ts.block_size ELSE 0 END) undo_tablespaces_bytes,
+       SUM(CASE ts.contents WHEN 'TEMPORARY' THEN us.tablespace_size * ts.block_size ELSE 0 END) temp_tablespaces_bytes
   FROM &&awr_object_prefix.tbspc_space_usage us,
        &&awr_object_prefix.snapshot sn,
        v$tablespace vt,
@@ -1544,8 +1549,8 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        us.snap_id
 )
 SELECT snap_id,
-       TO_CHAR(MIN(begin_interval_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
-       TO_CHAR(MIN(end_interval_time), ''YYYY-MM-DD HH24:MI:SS'') end_time,
+       TO_CHAR(MIN(begin_interval_time), 'YYYY-MM-DD HH24:MI:SS') begin_time,
+       TO_CHAR(MIN(end_interval_time), 'YYYY-MM-DD HH24:MI:SS') end_time,
        ROUND(MAX(all_tablespaces_bytes) / POWER(10,9), 3),
        ROUND(MAX(perm_tablespaces_bytes) / POWER(10,9), 3),
        ROUND(MAX(undo_tablespaces_bytes) / POWER(10,9), 3),
@@ -1566,7 +1571,7 @@ SELECT snap_id,
        snap_id
  ORDER BY
        snap_id
-';
+]';
 END;
 /
 
@@ -1584,24 +1589,25 @@ DEF skip_pch = 'Y';
 
 DEF title = 'IOPS and MBPS Percentiles';
 DEF main_table = '&&awr_hist_prefix.SYSSTAT';
-DEF abstract = 'I/O Operations per Second (IOPS) and I/O Mega Bytes per Second (MBPS). Includes Peak (max), percentiles and average for read (R), write (W) and read+write (RW) operations.<br />'
+DEF abstract = 'I/O Operations per Second (IOPS) and I/O Mega Bytes per Second (MBPS). Includes Peak (max), percentiles and average for read (R), write (W) and read+write (RW) operations.'
+DEF abstract2 = '&&abstract_uom.'
 DEF foot = 'Consider Peak or high Percentile for sizing. Instance Number -1 means aggregated values (SUM) while -2 means over all instances (combined).'
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 WITH
 sysstat_io AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        h.snap_id,
        h.dbid,
        h.instance_number,
-       SUM(CASE WHEN h.stat_name = ''physical read total IO requests'' THEN value ELSE 0 END) r_reqs,
-       SUM(CASE WHEN h.stat_name IN (''physical write total IO requests'', ''redo writes'') THEN value ELSE 0 END) w_reqs,
-       SUM(CASE WHEN h.stat_name = ''physical read total bytes'' THEN value ELSE 0 END) r_bytes,
-       SUM(CASE WHEN h.stat_name IN (''physical write total bytes'', ''redo size'') THEN value ELSE 0 END) w_bytes
+       SUM(CASE WHEN h.stat_name = 'physical read total IO requests' THEN value ELSE 0 END) r_reqs,
+       SUM(CASE WHEN h.stat_name IN ('physical write total IO requests', 'redo writes') THEN value ELSE 0 END) w_reqs,
+       SUM(CASE WHEN h.stat_name = 'physical read total bytes' THEN value ELSE 0 END) r_bytes,
+       SUM(CASE WHEN h.stat_name IN ('physical write total bytes', 'redo size') THEN value ELSE 0 END) w_bytes
   FROM &&awr_object_prefix.sysstat h
  WHERE h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND h.dbid = &&edb360_dbid.
-   AND h.stat_name IN (''physical read total IO requests'', ''physical write total IO requests'', ''redo writes'', ''physical read total bytes'', ''physical write total bytes'', ''redo size'')
+   AND h.stat_name IN ('physical read total IO requests', 'physical write total IO requests', 'redo writes', 'physical read total bytes', 'physical write total bytes', 'redo size')
  GROUP BY
        h.snap_id,
        h.dbid,
@@ -1792,41 +1798,41 @@ SELECT dbid,
        dbid
 ),
 io_per_inst_or_cluster AS (
-SELECT dbid, 01 order_by, ''Maximum or peak'' metric, instance_number, rw_iops_peak rw_iops, r_iops_peak r_iops, w_iops_peak w_iops, rw_mbps_peak rw_mbps, r_mbps_peak r_mbps, w_mbps_peak w_mbps, begin_interval_time, end_interval_time, snap_shots FROM io_per_inst
+SELECT dbid, 01 order_by, 'Maximum or peak' metric, instance_number, rw_iops_peak rw_iops, r_iops_peak r_iops, w_iops_peak w_iops, rw_mbps_peak rw_mbps, r_mbps_peak r_mbps, w_mbps_peak w_mbps, begin_interval_time, end_interval_time, snap_shots FROM io_per_inst
  UNION ALL
-SELECT dbid, 02 order_by, ''99.9th percentl'' metric, instance_number, rw_iops_999 rw_iops,  r_iops_999 r_iops,  w_iops_999 w_iops,  rw_mbps_999 rw_mbps,  r_mbps_999 r_mbps,  w_mbps_999 w_mbps,  begin_interval_time, end_interval_time, snap_shots FROM io_per_inst
+SELECT dbid, 02 order_by, '99.9th percentl' metric, instance_number, rw_iops_999 rw_iops,  r_iops_999 r_iops,  w_iops_999 w_iops,  rw_mbps_999 rw_mbps,  r_mbps_999 r_mbps,  w_mbps_999 w_mbps,  begin_interval_time, end_interval_time, snap_shots FROM io_per_inst
  UNION ALL
-SELECT dbid, 03 order_by, ''99th percentile'' metric, instance_number, rw_iops_99 rw_iops,   r_iops_99 r_iops,   w_iops_99 w_iops,   rw_mbps_99 rw_mbps,   r_mbps_99 r_mbps,   w_mbps_99 w_mbps,   begin_interval_time, end_interval_time, snap_shots FROM io_per_inst
+SELECT dbid, 03 order_by, '99th percentile' metric, instance_number, rw_iops_99 rw_iops,   r_iops_99 r_iops,   w_iops_99 w_iops,   rw_mbps_99 rw_mbps,   r_mbps_99 r_mbps,   w_mbps_99 w_mbps,   begin_interval_time, end_interval_time, snap_shots FROM io_per_inst
  UNION ALL
-SELECT dbid, 04 order_by, ''97th percentile'' metric, instance_number, rw_iops_97 rw_iops,   r_iops_97 r_iops,   w_iops_97 w_iops,   rw_mbps_97 rw_mbps,   r_mbps_97 r_mbps,   w_mbps_97 w_mbps,   begin_interval_time, end_interval_time, snap_shots FROM io_per_inst
+SELECT dbid, 04 order_by, '97th percentile' metric, instance_number, rw_iops_97 rw_iops,   r_iops_97 r_iops,   w_iops_97 w_iops,   rw_mbps_97 rw_mbps,   r_mbps_97 r_mbps,   w_mbps_97 w_mbps,   begin_interval_time, end_interval_time, snap_shots FROM io_per_inst
  UNION ALL
-SELECT dbid, 05 order_by, ''95th percentile'' metric, instance_number, rw_iops_95 rw_iops,   r_iops_95 r_iops,   w_iops_95 w_iops,   rw_mbps_95 rw_mbps,   r_mbps_95 r_mbps,   w_mbps_95 w_mbps,   begin_interval_time, end_interval_time, snap_shots FROM io_per_inst
+SELECT dbid, 05 order_by, '95th percentile' metric, instance_number, rw_iops_95 rw_iops,   r_iops_95 r_iops,   w_iops_95 w_iops,   rw_mbps_95 rw_mbps,   r_mbps_95 r_mbps,   w_mbps_95 w_mbps,   begin_interval_time, end_interval_time, snap_shots FROM io_per_inst
  UNION ALL
-SELECT dbid, 06 order_by, ''90th percentile'' metric, instance_number, rw_iops_90 rw_iops,   r_iops_90 r_iops,   w_iops_90 w_iops,   rw_mbps_90 rw_mbps,   r_mbps_90 r_mbps,   w_mbps_90 w_mbps,   begin_interval_time, end_interval_time, snap_shots FROM io_per_inst
+SELECT dbid, 06 order_by, '90th percentile' metric, instance_number, rw_iops_90 rw_iops,   r_iops_90 r_iops,   w_iops_90 w_iops,   rw_mbps_90 rw_mbps,   r_mbps_90 r_mbps,   w_mbps_90 w_mbps,   begin_interval_time, end_interval_time, snap_shots FROM io_per_inst
  UNION ALL
-SELECT dbid, 07 order_by, ''75th percentile'' metric, instance_number, rw_iops_75 rw_iops,   r_iops_75 r_iops,   w_iops_75 w_iops,   rw_mbps_75 rw_mbps,   r_mbps_75 r_mbps,   w_mbps_75 w_mbps,   begin_interval_time, end_interval_time, snap_shots FROM io_per_inst
+SELECT dbid, 07 order_by, '75th percentile' metric, instance_number, rw_iops_75 rw_iops,   r_iops_75 r_iops,   w_iops_75 w_iops,   rw_mbps_75 rw_mbps,   r_mbps_75 r_mbps,   w_mbps_75 w_mbps,   begin_interval_time, end_interval_time, snap_shots FROM io_per_inst
  UNION ALL
-SELECT dbid, 08 order_by, ''Median''          metric, instance_number, rw_iops_med rw_iops,  r_iops_med r_iops,  w_iops_med w_iops,  rw_mbps_med rw_mbps,  r_mbps_med r_mbps,  w_mbps_med w_mbps,  begin_interval_time, end_interval_time, snap_shots FROM io_per_inst
+SELECT dbid, 08 order_by, 'Median'          metric, instance_number, rw_iops_med rw_iops,  r_iops_med r_iops,  w_iops_med w_iops,  rw_mbps_med rw_mbps,  r_mbps_med r_mbps,  w_mbps_med w_mbps,  begin_interval_time, end_interval_time, snap_shots FROM io_per_inst
  UNION ALL
-SELECT dbid, 09 order_by, ''Average''         metric, instance_number, rw_iops_avg rw_iops,  r_iops_avg r_iops,  w_iops_avg w_iops,  rw_mbps_avg rw_mbps,  r_mbps_avg r_mbps,  w_mbps_avg w_mbps,  begin_interval_time, end_interval_time, snap_shots FROM io_per_inst
+SELECT dbid, 09 order_by, 'Average'         metric, instance_number, rw_iops_avg rw_iops,  r_iops_avg r_iops,  w_iops_avg w_iops,  rw_mbps_avg rw_mbps,  r_mbps_avg r_mbps,  w_mbps_avg w_mbps,  begin_interval_time, end_interval_time, snap_shots FROM io_per_inst
  UNION ALL
-SELECT dbid, 01 order_by, ''Maximum or peak'' metric, instance_number, rw_iops_peak rw_iops, r_iops_peak r_iops, w_iops_peak w_iops, rw_mbps_peak rw_mbps, r_mbps_peak r_mbps, w_mbps_peak w_mbps, begin_interval_time, end_interval_time, snap_shots FROM io_per_cluster
+SELECT dbid, 01 order_by, 'Maximum or peak' metric, instance_number, rw_iops_peak rw_iops, r_iops_peak r_iops, w_iops_peak w_iops, rw_mbps_peak rw_mbps, r_mbps_peak r_mbps, w_mbps_peak w_mbps, begin_interval_time, end_interval_time, snap_shots FROM io_per_cluster
  UNION ALL
-SELECT dbid, 02 order_by, ''99.9th percentl'' metric, instance_number, rw_iops_999 rw_iops,  r_iops_999 r_iops,  w_iops_999 w_iops,  rw_mbps_999 rw_mbps,  r_mbps_999 r_mbps,  w_mbps_999 w_mbps,  begin_interval_time, end_interval_time, snap_shots FROM io_per_cluster
+SELECT dbid, 02 order_by, '99.9th percentl' metric, instance_number, rw_iops_999 rw_iops,  r_iops_999 r_iops,  w_iops_999 w_iops,  rw_mbps_999 rw_mbps,  r_mbps_999 r_mbps,  w_mbps_999 w_mbps,  begin_interval_time, end_interval_time, snap_shots FROM io_per_cluster
  UNION ALL
-SELECT dbid, 03 order_by, ''99th percentile'' metric, instance_number, rw_iops_99 rw_iops,   r_iops_99 r_iops,   w_iops_99 w_iops,   rw_mbps_99 rw_mbps,   r_mbps_99 r_mbps,   w_mbps_99 w_mbps,   begin_interval_time, end_interval_time, snap_shots FROM io_per_cluster
+SELECT dbid, 03 order_by, '99th percentile' metric, instance_number, rw_iops_99 rw_iops,   r_iops_99 r_iops,   w_iops_99 w_iops,   rw_mbps_99 rw_mbps,   r_mbps_99 r_mbps,   w_mbps_99 w_mbps,   begin_interval_time, end_interval_time, snap_shots FROM io_per_cluster
  UNION ALL
-SELECT dbid, 04 order_by, ''97th percentile'' metric, instance_number, rw_iops_97 rw_iops,   r_iops_97 r_iops,   w_iops_97 w_iops,   rw_mbps_97 rw_mbps,   r_mbps_97 r_mbps,   w_mbps_97 w_mbps,   begin_interval_time, end_interval_time, snap_shots FROM io_per_cluster
+SELECT dbid, 04 order_by, '97th percentile' metric, instance_number, rw_iops_97 rw_iops,   r_iops_97 r_iops,   w_iops_97 w_iops,   rw_mbps_97 rw_mbps,   r_mbps_97 r_mbps,   w_mbps_97 w_mbps,   begin_interval_time, end_interval_time, snap_shots FROM io_per_cluster
  UNION ALL
-SELECT dbid, 05 order_by, ''95th percentile'' metric, instance_number, rw_iops_95 rw_iops,   r_iops_95 r_iops,   w_iops_95 w_iops,   rw_mbps_95 rw_mbps,   r_mbps_95 r_mbps,   w_mbps_95 w_mbps,   begin_interval_time, end_interval_time, snap_shots FROM io_per_cluster
+SELECT dbid, 05 order_by, '95th percentile' metric, instance_number, rw_iops_95 rw_iops,   r_iops_95 r_iops,   w_iops_95 w_iops,   rw_mbps_95 rw_mbps,   r_mbps_95 r_mbps,   w_mbps_95 w_mbps,   begin_interval_time, end_interval_time, snap_shots FROM io_per_cluster
  UNION ALL
-SELECT dbid, 06 order_by, ''90th percentile'' metric, instance_number, rw_iops_90 rw_iops,   r_iops_90 r_iops,   w_iops_90 w_iops,   rw_mbps_90 rw_mbps,   r_mbps_90 r_mbps,   w_mbps_90 w_mbps,   begin_interval_time, end_interval_time, snap_shots FROM io_per_cluster
+SELECT dbid, 06 order_by, '90th percentile' metric, instance_number, rw_iops_90 rw_iops,   r_iops_90 r_iops,   w_iops_90 w_iops,   rw_mbps_90 rw_mbps,   r_mbps_90 r_mbps,   w_mbps_90 w_mbps,   begin_interval_time, end_interval_time, snap_shots FROM io_per_cluster
  UNION ALL
-SELECT dbid, 07 order_by, ''75th percentile'' metric, instance_number, rw_iops_75 rw_iops,   r_iops_75 r_iops,   w_iops_75 w_iops,   rw_mbps_75 rw_mbps,   r_mbps_75 r_mbps,   w_mbps_75 w_mbps,   begin_interval_time, end_interval_time, snap_shots FROM io_per_cluster
+SELECT dbid, 07 order_by, '75th percentile' metric, instance_number, rw_iops_75 rw_iops,   r_iops_75 r_iops,   w_iops_75 w_iops,   rw_mbps_75 rw_mbps,   r_mbps_75 r_mbps,   w_mbps_75 w_mbps,   begin_interval_time, end_interval_time, snap_shots FROM io_per_cluster
  UNION ALL
-SELECT dbid, 08 order_by, ''Median''          metric, instance_number, rw_iops_med rw_iops,  r_iops_med r_iops,  w_iops_med w_iops,  rw_mbps_med rw_mbps,  r_mbps_med r_mbps,  w_mbps_med w_mbps,  begin_interval_time, end_interval_time, snap_shots FROM io_per_cluster
+SELECT dbid, 08 order_by, 'Median'          metric, instance_number, rw_iops_med rw_iops,  r_iops_med r_iops,  w_iops_med w_iops,  rw_mbps_med rw_mbps,  r_mbps_med r_mbps,  w_mbps_med w_mbps,  begin_interval_time, end_interval_time, snap_shots FROM io_per_cluster
  UNION ALL
-SELECT dbid, 09 order_by, ''Average''         metric, instance_number, rw_iops_avg rw_iops,  r_iops_avg r_iops,  w_iops_avg w_iops,  rw_mbps_avg rw_mbps,  r_mbps_avg r_mbps,  w_mbps_avg w_mbps,  begin_interval_time, end_interval_time, snap_shots FROM io_per_cluster
+SELECT dbid, 09 order_by, 'Average'         metric, instance_number, rw_iops_avg rw_iops,  r_iops_avg r_iops,  w_iops_avg w_iops,  rw_mbps_avg rw_mbps,  r_mbps_avg r_mbps,  w_mbps_avg w_mbps,  begin_interval_time, end_interval_time, snap_shots FROM io_per_cluster
 )
 SELECT dbid,
        metric,
@@ -1837,8 +1843,8 @@ SELECT dbid,
        rw_mbps,
        r_mbps,
        w_mbps,
-       TO_CHAR(CAST(begin_interval_time AS DATE), ''YYYY-MM-DD HH24:MI:SS'') begin_interval_time,
-       TO_CHAR(CAST(end_interval_time AS DATE), ''YYYY-MM-DD HH24:MI:SS'') end_interval_time,
+       TO_CHAR(CAST(begin_interval_time AS DATE), 'YYYY-MM-DD HH24:MI:SS') begin_interval_time,
+       TO_CHAR(CAST(end_interval_time AS DATE), 'YYYY-MM-DD HH24:MI:SS') end_interval_time,
        snap_shots,
        ROUND(CAST(end_interval_time AS DATE) - CAST(begin_interval_time AS DATE), 1) days,
        ROUND(snap_shots / (CAST(end_interval_time AS DATE) - CAST(begin_interval_time AS DATE)), 1) avg_snaps_per_day
@@ -1847,7 +1853,7 @@ SELECT dbid,
        dbid,
        order_by,
        instance_number NULLS LAST
-';
+]';
 END;
 /
 @@&&skip_diagnostics.edb360_9a_pre_one.sql
@@ -1870,21 +1876,21 @@ DEF tit_14 = '';
 DEF tit_15 = '';
 
 BEGIN
-  :sql_text_backup := '
+  :sql_text_backup := q'[
 WITH
 sysstat_io AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        instance_number,
        snap_id,
-       SUM(CASE WHEN stat_name = ''physical read total IO requests'' THEN value ELSE 0 END) r_reqs,
-       SUM(CASE WHEN stat_name IN (''physical write total IO requests'', ''redo writes'') THEN value ELSE 0 END) w_reqs,
-       SUM(CASE WHEN stat_name = ''physical read total bytes'' THEN value ELSE 0 END) r_bytes,
-       SUM(CASE WHEN stat_name IN (''physical write total bytes'', ''redo size'') THEN value ELSE 0 END) w_bytes
+       SUM(CASE WHEN stat_name = 'physical read total IO requests' THEN value ELSE 0 END) r_reqs,
+       SUM(CASE WHEN stat_name IN ('physical write total IO requests', 'redo writes') THEN value ELSE 0 END) w_reqs,
+       SUM(CASE WHEN stat_name = 'physical read total bytes' THEN value ELSE 0 END) r_bytes,
+       SUM(CASE WHEN stat_name IN ('physical write total bytes', 'redo size') THEN value ELSE 0 END) w_bytes
   FROM &&awr_object_prefix.sysstat
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
    AND instance_number = @instance_number@
-   AND stat_name IN (''physical read total IO requests'', ''physical write total IO requests'', ''redo writes'', ''physical read total bytes'', ''physical write total bytes'', ''redo size'')
+   AND stat_name IN ('physical read total IO requests', 'physical write total IO requests', 'redo writes', 'physical read total bytes', 'physical write total bytes', 'redo size')
  GROUP BY
        instance_number,
        snap_id
@@ -1934,8 +1940,8 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        instance_number
 )
 SELECT snap_id,
-       TO_CHAR(MIN(begin_interval_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
-       TO_CHAR(MIN(end_interval_time), ''YYYY-MM-DD HH24:MI:SS'') end_time,
+       TO_CHAR(MIN(begin_interval_time), 'YYYY-MM-DD HH24:MI:SS') begin_time,
+       TO_CHAR(MIN(end_interval_time), 'YYYY-MM-DD HH24:MI:SS') end_time,
        SUM(@column1@) @column1@,
        SUM(@column2@) @column2@,
        SUM(@column3@) @column3@,
@@ -1956,7 +1962,7 @@ SELECT snap_id,
        snap_id
  ORDER BY
        snap_id
-';
+]';
 END;
 /
 
@@ -2174,77 +2180,77 @@ DEF stacked = '';
 DEF vbaseline = '';
 
 BEGIN
-  :sql_text_backup := '
+  :sql_text_backup := q'[
 WITH
 sysstat_io AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        instance_number,
        snap_id,
-       SUM(CASE WHEN stat_name = ''physical read bytes'' THEN value ELSE 0 END) r_appl_bytes,
-       SUM(CASE WHEN stat_name = ''physical read flash cache hits'' THEN value ELSE 0 END) r_flash_cache_hits,
-       SUM(CASE WHEN stat_name = ''physical read IO requests'' THEN value ELSE 0 END) r_IO_requests,
-       SUM(CASE WHEN stat_name = ''physical read requests optimized'' THEN value ELSE 0 END) r_requests_optimized,
-       SUM(CASE WHEN stat_name = ''physical read total bytes'' THEN value ELSE 0 END) r_total_bytes,
-       SUM(CASE WHEN stat_name = ''physical read total IO requests'' THEN value ELSE 0 END) r_total_IO_requests,
-       SUM(CASE WHEN stat_name = ''physical read total multi block requests'' THEN value ELSE 0 END) r_total_multi_block_requests,
-       SUM(CASE WHEN stat_name = ''physical reads'' THEN value ELSE 0 END) reads,
-       SUM(CASE WHEN stat_name = ''physical reads cache'' THEN value ELSE 0 END) r_cache,
-       SUM(CASE WHEN stat_name = ''physical reads cache prefetch'' THEN value ELSE 0 END) r_cache_prefetch,
-       SUM(CASE WHEN stat_name = ''physical reads direct'' THEN value ELSE 0 END) r_direct,
-       SUM(CASE WHEN stat_name = ''physical reads direct (lob)'' THEN value ELSE 0 END) r_direct_lob,
-       SUM(CASE WHEN stat_name = ''physical reads direct temporary tablespace'' THEN value ELSE 0 END) r_direct_temporary_tablespace,
-       SUM(CASE WHEN stat_name = ''physical reads for flashback new'' THEN value ELSE 0 END) r_for_flashback_new,
-       SUM(CASE WHEN stat_name = ''physical reads prefetch warmup'' THEN value ELSE 0 END) r_prefetch_warmup,
-       SUM(CASE WHEN stat_name = ''physical write bytes'' THEN value ELSE 0 END) w_appl_bytes,
-       SUM(CASE WHEN stat_name = ''physical write IO requests'' THEN value ELSE 0 END) w_IO_requests,
-       SUM(CASE WHEN stat_name = ''physical write total bytes'' THEN value ELSE 0 END) w_total_bytes,
-       SUM(CASE WHEN stat_name = ''physical write total IO requests'' THEN value ELSE 0 END) w_total_IO_requests,
-       SUM(CASE WHEN stat_name = ''physical write total multi block requests'' THEN value ELSE 0 END) w_total_multi_block_requests,
-       SUM(CASE WHEN stat_name = ''physical writes'' THEN value ELSE 0 END) writes,
-       SUM(CASE WHEN stat_name = ''physical writes direct'' THEN value ELSE 0 END) w_direct,
-       SUM(CASE WHEN stat_name = ''physical writes direct (lob)'' THEN value ELSE 0 END) w_direct_lob,
-       SUM(CASE WHEN stat_name = ''physical writes direct temporary tablespace'' THEN value ELSE 0 END) w_direct_temporary_tablespace,
-       SUM(CASE WHEN stat_name = ''physical writes from cache'' THEN value ELSE 0 END) w_from_cache,
-       SUM(CASE WHEN stat_name = ''physical writes non checkpoint'' THEN value ELSE 0 END) w_non_checkpoint,
-       SUM(CASE WHEN stat_name = ''redo size'' THEN value ELSE 0 END) redo_size,
-       SUM(CASE WHEN stat_name = ''redo writes'' THEN value ELSE 0 END) redo_writes,
-       SUM(CASE WHEN stat_name = ''physical read total IO requests'' THEN value ELSE 0 END) r_reqs,
-       SUM(CASE WHEN stat_name IN (''physical write total IO requests'', ''redo writes'') THEN value ELSE 0 END) w_reqs,
-       SUM(CASE WHEN stat_name = ''physical read total bytes'' THEN value ELSE 0 END) r_bytes,
-       SUM(CASE WHEN stat_name IN (''physical write total bytes'', ''redo size'') THEN value ELSE 0 END) w_bytes
+       SUM(CASE WHEN stat_name = 'physical read bytes' THEN value ELSE 0 END) r_appl_bytes,
+       SUM(CASE WHEN stat_name = 'physical read flash cache hits' THEN value ELSE 0 END) r_flash_cache_hits,
+       SUM(CASE WHEN stat_name = 'physical read IO requests' THEN value ELSE 0 END) r_IO_requests,
+       SUM(CASE WHEN stat_name = 'physical read requests optimized' THEN value ELSE 0 END) r_requests_optimized,
+       SUM(CASE WHEN stat_name = 'physical read total bytes' THEN value ELSE 0 END) r_total_bytes,
+       SUM(CASE WHEN stat_name = 'physical read total IO requests' THEN value ELSE 0 END) r_total_IO_requests,
+       SUM(CASE WHEN stat_name = 'physical read total multi block requests' THEN value ELSE 0 END) r_total_multi_block_requests,
+       SUM(CASE WHEN stat_name = 'physical reads' THEN value ELSE 0 END) reads,
+       SUM(CASE WHEN stat_name = 'physical reads cache' THEN value ELSE 0 END) r_cache,
+       SUM(CASE WHEN stat_name = 'physical reads cache prefetch' THEN value ELSE 0 END) r_cache_prefetch,
+       SUM(CASE WHEN stat_name = 'physical reads direct' THEN value ELSE 0 END) r_direct,
+       SUM(CASE WHEN stat_name = 'physical reads direct (lob)' THEN value ELSE 0 END) r_direct_lob,
+       SUM(CASE WHEN stat_name = 'physical reads direct temporary tablespace' THEN value ELSE 0 END) r_direct_temporary_tablespace,
+       SUM(CASE WHEN stat_name = 'physical reads for flashback new' THEN value ELSE 0 END) r_for_flashback_new,
+       SUM(CASE WHEN stat_name = 'physical reads prefetch warmup' THEN value ELSE 0 END) r_prefetch_warmup,
+       SUM(CASE WHEN stat_name = 'physical write bytes' THEN value ELSE 0 END) w_appl_bytes,
+       SUM(CASE WHEN stat_name = 'physical write IO requests' THEN value ELSE 0 END) w_IO_requests,
+       SUM(CASE WHEN stat_name = 'physical write total bytes' THEN value ELSE 0 END) w_total_bytes,
+       SUM(CASE WHEN stat_name = 'physical write total IO requests' THEN value ELSE 0 END) w_total_IO_requests,
+       SUM(CASE WHEN stat_name = 'physical write total multi block requests' THEN value ELSE 0 END) w_total_multi_block_requests,
+       SUM(CASE WHEN stat_name = 'physical writes' THEN value ELSE 0 END) writes,
+       SUM(CASE WHEN stat_name = 'physical writes direct' THEN value ELSE 0 END) w_direct,
+       SUM(CASE WHEN stat_name = 'physical writes direct (lob)' THEN value ELSE 0 END) w_direct_lob,
+       SUM(CASE WHEN stat_name = 'physical writes direct temporary tablespace' THEN value ELSE 0 END) w_direct_temporary_tablespace,
+       SUM(CASE WHEN stat_name = 'physical writes from cache' THEN value ELSE 0 END) w_from_cache,
+       SUM(CASE WHEN stat_name = 'physical writes non checkpoint' THEN value ELSE 0 END) w_non_checkpoint,
+       SUM(CASE WHEN stat_name = 'redo size' THEN value ELSE 0 END) redo_size,
+       SUM(CASE WHEN stat_name = 'redo writes' THEN value ELSE 0 END) redo_writes,
+       SUM(CASE WHEN stat_name = 'physical read total IO requests' THEN value ELSE 0 END) r_reqs,
+       SUM(CASE WHEN stat_name IN ('physical write total IO requests', 'redo writes') THEN value ELSE 0 END) w_reqs,
+       SUM(CASE WHEN stat_name = 'physical read total bytes' THEN value ELSE 0 END) r_bytes,
+       SUM(CASE WHEN stat_name IN ('physical write total bytes', 'redo size') THEN value ELSE 0 END) w_bytes
   FROM &&awr_object_prefix.sysstat
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
    AND instance_number = @instance_number@
    AND stat_name IN (
-   ''physical read bytes'',
-   ''physical read flash cache hits'',
-   ''physical read IO requests'',
-   ''physical read requests optimized'',
-   ''physical read total bytes'', /* r_bytes */
-   ''physical read total IO requests'', /* r_reqs */
-   ''physical read total multi block requests'',
-   ''physical reads'',
-   ''physical reads cache'',
-   ''physical reads cache prefetch'',
-   ''physical reads direct'',
-   ''physical reads direct (lob)'',
-   ''physical reads direct temporary tablespace'',
-   ''physical reads for flashback new'',
-   ''physical reads prefetch warmup'',
-   ''physical write bytes'',
-   ''physical write IO requests'',
-   ''physical write total bytes'', /* w_bytes */
-   ''physical write total IO requests'', /* w_reqs */
-   ''physical write total multi block requests'',
-   ''physical writes'',
-   ''physical writes direct'',
-   ''physical writes direct (lob)'',
-   ''physical writes direct temporary tablespace'',
-   ''physical writes from cache'',
-   ''physical writes non checkpoint'',
-   ''redo size'', /* w_bytes */
-   ''redo writes'') /* w_reqs */
+   'physical read bytes',
+   'physical read flash cache hits',
+   'physical read IO requests',
+   'physical read requests optimized',
+   'physical read total bytes', /* r_bytes */
+   'physical read total IO requests', /* r_reqs */
+   'physical read total multi block requests',
+   'physical reads',
+   'physical reads cache',
+   'physical reads cache prefetch',
+   'physical reads direct',
+   'physical reads direct (lob)',
+   'physical reads direct temporary tablespace',
+   'physical reads for flashback new',
+   'physical reads prefetch warmup',
+   'physical write bytes',
+   'physical write IO requests',
+   'physical write total bytes', /* w_bytes */
+   'physical write total IO requests', /* w_reqs */
+   'physical write total multi block requests',
+   'physical writes',
+   'physical writes direct',
+   'physical writes direct (lob)',
+   'physical writes direct temporary tablespace',
+   'physical writes from cache',
+   'physical writes non checkpoint',
+   'redo size', /* w_bytes */
+   'redo writes') /* w_reqs */
  GROUP BY
        instance_number,
        snap_id
@@ -2362,8 +2368,8 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        instance_number
 )
 SELECT snap_id,
-       TO_CHAR(MIN(begin_interval_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
-       TO_CHAR(MIN(end_interval_time), ''YYYY-MM-DD HH24:MI:SS'') end_time,
+       TO_CHAR(MIN(begin_interval_time), 'YYYY-MM-DD HH24:MI:SS') begin_time,
+       TO_CHAR(MIN(end_interval_time), 'YYYY-MM-DD HH24:MI:SS') end_time,
        #column01#
        #column02#
        #column03#
@@ -2384,7 +2390,7 @@ SELECT snap_id,
        snap_id
  ORDER BY
        snap_id
-';
+]';
 END;
 /
 

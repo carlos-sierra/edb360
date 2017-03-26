@@ -9,7 +9,7 @@ SPO OFF;
 
 DEF main_table = '&&awr_hist_prefix.ACTIVE_SESS_HISTORY';
 BEGIN
-  :sql_text_backup := '
+  :sql_text_backup := q'[
 WITH
 events AS (
 SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
@@ -45,12 +45,12 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
 total AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */ SUM(samples) samples FROM events
 )
-SELECT CASE WHEN e.plsql_entry_procedure_name||e.plsql_entry_object_name||e.plsql_entry_owner IS NULL THEN ''null'' ELSE
-       NVL(e.plsql_entry_owner, ''null'')||''.''||NVL(e.plsql_entry_object_name, ''null'')||''.''||NVL(e.plsql_entry_procedure_name, ''null'')
+SELECT CASE WHEN e.plsql_entry_procedure_name||e.plsql_entry_object_name||e.plsql_entry_owner IS NULL THEN 'null' ELSE
+       NVL(e.plsql_entry_owner, 'null')||'.'||NVL(e.plsql_entry_object_name, 'null')||'.'||NVL(e.plsql_entry_procedure_name, 'null')
        END||
-       ''(''||CASE WHEN e.plsql_procedure_name||e.plsql_object_name||e.plsql_owner IS NULL THEN ''null'' ELSE
-       NVL(e.plsql_owner, ''null'')||''.''||NVL(e.plsql_object_name, ''null'')||''.''||NVL(e.plsql_procedure_name, ''null'')
-       END||'')''
+       '('||CASE WHEN e.plsql_procedure_name||e.plsql_object_name||e.plsql_owner IS NULL THEN 'null' ELSE
+       NVL(e.plsql_owner, 'null')||'.'||NVL(e.plsql_object_name, 'null')||'.'||NVL(e.plsql_procedure_name, 'null')
+       END||')'
        procedure_name,
        e.samples,
        ROUND(100 * e.samples / t.samples, 1) percent,
@@ -59,7 +59,7 @@ SELECT CASE WHEN e.plsql_entry_procedure_name||e.plsql_entry_object_name||e.plsq
        total t
  WHERE e.samples >= t.samples / 1000 AND rn <= 14
  UNION ALL
-SELECT ''Others'',
+SELECT 'Others',
        NVL(SUM(e.samples), 0) samples,
        NVL(ROUND(100 * SUM(e.samples) / AVG(t.samples), 1), 0) percent,
        NULL dummy_01
@@ -67,7 +67,7 @@ SELECT ''Others'',
        total t
  WHERE e.samples < t.samples / 1000 OR rn > 14
  ORDER BY 2 DESC NULLS LAST
-';
+]';
 END;
 /
 

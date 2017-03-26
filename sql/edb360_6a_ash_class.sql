@@ -11,34 +11,34 @@ DEF main_table = 'GV$ACTIVE_SESSION_HISTORY';
 DEF bar_height = '65%';
 
 BEGIN
-  :sql_text_backup := '
+  :sql_text_backup := q'[
 WITH
 hist AS (
 SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
-       CASE session_state WHEN ''ON CPU'' THEN session_state ELSE wait_class END wait_class,
+       CASE session_state WHEN 'ON CPU' THEN session_state ELSE wait_class END wait_class,
        ROW_NUMBER () OVER (ORDER BY COUNT(*) DESC) rn,
        COUNT(*) samples
   FROM gv$active_session_history
  WHERE @filter_predicate@
-   AND (session_state = ''ON CPU'' OR wait_class <> ''Idle'')
+   AND (session_state = 'ON CPU' OR wait_class <> 'Idle')
  GROUP BY
-       CASE session_state WHEN ''ON CPU'' THEN session_state ELSE wait_class END
+       CASE session_state WHEN 'ON CPU' THEN session_state ELSE wait_class END
 ),
 total AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */ SUM(samples) samples FROM hist
 )
-SELECT h.wait_class||'' (''||ROUND(100 * h.samples / t.samples, 1)||''%)'' bucket,
+SELECT h.wait_class||' ('||ROUND(100 * h.samples / t.samples, 1)||'%)' bucket,
        ROUND(100 * h.samples / t.samples, 1) percent,
        &&wait_class_colors.
        &&wait_class_colors2.
        &&wait_class_colors3.
        &&wait_class_colors4. color,
-       h.samples||'' 1s-samples (''||ROUND(100 * h.samples / t.samples, 1)||''% of DB Time)'' tooltip
+       h.samples||' 1s-samples ('||ROUND(100 * h.samples / t.samples, 1)||'% of DB Time)' tooltip
   FROM hist h,
        total t
  --WHERE ROUND(100 * h.samples / t.samples, 1) >= 3 /* only if >= 3% */
  ORDER BY 2 DESC NULLS LAST
-';
+]';
 END;
 /
 
@@ -111,37 +111,37 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'inst_id = 8')
 
 DEF main_table = '&&awr_hist_prefix.ACTIVE_SESS_HISTORY';
 BEGIN
-  :sql_text_backup := '
+  :sql_text_backup := q'[
 WITH
 hist AS (
 SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
        /* &&section_id..&&report_sequence. */
-       CASE session_state WHEN ''ON CPU'' THEN session_state ELSE wait_class END wait_class,
+       CASE session_state WHEN 'ON CPU' THEN session_state ELSE wait_class END wait_class,
        ROW_NUMBER () OVER (ORDER BY COUNT(*) DESC) rn,
        COUNT(*) samples
   FROM &&awr_object_prefix.active_sess_history h
  WHERE @filter_predicate@
    AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
-   AND (session_state = ''ON CPU'' OR wait_class <> ''Idle'')
+   AND (session_state = 'ON CPU' OR wait_class <> 'Idle')
  GROUP BY
-       CASE session_state WHEN ''ON CPU'' THEN session_state ELSE wait_class END
+       CASE session_state WHEN 'ON CPU' THEN session_state ELSE wait_class END
 ),
 total AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */ SUM(samples) samples FROM hist
 )
-SELECT h.wait_class||'' (''||ROUND(100 * h.samples / t.samples, 1)||''%)'' bucket,
+SELECT h.wait_class||' ('||ROUND(100 * h.samples / t.samples, 1)||'%)' bucket,
        ROUND(100 * h.samples / t.samples, 1) percent,
        &&wait_class_colors.
        &&wait_class_colors2.
        &&wait_class_colors3.
        &&wait_class_colors4. color,
-       h.samples||'' 10s-samples (''||ROUND(100 * h.samples / t.samples, 1)||''% of DB Time)'' tooltip
+       h.samples||' 10s-samples ('||ROUND(100 * h.samples / t.samples, 1)||'% of DB Time)' tooltip
   FROM hist h,
        total t
  --WHERE ROUND(100 * h.samples / t.samples, 1) >= 3 /* only if >= 3% */
  ORDER BY 2 DESC NULLS LAST
-';
+]';
 END;
 /
 

@@ -17,7 +17,7 @@ SELECT '0' row_num FROM DUAL;
 -- log and watchdog
 SPO &&edb360_log..txt APP;
 COL edb360_bypass NEW_V edb360_bypass;
-SELECT '--timeout--' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds
+SELECT ' echo timeout ' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds
 /
 SELECT 'Elapsed Hours so far: '||ROUND((DBMS_UTILITY.GET_TIME - :edb360_time0) / 100 / 3600, 3) FROM DUAL
 /
@@ -44,7 +44,7 @@ SET TIMI OFF;
 SET SERVEROUT OFF;
 PRO
 SPO OFF;
-HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_log..txt >> &&edb360_log3..txt
+HOS zip &&edb360_zip_filename. &&edb360_log..txt >> &&edb360_log3..txt
 
 -- spools query
 SPO &&common_edb360_prefix._query.sql;
@@ -58,7 +58,7 @@ SET TERM OFF;
 SPO &&edb360_main_report..html APP;
 PRO <li title="&&main_table.">&&edb360_bypass.&&title.
 SPO OFF;
-HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html >> &&edb360_log3..txt
+HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt
 
 -- dummy call
 COL edb360_prev_sql_id NEW_V edb360_prev_sql_id NOPRI;
@@ -72,19 +72,20 @@ SELECT prev_sql_id edb360_prev_sql_id, TO_CHAR(prev_child_number) edb360_prev_ch
 @@&&edb360_bypass.&&skip_text.&&edb360_skip_text.edb360_9c_one_text.sql
 @@&&edb360_bypass.&&skip_csv.&&edb360_skip_csv.edb360_9d_one_csv.sql
 @@&&edb360_bypass.&&skip_lch.&&edb360_skip_line.edb360_9e_one_line_chart.sql
+@@&&edb360_bypass.&&skip_lch2.&&edb360_skip_line.edb360_9e_two_line_chart.sql
 @@&&edb360_bypass.&&skip_pch.&&edb360_skip_pie.edb360_9f_one_pie_chart.sql
 @@&&edb360_bypass.&&skip_bch.&&edb360_skip_bar.edb360_9h_one_bar_chart.sql
-HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_log2..txt >> &&edb360_log3..txt
-HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_log3..txt
+HOS zip &&edb360_zip_filename. &&edb360_log2..txt >> &&edb360_log3..txt
+HOS zip &&edb360_zip_filename. &&edb360_log3..txt
 
 -- sql monitor long executions of sql from edb360
-SELECT 'N' edb360_tuning_pack_for_sqlmon, '--' skip_sqlmon_exec FROM DUAL
+SELECT 'N' edb360_tuning_pack_for_sqlmon, ' echo skip sqlmon' skip_sqlmon_exec FROM DUAL
 /
 SELECT '&&tuning_pack.' edb360_tuning_pack_for_sqlmon, NULL skip_sqlmon_exec, SUBSTR(sql_text, 1, 100) edb360_sql_text_100, elapsed_time FROM v$sql 
 WHERE sql_id = '&&edb360_prev_sql_id.' AND elapsed_time / 1e6 > 60 /* seconds */
 /
 @@&&skip_tuning.&&skip_sqlmon_exec.sqlmon.sql &&edb360_tuning_pack_for_sqlmon. &&edb360_prev_sql_id.
-HOS zip -m &&edb360_main_filename._&&edb360_file_time. sqlmon_&&edb360_prev_sql_id._&&current_time..zip >> &&edb360_log3..txt
+HOS zip -m &&edb360_zip_filename. sqlmon_&&edb360_prev_sql_id._&&current_time..zip >> &&edb360_log3..txt
 
 -- needed reset after eventual sqlmon above
 SET TERM OFF; 
@@ -116,6 +117,7 @@ DEF skip_html = '';
 DEF skip_text = '';
 DEF skip_csv = '';
 DEF skip_lch = '--skip--';
+DEF skip_lch2 = '--skip--';
 DEF skip_pch = '--skip--';
 DEF skip_bch = '--skip--';
 DEF title_suffix = '';
@@ -127,7 +129,7 @@ SPO &&edb360_main_report..html APP;
 PRO <small><em> (&&row_num.) </em></small>
 PRO </li>
 SPO OFF;
-HOS zip &&edb360_main_filename._&&edb360_file_time. &&edb360_main_report..html >> &&edb360_log3..txt
+HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt
 
 -- report sequence
 EXEC :repo_seq := :repo_seq + 1;

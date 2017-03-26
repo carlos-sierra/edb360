@@ -9,7 +9,7 @@ SPO OFF;
 
 DEF main_table = '&&awr_hist_prefix.ACTIVE_SESS_HISTORY';
 BEGIN
-  :sql_text_backup := '
+  :sql_text_backup := q'[
 WITH
 hist AS (
 SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
@@ -20,7 +20,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
   FROM &&awr_object_prefix.active_sess_history h
  WHERE @filter_predicate@
    AND current_obj# >= 0
-   AND wait_class IN (''Application'', ''Cluster'', ''Concurrency'', ''System I/O'', ''User I/O'')
+   AND wait_class IN ('Application', 'Cluster', 'Concurrency', 'System I/O', 'User I/O')
    AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
  GROUP BY
@@ -30,8 +30,8 @@ total AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */ SUM(samples) samples FROM hist
 )
 SELECT h.current_obj#||
-       CASE h.current_obj# WHEN 0 THEN '' UNDO'' ELSE
-       (SELECT TRIM(''.'' FROM '' ''||o.owner||''.''||o.object_name||''.''||o.subobject_name) FROM dba_objects o WHERE o.object_id = h.current_obj# AND ROWNUM = 1) 
+       CASE h.current_obj# WHEN 0 THEN ' UNDO' ELSE
+       (SELECT TRIM('.' FROM ' '||o.owner||'.'||o.object_name||'.'||o.subobject_name) FROM dba_objects o WHERE o.object_id = h.current_obj# AND ROWNUM = 1) 
        END
        data_object,
        h.samples,
@@ -41,7 +41,7 @@ SELECT h.current_obj#||
        total t
  WHERE h.samples >= t.samples / 1000 AND rn <= 14
  UNION ALL
-SELECT ''Others'',
+SELECT 'Others',
        NVL(SUM(h.samples), 0) samples,
        NVL(ROUND(100 * SUM(h.samples) / AVG(t.samples), 1), 0) percent,
        NULL dummy_01
@@ -49,7 +49,7 @@ SELECT ''Others'',
        total t
  WHERE h.samples < t.samples / 1000 OR rn > 14
  ORDER BY 2 DESC NULLS LAST
-';
+]';
 END;
 /
 

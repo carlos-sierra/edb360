@@ -20,5 +20,5 @@
 DEF ash_validation = '';
 @@sql/edb360_0a_main.sql
 -- list of generated files
-HOS unzip -l &&edb360_main_filename._&&edb360_file_time.
-PRO "End edb360. Output: &&edb360_main_filename._&&edb360_file_time..zip"
+HOS unzip -l &&edb360_move_directory.&&edb360_zip_filename.
+PRO "End edb360. Output: &&edb360_move_directory.&&edb360_zip_filename..zip"

@@ -28,18 +28,18 @@ DEF tit_13 = '';
 DEF tit_14 = '';
 DEF tit_15 = '';
 BEGIN
-  :sql_text_backup := '
+  :sql_text_backup := q'[
 WITH
 vm AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        h1.snap_id,
        h1.dbid,
        h1.instance_number,
-       SUM(CASE WHEN h1.stat_name = ''VM_IN_BYTES''  AND h1.value > h0.value THEN h1.value - h0.value ELSE 0 END) in_bytes,
-       SUM(CASE WHEN h1.stat_name = ''VM_OUT_BYTES'' AND h1.value > h0.value THEN h1.value - h0.value ELSE 0 END) out_bytes
+       SUM(CASE WHEN h1.stat_name = 'VM_IN_BYTES'  AND h1.value > h0.value THEN h1.value - h0.value ELSE 0 END) in_bytes,
+       SUM(CASE WHEN h1.stat_name = 'VM_OUT_BYTES' AND h1.value > h0.value THEN h1.value - h0.value ELSE 0 END) out_bytes
   FROM &&awr_object_prefix.osstat h0,
        &&awr_object_prefix.osstat h1
- WHERE h1.stat_name IN (''VM_IN_BYTES'', ''VM_OUT_BYTES'')
+ WHERE h1.stat_name IN ('VM_IN_BYTES', 'VM_OUT_BYTES')
    AND h1.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND h1.dbid = &&edb360_dbid.
    AND h1.instance_number = @instance_number@
@@ -76,7 +76,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        h1.instance_number,
        SUM(h1.value) bytes
   FROM &&awr_object_prefix.pgastat h1
- WHERE h1.name = ''total PGA allocated''
+ WHERE h1.name = 'total PGA allocated'
    AND h1.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND h1.dbid = &&edb360_dbid.
    AND h1.instance_number = @instance_number@
@@ -114,8 +114,8 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
    AND pga.instance_number(+) = snp.instance_number
 )
 SELECT snap_id,
-       TO_CHAR(MIN(begin_interval_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
-       TO_CHAR(MIN(end_interval_time), ''YYYY-MM-DD HH24:MI:SS'') end_time,
+       TO_CHAR(MIN(begin_interval_time), 'YYYY-MM-DD HH24:MI:SS') begin_time,
+       TO_CHAR(MIN(end_interval_time), 'YYYY-MM-DD HH24:MI:SS') end_time,
        ROUND(SUM(mem_bytes)/POWER(2,30),3) mem_gb,
        ROUND(SUM(sga_bytes)/POWER(2,30),3) sga_gb,
        ROUND(SUM(pga_bytes)/POWER(2,30),3) pga_gb,
@@ -137,13 +137,14 @@ SELECT snap_id,
        snap_id
  ORDER BY
        snap_id
-';
+]';
 END;
 /
 
 DEF skip_lch = '';
 DEF skip_all = '&&is_single_instance.';
 DEF title = 'Memory Statistics for Cluster';
+DEF abstract = '&&abstract_uom.';
 DEF foot = 'Includes Free SGA Memory Available.'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', 'h1.instance_number');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
@@ -152,6 +153,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 1;
 DEF title = 'Memory Statistics for Instance 1';
+DEF abstract = '&&abstract_uom.';
 DEF foot = 'Includes Free SGA Memory Available.'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '1');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
@@ -160,6 +162,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 2;
 DEF title = 'Memory Statistics for Instance 2';
+DEF abstract = '&&abstract_uom.';
 DEF foot = 'Includes Free SGA Memory Available.'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '2');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
@@ -168,6 +171,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 3;
 DEF title = 'Memory Statistics for Instance 3';
+DEF abstract = '&&abstract_uom.';
 DEF foot = 'Includes Free SGA Memory Available.'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '3');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
@@ -176,6 +180,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 4;
 DEF title = 'Memory Statistics for Instance 4';
+DEF abstract = '&&abstract_uom.';
 DEF foot = 'Includes Free SGA Memory Available.'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '4');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
@@ -184,6 +189,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 5;
 DEF title = 'Memory Statistics for Instance 5';
+DEF abstract = '&&abstract_uom.';
 DEF foot = 'Includes Free SGA Memory Available.'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '5');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
@@ -192,6 +198,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 6;
 DEF title = 'Memory Statistics for Instance 6';
+DEF abstract = '&&abstract_uom.';
 DEF foot = 'Includes Free SGA Memory Available.'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '6');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
@@ -200,6 +207,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 7;
 DEF title = 'Memory Statistics for Instance 7';
+DEF abstract = '&&abstract_uom.';
 DEF foot = 'Includes Free SGA Memory Available.'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '7');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
@@ -208,6 +216,7 @@ DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM gv$instance WHERE instance_number = 8;
 DEF title = 'Memory Statistics for Instance 8';
+DEF abstract = '&&abstract_uom.';
 DEF foot = 'Includes Free SGA Memory Available.'
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '8');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql

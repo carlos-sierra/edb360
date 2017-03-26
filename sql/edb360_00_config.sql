@@ -34,7 +34,10 @@ DEF edb360_conf_work_day_to = '6';
 DEF edb360_conf_max_hours = '24';
 
 -- include database name on index page (default N)
-DEF edb360_conf_incl_dbname = 'N';
+DEF edb360_conf_incl_dbname_index = 'N';
+
+-- include database name on zip filename (default N)
+DEF edb360_conf_incl_dbname_file = 'N';
 
 -- include GV$ACTIVE_SESSION_HISTORY (default N)
 DEF edb360_conf_incl_ash_mem = 'N';
@@ -56,11 +59,14 @@ DEF edb360_conf_incl_segments = 'Y';
 -- note: some releases of Oracle take very long to generate metadata
 DEF edb360_conf_incl_metadata = 'Y';
 
--- include eadam for top SQL (default Y)
+-- include eadam for top SQL and peak snaps (default Y)
 DEF edb360_conf_incl_eadam = 'Y';
 
 -- awr repository. set edb360_repo_user only if edb360 repository has been seeded recently
 DEF edb360_repo_user = '';
+
+-- move generated edb360 zip file to directory (i.e.: /home/oracle/csierra/edb360/prod/)
+DEF edb360_move_directory = '';
 
 /**************************** not recommended to modify *********************************/
 
@@ -75,8 +81,10 @@ DEF edb360_conf_incl_bar  = 'Y';
 
 -- excluding awr reports substantially reduces usability with minimal performance gain
 DEF edb360_conf_incl_awr_rpt = 'Y';
+DEF edb360_conf_incl_awr_diff_rpt = 'Y';
 DEF edb360_conf_incl_addm_rpt = 'Y';
 DEF edb360_conf_incl_ash_rpt = 'Y';
+DEF edb360_conf_incl_ash_analy_rpt = 'Y';
 DEF edb360_conf_incl_tkprof = 'Y';
 
 -- top sql to execute further diagnostics (range 0-128)
@@ -90,7 +98,7 @@ DEF edb360_conf_sqlhc_top = '0';
 DEF edb360_conf_sqld360_top = '16';
 DEF edb360_conf_sqld360_top_tc = '0';
 
--- change only if you changed it while generating repository, they must match
+-- change only if you changed it while generating repository, as they must match
 DEF edb360_repo_prefix = 'edb360_';
 
 /************************************ modifications *************************************/

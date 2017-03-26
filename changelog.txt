@@ -1,6 +1,25 @@
 Changelog
 =========
 
+v1708 (2017-03-25)
+=====
+1. Individual sections and some columns can be executed passing 2nd parameter: @edb360 T 7a
+2. Added "SQL in logon storms" under section 3h
+3. Added "SQL executed row-by-row" under section 3h
+4. ASH from eAdam for top 16 SQL_ID (as per SQLd360 list) + top 12 SNAP_ID (as per AWR MAX from 7a)
+5. Present totals line using of COMPUTE in some reports on section 2b
+6. RMAN section includes now Blocks with Corruption or Nonlogged
+7. Added Load Profile (Per Sec, Per Txn and Count) as per DBA_HIST_SYSMETRIC_SUMMARY
+8. Added abstract: Memory is accounted as power of two (binary) while storage and network traffic as power of ten (decimal)
+9. Added new section 4i with Waits Count v.s. Average Latency for top 24 Wait Events
+10. Fixing "ORA-01476: divisor is equal to zero" on planx at DBA_HIST_SQLSTAT
+11. Added AWR DIFF reports for RAC and per instance. Regulated by edb360_conf_incl_addm_rpt
+12. Added the ASH Analytics active report for 12c. Regulated by edb360_conf_incl_ash_analy_rpt
+13. Database name can be part of the main filename (off by default). Regulated by edb360_conf_incl_dbname_file
+14. At completion, main edb360 zip file can now by moved to a location other than SQL*Plus working directory. Regulated by edb360_move_directory
+15. Added report on Database and Schema Triggers in column 3h. This can be used to see LOGON triggers
+16. Implement q'[text]' format in all scripts for improved readability
+
 v1707 (2017-03-06)
 =====
 1. fixing planx failing due to SQL*Plus crash
@@ -56,7 +75,7 @@ v1622 (2016-12-27)
 8. Pie charts have now a hole
 9. Skip SQL that would error on 10g
 10. Refresh of sections 4f and 4g to include all waits and not just I/O waits
-11. Database name can now be shown on index page as per edb360_conf_incl_dbname
+11. Database name can now be shown on index page as per edb360_conf_incl_dbname_index
 12. Removed CBO Hints on 3 queries from David Kurtz on section 2b as per request from Luis Calvo
 13. Added a 2nd version of redundant index as per request from David Kurtz
 14. Removed PGA memory freed back to OS from 4b PGA stats

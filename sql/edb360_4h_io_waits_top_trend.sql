@@ -10,7 +10,7 @@ SPO OFF;
 DEF title = 'Top 24 Wait Events';
 DEF main_table = '&&awr_hist_prefix.EVENT_HISTOGRAM';
 BEGIN
-  :sql_text := '
+  :sql_text := q'[
 WITH
 details AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
@@ -22,7 +22,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
   FROM &&awr_object_prefix.event_histogram
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
-   AND wait_class <> ''Idle''
+   AND wait_class <> 'Idle'
 ),
 events AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
@@ -50,7 +50,7 @@ SELECT hours_waited,
  WHERE wrank < 25
  ORDER BY
        wrank
-';
+]';
 END;
 /
 @@edb360_9a_pre_one.sql
@@ -236,7 +236,7 @@ DEF tit_14 = '';
 DEF tit_15 = '';
 
 BEGIN
-  :sql_text_backup := '
+  :sql_text_backup := q'[
 WITH
 histogram AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
@@ -295,8 +295,8 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
    AND s.instance_number = h.instance_number
 )
 SELECT snap_id,
-       TO_CHAR(MIN(begin_interval_time), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
-       TO_CHAR(MIN(end_interval_time), ''YYYY-MM-DD HH24:MI:SS'') end_time,
+       TO_CHAR(MIN(begin_interval_time), 'YYYY-MM-DD HH24:MI:SS') begin_time,
+       TO_CHAR(MIN(end_interval_time), 'YYYY-MM-DD HH24:MI:SS') end_time,
        ROUND(SUM(avg_wait_time_milli), 3) avg_latency_ms,
        ROUND(SUM(avg_avg_wait_time_milli), 3) latency_trend_ms,
        0 dummy_03,
@@ -317,7 +317,7 @@ SELECT snap_id,
        snap_id
  ORDER BY
        snap_id
-';
+]';
 END;
 /
 

@@ -14,7 +14,7 @@ DEF vaxis = 'Average Ping Latencies in Milliseconds';
 DEF vbaseline = '';
 
 BEGIN
-  :sql_text_backup := '
+  :sql_text_backup := q'[
 WITH
 interconnect_pings AS (
 SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
@@ -38,7 +38,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
    AND s.snap_id = h.snap_id
    AND s.dbid = h.dbid
    AND s.instance_number = h.instance_number
-   AND s.end_interval_time - s.begin_interval_time > TO_DSINTERVAL(''+00 00:01:00.000000'') -- exclude snaps less than 1m appart
+   AND s.end_interval_time - s.begin_interval_time > TO_DSINTERVAL('+00 00:01:00.000000') -- exclude snaps less than 1m appart
 ),
 per_source_and_target AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
@@ -54,7 +54,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        ROUND(SUM(wait_500b) / SUM(cnt_500b) / 1000, 2) Avg_Latency_500B_msg,
        ROUND(SUM(wait_8k) / SUM(cnt_8k) / 1000, 2) Avg_Latency_8K_msg
   FROM interconnect_pings
- WHERE startup_time_interval = TO_DSINTERVAL(''+00 00:00:00.000000'') -- include only snaps from same startup
+ WHERE startup_time_interval = TO_DSINTERVAL('+00 00:00:00.000000') -- include only snaps from same startup
    AND cnt_500b > 0
    AND cnt_8k > 0 
    AND wait_500b > 0
@@ -249,8 +249,8 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
 )
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        snap_id,
-       TO_CHAR(CAST(begin_interval_time AS DATE), ''YYYY-MM-DD HH24:MI:SS'') begin_time,
-       TO_CHAR(CAST(end_interval_time AS DATE), ''YYYY-MM-DD HH24:MI:SS'') end_time,
+       TO_CHAR(CAST(begin_interval_time AS DATE), 'YYYY-MM-DD HH24:MI:SS') begin_time,
+       TO_CHAR(CAST(end_interval_time AS DATE), 'YYYY-MM-DD HH24:MI:SS') end_time,
        c_Avg_Latency_@msg@_msg cluster_avg,
        i_Avg_Latency_@msg@_msg instance_avg,
        Avg_Latency_@msg@_msg_i1 inst_1,
@@ -269,7 +269,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
   FROM denorm_@denorm@
  ORDER BY       
        snap_id
-';
+]';
 END;
 /
 
@@ -296,7 +296,7 @@ END;
 SPO OFF;
 SET SERVEROUT OFF;
 @99800_&&common_edb360_prefix._chart_setup_driver2.sql;
-HOS zip -m &&edb360_main_filename._&&edb360_file_time. 99800_&&common_edb360_prefix._chart_setup_driver2.sql >> &&edb360_log3..txt
+HOS zip -m &&edb360_zip_filename. 99800_&&common_edb360_prefix._chart_setup_driver2.sql >> &&edb360_log3..txt
 
 DEF tit_01 = 'Cluster Avg';
 DEF tit_02 = '';
