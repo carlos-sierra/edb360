@@ -80,6 +80,7 @@ DEF edb360_conf_incl_pie  = 'Y';
 DEF edb360_conf_incl_bar  = 'Y';
 
 -- excluding awr reports substantially reduces usability with minimal performance gain
+DEF edb360_conf_incl_perfhub = 'Y';
 DEF edb360_conf_incl_awr_rpt = 'Y';
 DEF edb360_conf_incl_awr_diff_rpt = 'Y';
 DEF edb360_conf_incl_addm_rpt = 'Y';

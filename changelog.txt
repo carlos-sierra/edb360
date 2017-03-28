@@ -1,6 +1,11 @@
 Changelog
 =========
 
+v1709 (2017-03-27)
+=====
+1. Added Performance Hub active report
+2. Added 2nd method to create repository under extt subdirectory
+
 v1708 (2017-03-25)
 =====
 1. Individual sections and some columns can be executed passing 2nd parameter: @edb360 T 7a

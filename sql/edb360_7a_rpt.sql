@@ -415,7 +415,7 @@ BEGIN
         -- main report
         put_line('-- update main report');
         put_line('SPO &&edb360_main_report..html APP;');
-        put_line('PRO <li>rac_'||j.bid||'_'||j.eid||'_'||j.rep||' <small><em>('||TO_CHAR(j.begin_date,'&&edb360_date_format.')||' to '||TO_CHAR(j.end_date,'&&edb360_date_format.')||')</em></small>');
+        put_line('PRO <li>rac_'||j.bid||'_'||j.eid||'_'||j.rep||' <small><em>('||TO_CHAR(j.begin_date,'&&edb360_date_format.')||' to '||TO_CHAR(j.end_date,'&&edb360_date_format.')||')</em></small><br />');
         put_line('SELECT ''*** time limit exceeded ***'' FROM DUAL WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NOT NULL;');
         put_line('SPO OFF;');
         put_line('HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
@@ -426,7 +426,40 @@ BEGIN
         IF '&&edb360_conf_incl_eadam.' = 'Y' AND j.rep IN ('max&&hist_work_days.wd1', 'max&&hist_work_days.wd2', 'max&&hist_work_days.wd3', 'max&&history_days.d1', 'max&&history_days.d2', 'max&&history_days.d3', 'max5wd1', 'max5wd2', 'max5wd3', 'max7d1', 'max7d2', 'max7d3') THEN
           put_line('DEF edb360_eadam_snaps = '''||CHR(38)||CHR(38)||'edb360_eadam_snaps., '||j.eid||''';');
         END IF;
-  
+        
+        -- 12c perfhub
+        IF '&&edb360_conf_incl_perfhub.' = 'Y' AND '&&db_version.' >= '12' AND j.rep IN ('max&&hist_work_days.wd1', 'max&&hist_work_days.wd2', 'max&&hist_work_days.wd3', 'max&&history_days.d1', 'max&&history_days.d2', 'max&&history_days.d3', 'max5wd1', 'max5wd2', 'max5wd3', 'max7d1', 'max7d2', 'max7d3') THEN
+          put_line('COL edb360_bypass NEW_V edb360_bypass;');
+          put_line('SELECT '' echo timeout '' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
+          l_standard_filename := 'perfhub_rac_'||j.bid||'_'||j.eid||'_'||j.rep;
+          l_spool_filename := '&&common_edb360_prefix._'||l_standard_filename;
+          put_line('COL hh_mm_ss NEW_V hh_mm_ss NOPRI FOR A8;');
+          put_line('SELECT TO_CHAR(SYSDATE, ''HH24:MI:SS'') hh_mm_ss FROM DUAL;');
+          put_line('-- update log');
+          put_line('SPO &&edb360_log..txt APP;');
+          put_line('PRO');
+          put_line('PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
+          put_line('PRO');
+          put_line('PRO '||CHR(38)||CHR(38)||'hh_mm_ss. '||l_spool_filename);
+          put_line('SPO OFF;');
+          put_line('HOS zip &&edb360_zip_filename. &&edb360_log..txt >> &&edb360_log3..txt');
+          put_line('HOS zip &&edb360_zip_filename. &&edb360_log3..txt');
+          :file_seq := :file_seq + 1;
+          l_one_spool_filename := LPAD(:file_seq, 5, '0')||'_'||l_spool_filename;
+          update_log(l_one_spool_filename||'.html');
+          put_line('SPO '||l_one_spool_filename||'.html;');
+          put_line('SELECT /* &&section_id. */ DBMS_PERF.REPORT_PERFHUB(0,GREATEST(TO_DATE(:lv_begin_date,''YYYYMMDDHH24MISS'')-(12/24),TO_DATE(''&&edb360_date_from.'',''&&edb360_date_format.'')),LEAST(TO_DATE(:lv_end_date,''YYYYMMDDHH24MISS'')+(12/24),TO_DATE(''&&edb360_date_to.'',''&&edb360_date_format.'')),TO_DATE(:lv_begin_date,''YYYYMMDDHH24MISS'')-(1/24),TO_DATE(:lv_end_date,''YYYYMMDDHH24MISS'')+(1/24),:lv_inst_num,:lv_dbid) FROM DUAL WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NULL;');
+          put_line('SELECT ''*** time limit exceeded ***'' FROM DUAL WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NOT NULL;');
+          put_line('SPO OFF;');
+          put_line('-- update main report');
+          put_line('SPO &&edb360_main_report..html APP;');
+          put_line('PRO <a href="'||l_one_spool_filename||'.html">perfhub html</a>');
+          put_line('SPO OFF;');
+          put_line('-- zip');
+          put_line('HOS zip -m &&edb360_zip_filename. '||l_one_spool_filename||'.html >> &&edb360_log3..txt');
+          put_line('HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
+        END IF;
+
         -- awr all modes
         IF '&&edb360_conf_incl_awr_rpt.' = 'Y' AND l_instances > 1 AND '&&db_version.' >= '11.2' THEN
           put_line('COL edb360_bypass NEW_V edb360_bypass;');
@@ -460,6 +493,7 @@ BEGIN
             put_line('-- zip');
             put_line('HOS zip -m &&edb360_zip_filename. '||l_one_spool_filename||'.html >> &&edb360_log3..txt');
             put_line('HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
+            
             IF '&&edb360_conf_incl_awr_diff_rpt.' = 'Y' AND j.rep IN ('max&&hist_work_days.wd1', 'max&&hist_work_days.wd2', 'max&&hist_work_days.wd3', 
                                                                       'max&&history_days.d1', 'max&&history_days.d2', 'max&&history_days.d3', 
                                                                       'max5wd1', 'max5wd2', 'max5wd3', 
@@ -505,6 +539,7 @@ BEGIN
             put_line('-- zip');
             put_line('HOS zip -m &&edb360_zip_filename. '||l_one_spool_filename||'.txt >> &&edb360_log3..txt');
             put_line('HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
+            
             IF '&&edb360_conf_incl_awr_diff_rpt.' = 'Y' AND j.rep IN ('max&&hist_work_days.wd1', 'max&&hist_work_days.wd2', 'max&&hist_work_days.wd3', 
                                                                       'max&&history_days.d1', 'max&&history_days.d2', 'max&&history_days.d3', 
                                                                       'max5wd1', 'max5wd2', 'max5wd3', 
@@ -1007,13 +1042,46 @@ BEGIN
         -- main report
         put_line('-- update main report');
         put_line('SPO &&edb360_main_report..html APP;');
-        put_line('PRO <li>'||i.instance_number||'_'||j.bid||'_'||j.eid||'_'||j.rep||' <small><em>('||TO_CHAR(j.begin_date,'&&edb360_date_format.')||' to '||TO_CHAR(j.end_date,'&&edb360_date_format.')||')</em></small>');
+        put_line('PRO <li>'||i.instance_number||'_'||j.bid||'_'||j.eid||'_'||j.rep||' <small><em>('||TO_CHAR(j.begin_date,'&&edb360_date_format.')||' to '||TO_CHAR(j.end_date,'&&edb360_date_format.')||')</em></small><br />');
         put_line('SELECT ''*** time limit exceeded ***'' FROM DUAL WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NOT NULL;');
         put_line('SPO OFF;');
         put_line('HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
         put_line('EXEC :repo_seq := :repo_seq + 1;');
         put_line('SELECT TO_CHAR(:repo_seq) report_sequence FROM DUAL;');
   
+        -- 12c perfhub
+        IF '&&edb360_conf_incl_perfhub.' = 'Y' AND '&&db_version.' >= '12' AND j.rep IN ('max&&hist_work_days.wd1', 'max&&hist_work_days.wd2', 'max&&hist_work_days.wd3', 'max&&history_days.d1', 'max&&history_days.d2', 'max&&history_days.d3', 'max5wd1', 'max5wd2', 'max5wd3', 'max7d1', 'max7d2', 'max7d3') THEN
+          put_line('COL edb360_bypass NEW_V edb360_bypass;');
+          put_line('SELECT '' echo timeout '' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
+          l_standard_filename := 'perfhub_'||i.instance_number||'_'||j.bid||'_'||j.eid||'_'||j.rep;
+          l_spool_filename := '&&common_edb360_prefix._'||l_standard_filename;
+          put_line('COL hh_mm_ss NEW_V hh_mm_ss NOPRI FOR A8;');
+          put_line('SELECT TO_CHAR(SYSDATE, ''HH24:MI:SS'') hh_mm_ss FROM DUAL;');
+          put_line('-- update log');
+          put_line('SPO &&edb360_log..txt APP;');
+          put_line('PRO');
+          put_line('PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
+          put_line('PRO');
+          put_line('PRO '||CHR(38)||CHR(38)||'hh_mm_ss. '||l_spool_filename);
+          put_line('SPO OFF;');
+          put_line('HOS zip &&edb360_zip_filename. &&edb360_log..txt >> &&edb360_log3..txt');
+          put_line('HOS zip &&edb360_zip_filename. &&edb360_log3..txt');
+          :file_seq := :file_seq + 1;
+          l_one_spool_filename := LPAD(:file_seq, 5, '0')||'_'||l_spool_filename;
+          update_log(l_one_spool_filename||'.html');
+          put_line('SPO '||l_one_spool_filename||'.html;');
+          put_line('SELECT /* &&section_id. */ DBMS_PERF.REPORT_PERFHUB(0,GREATEST(TO_DATE(:lv_begin_date,''YYYYMMDDHH24MISS'')-(12/24),TO_DATE(''&&edb360_date_from.'',''&&edb360_date_format.'')),LEAST(TO_DATE(:lv_end_date,''YYYYMMDDHH24MISS'')+(12/24),TO_DATE(''&&edb360_date_to.'',''&&edb360_date_format.'')),TO_DATE(:lv_begin_date,''YYYYMMDDHH24MISS'')-(1/24),TO_DATE(:lv_end_date,''YYYYMMDDHH24MISS'')+(1/24),:lv_inst_num,:lv_dbid) FROM DUAL WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NULL;');
+          put_line('SELECT ''*** time limit exceeded ***'' FROM DUAL WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NOT NULL;');
+          put_line('SPO OFF;');
+          put_line('-- update main report');
+          put_line('SPO &&edb360_main_report..html APP;');
+          put_line('PRO <a href="'||l_one_spool_filename||'.html">perfhub html</a>');
+          put_line('SPO OFF;');
+          put_line('-- zip');
+          put_line('HOS zip -m &&edb360_zip_filename. '||l_one_spool_filename||'.html >> &&edb360_log3..txt');
+          put_line('HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
+        END IF;
+
         -- awr one node
         IF '&&edb360_conf_incl_awr_rpt.' = 'Y' THEN 
           put_line('COL edb360_bypass NEW_V edb360_bypass;');
@@ -1047,6 +1115,7 @@ BEGIN
             put_line('-- zip');
             put_line('HOS zip -m &&edb360_zip_filename. '||l_one_spool_filename||'.html >> &&edb360_log3..txt');
             put_line('HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
+            
             IF '&&edb360_conf_incl_awr_diff_rpt.' = 'Y' AND j.rep IN ('max&&hist_work_days.wd1', 'max&&hist_work_days.wd2', 'max&&hist_work_days.wd3', 
                                                                       'max&&history_days.d1', 'max&&history_days.d2', 'max&&history_days.d3', 
                                                                       'max5wd1', 'max5wd2', 'max5wd3', 
@@ -1092,6 +1161,7 @@ BEGIN
             put_line('-- zip');
             put_line('HOS zip -m &&edb360_zip_filename. '||l_one_spool_filename||'.txt >> &&edb360_log3..txt');
             put_line('HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
+            
             IF '&&edb360_conf_incl_awr_diff_rpt.' = 'Y' AND j.rep IN ('max&&hist_work_days.wd1', 'max&&hist_work_days.wd2', 'max&&hist_work_days.wd3', 
                                                                       'max&&history_days.d1', 'max&&history_days.d2', 'max&&history_days.d3', 
                                                                       'max5wd1', 'max5wd2', 'max5wd3', 

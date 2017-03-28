@@ -161,32 +161,56 @@ TRUNCATE TABLE &&edb360_repo_user..&&edb360_repo_prefix.snapshot             ;
 ------------------------------------------------------------------------------------------
 
 INSERT /*+ APPEND */ INTO &&edb360_repo_user..&&edb360_repo_prefix.active_sess_history  SELECT * FROM dba_hist_active_sess_history  WHERE dbid = &&edb360_repo_dbid. AND snap_id BETWEEN &&edb360_repo_min_snap_id. AND &&edb360_repo_max_snap_id.;
+COMMIT;
 INSERT /*+ APPEND */ INTO &&edb360_repo_user..&&edb360_repo_prefix.database_instance    SELECT * FROM dba_hist_database_instance    WHERE dbid = &&edb360_repo_dbid.;
+COMMIT;
 INSERT /*+ APPEND */ INTO &&edb360_repo_user..&&edb360_repo_prefix.event_histogram      SELECT * FROM dba_hist_event_histogram      WHERE dbid = &&edb360_repo_dbid. AND snap_id BETWEEN &&edb360_repo_min_snap_id. AND &&edb360_repo_max_snap_id.;
+COMMIT;
 INSERT /*+ APPEND */ INTO &&edb360_repo_user..&&edb360_repo_prefix.ic_client_stats      SELECT * FROM dba_hist_ic_client_stats      WHERE dbid = &&edb360_repo_dbid. AND snap_id BETWEEN &&edb360_repo_min_snap_id. AND &&edb360_repo_max_snap_id.;
+COMMIT;
 INSERT /*+ APPEND */ INTO &&edb360_repo_user..&&edb360_repo_prefix.ic_device_stats      SELECT * FROM dba_hist_ic_device_stats      WHERE dbid = &&edb360_repo_dbid. AND snap_id BETWEEN &&edb360_repo_min_snap_id. AND &&edb360_repo_max_snap_id.;
+COMMIT;
 INSERT /*+ APPEND */ INTO &&edb360_repo_user..&&edb360_repo_prefix.interconnect_pings   SELECT * FROM dba_hist_interconnect_pings   WHERE dbid = &&edb360_repo_dbid. AND snap_id BETWEEN &&edb360_repo_min_snap_id. AND &&edb360_repo_max_snap_id.;
+COMMIT;
 INSERT /*+ APPEND */ INTO &&edb360_repo_user..&&edb360_repo_prefix.memory_resize_ops    SELECT * FROM dba_hist_memory_resize_ops    WHERE dbid = &&edb360_repo_dbid. AND snap_id BETWEEN &&edb360_repo_min_snap_id. AND &&edb360_repo_max_snap_id.;
+COMMIT;
 INSERT /*+ APPEND */ INTO &&edb360_repo_user..&&edb360_repo_prefix.memory_target_advice SELECT * FROM dba_hist_memory_target_advice WHERE dbid = &&edb360_repo_dbid. AND snap_id BETWEEN &&edb360_repo_min_snap_id. AND &&edb360_repo_max_snap_id.;
+COMMIT;
 INSERT /*+ APPEND */ INTO &&edb360_repo_user..&&edb360_repo_prefix.osstat               SELECT * FROM dba_hist_osstat               WHERE dbid = &&edb360_repo_dbid. AND snap_id BETWEEN &&edb360_repo_min_snap_id. AND &&edb360_repo_max_snap_id.;
+COMMIT;
 INSERT /*+ APPEND */ INTO &&edb360_repo_user..&&edb360_repo_prefix.parameter            SELECT * FROM dba_hist_parameter            WHERE dbid = &&edb360_repo_dbid. AND snap_id BETWEEN &&edb360_repo_min_snap_id. AND &&edb360_repo_max_snap_id.;
+COMMIT;
 INSERT /*+ APPEND */ INTO &&edb360_repo_user..&&edb360_repo_prefix.pgastat              SELECT * FROM dba_hist_pgastat              WHERE dbid = &&edb360_repo_dbid. AND snap_id BETWEEN &&edb360_repo_min_snap_id. AND &&edb360_repo_max_snap_id.;
+COMMIT;
 INSERT /*+ APPEND */ INTO &&edb360_repo_user..&&edb360_repo_prefix.resource_limit       SELECT * FROM dba_hist_resource_limit       WHERE dbid = &&edb360_repo_dbid. AND snap_id BETWEEN &&edb360_repo_min_snap_id. AND &&edb360_repo_max_snap_id.;
+COMMIT;
 INSERT /*+ APPEND */ INTO &&edb360_repo_user..&&edb360_repo_prefix.service_name         SELECT * FROM dba_hist_service_name         WHERE dbid = &&edb360_repo_dbid.;
+COMMIT;
 INSERT /*+ APPEND */ INTO &&edb360_repo_user..&&edb360_repo_prefix.sga                  SELECT * FROM dba_hist_sga                  WHERE dbid = &&edb360_repo_dbid. AND snap_id BETWEEN &&edb360_repo_min_snap_id. AND &&edb360_repo_max_snap_id.;
+COMMIT;
 INSERT /*+ APPEND */ INTO &&edb360_repo_user..&&edb360_repo_prefix.sgastat              SELECT * FROM dba_hist_sgastat              WHERE dbid = &&edb360_repo_dbid. AND snap_id BETWEEN &&edb360_repo_min_snap_id. AND &&edb360_repo_max_snap_id.;
+COMMIT;
 INSERT /*+ APPEND */ INTO &&edb360_repo_user..&&edb360_repo_prefix.sql_plan             SELECT * FROM dba_hist_sql_plan             WHERE dbid = &&edb360_repo_dbid.;
+COMMIT;
 INSERT /*+ APPEND */ INTO &&edb360_repo_user..&&edb360_repo_prefix.sqlstat              SELECT * FROM dba_hist_sqlstat              WHERE dbid = &&edb360_repo_dbid. AND snap_id BETWEEN &&edb360_repo_min_snap_id. AND &&edb360_repo_max_snap_id.;
+COMMIT;
 INSERT /*+ APPEND */ INTO &&edb360_repo_user..&&edb360_repo_prefix.sqltext              SELECT * FROM dba_hist_sqltext              WHERE dbid = &&edb360_repo_dbid.;
+COMMIT;
 INSERT /*+ APPEND */ INTO &&edb360_repo_user..&&edb360_repo_prefix.sys_time_model       SELECT * FROM dba_hist_sys_time_model       WHERE dbid = &&edb360_repo_dbid. AND snap_id BETWEEN &&edb360_repo_min_snap_id. AND &&edb360_repo_max_snap_id.;
+COMMIT;
 INSERT /*+ APPEND */ INTO &&edb360_repo_user..&&edb360_repo_prefix.sysmetric_history    SELECT * FROM dba_hist_sysmetric_history    WHERE dbid = &&edb360_repo_dbid. AND snap_id BETWEEN &&edb360_repo_min_snap_id. AND &&edb360_repo_max_snap_id.;
+COMMIT;
 INSERT /*+ APPEND */ INTO &&edb360_repo_user..&&edb360_repo_prefix.sysmetric_summary    SELECT * FROM dba_hist_sysmetric_summary    WHERE dbid = &&edb360_repo_dbid. AND snap_id BETWEEN &&edb360_repo_min_snap_id. AND &&edb360_repo_max_snap_id.;
+COMMIT;
 INSERT /*+ APPEND */ INTO &&edb360_repo_user..&&edb360_repo_prefix.sysstat              SELECT * FROM dba_hist_sysstat              WHERE dbid = &&edb360_repo_dbid. AND snap_id BETWEEN &&edb360_repo_min_snap_id. AND &&edb360_repo_max_snap_id.;
+COMMIT;
 INSERT /*+ APPEND */ INTO &&edb360_repo_user..&&edb360_repo_prefix.system_event         SELECT * FROM dba_hist_system_event         WHERE dbid = &&edb360_repo_dbid. AND snap_id BETWEEN &&edb360_repo_min_snap_id. AND &&edb360_repo_max_snap_id.;
+COMMIT;
 INSERT /*+ APPEND */ INTO &&edb360_repo_user..&&edb360_repo_prefix.tbspc_space_usage    SELECT * FROM dba_hist_tbspc_space_usage    WHERE dbid = &&edb360_repo_dbid. AND snap_id BETWEEN &&edb360_repo_min_snap_id. AND &&edb360_repo_max_snap_id.;
+COMMIT;
 INSERT /*+ APPEND */ INTO &&edb360_repo_user..&&edb360_repo_prefix.wr_control           SELECT * FROM dba_hist_wr_control           WHERE dbid = &&edb360_repo_dbid.;
+COMMIT;
 INSERT /*+ APPEND */ INTO &&edb360_repo_user..&&edb360_repo_prefix.snapshot             SELECT * FROM dba_hist_snapshot             WHERE dbid = &&edb360_repo_dbid. AND snap_id BETWEEN &&edb360_repo_min_snap_id. AND &&edb360_repo_max_snap_id.;
-
 COMMIT;
 
 ------------------------------------------------------------------------------------------

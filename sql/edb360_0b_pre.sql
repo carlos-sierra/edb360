@@ -1,5 +1,5 @@
-DEF edb360_vYYNN = 'v1708';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2017-03-25)';
+DEF edb360_vYYNN = 'v1709';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2017-03-27)';
 DEF edb360_copyright = ' (c) 2017';
 
 SET TERM OFF;
@@ -455,7 +455,7 @@ DEF ebs_release = '';
 DEF ebs_system_name = '';
 COL ebs_release NEW_V ebs_release;
 COL ebs_system_name NEW_V ebs_system_name;
-SELECT release_name ebs_release, applications_system_name ebs_system_name FROM applsys.fnd_product_groups WHERE ROWNUM = 1;
+SELECT /* ignore if it fails to parse */ release_name ebs_release, applications_system_name ebs_system_name FROM applsys.fnd_product_groups WHERE ROWNUM = 1;
 
 -- siebel
 DEF siebel_schema = 'siebel_schema';
@@ -642,25 +642,11 @@ COL edb360_sql_text_100 NEW_V edb360_sql_text_100;
 DEF exact_matching_signature = '';
 DEF force_matching_signature = '';
 —- this gives you two level of “indirection”, aka it goes into PL/SQL that dumps a script that is later on executed 
-—- I use this for bar charts on sqld360
---DEF wait_class_colors = 'CASE wait_class WHEN ''''''''CPU'''''''' THEN ''''''''34CF27'''''''' WHEN ''''''''Scheduler'''''''' THEN ''''''''9FFA9D'''''''' WHEN ''''''''User I/O'''''''' THEN ''''''''0252D7'''''''' WHEN ''''''''System I/O'''''''' THEN ''''''''1E96DD'''''''' ';
---DEF wait_class_colors2 = ' WHEN ''''''''Concurrency'''''''' THEN ''''''''871C12'''''''' WHEN ''''''''Application'''''''' THEN ''''''''C42A05'''''''' WHEN ''''''''Commit'''''''' THEN ''''''''EA6A05'''''''' WHEN ''''''''Configuration'''''''' THEN ''''''''594611''''''''  ';
---DEF wait_class_colors3 = ' WHEN ''''''''Administrative'''''''' THEN ''''''''75763E''''''''  WHEN ''''''''Network'''''''' THEN ''''''''989779'''''''' WHEN ''''''''Other'''''''' THEN ''''''''F571A0'''''''' ';
---DEF wait_class_colors4 = ' WHEN ''''''''Cluster'''''''' THEN ''''''''CEC3B5'''''''' WHEN ''''''''Queueing'''''''' THEN ''''''''C6BAA5'''''''' ELSE ''''''''000000'''''''' END';
 —- I use this for bar charts on edb360
---DEF wait_class_colors = " CASE wait_class WHEN ''ON CPU'' THEN ''34CF27'' WHEN ''Scheduler'' THEN ''9FFA9D'' WHEN ''User I/O'' THEN ''0252D7'' WHEN ''System I/O'' THEN ''1E96DD'' ";
---DEF wait_class_colors2 = " WHEN ''Concurrency'' THEN ''871C12'' WHEN ''Application'' THEN ''C42A05'' WHEN ''Commit'' THEN ''EA6A05'' WHEN ''Configuration'' THEN ''594611''  ";
---DEF wait_class_colors3 = " WHEN ''Administrative'' THEN ''75763E''  WHEN ''Network'' THEN ''989779'' WHEN ''Other'' THEN ''F571A0'' ";
---DEF wait_class_colors4 = " WHEN ''Cluster'' THEN ''CEC3B5'' WHEN ''Queueing'' THEN ''C6BAA5'' ELSE ''000000'' END ";
 DEF wait_class_colors = " CASE wait_class WHEN 'ON CPU' THEN '34CF27' WHEN 'Scheduler' THEN '9FFA9D' WHEN 'User I/O' THEN '0252D7' WHEN 'System I/O' THEN '1E96DD' ";
 DEF wait_class_colors2 = " WHEN 'Concurrency' THEN '871C12' WHEN 'Application' THEN 'C42A05' WHEN 'Commit' THEN 'EA6A05' WHEN 'Configuration' THEN '594611'  ";
 DEF wait_class_colors3 = " WHEN 'Administrative' THEN '75763E'  WHEN 'Network' THEN '989779' WHEN 'Other' THEN 'F571A0' ";
 DEF wait_class_colors4 = " WHEN 'Cluster' THEN 'CEC3B5' WHEN 'Queueing' THEN 'C6BAA5' ELSE '000000' END ";
-—-this one gives you one level of indirection indirection AND it builds the string in the way the line charts needs it (color: ‘#FFFFFF’) 
---DEF wait_class_colors_s = 'CASE wait_class WHEN ''''CPU'''' THEN ''''color: ''''''''#34CF27'''''''''''' WHEN ''''Scheduler'''' THEN ''''color: ''''''''#9FFA9D'''''''''''' WHEN ''''User I/O'''' THEN ''''color: ''''''''#0252D7'''''''''''' WHEN ''''System I/O'''' THEN ''''color: ''''''''#1E96DD'''''''''''' ';
---DEF wait_class_colors2_s = ' WHEN ''''Concurrency'''' THEN ''''color: ''''''''#871C12'''''''''''' WHEN ''''Application'''' THEN ''''color: ''''''''#C42A05'''''''''''' WHEN ''''Commit'''' THEN ''''color: ''''''''#EA6A05'''''''''''' WHEN ''''Configuration'''' THEN ''''color: ''''''''#594611''''''''''''  ';
---DEF wait_class_colors3_s = ' WHEN ''''Administrative'''' THEN ''''color: ''''''''#75763E''''''''''''  WHEN ''''Network'''' THEN ''''color: ''''''''#989779'''''''''''' WHEN ''''Other'''' THEN ''''color: ''''''''#F571A0'''''''''''' ';
---DEF wait_class_colors4_s = ' WHEN ''''Cluster'''' THEN ''''color: ''''''''#CEC3B5'''''''''''' WHEN ''''Queueing'''' THEN ''''color: ''''''''#C6BAA5'''''''''''' ELSE ''''color: ''''''''#000000'''''''''''' END';
 --
 COL series_01 NEW_V series_01; 
 COL series_02 NEW_V series_02; 
