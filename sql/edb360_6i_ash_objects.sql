@@ -31,15 +31,17 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */ SUM(sample
 )
 SELECT h.current_obj#||
        CASE h.current_obj# WHEN 0 THEN ' UNDO' ELSE
-       (SELECT TRIM('.' FROM ' '||o.owner||'.'||o.object_name||'.'||o.subobject_name) FROM dba_objects o WHERE o.object_id = h.current_obj# AND ROWNUM = 1) 
+       TRIM('.' FROM ' '||o.owner||'.'||o.object_name||'.'||o.subobject_name) 
        END
        data_object,
        h.samples,
        ROUND(100 * h.samples / t.samples, 1) percent,
        NULL dummy_01
   FROM hist h,
-       total t
+       total t,
+       &&dba_object_prefix.objects o
  WHERE h.samples >= t.samples / 1000 AND rn <= 14
+   AND o.object_id(+) = h.current_obj#
  UNION ALL
 SELECT 'Others',
        NVL(SUM(h.samples), 0) samples,

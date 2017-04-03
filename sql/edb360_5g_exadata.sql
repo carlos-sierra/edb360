@@ -31,7 +31,7 @@ SELECT a.samples,
        CASE a.current_obj# WHEN 0 THEN 'UNDO' ELSE o.object_name END object_name,
        CASE a.current_obj# WHEN 0 THEN NULL ELSE o.subobject_name END subobject_name
   FROM ash a,
-       dba_objects o
+       &&dba_object_prefix.objects o
  WHERE o.object_id(+) = a.current_obj#
  ORDER BY
        a.samples DESC,

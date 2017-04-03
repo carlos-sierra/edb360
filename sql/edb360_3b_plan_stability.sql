@@ -8,11 +8,11 @@ PRO <ol start="&&report_sequence.">
 SPO OFF;
 
 DEF title = 'SQL Patches';
-DEF main_table = 'DBA_SQL_PATCHES';
+DEF main_table = '&&dba_view_prefix.SQL_PATCHES';
 BEGIN
   :sql_text := q'[
 SELECT *
-  FROM dba_sql_patches
+  FROM &&dba_object_prefix.sql_patches
  ORDER BY
        created DESC
 ]';
@@ -21,11 +21,11 @@ END;
 @@&&skip_10g_script.edb360_9a_pre_one.sql       
 
 DEF title = 'SQL Profiles';
-DEF main_table = 'DBA_SQL_PROFILES';
+DEF main_table = '&&dba_view_prefix.SQL_PROFILES';
 BEGIN
   :sql_text := q'[
 SELECT *
-  FROM dba_sql_profiles
+  FROM &&dba_object_prefix.sql_profiles
  ORDER BY
        created DESC
 ]';
@@ -34,7 +34,7 @@ END;
 @@&&skip_tuning.edb360_9a_pre_one.sql       
 
 DEF title = 'SQL Plan Profiles Summary by Type and Status';
-DEF main_table = 'DBA_SQL_PROFILES';
+DEF main_table = '&&dba_view_prefix.SQL_PROFILES';
 BEGIN
   :sql_text := q'[
 SELECT COUNT(*),
@@ -44,7 +44,7 @@ SELECT COUNT(*),
        MIN(created) min_created,
        MAX(created) max_created,
        MEDIAN(created) median_created
-  FROM dba_sql_profiles
+  FROM &&dba_object_prefix.sql_profiles
  GROUP BY
        category,
        type,
@@ -57,14 +57,14 @@ END;
 @@&&skip_tuning.edb360_9a_pre_one.sql       
 
 DEF title = 'SQL Profiles Summary by Creation Month';
-DEF main_table = 'DBA_SQL_PROFILES';
+DEF main_table = '&&dba_view_prefix.SQL_PROFILES';
 BEGIN
   :sql_text := q'[
 SELECT TO_CHAR(TRUNC(created, 'MM'), 'YYYY-MM') created,
        COUNT(*) profiles,
        SUM(CASE status WHEN 'ENABLED' THEN 1 ELSE 0 END) enabled,
        SUM(CASE status WHEN 'DISABLED' THEN 1 ELSE 0 END) disabled
-  FROM dba_sql_profiles
+  FROM &&dba_object_prefix.sql_profiles
  GROUP BY
        TRUNC(created, 'MM')
  ORDER BY
@@ -75,11 +75,11 @@ END;
 @@&&skip_tuning.edb360_9a_pre_one.sql       
 
 DEF title = 'SQL Plan Baselines';
-DEF main_table = 'DBA_SQL_PLAN_BASELINES';
+DEF main_table = '&&dba_view_prefix.SQL_PLAN_BASELINES';
 BEGIN
   :sql_text := q'[
 SELECT *
-  FROM dba_sql_plan_baselines
+  FROM &&dba_object_prefix.sql_plan_baselines
  ORDER BY
        created DESC
 ]';
@@ -88,7 +88,7 @@ END;
 @@&&skip_10g_script.edb360_9a_pre_one.sql       
 
 DEF title = 'SQL Plan Baselines Summary by Status';
-DEF main_table = 'DBA_SQL_PLAN_BASELINES';
+DEF main_table = '&&dba_view_prefix.SQL_PLAN_BASELINES';
 BEGIN
   :sql_text := q'[
 SELECT COUNT(*),
@@ -99,7 +99,7 @@ SELECT COUNT(*),
        MIN(created) min_created,
        MAX(created) max_created,
        MEDIAN(created) median_created
-  FROM dba_sql_plan_baselines
+  FROM &&dba_object_prefix.sql_plan_baselines
  GROUP BY
        enabled,
        accepted,
@@ -113,7 +113,7 @@ END;
 @@&&skip_10g_script.edb360_9a_pre_one.sql       
 
 DEF title = 'SQL Plan Baselines Summary by Creation Month';
-DEF main_table = 'DBA_SQL_PLAN_BASELINES';
+DEF main_table = '&&dba_view_prefix.SQL_PLAN_BASELINES';
 BEGIN
   :sql_text := q'[
 SELECT TO_CHAR(TRUNC(created, 'MM'), 'YYYY-MM') created,
@@ -122,7 +122,7 @@ SELECT TO_CHAR(TRUNC(created, 'MM'), 'YYYY-MM') created,
        SUM(CASE enabled WHEN 'YES' THEN (CASE accepted WHEN 'YES' THEN 1 ELSE 0 END) ELSE 0 END) accepted,
        &&skip_11r1_column.SUM(CASE enabled WHEN 'YES' THEN (CASE accepted WHEN 'YES' THEN (CASE reproduced WHEN 'YES' THEN 1 ELSE 0 END) ELSE 0 END) ELSE 0 END) reproduced,
        SUM(CASE enabled WHEN 'NO' THEN 1 ELSE 0 END) disabled
-  FROM dba_sql_plan_baselines
+  FROM &&dba_object_prefix.sql_plan_baselines
  GROUP BY
        TRUNC(created, 'MM')
  ORDER BY
@@ -133,7 +133,7 @@ END;
 @@&&skip_10g_script.edb360_9a_pre_one.sql       
 
 DEF title = 'SQL Plan Baselines State by SQL';
-DEF main_table = 'DBA_SQL_PLAN_BASELINES';
+DEF main_table = '&&dba_view_prefix.SQL_PLAN_BASELINES';
 BEGIN
   :sql_text := q'[
 SELECT q.signature,
@@ -149,8 +149,8 @@ SELECT q.signature,
        SUM(CASE q.enabled||q.accepted||q.reproduced||q.fixed WHEN 'YESYESYESYES' THEN 1 ELSE 0 END) enabled_accept_reprod_fixed,
        SUM(CASE q.enabled||q.accepted WHEN 'YESNO' THEN 1 ELSE 0 END) pending,
        SUM(CASE q.enabled WHEN 'NO' THEN 1 ELSE 0 END) disabled,
-       (SELECT s.sql_text FROM dba_sql_plan_baselines s WHERE s.signature = q.signature AND s.sql_handle = q.sql_handle AND ROWNUM = 1) sql_text
-  FROM dba_sql_plan_baselines q
+       MIN(q.sql_text) min_sql_text
+  FROM &&dba_object_prefix.sql_plan_baselines q
  GROUP BY
        q.signature,
        q.sql_handle
@@ -163,11 +163,11 @@ END;
 @@&&skip_10g_script.edb360_9a_pre_one.sql       
 
 DEF title = 'SQL Plan Directives';
-DEF main_table = 'DBA_SQL_PLAN_DIRECTIVES';
+DEF main_table = '&&dba_view_prefix.SQL_PLAN_DIRECTIVES';
 BEGIN
   :sql_text := q'[
 SELECT *
-  FROM dba_sql_plan_directives
+  FROM &&dba_object_prefix.sql_plan_directives
  ORDER BY
        1
 ]';
@@ -176,11 +176,11 @@ END;
 @@&&skip_10g_script.&&skip_11g_script.edb360_9a_pre_one.sql       
 
 DEF title = 'SQL Plan Directives - Objects';
-DEF main_table = 'DBA_SQL_PLAN_DIR_OBJECTS';
+DEF main_table = '&&dba_view_prefix.SQL_PLAN_DIR_OBJECTS';
 BEGIN
   :sql_text := q'[
 SELECT *
-  FROM dba_sql_plan_dir_objects
+  FROM &&dba_object_prefix.sql_plan_dir_objects
  ORDER BY
        1,2,3,4
 ]';

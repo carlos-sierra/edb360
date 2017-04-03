@@ -55,7 +55,7 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Tables Summary';
-DEF main_table = 'DBA_TABLES';
+DEF main_table = '&&dba_view_prefix.TABLES';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
@@ -90,11 +90,11 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_90_percentile,
        PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_95_percentile,
        PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_99_percentile
-  FROM dba_tables t
+  FROM &&dba_object_prefix.tables t
  WHERE table_name NOT LIKE 'BIN$%' -- bug 9930151 reported by brad peek
    AND NOT EXISTS (
 SELECT /*+ &&top_level_hints. */ NULL
-  FROM dba_external_tables e
+  FROM &&dba_object_prefix.external_tables e
  WHERE e.owner = t.owner
    AND e.table_name = t.table_name 
 )
@@ -108,7 +108,7 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Tab Summary';
-DEF main_table = 'DBA_TAB_STATISTICS';
+DEF main_table = '&&dba_view_prefix.TAB_STATISTICS';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
@@ -129,11 +129,11 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_90_percentile,
        PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_95_percentile,
        PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_99_percentile
-  FROM dba_tab_statistics s
+  FROM &&dba_object_prefix.tab_statistics s
  WHERE table_name NOT LIKE 'BIN$%' -- bug 9930151 reported by brad peek
    AND NOT EXISTS (
 SELECT /*+ &&top_level_hints. */ NULL
-  FROM dba_external_tables e
+  FROM &&dba_object_prefix.external_tables e
  WHERE e.owner = s.owner
    AND e.table_name = s.table_name 
 )
@@ -147,7 +147,7 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Table Columns Summary';
-DEF main_table = 'DBA_TAB_COLS';
+DEF main_table = '&&dba_view_prefix.TAB_COLS';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
@@ -165,13 +165,13 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_90_percentile,
        PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_95_percentile,
        PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_99_percentile
-  FROM dba_tab_cols c
+  FROM &&dba_object_prefix.tab_cols c
  WHERE table_name NOT LIKE 'BIN$%' -- bug 9930151 reported by brad peek
    AND owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
    AND NOT EXISTS (
 SELECT /*+ &&top_level_hints. */ NULL
-  FROM dba_external_tables e
+  FROM &&dba_object_prefix.external_tables e
  WHERE e.owner = c.owner
    AND e.table_name = c.table_name 
 )
@@ -185,7 +185,7 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Indexes Summary';
-DEF main_table = 'DBA_INDEXES';
+DEF main_table = '&&dba_view_prefix.INDEXES';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
@@ -212,7 +212,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_90_percentile,
        PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_95_percentile,
        PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_99_percentile
-  FROM dba_indexes
+  FROM &&dba_object_prefix.indexes
  WHERE owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
  GROUP BY
@@ -225,7 +225,7 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Ind Summary';
-DEF main_table = 'DBA_IND_STATISTICS';
+DEF main_table = '&&dba_view_prefix.IND_STATISTICS';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
@@ -245,7 +245,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_90_percentile,
        PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_95_percentile,
        PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_99_percentile
-  FROM dba_ind_statistics
+  FROM &&dba_object_prefix.ind_statistics
  WHERE owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
  GROUP BY
@@ -258,7 +258,7 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Table Partitions Summary';
-DEF main_table = 'DBA_TAB_PARTITIONS';
+DEF main_table = '&&dba_view_prefix.TAB_PARTITIONS';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
@@ -288,7 +288,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_90_percentile,
        PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_95_percentile,
        PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_99_percentile
-  FROM dba_tab_partitions
+  FROM &&dba_object_prefix.tab_partitions
  WHERE table_owner NOT IN &&exclusion_list.
    AND table_owner NOT IN &&exclusion_list2.
  GROUP BY
@@ -301,7 +301,7 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Index Partitions Summary';
-DEF main_table = 'DBA_IND_PARTITIONS';
+DEF main_table = '&&dba_view_prefix.IND_PARTITIONS';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
@@ -326,7 +326,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        PERCENTILE_DISC(0.90) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_90_percentile,
        PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_95_percentile,
        PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY last_analyzed) last_analyzed_99_percentile
-  FROM dba_ind_partitions
+  FROM &&dba_object_prefix.ind_partitions
  WHERE index_owner NOT IN &&exclusion_list.
    AND index_owner NOT IN &&exclusion_list2.
  GROUP BY
@@ -339,13 +339,13 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Tables with Missing Stats';
-DEF main_table = 'DBA_TAB_STATISTICS';
+DEF main_table = '&&dba_view_prefix.TAB_STATISTICS';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        s.owner, s.table_name, s.stale_stats, s.stattype_locked
-  FROM dba_tab_statistics s,
-       dba_tables t
+  FROM &&dba_object_prefix.tab_statistics s,
+       &&dba_object_prefix.tables t
  WHERE s.object_type = 'TABLE'
    AND s.owner NOT IN &&exclusion_list.
    AND s.owner NOT IN &&exclusion_list2.
@@ -357,7 +357,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
    AND t.temporary = 'N'
    AND NOT EXISTS (
 SELECT NULL
-  FROM dba_external_tables e
+  FROM &&dba_object_prefix.external_tables e
  WHERE e.owner = s.owner
    AND e.table_name = s.table_name 
 )
@@ -369,13 +369,13 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Tables with Stale Stats';
-DEF main_table = 'DBA_TAB_STATISTICS';
+DEF main_table = '&&dba_view_prefix.TAB_STATISTICS';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        s.owner, s.table_name, s.num_rows, s.last_analyzed, s.stattype_locked
-  FROM dba_tab_statistics s,
-       dba_tables t
+  FROM &&dba_object_prefix.tab_statistics s,
+       &&dba_object_prefix.tables t
  WHERE s.object_type = 'TABLE'
    AND s.owner NOT IN &&exclusion_list.
    AND s.owner NOT IN &&exclusion_list2.
@@ -387,7 +387,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
    AND t.temporary = 'N'
    AND NOT EXISTS (
 SELECT NULL
-  FROM dba_external_tables e
+  FROM &&dba_object_prefix.external_tables e
  WHERE e.owner = s.owner
    AND e.table_name = s.table_name 
 )
@@ -399,13 +399,13 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Tables with Outdated Stats';
-DEF main_table = 'DBA_TAB_STATISTICS';
+DEF main_table = '&&dba_view_prefix.TAB_STATISTICS';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        s.owner, s.table_name, s.num_rows, s.last_analyzed, s.stale_stats, s.stattype_locked
-  FROM dba_tab_statistics s,
-       dba_tables t
+  FROM &&dba_object_prefix.tab_statistics s,
+       &&dba_object_prefix.tables t
  WHERE s.object_type = 'TABLE'
    AND s.owner NOT IN &&exclusion_list.
    AND s.owner NOT IN &&exclusion_list2.
@@ -417,7 +417,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
    AND t.temporary = 'N'
    AND NOT EXISTS (
 SELECT NULL
-  FROM dba_external_tables e
+  FROM &&dba_object_prefix.external_tables e
  WHERE e.owner = s.owner
    AND e.table_name = s.table_name 
 )
@@ -429,14 +429,14 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Tables with Locked Stats';
-DEF main_table = 'DBA_TAB_STATISTICS';
+DEF main_table = '&&dba_view_prefix.TAB_STATISTICS';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        s.owner, s.table_name, t.temporary, s.num_rows, s.last_analyzed, s.stale_stats, s.stattype_locked, e.type_name external_table_type
-  FROM dba_tab_statistics s,
-       dba_tables t,
-       dba_external_tables e
+  FROM &&dba_object_prefix.tab_statistics s,
+       &&dba_object_prefix.tables t,
+       &&dba_object_prefix.external_tables e
  WHERE s.object_type = 'TABLE'
    AND s.owner NOT IN &&exclusion_list.
    AND s.owner NOT IN &&exclusion_list2.
@@ -454,13 +454,13 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Global Temporary Tables with Stats';
-DEF main_table = 'DBA_TAB_STATISTICS';
+DEF main_table = '&&dba_view_prefix.TAB_STATISTICS';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        s.owner, s.table_name, s.num_rows, s.last_analyzed, s.stale_stats, s.stattype_locked
-  FROM dba_tab_statistics s,
-       dba_tables t
+  FROM &&dba_object_prefix.tab_statistics s,
+       &&dba_object_prefix.tables t
  WHERE s.object_type = 'TABLE'
    AND s.owner NOT IN &&exclusion_list.
    AND s.owner NOT IN &&exclusion_list2.
@@ -477,13 +477,13 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Temp Tables with Stats';
-DEF main_table = 'DBA_TAB_STATISTICS';
+DEF main_table = '&&dba_view_prefix.TAB_STATISTICS';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        s.owner, s.table_name, t.temporary, s.num_rows, s.last_analyzed, s.stale_stats, s.stattype_locked
-  FROM dba_tab_statistics s,
-       dba_tables t
+  FROM &&dba_object_prefix.tab_statistics s,
+       &&dba_object_prefix.tables t
  WHERE s.object_type = 'TABLE'
    AND s.owner NOT IN &&exclusion_list.
    AND s.owner NOT IN &&exclusion_list2.
@@ -495,7 +495,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
    AND t.table_name = s.table_name
    AND NOT EXISTS (
 SELECT NULL
-  FROM dba_external_tables e
+  FROM &&dba_object_prefix.external_tables e
  WHERE e.owner = s.owner
    AND e.table_name = s.table_name 
 )
@@ -545,7 +545,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        h.min_blkcnt,
        h.max_blkcnt,
        h.med_blkcnt
-  FROM h, dba_objects o
+  FROM h, &&dba_object_prefix.objects o
  WHERE o.object_id = h.obj#
    AND o.owner NOT IN &&exclusion_list.
    AND o.owner NOT IN &&exclusion_list2.
@@ -560,12 +560,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'SYS Stats for WRH$, WRI$, WRM$ and WRR$ Tables';
-DEF main_table = 'DBA_TABLES';
+DEF main_table = '&&dba_view_prefix.TABLES';
 BEGIN
   :sql_text := q'[
 select /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
 table_name, blocks, num_rows, sample_size, last_analyzed
-from dba_tables 
+from &&dba_object_prefix.tables 
 where owner = 'SYS'
 and table_name like 'WR_$%'
 order by table_name
@@ -575,12 +575,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'SYS Stats for WRH$, WRI$, WRM$ and WRR$ Indexes';
-DEF main_table = 'DBA_INDEXES';
+DEF main_table = '&&dba_view_prefix.INDEXES';
 BEGIN
   :sql_text := q'[
 select /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
 table_name, index_name, blevel, leaf_blocks, distinct_keys, num_rows, sample_size, last_analyzed
-from dba_indexes 
+from &&dba_object_prefix.indexes 
 where owner = 'SYS'
 and table_name like 'WR_$%'
 order by table_name, index_name
@@ -590,12 +590,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Table Modifications for WRH$, WRI$, WRM$ and WRR$';
-DEF main_table = 'DBA_TAB_MODIFICATIONS';
+DEF main_table = '&&dba_view_prefix.TAB_MODIFICATIONS';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        table_name, partition_name, inserts, updates, deletes, timestamp, truncated
-  FROM dba_tab_modifications
+  FROM &&dba_object_prefix.tab_modifications
  WHERE table_owner = 'SYS'
    AND table_name LIKE 'WR_$%'
  ORDER BY

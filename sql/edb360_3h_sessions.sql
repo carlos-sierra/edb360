@@ -104,11 +104,11 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Database and Schema Triggers';
-DEF main_table = 'DBA_TRIGGERS';
+DEF main_table = '&&dba_view_prefix.TRIGGERS';
 BEGIN
   :sql_text := q'[
 SELECT *
-  FROM dba_triggers
+  FROM &&dba_object_prefix.triggers
  WHERE base_object_type IN ('DATABASE', 'SCHEMA')
  ORDER BY
        base_object_type, owner, trigger_name
@@ -157,9 +157,11 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        s.actions,
        s.min_action,
        s.max_action,
-       (SELECT DBMS_LOB.SUBSTR(t.sql_text, 1000) FROM &&awr_object_prefix.sqltext t WHERE t.sql_id = s.sql_id AND t.dbid = &&edb360_dbid.) sql_text
-  FROM ash s
- WHERE ROWNUM < 101
+       DBMS_LOB.SUBSTR(t.sql_text, 1000) sql_text
+  FROM ash s, &&awr_object_prefix.sqltext t
+ WHERE t.sql_id(+) = s.sql_id 
+   AND t.dbid(+) = &&edb360_dbid.
+   AND ROWNUM < 101
 ]';
 END;
 /
@@ -313,34 +315,36 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */
        SUM(executions_delta) DESC
 )
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
-       sql_id,
-       executions,
-       rows_processed,
-       ROUND(rows_processed/executions, 3) rows_per_exec,
-       parses,
-       fetches,
-       buffer_gets,
-       disk_reads,
-       direct_writes,
-       elapsed_secs,
-       cpu_secs,
-       io_secs,
-       clust_secs,
-       appl_secs,
-       conc_secs,
-       pls_exec_secs,
-       java_secs,
-       plans,
-       avg_cost,
-       modules,       
-       min_module,
-       max_module,
-       actions,       
-       min_action,
-       max_action,       
-       (SELECT DBMS_LOB.SUBSTR(s.sql_text, 1000) FROM &&awr_object_prefix.sqltext s WHERE s.sql_id = t.sql_id AND s.dbid = &&edb360_dbid.) sql_text
-  FROM totals t
- WHERE ROWNUM < 101 
+       s.sql_id,
+       s.executions,
+       s.rows_processed,
+       ROUND(s.rows_processed/s.executions, 3) rows_per_exec,
+       s.parses,
+       s.fetches,
+       s.buffer_gets,
+       s.disk_reads,
+       s.direct_writes,
+       s.elapsed_secs,
+       s.cpu_secs,
+       s.io_secs,
+       s.clust_secs,
+       s.appl_secs,
+       s.conc_secs,
+       s.pls_exec_secs,
+       s.java_secs,
+       s.plans,
+       s.avg_cost,
+       s.modules,       
+       s.min_module,
+       s.max_module,
+       s.actions,       
+       s.min_action,
+       s.max_action,       
+       DBMS_LOB.SUBSTR(t.sql_text, 1000) sql_text
+  FROM totals s, &&awr_object_prefix.sqltext t
+ WHERE t.sql_id(+) = s.sql_id 
+   AND t.dbid(+) = &&edb360_dbid.
+   AND ROWNUM < 101 
 ]';
 END;
 /
@@ -517,10 +521,11 @@ select /*+ rule as.sql */ a.sid||','||a.serial#||',@'||a.inst_id as sid_serial_i
 	a.module, a.action, a.client_info,
 	'SQL:'||b.sql_id as sql_id, child_number child, plan_hash_value, executions execs,
 	(elapsed_time/decode(nvl(executions,0),0,1,executions))/1000000 avg_etime,
-	decode(a.plsql_object_id,null,sql_text,(select distinct sqla.object_name||'.'||sqlb.procedure_name from dba_procedures sqla, dba_procedures sqlb where sqla.object_id=a.plsql_object_id and sqlb.object_id = a.plsql_object_id and a.plsql_subprogram_id = sqlb.subprogram_id)) sql_text, 
+	decode(a.plsql_object_id,null,sql_text,sqla.object_name||'.'||sqlb.procedure_name) sql_text, 
 	(c.wait_time_micro/1000000) wait_s, 
-	decode(a.plsql_object_id,null,decode(c.wait_time,0,decode(a.blocking_session,null,c.event,c.event||'> Blocked by (inst:sid): '||a.final_blocking_instance||':'||a.final_blocking_session),'ON CPU:SQL'),(select 'ON CPU:PLSQL:'||object_name from dba_objects where object_id=a.plsql_object_id)) as wait_or_cpu
-from gv$session a, gv$sql b, gv$session_wait c, gv$process d
+	decode(a.plsql_object_id,null,decode(c.wait_time,0,decode(a.blocking_session,null,c.event,c.event||'> Blocked by (inst:sid): '||a.final_blocking_instance||':'||a.final_blocking_session),'ON CPU:SQL'),'ON CPU:PLSQL:'||o.object_name) as wait_or_cpu
+from gv$session a, gv$sql b, gv$session_wait c, gv$process d, 
+     &&dba_object_prefix.procedures sqla, &&dba_object_prefix.procedures sqlb, &&dba_object_prefix.objects o
 where a.status = 'ACTIVE'
 and a.username is not null
 and a.sql_id = b.sql_id
@@ -531,6 +536,8 @@ and a.inst_id = d.inst_id
 and a.paddr = d.addr
 and a.sql_child_number = b.child_number
 and sql_text not like 'select /*+ rule as.sql */%' /* dont show this query */
+and sqla.object_id(+)=a.plsql_object_id and sqlb.object_id(+) = a.plsql_object_id and a.plsql_subprogram_id = sqlb.subprogram_id(+)
+and o.object_id(+)=a.plsql_object_id
 order by sql_id, sql_child_number
 ]';
 END;
@@ -721,14 +728,18 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        w2.w_event,
        (10 * b.b_samples) b_seconds,
        b.b_sql_id,
-       (SELECT DBMS_LOB.SUBSTR(s.sql_text, 1000) FROM &&awr_object_prefix.sqltext s WHERE s.sql_id = w2.w_sql_id AND s.dbid = w2.dbid AND ROWNUM = 1) w_sql_text,
-       (SELECT DBMS_LOB.SUBSTR(s.sql_text, 1000) FROM &&awr_object_prefix.sqltext s WHERE s.sql_id = b.b_sql_id AND s.dbid = b.dbid AND ROWNUM = 1) b_sql_text        
-  FROM w2, b, w3
+       DBMS_LOB.SUBSTR(s1.sql_text, 1000) w_sql_text,
+       DBMS_LOB.SUBSTR(s2.sql_text, 1000) b_sql_text        
+  FROM w2, b, w3, &&awr_object_prefix.sqltext s1, &&awr_object_prefix.sqltext s2
  WHERE b.dbid = w2.dbid
    AND b.w_sql_id = w2.w_sql_id
    AND b.w_event = w2.w_event
    AND w3.dbid = w2.dbid
    AND w3.w_sql_id = w2.w_sql_id
+   AND s1.sql_id(+) = w2.w_sql_id 
+   AND s1.dbid(+) = w2.dbid
+   AND s2.sql_id(+) = b.b_sql_id 
+   AND s2.dbid(+) = b.dbid
  ORDER BY
        w3.w_samples DESC,
        w2.w_samples DESC,
@@ -901,13 +912,13 @@ END;
 --@@&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF title = 'Distributed Transactions awaiting Recovery';
-DEF main_table = 'DBA_2PC_PENDING';
+DEF main_table = '&&dba_view_prefix.2PC_PENDING';
 BEGIN
   :sql_text := q'[
 -- requested by Milton Quinteros
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM dba_2pc_pending
+  FROM &&dba_object_prefix.2pc_pending
  ORDER BY
        1, 2
 ]';
@@ -916,13 +927,13 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Connections for Pending Transactions';
-DEF main_table = 'DBA_2PC_NEIGHBORS';
+DEF main_table = '&&dba_view_prefix.2PC_NEIGHBORS';
 BEGIN
   :sql_text := q'[
 -- requested by Milton Quinteros
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM dba_2pc_neighbors
+  FROM &&dba_object_prefix.2pc_neighbors
  ORDER BY
        1
 ]';

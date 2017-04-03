@@ -22,12 +22,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Tablespaces';
-DEF main_table = 'DBA_TABLESPACES';
+DEF main_table = '&&dba_view_prefix.TABLESPACES';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM dba_tablespaces
+  FROM &&dba_object_prefix.tablespaces
  ORDER BY
        tablespace_name
 ]';
@@ -36,12 +36,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Tablespace Groups';
-DEF main_table = 'DBA_TABLESPACE_GROUPS';
+DEF main_table = '&&dba_view_prefix.TABLESPACE_GROUPS';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM dba_tablespace_groups
+  FROM &&dba_object_prefix.tablespace_groups
  ORDER BY
        group_name
 ]';
@@ -50,12 +50,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Default Tablespace Use';
-DEF main_table = 'DBA_USERS';
+DEF main_table = '&&dba_view_prefix.USERS';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        default_tablespace, COUNT(*)
-  FROM dba_users
+  FROM &&dba_object_prefix.users
  GROUP BY
        default_tablespace
  ORDER BY
@@ -66,12 +66,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Temporary Tablespace Use';
-DEF main_table = 'DBA_USERS';
+DEF main_table = '&&dba_view_prefix.USERS';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        temporary_tablespace, COUNT(*)
-  FROM dba_users
+  FROM &&dba_object_prefix.users
  GROUP BY
        temporary_tablespace
  ORDER BY
@@ -95,7 +95,7 @@ END;
 
 
 DEF title = 'Tablespace Usage';
-DEF main_table = 'DBA_SEGMENTS';
+DEF main_table = '&&dba_view_prefix.SEGMENTS';
 COL pct_used FOR 999990.0;
 BEGIN
   :sql_text := q'[
@@ -107,7 +107,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        tablespace_name,
        SUM(DECODE(autoextensible, 'YES', maxbytes, bytes)) / POWER(10,9) Max_size_gb,
        SUM( bytes) / POWER(10,9) Size_gb
-  FROM dba_data_files
+  FROM &&dba_object_prefix.data_files
  GROUP BY
        tablespace_name
 ),
@@ -115,7 +115,7 @@ segments AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        tablespace_name,
        SUM(bytes) / POWER(10,9) used_gb
-  FROM dba_segments
+  FROM &&dba_object_prefix.segments
  WHERE '&&edb360_conf_incl_segments.' = 'Y'
  GROUP BY
        tablespace_name
@@ -174,7 +174,7 @@ ROUND(100*(B.TOT_GBBYTES_CACHED/A.AVAIL_SIZE_GB),1) PERC_CACHED,
 ROUND(100*(B.TOT_GBBYTES_USED/A.AVAIL_SIZE_GB),1) PERC_USED
 FROM
 (select  tablespace_name,sum(bytes)/POWER(10,9) AVAIL_SIZE_GB
-from dba_temp_files
+from &&dba_object_prefix.temp_files
 group by tablespace_name) A,
 (SELECT tablespace_name, 
 SUM(BYTES_CACHED)/POWER(10,9) TOT_GBBYTES_CACHED, 
@@ -188,11 +188,11 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Tablespace Quotas';
-DEF main_table = 'DBA_TS_QUOTAS';
+DEF main_table = '&&dba_view_prefix.TS_QUOTAS';
 BEGIN
   :sql_text := q'[
 -- by berx
-select /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ * from DBA_TS_QUOTAS
+select /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ * from &&dba_object_prefix.ts_quotas
 WHERE username NOT IN &&exclusion_list.
 and username not in &&exclusion_list2.
 ]';
@@ -215,12 +215,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Data Files';
-DEF main_table = 'DBA_DATA_FILES';
+DEF main_table = '&&dba_view_prefix.DATA_FILES';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM dba_data_files
+  FROM &&dba_object_prefix.data_files
  ORDER BY
        file_name
 ]';
@@ -229,7 +229,7 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Data Files Usage';
-DEF main_table = 'DBA_DATA_FILES';
+DEF main_table = '&&dba_view_prefix.DATA_FILES';
 COL pct_used FOR 999990.0;
 COL pct_free FOR 999990.0;
 BEGIN
@@ -240,7 +240,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        tablespace_name,
        COUNT(*) datafiles,
        ROUND(SUM(bytes)/POWER(10,9)) gb
-  FROM dba_data_files
+  FROM &&dba_object_prefix.data_files
  GROUP BY
        tablespace_name
 ),
@@ -248,7 +248,7 @@ free AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        tablespace_name,
        ROUND(SUM(bytes)/POWER(10,9)) gb
-  FROM dba_free_space
+  FROM &&dba_object_prefix.free_space
  GROUP BY
        tablespace_name
 ),
@@ -317,12 +317,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Temp Files';
-DEF main_table = 'DBA_TEMP_FILES';
+DEF main_table = '&&dba_view_prefix.TEMP_FILES';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM dba_temp_files
+  FROM &&dba_object_prefix.temp_files
  ORDER BY
        file_name
 ]';
@@ -420,7 +420,7 @@ END;
 @@edb360_9a_pre_one.sql
     
 DEF title = 'Largest 200 Objects';
-DEF main_table = 'DBA_SEGMENTS';
+DEF main_table = '&&dba_view_prefix.SEGMENTS';
 COL gb FOR 999990.000;
 BEGIN
   :sql_text := q'[
@@ -434,7 +434,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        SUM(extents) extents,
        SUM(blocks) blocks,
        SUM(bytes) bytes
-  FROM dba_segments
+  FROM &&dba_object_prefix.segments
  WHERE '&&edb360_conf_incl_segments.' = 'Y'
  GROUP BY
        segment_type,
@@ -473,13 +473,13 @@ SELECT so.segment_type,
 ), top_200 AS (
 SELECT p.*,
        (SELECT object_id
-          FROM dba_objects o
+          FROM &&dba_object_prefix.objects o
          WHERE o.object_type = p.segment_type
            AND o.owner = p.owner
            AND o.object_name = p.segment_name
            AND o.object_type NOT LIKE '%PARTITION%') object_id,
        (SELECT data_object_id
-          FROM dba_objects o
+          FROM &&dba_object_prefix.objects o
          WHERE o.object_type = p.segment_type
            AND o.owner = p.owner
            AND o.object_name = p.segment_name
@@ -532,11 +532,11 @@ SELECT v.rank,
        CASE
        WHEN v.segment_type LIKE 'INDEX%' THEN
          (SELECT i.table_name
-            FROM dba_indexes i
+            FROM &&dba_object_prefix.indexes i
            WHERE i.owner = v.owner AND i.index_name = v.segment_name)       
        WHEN v.segment_type LIKE 'LOB%' THEN
          (SELECT l.table_name
-            FROM dba_lobs l
+            FROM &&dba_object_prefix.lobs l
            WHERE l.owner = v.owner AND l.segment_name = v.segment_name)
        END table_name,
        v.segments,
@@ -645,14 +645,14 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Tables with one extent and no rows';
-DEF main_table = 'DBA_SEGMENTS';
+DEF main_table = '&&dba_view_prefix.SEGMENTS';
 BEGIN
   :sql_text := q'[
 -- requested by David Kurtz
 SELECT  /* LEADING(T) USE_NL(S) */ -- removed hint as per Luis Calvo
         t.owner, t.table_name, t.tablespace_name, t.num_rows, t.blocks hwm_blocks, t.last_analyzed, s.blocks seg_blocks
-FROM    dba_tables t
-,       dba_segments s
+FROM    &&dba_object_prefix.tables t
+,       &&dba_object_prefix.segments s
 WHERE   '&&edb360_conf_incl_segments.' = 'Y'
 and     t.owner not in &&exclusion_list.
 and     t.owner not in &&exclusion_list2.
@@ -678,14 +678,14 @@ CL BRE;
 CL COMP;
 
 DEF title = 'Partitions with one extent and no rows';
-DEF main_table = 'DBA_SEGMENTS';
+DEF main_table = '&&dba_view_prefix.SEGMENTS';
 BEGIN
   :sql_text := q'[
 -- requested by David Kurtz
 SELECT  /* LEADING(T) USE_NL(S) */ -- removed hint as per Luis Calvo
         t.table_owner, t.table_name, t.partition_name, t.tablespace_name, t.num_rows, t.blocks hwm_blocks, t.last_analyzed, s.blocks seg_blocks
-FROM    dba_tab_partitions t
-,       dba_segments s
+FROM    &&dba_object_prefix.tab_partitions t
+,       &&dba_object_prefix.segments s
 WHERE   '&&edb360_conf_incl_segments.' = 'Y'
 and     t.table_owner not in &&exclusion_list.
 and     t.table_owner not in &&exclusion_list2.
@@ -711,14 +711,14 @@ CL BRE;
 CL COMP;
 
 DEF title = 'Subpartitions with one extent and no rows';
-DEF main_table = 'DBA_SEGMENTS';
+DEF main_table = '&&dba_view_prefix.SEGMENTS';
 BEGIN
   :sql_text := q'[
 -- requested by David Kurtz
 SELECT  /* LEADING(T) USE_NL(S) */ -- removed hint as per Luis Calvo
         t.table_owner, t.table_name, t.partition_name, t.subpartition_name, t.tablespace_name, t.num_rows, t.blocks hwm_blocks, t.last_analyzed, s.blocks seg_blocks
-FROM    dba_tab_subpartitions t
-,       dba_segments s
+FROM    &&dba_object_prefix.tab_subpartitions t
+,       &&dba_object_prefix.segments s
 WHERE   '&&edb360_conf_incl_segments.' = 'Y'
 and     t.table_owner not in &&exclusion_list.
 and     t.table_owner not in &&exclusion_list2.
@@ -744,7 +744,7 @@ CL BRE;
 CL COMP;
 
 DEF title = 'Tables and their indexes larger than 1 GB';
-DEF main_table = 'DBA_SEGMENTS';
+DEF main_table = '&&dba_view_prefix.SEGMENTS';
 COL gb FOR 999990.000;
 BEGIN
   :sql_text := q'[
@@ -755,7 +755,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        segment_name,
        SUM(bytes) bytes,
        COUNT(*) segments
-  FROM dba_segments
+  FROM &&dba_object_prefix.segments
  WHERE '&&edb360_conf_incl_segments.' = 'Y'
    AND segment_type LIKE 'TABLE%'
 GROUP BY
@@ -768,7 +768,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        segment_name,
        SUM(bytes) bytes,
        COUNT(*) segments
-  FROM dba_segments
+  FROM &&dba_object_prefix.segments
  WHERE '&&edb360_conf_incl_segments.' = 'Y'
    AND segment_type LIKE 'INDEX%'
 GROUP BY
@@ -782,7 +782,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        SUM(i.bytes) bytes,
        SUM(i.segments) segments
   FROM indexes i,
-       dba_indexes d
+       &&dba_object_prefix.indexes d
 WHERE i.owner = d.owner
   AND i.segment_name = d.index_name
 GROUP BY
@@ -822,7 +822,7 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Indexes larger than their Table';
-DEF main_table = 'DBA_SEGMENTS';
+DEF main_table = '&&dba_view_prefix.SEGMENTS';
 COL gb FOR 999990.000;
 BEGIN
   :sql_text := q'[
@@ -832,7 +832,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        owner,
        segment_name,
        SUM(bytes) bytes
-  FROM dba_segments
+  FROM &&dba_object_prefix.segments
  WHERE '&&edb360_conf_incl_segments.' = 'Y'
    AND segment_type LIKE 'TABLE%'
 GROUP BY
@@ -844,7 +844,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        owner,
        segment_name,
        SUM(bytes) bytes
-  FROM dba_segments
+  FROM &&dba_object_prefix.segments
  WHERE '&&edb360_conf_incl_segments.' = 'Y'
    AND segment_type LIKE 'INDEX%'
 GROUP BY
@@ -859,7 +859,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        d.index_name,
        SUM(i.bytes) bytes
   FROM indexes i,
-       dba_indexes d
+       &&dba_object_prefix.indexes d
 WHERE i.owner = d.owner
    AND i.segment_name = d.index_name
 GROUP BY
@@ -903,7 +903,7 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Candidate Tables for Partitioning';
-DEF main_table = 'DBA_TABLES';
+DEF main_table = '&&dba_view_prefix.TABLES';
 BEGIN
   :sql_text := q'[
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
@@ -912,10 +912,10 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
    round(blocks * block_size / POWER(10,6)) mb, 
    num_rows, avg_row_len, degree, sample_size, last_analyzed
 from 
-   dba_tables, 
-   dba_tablespaces
+   &&dba_object_prefix.tables, 
+   &&dba_object_prefix.tablespaces
 where
-   dba_tablespaces.tablespace_name = dba_tables.tablespace_name and
+   &&dba_object_prefix.tablespaces.tablespace_name = &&dba_object_prefix.tables.tablespace_name and
    (blocks * block_size / POWER(10,6)) >= POWER(10,3) and
    partitioned = 'NO' and
    owner not in &&exclusion_list. and
@@ -927,14 +927,14 @@ END;
 --@@edb360_9a_pre_one.sql (redundant with "Largest 200 Objects")
 
 DEF title = 'Temporary Segments in Permanent Tablespaces';
-DEF main_table = 'DBA_SEGMENTS';
+DEF main_table = '&&dba_view_prefix.SEGMENTS';
 BEGIN
   :sql_text := q'[
 -- http://askdba.org/weblog/2009/07/cleanup-temporary-segments-in-permanent-tablespace/
 select /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
 tablespace_name, owner, segment_name,
 round(sum(bytes/POWER(10,6))) mega_bytes 
-from dba_segments
+from &&dba_object_prefix.segments
 where '&&edb360_conf_incl_segments.' = 'Y'
 and segment_type = 'TEMPORARY' 
 group by tablespace_name, owner, segment_name
@@ -946,19 +946,19 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Segments in Reserved Tablespaces';
-DEF main_table = 'DBA_SEGMENTS';
+DEF main_table = '&&dba_view_prefix.SEGMENTS';
 BEGIN
   :sql_text := q'[
 -- provided by Simon Pane
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        s.owner, s.segment_type, s.tablespace_name, COUNT(1) segments
-  FROM dba_segments s
+  FROM &&dba_object_prefix.segments s
  WHERE '&&edb360_conf_incl_segments.' = 'Y'
    AND s.owner NOT IN ('SYS','SYSTEM','OUTLN','AURORA$JIS$UTILITY$','OSE$HTTP$ADMIN','ORACACHE','ORDSYS',
                        'CTXSYS','DBSNMP','DMSYS','EXFSYS','MDSYS','OLAPSYS','SYSMAN','TSMSYS','WMSYS','XDB')
    AND s.tablespace_name IN ('SYSTEM','SYSAUX','TEMP','TEMPORARY','RBS','ROLLBACK','ROLLBACKS','RBSEGS')
    AND s.tablespace_name NOT IN (SELECT tablespace_name
-                                   FROM sys.dba_tablespaces
+                                   FROM &&dba_object_prefix.tablespaces
                                   WHERE contents IN ('UNDO','TEMPORARY')
                                 )
 and s.owner not in &&exclusion_list.
@@ -991,13 +991,13 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Objects in Recycle Bin';
-DEF main_table = 'DBA_RECYCLEBIN';
+DEF main_table = '&&dba_view_prefix.RECYCLEBIN';
 BEGIN
   :sql_text := q'[
 -- requested by Milton Quinteros
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM dba_recyclebin
+  FROM &&dba_object_prefix.recyclebin
  WHERE owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
  ORDER BY
@@ -1009,15 +1009,15 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Consumers of Recycle Bin';
-DEF main_table = 'DBA_RECYCLEBIN';
+DEF main_table = '&&dba_view_prefix.RECYCLEBIN';
 BEGIN
   :sql_text := q'[
 -- requested by Dimas Chbane
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        ROUND(SUM(r.space * t.block_size) / POWER(10,6)) mb_space,
        r.owner
-  FROM dba_recyclebin r,
-       dba_tablespaces t
+  FROM &&dba_object_prefix.recyclebin r,
+       &&dba_object_prefix.tablespaces t
  WHERE r.ts_name = t.tablespace_name
  GROUP BY
        r.owner
@@ -1030,7 +1030,7 @@ END;
 @@edb360_9a_pre_one.sql
    
 DEF title = 'Tables with excessive wasted space';
-DEF main_table = 'DBA_TABLES';
+DEF main_table = '&&dba_view_prefix.TABLES';
 BEGIN
   :sql_text := q'[
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
@@ -1042,10 +1042,10 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
    round(num_rows * avg_row_len * (1+(pct_free/100)) * decode (compression,'ENABLED',0.50,1.00) / POWER(10,6)) estimate_mb,
    num_rows, avg_row_len, degree, compression, sample_size, to_char(last_analyzed,'MM/DD/RRRR') last_analyzed
 from
-   dba_tables,
-   dba_tablespaces
+   &&dba_object_prefix.tables,
+   &&dba_object_prefix.tablespaces
 where
-   dba_tablespaces.tablespace_name = dba_tables.tablespace_name and
+   &&dba_object_prefix.tablespaces.tablespace_name = &&dba_object_prefix.tables.tablespace_name and
    (blocks * block_size / POWER(10,6)) >= 100 and -- actual_mb 
    abs(round(blocks * block_size / POWER(10,6)) - round(num_rows * avg_row_len * (1+(pct_free/100)) * decode (compression,'ENABLED',0.50,1.00) / POWER(10,6))) / 
       (round(blocks * block_size / POWER(10,6))) >= 0.25 and
@@ -1061,7 +1061,7 @@ END;
 
 DEF title = 'Indexes with actual size greater than estimated';
 DEF abstract = 'Actual and Estimated sizes for Indexes.<br />';
-DEF main_table = 'DBA_INDEXES';
+DEF main_table = '&&dba_view_prefix.INDEXES';
 VAR random1 VARCHAR2(30);
 VAR random2 VARCHAR2(30);
 EXEC :random1 := DBMS_RANDOM.string('A', 30);
@@ -1085,10 +1085,10 @@ PRO
 DECLARE
   sql_text CLOB;
 BEGIN
-  IF '&&edb360_conf_incl_metadata.' = 'Y' AND '&&db_version.' < '11.2.0.3' AND '&&db_version.' >= '11.2.0.4' THEN -- avoids DBMS_METADATA.GET_DDL: Query Against SYS.KU$_INDEX_VIEW Is Slow In 11.2.0.3 as per 1459841.1
+  IF '&&edb360_conf_incl_metadata.' = 'Y' /*AND '&&db_version.' < '11.2.0.3'*/ AND '&&db_version.' >= '11.2.0.4' THEN -- avoids DBMS_METADATA.GET_DDL: Query Against SYS.KU$_INDEX_VIEW Is Slow In 11.2.0.3 as per 1459841.1
     FOR i IN (SELECT idx.owner, idx.index_name
-                FROM dba_indexes idx,
-                     dba_tables tbl
+                FROM &&dba_object_prefix.indexes idx,
+                     &&dba_object_prefix.tables tbl
                WHERE idx.owner NOT IN &&exclusion_list. -- exclude non-application schemas
                  AND idx.owner NOT IN &&exclusion_list2. -- exclude more non-application schemas
                  AND idx.index_type IN ('NORMAL', 'FUNCTION-BASED NORMAL', 'BITMAP', 'NORMAL/REV') -- exclude domain and lob
@@ -1145,7 +1145,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
 segments AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        owner, segment_name, SUM(bytes) actual_bytes
-  FROM dba_segments
+  FROM &&dba_object_prefix.segments
  WHERE '&&edb360_conf_incl_segments.' = 'Y'
    AND owner NOT IN &&exclusion_list. -- exclude non-application schemas
    AND owner NOT IN &&exclusion_list2. -- exclude more non-application schemas

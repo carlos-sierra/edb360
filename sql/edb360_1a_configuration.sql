@@ -245,11 +245,11 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Pluggable Databases';
-DEF main_table = 'DBA_PDBS';
+DEF main_table = '&&dba_view_prefix.PDBS';
 BEGIN
   :sql_text := q'[
 SELECT pdb1.*, pdb2.open_mode, pdb2.restricted, pdb2.open_time, pdb2.total_size, pdb2.block_size, pdb2.recovery_status
-FROM  DBA_PDBS pdb1 join v$pdbs pdb2
+FROM  &&dba_object_prefix.pdbs pdb1 join v$pdbs pdb2
   on pdb1.con_id=pdb2.con_id
 ORDER BY pdb1.con_id
 ]';
@@ -307,13 +307,13 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Registry';
-DEF main_table = 'DBA_REGISTRY';
+DEF main_table = '&&dba_view_prefix.REGISTRY';
 BEGIN
   :sql_text := q'[
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM dba_registry
+  FROM &&dba_object_prefix.registry
  ORDER BY
        comp_id
 ]';
@@ -322,12 +322,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Registry SQL Patch';
-DEF main_table = 'DBA_REGISTRY_SQLPATCH';
+DEF main_table = '&&dba_view_prefix.REGISTRY_SQLPATCH';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM dba_registry_sqlpatch
+  FROM &&dba_object_prefix.registry_sqlpatch
  ORDER BY
        1
 ]';
@@ -336,13 +336,13 @@ END;
 @@&&skip_10g_script.&&skip_11g_script.edb360_9a_pre_one.sql
 
 DEF title = 'Registry History';
-DEF main_table = 'DBA_REGISTRY_HISTORY';
+DEF main_table = '&&dba_view_prefix.REGISTRY_HISTORY';
 DEF abstract = 'Review MOS 1360790.1<br />';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM dba_registry_history
+  FROM &&dba_object_prefix.registry_history
  ORDER BY
        1
 ]';
@@ -351,13 +351,13 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Registry Hierarchy';
-DEF main_table = 'DBA_REGISTRY_HIERARCHY';
+DEF main_table = '&&dba_view_prefix.REGISTRY_HIERARCHY';
 BEGIN
   :sql_text := q'[
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM dba_registry_hierarchy
+  FROM &&dba_object_prefix.registry_hierarchy
  ORDER BY
        1, 2, 3
 ]';
@@ -366,13 +366,13 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Feature Usage Statistics';
-DEF main_table = 'DBA_FEATURE_USAGE_STATISTICS';
+DEF main_table = '&&dba_view_prefix.FEATURE_USAGE_STATISTICS';
 BEGIN
   :sql_text := q'[
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM dba_feature_usage_statistics
+  FROM &&dba_object_prefix.feature_usage_statistics
  ORDER BY
        name,
        version
@@ -413,12 +413,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'HWM Statistics';
-DEF main_table = 'DBA_HIGH_WATER_MARK_STATISTICS';
+DEF main_table = '&&dba_view_prefix.HIGH_WATER_MARK_STATISTICS';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM dba_high_water_mark_statistics
+  FROM &&dba_object_prefix.high_water_mark_statistics
  ORDER BY
        dbid,
        name
@@ -428,13 +428,13 @@ END;
 @@&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF title = 'Database Links';
-DEF main_table = 'DBA_DB_LINKS';
+DEF main_table = '&&dba_view_prefix.DB_LINKS';
 BEGIN
   :sql_text := q'[
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM dba_db_links
+  FROM &&dba_object_prefix.db_links
  ORDER BY
        owner,
        db_link
@@ -444,12 +444,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Application Schemas';
-DEF main_table = 'DBA_TABLES';
+DEF main_table = '&&dba_view_prefix.TABLES';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        owner, SUM(num_rows) num_rows, SUM(blocks) blocks, COUNT(*) tables
-  FROM dba_tables
+  FROM &&dba_object_prefix.tables
  WHERE owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
  GROUP BY
@@ -463,7 +463,7 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Application Schema Objects';
-DEF main_table = 'DBA_OBJECTS';
+DEF main_table = '&&dba_view_prefix.OBJECTS';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
@@ -484,7 +484,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        SUM(CASE object_type WHEN 'SYNONYM' THEN 1 ELSE 0 END) synonyms,
        SUM(CASE object_type WHEN 'TYPE' THEN 1 ELSE 0 END) types,
        SUM(CASE object_type WHEN 'SEQUENCE' THEN 1 ELSE 0 END) sequences
-  FROM dba_objects
+  FROM &&dba_object_prefix.objects
  WHERE owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
    AND object_type IN ('TABLE', 'TABLE PARTITION', 'TABLE SUBPARTITION', 'INDEX', 'INDEX PARTITION', 'INDEX SUBPARTITION', 'VIEW', 
@@ -706,7 +706,7 @@ DEF title = 'SQLTXPLAIN Version';
 DEF main_table = 'SQLTXPLAIN.SQLI$_PARAMETER';
 BEGIN
   :sql_text := q'[
-SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ /* ignore if it fails to parse */
 sqltxplain.sqlt$a.get_param('tool_version') sqlt_version,
 sqltxplain.sqlt$a.get_param('tool_date') sqlt_version_date,
 sqltxplain.sqlt$a.get_param('install_date') install_date

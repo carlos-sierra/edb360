@@ -29,15 +29,18 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
 total AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */ SUM(samples) samples FROM hist
 )
-SELECT h.force_matching_signature||'('||h.distinct_sql_id||')' force_matching_signature,
+SELECT DISTINCT
+       h.force_matching_signature||'('||h.distinct_sql_id||')' force_matching_signature,
        h.samples,
        ROUND(100 * h.samples / t.samples, 1) percent,
        h.min_sql_id,
        h.max_sql_id,
-       (SELECT v2.sql_text FROM gv$sql v2 WHERE v2.sql_id = h.min_sql_id AND ROWNUM = 1) sample_sql_text
+       v2.sql_text sample_sql_text
   FROM hist h,
-       total t
+       total t,
+       gv$sql v2
  WHERE h.samples >= t.samples / 1000 AND rn <= 14
+   AND v2.sql_id(+) = h.min_sql_id
  UNION ALL
 SELECT 'Others',
        NVL(SUM(h.samples), 0) samples,
@@ -150,10 +153,12 @@ SELECT h.force_matching_signature||'('||h.distinct_sql_id||')' force_matching_si
        ROUND(100 * h.samples / t.samples, 1) percent,
        --h.min_sql_id,
        --h.max_sql_id,
-       (SELECT DBMS_LOB.SUBSTR(s.sql_text, 1000) FROM &&awr_object_prefix.sqltext s WHERE s.sql_id = h.min_sql_id AND s.dbid = h.dbid AND ROWNUM = 1) sample_sql_text
+       DBMS_LOB.SUBSTR(s.sql_text, 1000) sample_sql_text
   FROM hist h,
-       total t
+       total t,
+       &&awr_object_prefix.sqltext s
  WHERE h.samples >= t.samples / 1000 AND rn <= 14
+   AND s.sql_id(+) = h.min_sql_id AND s.dbid(+) = h.dbid
  UNION ALL
 SELECT 'Others',
        NVL(SUM(h.samples), 0) samples,

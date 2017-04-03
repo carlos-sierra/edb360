@@ -386,10 +386,25 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        r.avg_secs_per_exec avg_secs_per_exec,
        r.min_secs_per_exec min_secs_per_exec,
        r.max_secs_per_exec max_secs_per_exec,
-       (SELECT COUNT(DISTINCT p.plan_hash_value) FROM &&awr_object_prefix.sql_plan p WHERE p.dbid = r.dbid AND p.sql_id = r.sql_id) plans,
-       REPLACE((SELECT DBMS_LOB.SUBSTR(s.sql_text, 1000) FROM &&awr_object_prefix.sqltext s WHERE s.dbid = r.dbid AND s.sql_id = r.sql_id), CHR(10)) sql_text
-  FROM ranked r
+       COUNT(DISTINCT p.plan_hash_value) plans,
+       REPLACE(DBMS_LOB.SUBSTR(s.sql_text, 1000), CHR(10)) sql_text
+  FROM ranked r,
+       &&awr_object_prefix.sqltext s,
+       &&awr_object_prefix.sql_plan p
  WHERE r.rank_num <= &&max_num_rows_x.
+   AND s.dbid(+) = r.dbid AND s.sql_id(+) = r.sql_id
+   AND p.dbid(+) = r.dbid AND p.sql_id(+) = r.sql_id
+ GROUP BY
+       r.rank_num,
+       r.sql_id,
+       r.change,
+       r.slope,
+       r.med_secs_per_exec,
+       r.std_secs_per_exec,
+       r.avg_secs_per_exec,
+       r.min_secs_per_exec,
+       r.max_secs_per_exec,
+       REPLACE(DBMS_LOB.SUBSTR(s.sql_text, 1000), CHR(10))
  ORDER BY
        r.rank_num
 ]';
@@ -634,12 +649,14 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        ROUND(p.avg_time_per_exec / 1e6, 3) avg_secs_per_exec,
        ROUND(p.min_time_per_exec / 1e6, 3) min_secs_per_exec,
        ROUND(p.max_time_per_exec / 1e6, 3) max_secs_per_exec,
-       REPLACE((SELECT DBMS_LOB.SUBSTR(s.sql_text, 1000) FROM &&awr_object_prefix.sqltext s WHERE s.dbid = r.dbid AND s.sql_id = r.sql_id), CHR(10)) sql_text
+       REPLACE(DBMS_LOB.SUBSTR(s.sql_text, 1000), CHR(10)) sql_text
   FROM ranked1 r,
-       per_phv p
+       per_phv p,
+       &&awr_object_prefix.sqltext s
  WHERE r.rank_num1 <= &&max_num_rows_x. * 5
    AND p.dbid = r.dbid
    AND p.sql_id = r.sql_id
+   AND s.dbid(+) = r.dbid AND s.sql_id(+) = r.sql_id
 )
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        r.sql_id,

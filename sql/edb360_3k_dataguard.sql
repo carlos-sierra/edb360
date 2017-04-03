@@ -32,12 +32,12 @@ END;
 @@edb360_9a_pre_one.sql       
 
 DEF title = 'Catproc Release';
-DEF main_table = 'DBA_REGISTRY';
+DEF main_table = '&&dba_view_prefix.REGISTRY';
 BEGIN
   :sql_text := q'[
 -- from MOS Doc ID: 1577401.1 
 SELECT version, modified, status /* &&section_id..&&report_sequence. */
-  FROM dba_registry WHERE comp_id = 'CATPROC'
+  FROM &&dba_object_prefix.registry WHERE comp_id = 'CATPROC'
 ]';
 END;
 /

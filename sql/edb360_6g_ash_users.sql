@@ -28,13 +28,15 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
 total AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */ SUM(samples) samples FROM hist
 )
-SELECT NVL((SELECT u.username FROM dba_users u WHERE u.user_id = h.user_id AND ROWNUM = 1), h.user_id) username,
+SELECT NVL(u.username, h.user_id) username,
        h.samples,
        ROUND(100 * h.samples / t.samples, 1) percent,
        NULL dummy_01
   FROM hist h,
-       total t
+       total t,
+       &&dba_object_prefix.users u
  WHERE h.samples >= t.samples / 1000 AND rn <= 14
+   AND u.user_id(+) = h.user_id
  UNION ALL
 SELECT 'Others',
        NVL(SUM(h.samples), 0) samples,

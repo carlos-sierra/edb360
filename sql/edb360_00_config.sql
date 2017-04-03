@@ -62,8 +62,8 @@ DEF edb360_conf_incl_metadata = 'Y';
 -- include eadam for top SQL and peak snaps (default Y)
 DEF edb360_conf_incl_eadam = 'Y';
 
--- awr repository. set edb360_repo_user only if edb360 repository has been seeded recently
-DEF edb360_repo_user = '';
+-- tool repository. set only if edb360 or eadam repository has been created
+DEF tool_repo_user = '';
 
 -- move generated edb360 zip file to directory (i.e.: /home/oracle/csierra/edb360/prod/)
 DEF edb360_move_directory = '';
@@ -99,8 +99,16 @@ DEF edb360_conf_sqlhc_top = '0';
 DEF edb360_conf_sqld360_top = '16';
 DEF edb360_conf_sqld360_top_tc = '0';
 
--- change only if you changed it while generating repository, as they must match
-DEF edb360_repo_prefix = 'edb360_';
+/*********************************** must match repo ************************************/
+
+-- prefix for AWR "dba_hist_" views
+DEF tool_prefix_1 = 'dba_hist#';
+-- prefix for data dictionary "dba_" views
+DEF tool_prefix_2 = 'dba#';
+-- prefix for dynamic "gv$" views
+DEF tool_prefix_3 = 'gv#';
+-- prefix for dynamic "v$" views
+DEF tool_prefix_4 = 'v#';
 
 /************************************ modifications *************************************/
 

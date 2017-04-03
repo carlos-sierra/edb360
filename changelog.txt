@@ -1,6 +1,10 @@
 Changelog
 =========
 
+v1710 (2017-04-03)
+=====
+1. Cleanup of section 3e Operating System (OS) Statistics History
+
 v1709 (2017-03-27)
 =====
 1. Added Performance Hub active report

@@ -120,11 +120,24 @@ PRO
 SET SUF '';
 @@&&custom_config_filename.
 SET SUF sql;
--- dba_hist or awr repository. do not change awr_hist_prefix.
+-- data dictionary views or tool repository. do not change:
 DEF awr_hist_prefix = 'DBA_HIST_';
 DEF awr_object_prefix = 'dba_hist_';
+DEF dba_view_prefix = 'DBA_';
+DEF dba_object_prefix = 'dba_';
+DEF gv_view_prefix = 'GV$';
+DEF gv_object_prefix = 'gv$';
+DEF v_view_prefix = 'V$';
+DEF v_object_prefix = 'v$';
 COL awr_object_prefix NEW_V awr_object_prefix;
-SELECT CASE WHEN '&&edb360_repo_user.' IS NULL THEN '&&awr_object_prefix.' ELSE '&&edb360_repo_user..&&edb360_repo_prefix.' END awr_object_prefix FROM DUAL
+COL dba_object_prefix NEW_V dba_object_prefix;
+COL gv_object_prefix NEW_V gv_object_prefix;
+COL v_object_prefix NEW_V v_object_prefix;
+SELECT CASE WHEN '&&tool_repo_user.' IS NULL THEN '&&awr_object_prefix.' ELSE '&&tool_repo_user..&&tool_prefix_1.' END awr_object_prefix,
+       CASE WHEN '&&tool_repo_user.' IS NULL THEN '&&dba_object_prefix.' ELSE '&&tool_repo_user..&&tool_prefix_2.' END dba_object_prefix,
+       CASE WHEN '&&tool_repo_user.' IS NULL THEN '&&gv_object_prefix.'  ELSE '&&tool_repo_user..&&tool_prefix_3.' END gv_object_prefix,
+       CASE WHEN '&&tool_repo_user.' IS NULL THEN '&&v_object_prefix.'   ELSE '&&tool_repo_user..&&tool_prefix_4.' END v_object_prefix
+  FROM DUAL
 /
 -- links
 DEF edb360_conf_tool_page = '<a href="http://carlos-sierra.net/edb360-an-oracle-database-360-degree-view/" target="_blank">';

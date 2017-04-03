@@ -494,10 +494,12 @@ SELECT SUBSTR(TRIM(h.sql_id||' '||h.program||' '||
        CASE h.module WHEN h.program THEN NULL ELSE h.module END), 1, 128) source,
        h.samples,
        ROUND(100 * h.samples / t.samples, 1) percent,
-       (SELECT DBMS_LOB.SUBSTR(s.sql_text, 1000) FROM &&awr_object_prefix.sqltext s WHERE s.sql_id = h.sql_id AND s.dbid = h.dbid AND ROWNUM = 1) sql_text
+       DBMS_LOB.SUBSTR(s.sql_text, 1000) sql_text
   FROM hist h,
-       total t
+       total t,
+       &&awr_object_prefix.sqltext s 
  WHERE h.samples >= t.samples / 1000 AND rn <= 14
+   AND s.sql_id(+) = h.sql_id AND s.dbid(+) = h.dbid
  UNION ALL
 SELECT 'Others' source,
        NVL(SUM(h.samples), 0) samples,

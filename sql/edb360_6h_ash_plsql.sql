@@ -23,8 +23,8 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
        p.object_name plsql_object_name,
        p.procedure_name plsql_procedure_name
   FROM &&awr_object_prefix.active_sess_history h,
-       dba_procedures e,
-       dba_procedures p
+       &&dba_object_prefix.procedures e,
+       &&dba_object_prefix.procedures p
  WHERE @filter_predicate@
    AND h.plsql_entry_object_id IS NOT NULL
    AND h.plsql_entry_subprogram_id IS NOT NULL

@@ -8,13 +8,13 @@ PRO <ol start="&&report_sequence.">
 SPO OFF;
 
 DEF title = 'Users';
-DEF main_table = 'DBA_USERS';
+DEF main_table = '&&dba_view_prefix.USERS';
 BEGIN
   :sql_text := q'[
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        *
-  FROM dba_users
+  FROM &&dba_object_prefix.users
  ORDER BY username
 ]';
 END;
@@ -22,13 +22,13 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Profiles';
-DEF main_table = 'DBA_PROFILES';
+DEF main_table = '&&dba_view_prefix.PROFILES';
 BEGIN
   :sql_text := q'[
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        *
-  FROM dba_profiles
+  FROM &&dba_object_prefix.profiles
  ORDER BY profile
 ]';
 END;
@@ -36,12 +36,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Users With Sensitive Roles Granted';
-DEF main_table = 'DBA_ROLE_PRIVS';
+DEF main_table = '&&dba_view_prefix.ROLE_PRIVS';
 BEGIN
   :sql_text := q'[
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
-       p.* from dba_role_privs p
+       p.* from &&dba_object_prefix.role_privs p
 where (p.granted_role in 
 ('AQ_ADMINISTRATOR_ROLE','DELETE_CATALOG_ROLE','DBA','DM_CATALOG_ROLE','EXECUTE_CATALOG_ROLE',
 'EXP_FULL_DATABASE','GATHER_SYSTEM_STATISTICS','HS_ADMIN_ROLE','IMP_FULL_DATABASE',
@@ -51,7 +51,7 @@ where (p.granted_role in
     or p.granted_role like '%ANY%')
    and p.grantee not in &&exclusion_list.
    and p.grantee not in &&exclusion_list2.
-   and p.grantee in (select username from dba_users)
+   and p.grantee in (select username from &&dba_object_prefix.users)
 order by p.grantee, p.granted_role
 ]';
 END;
@@ -59,20 +59,20 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Users With Inappropriate Tablespaces Granted';
-DEF main_table = 'DBA_USERS';
+DEF main_table = '&&dba_view_prefix.USERS';
 BEGIN
   :sql_text := q'[
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
-       * from dba_users u
+       * from &&dba_object_prefix.users u
 where (default_tablespace in ('SYSAUX','SYSTEM') or
 temporary_tablespace not in
    (select tablespace_name
-   from dba_tablespaces
+   from &&dba_object_prefix.tablespaces
    where contents = 'TEMPORARY'
    and status = 'ONLINE'))
 and NVL((SELECT COUNT(*) 
-         FROM dba_tablespace_groups g, dba_tablespaces t 
+         FROM &&dba_object_prefix.tablespace_groups g, &&dba_object_prefix.tablespaces t 
          WHERE g.group_name = u.temporary_tablespace 
          AND t.tablespace_name = g.tablespace_name 
          AND t.contents IN ('PERMANENT', 'UNDO')), 0) != 0
@@ -98,15 +98,15 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Profile Verification Functions';
-DEF main_table = 'DBA_PROFILES';
+DEF main_table = '&&dba_view_prefix.PROFILES';
 BEGIN
   :sql_text := q'[
 -- provided by Simon Pane
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        owner, object_name, created, last_ddl_time, status
-  FROM dba_objects
+  FROM &&dba_object_prefix.objects
  WHERE object_name IN (SELECT /*+ &&top_level_hints. */ limit
-                         FROM dba_profiles
+                         FROM &&dba_object_prefix.profiles
                         WHERE resource_name = 'PASSWORD_VERIFY_FUNCTION')
  ORDER BY 1,2
 ]';
@@ -115,13 +115,13 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Users with CREATE SESSION privilege';
-DEF main_table = 'DBA_USERS';
+DEF main_table = '&&dba_view_prefix.USERS';
 BEGIN
   :sql_text := q'[
 -- provided by Simon Pane
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ DISTINCT 
        u.NAME "SCHEMA", d.account_status
-  FROM SYS.user$ u, SYS.dba_users d
+  FROM SYS.user$ u, &&dba_object_prefix.users d
  WHERE u.NAME = d.username
    AND d.account_status NOT LIKE '%LOCKED%'
    AND u.type# = 1
@@ -136,7 +136,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ DISTINCT
                                         FROM SYS.system_privilege_map
                                        WHERE NAME = 'CREATE SESSION'))
    AND u.NAME IN (SELECT DISTINCT owner
-                    FROM dba_objects
+                    FROM &&dba_object_prefix.objects
                    WHERE object_type != 'SYNONYM')
 ORDER BY 1
 ]';
@@ -145,42 +145,42 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Roles (not default)';
-DEF main_table ='DBA_ROLES';
+DEF main_table ='&&dba_view_prefix.ROLES';
 BEGIN
   :sql_text := q'[
 -- by berx
 select /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
-* from   dba_roles
-where  role not in (SELECT ROLE FROM DBA_ROLES WHERE ORACLE_MAINTAINED='Y')
+* from   &&dba_object_prefix.roles
+where  role not in (SELECT ROLE FROM &&dba_object_prefix.roles WHERE ORACLE_MAINTAINED='Y')
 ]';
 END;
 /
 @@&&skip_10g_script.&&skip_11g_script.edb360_9a_pre_one.sql
 
 DEF title = 'Role Privileges (not default)';
-DEF main_table ='DBA_ROLE_PRIVS';
+DEF main_table ='&&dba_view_prefix.ROLE_PRIVS';
 BEGIN
   :sql_text := q'[
 -- by berx
 select  /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
-*  from   dba_role_privs
+*  from   &&dba_object_prefix.role_privs
 where  1=1
-  AND GRANTED_ROLE not in (SELECT ROLE FROM DBA_ROLES WHERE ORACLE_MAINTAINED='Y')
+  AND GRANTED_ROLE not in (SELECT ROLE FROM &&dba_object_prefix.roles WHERE ORACLE_MAINTAINED='Y')
 ]';
 END;
 /
 @@&&skip_10g_script.&&skip_11g_script.edb360_9a_pre_one.sql
 
 DEF title = 'System Grants (not default)';
-DEF main_table='DBA_SYS_PRIVS';
+DEF main_table='&&dba_view_prefix.SYS_PRIVS';
 BEGIN
   :sql_text := q'[
 -- by berx
 select  /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
-*  from   dba_sys_privs
+*  from   &&dba_object_prefix.sys_privs
 where  1=1
-  AND GRANTEE not in (SELECT ROLE FROM DBA_ROLES WHERE ORACLE_MAINTAINED='Y')
-  AND GRANTEE not in (SELECT USERNAME FROM DBA_USERS WHERE ORACLE_MAINTAINED='Y')
+  AND GRANTEE not in (SELECT ROLE FROM &&dba_object_prefix.roles WHERE ORACLE_MAINTAINED='Y')
+  AND GRANTEE not in (SELECT USERNAME FROM &&dba_object_prefix.users WHERE ORACLE_MAINTAINED='Y')
 ]';
 END;
 /

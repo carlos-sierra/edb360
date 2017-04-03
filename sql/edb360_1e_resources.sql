@@ -1537,7 +1537,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
   FROM &&awr_object_prefix.tbspc_space_usage us,
        &&awr_object_prefix.snapshot sn,
        v$tablespace vt,
-       dba_tablespaces ts
+       &&dba_object_prefix.tablespaces ts
  WHERE us.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND us.dbid = &&edb360_dbid.
    AND sn.snap_id = us.snap_id

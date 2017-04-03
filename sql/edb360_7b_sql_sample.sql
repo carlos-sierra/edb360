@@ -73,7 +73,7 @@ DECLARE
                    TRIM(TO_CHAR(ROUND(r.io_time_hrs, 2), '99990.00')) io_time_hrs,
                    r.rank_num,
                    NVL((SELECT a.name FROM audit_actions a WHERE a.action = h.command_type), TO_CHAR(h.command_type)) command_type,
-                   NVL((SELECT u.username FROM dba_users u WHERE u.user_id = r.user_id), TO_CHAR(r.user_id)) username,
+                   NVL((SELECT u.username FROM &&dba_object_prefix.users u WHERE u.user_id = r.user_id), TO_CHAR(r.user_id)) username,
                    r.module,
                    --h.sql_text,
                    CASE 
@@ -98,41 +98,15 @@ DECLARE
             ),
             top_not_shared AS (
             SELECT /*+ &&sq_fact_hints. &&section_id..&&report_sequence. */
+                   DISTINCT
                    ns.sql_rank,
                    ns.child_cursors,
                    ns.sql_id,
-                   --(SELECT s.sql_text FROM gv$sql s WHERE s.sql_id = ns.sql_id AND ROWNUM = 1) sql_text
-                   (SELECT REPLACE(REPLACE(REPLACE(REPLACE(DBMS_LOB.SUBSTR(s.sql_fulltext, 1000), CHR(10), ' '), '"', CHR(38)||'#34;'), '>', CHR(38)||'#62;'), '<', CHR(38)||'#60;')
-                      FROM gv$sql s 
-                     WHERE s.sql_id = ns.sql_id 
-                       AND ROWNUM = 1) sql_text_1000
-              FROM not_shared ns
-             WHERE ns.sql_rank <= &&edb360_conf_top_cur.
+                   REPLACE(REPLACE(REPLACE(REPLACE(DBMS_LOB.SUBSTR(s.sql_fulltext, 1000), CHR(10), ' '), '"', CHR(38)||'#34;'), '>', CHR(38)||'#62;'), '<', CHR(38)||'#60;') sql_text_1000
+              FROM not_shared ns, gv$sql s
+             WHERE s.sql_id(+) = ns.sql_id
+               AND ns.sql_rank <= &&edb360_conf_top_cur.
             ),
-            /*
-            by_signature AS (
-            SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. * 
-                   /* &&section_id..&&report_sequence. *
-                   force_matching_signature,
-                   dbid,
-                   ROW_NUMBER () OVER (ORDER BY COUNT(*) DESC) rn,
-                   COUNT(DISTINCT sql_id) distinct_sql_id,
-                   MIN(sql_id) sample_sql_id,
-                   COUNT(*) samples
-              FROM &&awr_object_prefix.active_sess_history h
-             WHERE sql_id IS NOT NULL
-               AND force_matching_signature IS NOT NULL
-               AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
-               AND dbid = &&edb360_dbid.
-               AND '&&edb360_bypass.' IS NULL
-               AND sql_id NOT IN (SELECT sql_id FROM top_sql)
-               AND sql_id NOT IN (SELECT sql_id FROM top_not_shared)
-             GROUP BY
-                   force_matching_signature,
-                   dbid
-            HAVING COUNT(*) > 60 -- >10min
-            ),
-            */
             by_signature AS (
             SELECT /*+ FULL(ts) FULL(ns) USE_HASH(ts ns h) &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
                    /* &&section_id..&&report_sequence. */

@@ -44,7 +44,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
      , least(e.block_id+e.blocks-1, c.block#+c.blocks-1)
        - greatest(e.block_id, c.block#) + 1 blocks_corrupted
      , null description
-  FROM dba_extents e, v$database_block_corruption c
+  FROM &&dba_object_prefix.extents e, v$database_block_corruption c
 WHERE e.file_id = c.file#
    AND e.block_id <= c.block# + c.blocks - 1
    AND e.block_id + e.blocks - 1 >= c.block#
@@ -55,7 +55,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
      , header_block corr_end_block#
      , 1 blocks_corrupted
      , 'Segment Header' description
-  FROM dba_segments s, v$database_block_corruption c
+  FROM &&dba_object_prefix.segments s, v$database_block_corruption c
 WHERE s.header_file = c.file#
    AND s.header_block between c.block# and c.block# + c.blocks - 1
 UNION
@@ -66,7 +66,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
      , least(f.block_id+f.blocks-1, c.block#+c.blocks-1)
        - greatest(f.block_id, c.block#) + 1 blocks_corrupted
      , 'Free Block' description
-  FROM dba_free_space f, v$database_block_corruption c
+  FROM &&dba_object_prefix.free_space f, v$database_block_corruption c
 WHERE f.file_id = c.file#
    AND f.block_id <= c.block# + c.blocks - 1
    AND f.block_id + f.blocks - 1 >= c.block#
@@ -80,7 +80,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
      , least(e.block_id+e.blocks-1, c.block#+c.blocks-1)
        - greatest(e.block_id, c.block#) + 1 blocks_corrupted
      , null description
-  FROM dba_extents e, V$NONLOGGED_BLOCK c
+  FROM &&dba_object_prefix.extents e, v$nonlogged_block c
 WHERE e.file_id = c.file#
    AND e.block_id <= c.block# + c.blocks - 1
    AND e.block_id + e.blocks - 1 >= c.block#
@@ -91,7 +91,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
      , header_block corr_end_block#
      , 1 blocks_corrupted
      , 'Segment Header' description
-  FROM dba_segments s, V$NONLOGGED_BLOCK c
+  FROM &&dba_object_prefix.segments s, v$nonlogged_block c
 WHERE s.header_file = c.file#
    AND s.header_block between c.block# and c.block# + c.blocks - 1
 UNION
@@ -102,7 +102,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
      , least(f.block_id+f.blocks-1, c.block#+c.blocks-1)
        - greatest(f.block_id, c.block#) + 1 blocks_corrupted
      , 'Free Block' description
-  FROM dba_free_space f, V$NONLOGGED_BLOCK  c
+  FROM &&dba_object_prefix.free_space f, v$nonlogged_block  c
 WHERE f.file_id = c.file#
    AND f.block_id <= c.block# + c.blocks - 1
    AND f.block_id + f.blocks - 1 >= c.block#
@@ -542,7 +542,7 @@ EXEC :repo_seq := :repo_seq + 1;
 SELECT TO_CHAR(:repo_seq) report_sequence FROM DUAL;
 
 DEF title = 'NOLOGGING Objects';
-DEF main_table = 'DBA_TABLESPACES';
+DEF main_table = '&&dba_view_prefix.TABLESPACES';
 BEGIN
   :sql_text := q'[
 WITH 
@@ -555,7 +555,7 @@ SELECT 1 record_type,
        NULL column_name,
        NULL partition,
        NULL subpartition
-  FROM dba_tablespaces
+  FROM &&dba_object_prefix.tablespaces
  WHERE logging = 'NOLOGGING'
    AND contents != 'TEMPORARY'
 UNION ALL       
@@ -567,7 +567,7 @@ SELECT 2 record_type,
        NULL column_name,
        NULL partition,
        NULL subpartition
-  FROM dba_all_tables
+  FROM &&dba_object_prefix.all_tables
  WHERE logging = 'NO'
    AND temporary = 'N'
 UNION ALL       
@@ -579,7 +579,7 @@ SELECT 3 record_type,
        NULL column_name,
        NULL partition,
        NULL subpartition
-  FROM dba_indexes
+  FROM &&dba_object_prefix.indexes
  WHERE logging = 'NO'
    AND temporary = 'N'
 UNION ALL       
@@ -591,7 +591,7 @@ SELECT 4 record_type,
        SUBSTR(column_name, 1, 30) column_name,
        NULL partition,
        NULL subpartition
-  FROM dba_lobs
+  FROM &&dba_object_prefix.lobs
  WHERE logging = 'NO'
 UNION ALL       
 SELECT 5 record_type,
@@ -602,7 +602,7 @@ SELECT 5 record_type,
        NULL column_name,
        partition_name partition,
        NULL subpartition
-  FROM dba_tab_partitions
+  FROM &&dba_object_prefix.tab_partitions
  WHERE logging = 'NO'
 UNION ALL       
 SELECT 6 record_type,
@@ -613,7 +613,7 @@ SELECT 6 record_type,
        NULL column_name,
        partition_name partition,
        NULL subpartition
-  FROM dba_ind_partitions
+  FROM &&dba_object_prefix.ind_partitions
  WHERE logging = 'NO'
 UNION ALL       
 SELECT 7 record_type,
@@ -624,7 +624,7 @@ SELECT 7 record_type,
        SUBSTR(column_name, 1, 30) column_name,
        partition_name partition,
        NULL subpartition
-  FROM dba_lob_partitions
+  FROM &&dba_object_prefix.lob_partitions
  WHERE logging = 'NO'
 UNION ALL       
 SELECT 8 record_type,
@@ -635,7 +635,7 @@ SELECT 8 record_type,
        NULL column_name,
        partition_name partition,
        subpartition_name subpartition
-  FROM dba_tab_subpartitions
+  FROM &&dba_object_prefix.tab_subpartitions
  WHERE logging = 'NO'
 UNION ALL       
 SELECT 9 record_type,
@@ -646,7 +646,7 @@ SELECT 9 record_type,
        NULL column_name,
        partition_name partition,
        subpartition_name subpartition
-  FROM dba_ind_subpartitions
+  FROM &&dba_object_prefix.ind_subpartitions
  WHERE logging = 'NO'
 UNION ALL       
 SELECT 10 record_type,
@@ -657,7 +657,7 @@ SELECT 10 record_type,
        SUBSTR(column_name, 1, 30) column_name,
        lob_partition_name partition,
        subpartition_name subpartition
-  FROM dba_lob_subpartitions
+  FROM &&dba_object_prefix.lob_subpartitions
  WHERE logging = 'NO'
 )
 SELECT object_type,
@@ -724,8 +724,8 @@ BEGIN
 select /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
 distinct dbo.owner,dbo.object_name, dbo.object_type, dfs.tablespace_name,
 dbt.logging table_level_logging, ts.logging tablespace_level_logging
-from v$segstat ss, dba_tablespaces ts, dba_objects dbo, dba_tables dbt,
-v$datafile df, dba_data_files dfs, v$tablespace vts
+from v$segstat ss, &&dba_object_prefix.tablespaces ts, &&dba_object_prefix.objects dbo, &&dba_object_prefix.tables dbt,
+v$datafile df, &&dba_object_prefix.data_files dfs, v$tablespace vts
 where ss.statistic_name ='physical writes direct'
 and dbo.object_id = ss.obj#
 and vts.ts# = ss.ts#

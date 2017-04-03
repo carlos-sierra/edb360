@@ -1,5 +1,5 @@
-DEF edb360_vYYNN = 'v1709';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2017-03-27)';
+DEF edb360_vYYNN = 'v1710';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2017-04-03)';
 DEF edb360_copyright = ' (c) 2017';
 
 SET TERM OFF;
@@ -462,7 +462,7 @@ DEF siebel_schema = 'siebel_schema';
 DEF siebel_app_ver = '';
 COL siebel_schema NEW_V siebel_schema;
 COL siebel_app_ver NEW_V siebel_app_ver;
-SELECT owner siebel_schema FROM sys.dba_tab_columns WHERE table_name = 'S_REPOSITORY' AND column_name = 'ROW_ID' AND data_type = 'VARCHAR2' AND ROWNUM = 1;
+SELECT owner siebel_schema FROM dba_tab_columns WHERE table_name = 'S_REPOSITORY' AND column_name = 'ROW_ID' AND data_type = 'VARCHAR2' AND ROWNUM = 1;
 SELECT /* ignore if it fails to parse */ app_ver siebel_app_ver FROM &&siebel_schema..s_app_ver WHERE ROWNUM = 1;
 
 -- psft
@@ -470,7 +470,7 @@ DEF psft_schema = 'psft_schema';
 DEF psft_tools_rel = '';
 COL psft_schema NEW_V psft_schema;
 COL psft_tools_rel NEW_V psft_tools_rel;
-SELECT owner psft_schema FROM sys.dba_tab_columns WHERE table_name = 'PSSTATUS' AND column_name = 'TOOLSREL' AND data_type = 'VARCHAR2' AND ROWNUM = 1;
+SELECT owner psft_schema FROM dba_tab_columns WHERE table_name = 'PSSTATUS' AND column_name = 'TOOLSREL' AND data_type = 'VARCHAR2' AND ROWNUM = 1;
 SELECT /* ignore if it fails to parse */ toolsrel psft_tools_rel FROM &&psft_schema..psstatus WHERE ROWNUM = 1;
 
 -- inclusion config determine skip flags

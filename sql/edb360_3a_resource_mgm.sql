@@ -8,12 +8,12 @@ PRO <ol start="&&report_sequence.">
 SPO OFF;
 
 DEF title = 'Consumer Groups';
-DEF main_table = 'DBA_RSRC_CONSUMER_GROUPS';
+DEF main_table = '&&dba_view_prefix.RSRC_CONSUMER_GROUPS';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM dba_rsrc_consumer_groups
+  FROM &&dba_object_prefix.rsrc_consumer_groups
  ORDER BY
        1, 2
 ]';
@@ -22,12 +22,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Consumer Group Users and Roles';
-DEF main_table = 'DBA_RSRC_CONSUMER_GROUP_PRIVS';
+DEF main_table = '&&dba_view_prefix.RSRC_CONSUMER_GROUP_PRIVS';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM dba_rsrc_consumer_group_privs
+  FROM &&dba_object_prefix.rsrc_consumer_group_privs
  ORDER BY
        1, 2
 ]';
@@ -36,12 +36,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Resource Groups Mappings';
-DEF main_table = 'DBA_RSRC_GROUP_MAPPINGS';
+DEF main_table = '&&dba_view_prefix.RSRC_GROUP_MAPPINGS';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM dba_rsrc_group_mappings
+  FROM &&dba_object_prefix.rsrc_group_mappings
  ORDER BY
        1, 2
 ]';
@@ -50,12 +50,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Resource Groups Mapping Priorities';
-DEF main_table = 'DBA_RSRC_MAPPING_PRIORITY';
+DEF main_table = '&&dba_view_prefix.RSRC_MAPPING_PRIORITY';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM dba_rsrc_mapping_priority
+  FROM &&dba_object_prefix.rsrc_mapping_priority
  ORDER BY
        1, 2
 ]';
@@ -64,12 +64,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Resource Plan Directives';
-DEF main_table = 'DBA_RSRC_PLAN_DIRECTIVES';
+DEF main_table = '&&dba_view_prefix.RSRC_PLAN_DIRECTIVES';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM dba_rsrc_plan_directives
+  FROM &&dba_object_prefix.rsrc_plan_directives
  ORDER BY
        1, 2
 ]';
@@ -78,12 +78,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Resource Plans';
-DEF main_table = 'DBA_RSRC_PLANS';
+DEF main_table = '&&dba_view_prefix.RSRC_PLANS';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM dba_rsrc_plans
+  FROM &&dba_object_prefix.rsrc_plans
  ORDER BY
        1, 2
 ]';
