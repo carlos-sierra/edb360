@@ -1546,7 +1546,8 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
    AND h.dbid = &&edb360_dbid.
    AND s.sql_id(+) = h.sql_id AND s.dbid(+) = &&edb360_dbid.
  GROUP BY
-       h.sql_id 
+       h.sql_id,
+       DBMS_LOB.SUBSTR(s.sql_text, 1000)
  ORDER BY
        2 DESC, 1
 ]';
@@ -1572,7 +1573,8 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
    AND h.dbid = &&edb360_dbid.
    AND s.sql_id(+) = h.sql_id AND s.dbid(+) = &&edb360_dbid.
  GROUP BY
-       h.sql_id 
+       h.sql_id,
+       DBMS_LOB.SUBSTR(s.sql_text, 1000) 
  ORDER BY
        2 DESC, 1
 ]';
