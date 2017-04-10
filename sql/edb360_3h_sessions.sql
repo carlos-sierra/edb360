@@ -8,7 +8,7 @@ PRO <ol start="&&report_sequence.">
 SPO OFF;
 
 DEF title = 'Sessions Aggregate per Type';
-DEF main_table = 'GV$SESSION';
+DEF main_table = '&&gv_view_prefix.SESSION';
 DEF foot = 'Content of &&main_table. is very dynamic. This report just tells state at the time when edb360 was executed.';
 BEGIN
   :sql_text := q'[
@@ -18,7 +18,7 @@ SELECT COUNT(*),
        server,
        status,
        state
-  FROM gv$session
+  FROM &&gv_object_prefix.session
  GROUP BY
        inst_id,
        type,
@@ -33,7 +33,7 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Sessions Aggregate per User and Type';
-DEF main_table = 'GV$SESSION';
+DEF main_table = '&&gv_view_prefix.SESSION';
 DEF foot = 'Content of &&main_table. is very dynamic. This report just tells state at the time when edb360 was executed.';
 BEGIN
   :sql_text := q'[
@@ -44,7 +44,7 @@ SELECT COUNT(*),
        server,
        status,
        state
-  FROM gv$session
+  FROM &&gv_object_prefix.session
  GROUP BY
        username,
        inst_id,
@@ -60,7 +60,7 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Sessions Aggregate per Module and Action';
-DEF main_table = 'GV$SESSION';
+DEF main_table = '&&gv_view_prefix.SESSION';
 DEF foot = 'Content of &&main_table. is very dynamic. This report just tells state at the time when edb360 was executed.';
 BEGIN
   :sql_text := q'[
@@ -72,7 +72,7 @@ SELECT COUNT(*),
        server,
        status,
        state
-  FROM gv$session
+  FROM &&gv_object_prefix.session
  GROUP BY
        module,
        action,
@@ -89,12 +89,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Sessions List';
-DEF main_table = 'GV$SESSION';
+DEF main_table = '&&gv_view_prefix.SESSION';
 DEF foot = 'Content of &&main_table. is very dynamic. This report just tells state at the time when edb360 was executed.';
 BEGIN
   :sql_text := q'[
 SELECT *
-  FROM gv$session
+  FROM &&gv_object_prefix.session
  ORDER BY
        inst_id,
        sid
@@ -104,11 +104,11 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Database and Schema Triggers';
-DEF main_table = '&&dba_view_prefix.TRIGGERS';
+DEF main_table = '&&dva_view_prefix.TRIGGERS';
 BEGIN
   :sql_text := q'[
 SELECT *
-  FROM &&dba_object_prefix.triggers
+  FROM &&dva_object_prefix.triggers
  WHERE base_object_type IN ('DATABASE', 'SCHEMA')
  ORDER BY
        base_object_type, owner, trigger_name
@@ -458,12 +458,12 @@ END;
 @@&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF title = 'Processes List';
-DEF main_table = 'GV$PROCESS';
+DEF main_table = '&&gv_view_prefix.PROCESS';
 DEF foot = 'Content of &&main_table. is very dynamic. This report just tells state at the time when edb360 was executed.';
 BEGIN
   :sql_text := q'[
 SELECT *
-  FROM gv$process
+  FROM &&gv_object_prefix.process
  ORDER BY
        inst_id,
        pid,
@@ -474,12 +474,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Processes Memory';
-DEF main_table = 'GV$PROCESS_MEMORY';
+DEF main_table = '&&gv_view_prefix.PROCESS_MEMORY';
 DEF foot = 'Content of &&main_table. is very dynamic. This report just tells state at the time when edb360 was executed.';
 BEGIN
   :sql_text := q'[
 SELECT *
-  FROM gv$process_memory
+  FROM &&gv_object_prefix.process_memory
  ORDER BY
        inst_id,
        pid,
@@ -491,13 +491,13 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Active Sessions (detail)';
-DEF main_table = 'GV$SESSION';
+DEF main_table = '&&gv_view_prefix.SESSION';
 BEGIN
   :sql_text := q'[
 SELECT /* active_sessions */ 
        se.*, sq.sql_text
-  FROM gv$session se,
-       gv$sql sq
+  FROM &&gv_object_prefix.session se,
+       &&gv_object_prefix.sql sq
  WHERE se.status = 'ACTIVE'
    AND sq.inst_id = se.inst_id
    AND sq.sql_id = se.sql_id
@@ -511,7 +511,7 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Active Sessions (more detail)';
-DEF main_table = 'GV$SESSION';
+DEF main_table = '&&gv_view_prefix.SESSION';
 BEGIN
   :sql_text := q'[
 -- provided by Frits Hoogland
@@ -524,8 +524,8 @@ select /*+ rule as.sql */ a.sid||','||a.serial#||',@'||a.inst_id as sid_serial_i
 	decode(a.plsql_object_id,null,sql_text,sqla.object_name||'.'||sqlb.procedure_name) sql_text, 
 	(c.wait_time_micro/1000000) wait_s, 
 	decode(a.plsql_object_id,null,decode(c.wait_time,0,decode(a.blocking_session,null,c.event,c.event||'> Blocked by (inst:sid): '||a.final_blocking_instance||':'||a.final_blocking_session),'ON CPU:SQL'),'ON CPU:PLSQL:'||o.object_name) as wait_or_cpu
-from gv$session a, gv$sql b, gv$session_wait c, gv$process d, 
-     &&dba_object_prefix.procedures sqla, &&dba_object_prefix.procedures sqlb, &&dba_object_prefix.objects o
+FROM &&gv_object_prefix.session a, &&gv_object_prefix.sql b, &&gv_object_prefix.session_wait c, &&gv_object_prefix.process d, 
+     &&dva_object_prefix.procedures sqla, &&dva_object_prefix.procedures sqlb, &&dva_object_prefix.objects o
 where a.status = 'ACTIVE'
 and a.username is not null
 and a.sql_id = b.sql_id
@@ -545,7 +545,7 @@ END;
 @@&&skip_10g_script.edb360_9a_pre_one.sql
 
 DEF title = 'Sessions Waiting';
-DEF main_table = 'GV$SESSION';
+DEF main_table = '&&gv_view_prefix.SESSION';
 BEGIN
   :sql_text := q'[
 -- borrowed from orachk
@@ -554,7 +554,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        ROUND(seconds_in_wait,2)  waiting_seconds,
        ROUND(wait_time/100,2)    waited_seconds, 
        p1,p2,p3, BLOCKING_SESSION 
-from gv$session
+FROM &&gv_object_prefix.session
 where event not in
 (
   'SQL*Net message from client',
@@ -573,7 +573,7 @@ END;
 
 DEF title = 'Session Blockers and Waiters';
 DEF abstract = 'Blockers (B) and Waiters (W)<br />';
-DEF main_table = 'GV$SESSION_BLOCKERS';
+DEF main_table = '&&gv_view_prefix.SESSION_BLOCKERS';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
@@ -607,11 +607,11 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        TO_CHAR(w.logon_time, 'DD-MON-YY HH24:MI:SS') w_logon_time,
        TO_CHAR(w.sql_exec_start, 'DD-MON-YY HH24:MI:SS') w_sql_exec_start, 
        SUBSTR(ws.sql_text, 1, 500) w_sql_text
-  FROM gv$session_blockers sb,
-       gv$session w,
-       gv$session b,
-       gv$sql ws,
-       gv$sql bs
+  FROM &&gv_object_prefix.session_blockers sb,
+       &&gv_object_prefix.session w,
+       &&gv_object_prefix.session b,
+       &&gv_object_prefix.sql ws,
+       &&gv_object_prefix.sql bs
  WHERE w.inst_id = sb.inst_id
    AND w.sid = sb.sid
    AND w.serial# = sb.sess_serial#
@@ -912,13 +912,13 @@ END;
 --@@&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF title = 'Distributed Transactions awaiting Recovery';
-DEF main_table = '&&dba_view_prefix.2PC_PENDING';
+DEF main_table = '&&dva_view_prefix.2PC_PENDING';
 BEGIN
   :sql_text := q'[
 -- requested by Milton Quinteros
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM &&dba_object_prefix.2pc_pending
+  FROM &&dva_object_prefix.2pc_pending
  ORDER BY
        1, 2
 ]';
@@ -927,13 +927,13 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Connections for Pending Transactions';
-DEF main_table = '&&dba_view_prefix.2PC_NEIGHBORS';
+DEF main_table = '&&dva_view_prefix.2PC_NEIGHBORS';
 BEGIN
   :sql_text := q'[
 -- requested by Milton Quinteros
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM &&dba_object_prefix.2pc_neighbors
+  FROM &&dva_object_prefix.2pc_neighbors
  ORDER BY
        1
 ]';

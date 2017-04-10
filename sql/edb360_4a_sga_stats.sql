@@ -126,7 +126,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', 'instance_numbe
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 1;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 1;
 DEF title = 'SGA Statistics for Instance 1';
 DEF abstract = '&&abstract_uom.';
 DEF foot = 'Does not include Free SGA Memory Available. For memory pools resize review Memory Statistics reports instead.'
@@ -135,7 +135,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '1');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 2;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 2;
 DEF title = 'SGA Statistics for Instance 2';
 DEF abstract = '&&abstract_uom.';
 DEF foot = 'Does not include Free SGA Memory Available. For memory pools resize review Memory Statistics reports instead.'
@@ -144,7 +144,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '2');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 3;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 3;
 DEF title = 'SGA Statistics for Instance 3';
 DEF abstract = '&&abstract_uom.';
 DEF foot = 'Does not include Free SGA Memory Available. For memory pools resize review Memory Statistics reports instead.'
@@ -153,7 +153,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '3');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 4;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 4;
 DEF title = 'SGA Statistics for Instance 4';
 DEF abstract = '&&abstract_uom.';
 DEF foot = 'Does not include Free SGA Memory Available. For memory pools resize review Memory Statistics reports instead.'
@@ -162,7 +162,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '4');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 5;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 5;
 DEF title = 'SGA Statistics for Instance 5';
 DEF abstract = '&&abstract_uom.';
 DEF foot = 'Does not include Free SGA Memory Available. For memory pools resize review Memory Statistics reports instead.'
@@ -171,7 +171,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '5');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 6;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 6;
 DEF title = 'SGA Statistics for Instance 6';
 DEF abstract = '&&abstract_uom.';
 DEF foot = 'Does not include Free SGA Memory Available. For memory pools resize review Memory Statistics reports instead.'
@@ -180,7 +180,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '6');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 7;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 7;
 DEF title = 'SGA Statistics for Instance 7';
 DEF abstract = '&&abstract_uom.';
 DEF foot = 'Does not include Free SGA Memory Available. For memory pools resize review Memory Statistics reports instead.'
@@ -189,7 +189,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '7');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 8;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 8;
 DEF title = 'SGA Statistics for Instance 8';
 DEF abstract = '&&abstract_uom.';
 DEF foot = 'Does not include Free SGA Memory Available. For memory pools resize review Memory Statistics reports instead.'

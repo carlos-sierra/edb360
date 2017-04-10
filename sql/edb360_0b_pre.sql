@@ -1,5 +1,5 @@
-DEF edb360_vYYNN = 'v1710';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2017-04-03)';
+DEF edb360_vYYNN = 'v1711';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2017-04-10)';
 DEF edb360_copyright = ' (c) 2017';
 
 SET TERM OFF;
@@ -26,7 +26,7 @@ SELECT startup_time, dbid, instance_number, COUNT(*) snaps,
 
 COL history_days NEW_V history_days;
 -- range: takes at least 31 days and at most as many as actual history, with a default of 31. parameter restricts within that range. 
-SELECT TO_CHAR(LEAST(CEIL(SYSDATE - CAST(MIN(begin_interval_time) AS DATE)), GREATEST(31, TO_NUMBER(NVL(TRIM('&&edb360_conf_days.'), '31'))))) history_days FROM &&awr_object_prefix.snapshot WHERE '&&diagnostics_pack.' = 'Y' AND dbid = (SELECT dbid FROM v$database);
+SELECT TO_CHAR(LEAST(CEIL(SYSDATE - CAST(MIN(begin_interval_time) AS DATE)), GREATEST(31, TO_NUMBER(NVL(TRIM('&&edb360_conf_days.'), '31'))))) history_days FROM &&awr_object_prefix.snapshot WHERE '&&diagnostics_pack.' = 'Y' AND dbid = (SELECT dbid FROM &&v_object_prefix.database);
 SELECT TO_CHAR(TO_DATE('&&edb360_conf_date_to.', 'YYYY-MM-DD') - TO_DATE('&&edb360_conf_date_from.', 'YYYY-MM-DD') + 1) history_days FROM DUAL WHERE '&&edb360_conf_date_from.' != 'YYYY-MM-DD' AND '&&edb360_conf_date_to.' != 'YYYY-MM-DD';
 SELECT '0' history_days FROM DUAL WHERE NVL(TRIM('&&diagnostics_pack.'), 'N') = 'N';
 SET TERM OFF;
@@ -239,15 +239,15 @@ DEF skip_script = 'sql/edb360_0f_skip_script.sql ';
 
 -- get dbid
 COL edb360_dbid NEW_V edb360_dbid;
-SELECT TRIM(TO_CHAR(dbid)) edb360_dbid FROM v$database;
+SELECT TRIM(TO_CHAR(dbid)) edb360_dbid FROM &&v_object_prefix.database;
 
 -- get dbmod
 COL edb360_dbmod NEW_V edb360_dbmod;
-SELECT LPAD(MOD(dbid,1e6),6,'6') edb360_dbmod FROM v$database;
+SELECT LPAD(MOD(dbid,1e6),6,'6') edb360_dbmod FROM &&v_object_prefix.database;
 
 -- get instance number
 COL connect_instance_number NEW_V connect_instance_number;
-SELECT TO_CHAR(instance_number) connect_instance_number FROM v$instance;
+SELECT TO_CHAR(instance_number) connect_instance_number FROM &&v_object_prefix.instance;
 
 -- get database name (up to 10, stop before first '.', no special characters)
 COL database_name_short NEW_V database_name_short FOR A10;
@@ -327,7 +327,7 @@ ALTER SESSION SET NLS_SORT = 'BINARY';
 ALTER SESSION SET NLS_COMP = 'BINARY';
 -- workaround fairpoint
 COL db_vers_ofe NEW_V db_vers_ofe;
-SELECT TRIM('.' FROM TRIM('0' FROM version)) db_vers_ofe FROM v$instance;
+SELECT TRIM('.' FROM TRIM('0' FROM version)) db_vers_ofe FROM &&v_object_prefix.instance;
 ALTER SESSION SET optimizer_features_enable = '&&db_vers_ofe.';
 -- to work around bug 12672969
 ALTER SESSION SET "_optimizer_order_by_elimination_enabled"=false; 
@@ -382,44 +382,49 @@ COL row_num NEW_V row_num HEA '#' PRI;
 
 -- get rdbms version
 COL db_version NEW_V db_version;
-SELECT version db_version FROM v$instance;
+SELECT version db_version FROM &&v_object_prefix.instance;
 
 -- skip
 DEF skip_10g_column = '';
 COL skip_10g_column NEW_V skip_10g_column;
 DEF skip_10g_script = '';
 COL skip_10g_script NEW_V skip_10g_script;
-SELECT ' -- skip 10g ' skip_10g_column, ' echo skip 10g ' skip_10g_script FROM v$instance WHERE version LIKE '10%';
+SELECT ' -- skip 10g ' skip_10g_column, ' echo skip 10g ' skip_10g_script FROM &&v_object_prefix.instance WHERE version LIKE '10%';
 DEF skip_11g_column = '';
 COL skip_11g_column NEW_V skip_11g_column;
 DEF skip_11g_script = '';
 COL skip_11g_script NEW_V skip_11g_script;
-SELECT ' -- skip 11g ' skip_11g_column, ' echo skip 11g ' skip_11g_script FROM v$instance WHERE version LIKE '11%';
+SELECT ' -- skip 11g ' skip_11g_column, ' echo skip 11g ' skip_11g_script FROM &&v_object_prefix.instance WHERE version LIKE '11%';
 DEF skip_11r1_column = '';
 COL skip_11r1_column NEW_V skip_11r1_column;
 DEF skip_11r1_script = '';
 COL skip_11r1_script NEW_V skip_11r1_script;
-SELECT ' -- skip 11gR1 ' skip_11r1_column, ' echo skip 11gR1 ' skip_11r1_script FROM v$instance WHERE version LIKE '11.1%';
+SELECT ' -- skip 11gR1 ' skip_11r1_column, ' echo skip 11gR1 ' skip_11r1_script FROM &&v_object_prefix.instance WHERE version LIKE '11.1%';
+DEF skip_non_repo_column = '';
+COL skip_non_repo_column NEW_V skip_non_repo_column;
+DEF skip_non_repo_script = '';
+COL skip_non_repo_script NEW_V skip_non_repo_script;
+SELECT ' -- skip non-repository ' skip_non_repo_column, ' echo skip non-repository ' skip_non_repo_script FROM DUAL WHERE '&&tool_repo_user.' IS NOT NULL;
 
 -- get average number of CPUs
 COL avg_cpu_count NEW_V avg_cpu_count FOR A6;
-SELECT TO_CHAR(ROUND(AVG(TO_NUMBER(value)),1)) avg_cpu_count FROM gv$system_parameter2 WHERE name = 'cpu_count';
+SELECT TO_CHAR(ROUND(AVG(TO_NUMBER(value)),1)) avg_cpu_count FROM &&gv_object_prefix.system_parameter2 WHERE name = 'cpu_count';
 
 -- get total number of CPUs
 COL sum_cpu_count NEW_V sum_cpu_count FOR A3;
-SELECT TO_CHAR(SUM(TO_NUMBER(value))) sum_cpu_count FROM gv$system_parameter2 WHERE name = 'cpu_count';
+SELECT TO_CHAR(SUM(TO_NUMBER(value))) sum_cpu_count FROM &&gv_object_prefix.system_parameter2 WHERE name = 'cpu_count';
 
 -- get average number of Cores
 COL avg_core_count NEW_V avg_core_count FOR A5;
-SELECT TO_CHAR(ROUND(AVG(TO_NUMBER(value)),1)) avg_core_count FROM gv$osstat WHERE stat_name = 'NUM_CPU_CORES';
+SELECT TO_CHAR(ROUND(AVG(TO_NUMBER(value)),1)) avg_core_count FROM &&gv_object_prefix.osstat WHERE stat_name = 'NUM_CPU_CORES';
 
 -- get average number of Threads
 COL avg_thread_count NEW_V avg_thread_count FOR A6;
-SELECT TO_CHAR(ROUND(AVG(TO_NUMBER(value)),1)) avg_thread_count FROM gv$osstat WHERE stat_name = 'NUM_CPUS';
+SELECT TO_CHAR(ROUND(AVG(TO_NUMBER(value)),1)) avg_thread_count FROM &&gv_object_prefix.osstat WHERE stat_name = 'NUM_CPUS';
 
 -- get number of Hosts
 COL hosts_count NEW_V hosts_count FOR A2;
-SELECT TO_CHAR(COUNT(DISTINCT inst_id)) hosts_count FROM gv$osstat WHERE stat_name = 'NUM_CPU_CORES';
+SELECT TO_CHAR(COUNT(DISTINCT inst_id)) hosts_count FROM &&gv_object_prefix.osstat WHERE stat_name = 'NUM_CPU_CORES';
 
 -- get cores_threads_hosts
 COL cores_threads_hosts NEW_V cores_threads_hosts;
@@ -427,11 +432,11 @@ SELECT CASE TO_NUMBER('&&hosts_count.') WHEN 1 THEN 'cores:&&avg_core_count. thr
 
 -- get block_size
 COL database_block_size NEW_V database_block_size;
-SELECT TRIM(TO_NUMBER(value)) database_block_size FROM v$system_parameter2 WHERE name = 'db_block_size';
+SELECT TRIM(TO_NUMBER(value)) database_block_size FROM &&v_object_prefix.system_parameter2 WHERE name = 'db_block_size';
 
 -- determine if rac or single instance (null means rac)
 COL is_single_instance NEW_V is_single_instance FOR A1;
-SELECT CASE COUNT(*) WHEN 1 THEN 'Y' END is_single_instance FROM gv$instance;
+SELECT CASE COUNT(*) WHEN 1 THEN 'Y' END is_single_instance FROM &&gv_object_prefix.instance;
 
 -- snapshot ranges
 SELECT '0' history_days FROM DUAL WHERE TRIM('&&history_days.') IS NULL;
@@ -462,7 +467,7 @@ DEF siebel_schema = 'siebel_schema';
 DEF siebel_app_ver = '';
 COL siebel_schema NEW_V siebel_schema;
 COL siebel_app_ver NEW_V siebel_app_ver;
-SELECT owner siebel_schema FROM dba_tab_columns WHERE table_name = 'S_REPOSITORY' AND column_name = 'ROW_ID' AND data_type = 'VARCHAR2' AND ROWNUM = 1;
+SELECT owner siebel_schema FROM &&dva_object_prefix.tab_columns WHERE table_name = 'S_REPOSITORY' AND column_name = 'ROW_ID' AND data_type = 'VARCHAR2' AND ROWNUM = 1;
 SELECT /* ignore if it fails to parse */ app_ver siebel_app_ver FROM &&siebel_schema..s_app_ver WHERE ROWNUM = 1;
 
 -- psft
@@ -470,7 +475,7 @@ DEF psft_schema = 'psft_schema';
 DEF psft_tools_rel = '';
 COL psft_schema NEW_V psft_schema;
 COL psft_tools_rel NEW_V psft_tools_rel;
-SELECT owner psft_schema FROM dba_tab_columns WHERE table_name = 'PSSTATUS' AND column_name = 'TOOLSREL' AND data_type = 'VARCHAR2' AND ROWNUM = 1;
+SELECT owner psft_schema FROM &&dva_object_prefix.tab_columns WHERE table_name = 'PSSTATUS' AND column_name = 'TOOLSREL' AND data_type = 'VARCHAR2' AND ROWNUM = 1;
 SELECT /* ignore if it fails to parse */ toolsrel psft_tools_rel FROM &&psft_schema..psstatus WHERE ROWNUM = 1;
 
 -- inclusion config determine skip flags
@@ -681,12 +686,12 @@ DEF series_15 = ''
 
 -- get udump directory path
 COL edb360_udump_path NEW_V edb360_udump_path FOR A500;
-SELECT value||DECODE(INSTR(value, '/'), 0, '\', '/') edb360_udump_path FROM v$parameter2 WHERE name = 'user_dump_dest';
-SELECT value||DECODE(INSTR(value, '/'), 0, '\', '/') edb360_udump_path FROM v$diag_info WHERE name = 'Diag Trace';
+SELECT value||DECODE(INSTR(value, '/'), 0, '\', '/') edb360_udump_path FROM &&v_dollar.parameter2 WHERE name = 'user_dump_dest';
+SELECT value||DECODE(INSTR(value, '/'), 0, '\', '/') edb360_udump_path FROM &&v_dollar.diag_info WHERE name = 'Diag Trace';
 
 -- get pid
 COL edb360_spid NEW_V edb360_spid FOR A5;
-SELECT TO_CHAR(spid) edb360_spid FROM v$session s, v$process p WHERE s.sid = SYS_CONTEXT('USERENV', 'SID') AND p.addr = s.paddr;
+SELECT TO_CHAR(spid) edb360_spid FROM &&v_dollar.session s, &&v_dollar.process p WHERE s.sid = SYS_CONTEXT('USERENV', 'SID') AND p.addr = s.paddr;
 
 SET TERM OFF; 
 SET HEA ON; 
@@ -728,7 +733,7 @@ COL value FOR A50;
 COL display_value FOR A50;
 COL update_comment NOPRI;
 SELECT *
-  FROM v$spparameter
+  FROM &&v_object_prefix.spparameter
  WHERE isspecified = 'TRUE'
  ORDER BY
        name,

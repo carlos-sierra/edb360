@@ -8,31 +8,31 @@ PRO <ol start="&&report_sequence.">
 SPO OFF;
 
 DEF title = 'Block Corruption';
-DEF main_table = 'V$DATABASE_BLOCK_CORRUPTION';
+DEF main_table = '&&v_view_prefix.DATABASE_BLOCK_CORRUPTION';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM v$database_block_corruption
+  FROM &&v_object_prefix.database_block_corruption
 ]';
 END;
 /
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Nonlogged Datafile Blocks';
-DEF main_table = 'V$NONLOGGED_BLOCK';
+DEF main_table = '&&v_view_prefix.NONLOGGED_BLOCK';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM v$nonlogged_block
+  FROM &&v_object_prefix.nonlogged_block
 ]';
 END;
 /
 @@&&skip_10g_script.&&skip_11g_script.edb360_9a_pre_one.sql
 
 DEF title = 'Blocks with Corruption or Nonlogged';
-DEF main_table = 'V$DATABASE_BLOCK_CORRUPTION';
+DEF main_table = '&&v_view_prefix.DATABASE_BLOCK_CORRUPTION';
 BEGIN
   :sql_text := q'[
 With -- requested by Gabriel Alonso
@@ -44,7 +44,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
      , least(e.block_id+e.blocks-1, c.block#+c.blocks-1)
        - greatest(e.block_id, c.block#) + 1 blocks_corrupted
      , null description
-  FROM &&dba_object_prefix.extents e, v$database_block_corruption c
+  FROM &&dva_object_prefix.extents e, &&v_object_prefix.database_block_corruption c
 WHERE e.file_id = c.file#
    AND e.block_id <= c.block# + c.blocks - 1
    AND e.block_id + e.blocks - 1 >= c.block#
@@ -55,7 +55,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
      , header_block corr_end_block#
      , 1 blocks_corrupted
      , 'Segment Header' description
-  FROM &&dba_object_prefix.segments s, v$database_block_corruption c
+  FROM &&dva_object_prefix.segments s, &&v_object_prefix.database_block_corruption c
 WHERE s.header_file = c.file#
    AND s.header_block between c.block# and c.block# + c.blocks - 1
 UNION
@@ -66,7 +66,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
      , least(f.block_id+f.blocks-1, c.block#+c.blocks-1)
        - greatest(f.block_id, c.block#) + 1 blocks_corrupted
      , 'Free Block' description
-  FROM &&dba_object_prefix.free_space f, v$database_block_corruption c
+  FROM &&dva_object_prefix.free_space f, &&v_object_prefix.database_block_corruption c
 WHERE f.file_id = c.file#
    AND f.block_id <= c.block# + c.blocks - 1
    AND f.block_id + f.blocks - 1 >= c.block#
@@ -80,7 +80,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
      , least(e.block_id+e.blocks-1, c.block#+c.blocks-1)
        - greatest(e.block_id, c.block#) + 1 blocks_corrupted
      , null description
-  FROM &&dba_object_prefix.extents e, v$nonlogged_block c
+  FROM &&dva_object_prefix.extents e, &&v_object_prefix.nonlogged_block c
 WHERE e.file_id = c.file#
    AND e.block_id <= c.block# + c.blocks - 1
    AND e.block_id + e.blocks - 1 >= c.block#
@@ -91,7 +91,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
      , header_block corr_end_block#
      , 1 blocks_corrupted
      , 'Segment Header' description
-  FROM &&dba_object_prefix.segments s, v$nonlogged_block c
+  FROM &&dva_object_prefix.segments s, &&v_object_prefix.nonlogged_block c
 WHERE s.header_file = c.file#
    AND s.header_block between c.block# and c.block# + c.blocks - 1
 UNION
@@ -102,7 +102,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
      , least(f.block_id+f.blocks-1, c.block#+c.blocks-1)
        - greatest(f.block_id, c.block#) + 1 blocks_corrupted
      , 'Free Block' description
-  FROM &&dba_object_prefix.free_space f, v$nonlogged_block  c
+  FROM &&dva_object_prefix.free_space f, &&v_object_prefix.nonlogged_block  c
 WHERE f.file_id = c.file#
    AND f.block_id <= c.block# + c.blocks - 1
    AND f.block_id + f.blocks - 1 >= c.block#
@@ -117,25 +117,25 @@ END;
 @@&&skip_10g_script.&&skip_11g_script.edb360_9a_pre_one.sql
 
 DEF title = 'Block Change Tracking';
-DEF main_table = 'V$BLOCK_CHANGE_TRACKING';
+DEF main_table = '&&v_view_prefix.BLOCK_CHANGE_TRACKING';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM v$block_change_tracking
+  FROM &&v_object_prefix.block_change_tracking
 ]';
 END;
 /
 @@edb360_9a_pre_one.sql
 
 DEF title = 'RMAN Backup Job Details';
-DEF main_table = 'V$RMAN_BACKUP_JOB_DETAILS';
+DEF main_table = '&&v_view_prefix.RMAN_BACKUP_JOB_DETAILS';
 BEGIN
   :sql_text := q'[
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM v$rman_backup_job_details
+  FROM &&v_object_prefix.rman_backup_job_details
  --WHERE start_time >= (SYSDATE - 100)
  ORDER BY
        start_time DESC
@@ -146,12 +146,12 @@ END;
 @@&&skip_10g_script.edb360_9a_pre_one.sql
 
 DEF title = 'RMAN Backup Set Details';
-DEF main_table = 'V$BACKUP_SET_DETAILS';
+DEF main_table = '&&v_view_prefix.BACKUP_SET_DETAILS';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM v$backup_set_details
+  FROM &&v_object_prefix.backup_set_details
  ORDER BY
        1, 2, 3, 4, 5
 ]';
@@ -160,85 +160,85 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'RMAN Output';
-DEF main_table = 'V$RMAN_OUTPUT';
+DEF main_table = '&&v_view_prefix.RMAN_OUTPUT';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM v$rman_output
+  FROM &&v_object_prefix.rman_output
 ]';
 END;
 /
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Fast Recovery Area';
-DEF main_table = 'V$RECOVERY_FILE_DEST';
+DEF main_table = '&&v_view_prefix.RECOVERY_FILE_DEST';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM v$recovery_file_dest
+  FROM &&v_object_prefix.recovery_file_dest
 ]';
 END;
 /
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Fast Recovery Area Usage';
-DEF main_table = 'V$RECOVERY_AREA_USAGE';
+DEF main_table = '&&v_view_prefix.RECOVERY_AREA_USAGE';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM v$recovery_area_usage
+  FROM &&v_object_prefix.recovery_area_usage
 ]';
 END;
 /
 @@&&skip_10g_script.edb360_9a_pre_one.sql
 
 DEF title = 'Restore Point';
-DEF main_table = 'V$RESTORE_POINT';
+DEF main_table = '&&v_view_prefix.RESTORE_POINT';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM v$restore_point
+  FROM &&v_object_prefix.restore_point
 ]';
 END;
 /
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Flashback Statistics';
-DEF main_table = 'V$FLASHBACK_DATABASE_STAT';
+DEF main_table = '&&v_view_prefix.FLASHBACK_DATABASE_STAT';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM v$flashback_database_stat
+  FROM &&v_object_prefix.flashback_database_stat
 ]';
 END;
 /
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Flashback Log';
-DEF main_table = 'V$FLASHBACK_DATABASE_LOG';
+DEF main_table = '&&v_view_prefix.FLASHBACK_DATABASE_LOG';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM v$flashback_database_log
+  FROM &&v_object_prefix.flashback_database_log
 ]';
 END;
 /
 @@edb360_9a_pre_one.sql
 
 DEF title = 'REDO LOG';
-DEF main_table = 'V$LOG';
+DEF main_table = '&&v_view_prefix.LOG';
 BEGIN
   :sql_text := q'[
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
      *
-  FROM v$log
+  FROM &&v_object_prefix.log
  ORDER BY 1, 2, 3, 4
 ]';
 END;
@@ -246,12 +246,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'REDO LOG Files';
-DEF main_table = 'V$LOGFILE';
+DEF main_table = '&&v_view_prefix.LOGFILE';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
      *
-  FROM v$logfile
+  FROM &&v_object_prefix.logfile
  ORDER BY 1, 2, 3, 4
 ]';
 END;
@@ -259,13 +259,13 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'REDO LOG History';
-DEF main_table = 'V$LOG_HISTORY';
+DEF main_table = '&&v_view_prefix.LOG_HISTORY';
 BEGIN
   :sql_text := q'[
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
  THREAD#, TO_CHAR(trunc(FIRST_TIME), 'YYYY-MON-DD') day, count(*)
-from v$log_history
+FROM &&v_object_prefix.log_history
 where FIRST_TIME >= (sysdate - 31)
 group by rollup(THREAD#, trunc(FIRST_TIME))
 order by THREAD#, trunc(FIRST_TIME)
@@ -275,7 +275,7 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'REDO LOG Switches Frequency Map';
-DEF main_table = 'V$LOG_HISTORY';
+DEF main_table = '&&v_view_prefix.LOG_HISTORY';
 COL row_num_noprint NOPRI;
 BEGIN
   :sql_text := q'[
@@ -311,7 +311,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        SUM(DECODE(TO_CHAR(first_time, 'HH24'), '22', 1, 0)) h22,
        SUM(DECODE(TO_CHAR(first_time, 'HH24'), '23', 1, 0)) h23,
        COUNT(*) per_day
-  FROM v$log_history
+  FROM &&v_object_prefix.log_history
  GROUP BY
        thread#,
        TRUNC(first_time)
@@ -347,18 +347,18 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'ARCHIVED LOG';
-DEF main_table = 'V$ARCHIVED_LOG';
+DEF main_table = '&&v_view_prefix.ARCHIVED_LOG';
 BEGIN
   :sql_text := q'[
 SELECT *
-  FROM v$archived_log
+  FROM &&v_object_prefix.archived_log
 ]';
 END;
 /
 @@edb360_9a_pre_one.sql
 
 DEF title = 'ARCHIVED LOG Frequency Map per Thread';
-DEF main_table = 'V$ARCHIVED_LOG';
+DEF main_table = '&&v_view_prefix.ARCHIVED_LOG';
 COL row_num_noprint NOPRI;
 BEGIN
   :sql_text := q'[
@@ -372,7 +372,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        first_time,
        blocks,
        block_size
-  FROM v$archived_log
+  FROM &&v_object_prefix.archived_log
  WHERE first_time IS NOT NULL
 ),
 log_denorm AS (
@@ -443,7 +443,7 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'ARCHIVED LOG Frequency Map per Cluster';
-DEF main_table = 'V$ARCHIVED_LOG';
+DEF main_table = '&&v_view_prefix.ARCHIVED_LOG';
 COL row_num_noprint NOPRI;
 BEGIN
   :sql_text := q'[
@@ -456,7 +456,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        first_time,
        blocks,
        block_size
-  FROM v$archived_log
+  FROM &&v_object_prefix.archived_log
  WHERE first_time IS NOT NULL
 ),
 log_denorm AS (
@@ -532,7 +532,7 @@ SET SERVEROUT OFF
 HOS zip -m &&edb360_zip_filename. &&one_spool_filename..html >> &&edb360_log3..txt
 -- update main report
 SPO &&edb360_main_report..html APP;
-PRO <li title="V$ARCHIVED_LOG">ARCHIVED REDO LOG Heat Map for past 31 Days
+PRO <li title="&&v_view_prefix.ARCHIVED_LOG">ARCHIVED REDO LOG Heat Map for past 31 Days
 PRO <a href="&&one_spool_filename..html">html</a>
 PRO </li>
 SPO OFF;
@@ -542,7 +542,7 @@ EXEC :repo_seq := :repo_seq + 1;
 SELECT TO_CHAR(:repo_seq) report_sequence FROM DUAL;
 
 DEF title = 'NOLOGGING Objects';
-DEF main_table = '&&dba_view_prefix.TABLESPACES';
+DEF main_table = '&&dva_view_prefix.TABLESPACES';
 BEGIN
   :sql_text := q'[
 WITH 
@@ -555,7 +555,7 @@ SELECT 1 record_type,
        NULL column_name,
        NULL partition,
        NULL subpartition
-  FROM &&dba_object_prefix.tablespaces
+  FROM &&dva_object_prefix.tablespaces
  WHERE logging = 'NOLOGGING'
    AND contents != 'TEMPORARY'
 UNION ALL       
@@ -567,7 +567,7 @@ SELECT 2 record_type,
        NULL column_name,
        NULL partition,
        NULL subpartition
-  FROM &&dba_object_prefix.all_tables
+  FROM &&dva_object_prefix.all_tables
  WHERE logging = 'NO'
    AND temporary = 'N'
 UNION ALL       
@@ -579,7 +579,7 @@ SELECT 3 record_type,
        NULL column_name,
        NULL partition,
        NULL subpartition
-  FROM &&dba_object_prefix.indexes
+  FROM &&dva_object_prefix.indexes
  WHERE logging = 'NO'
    AND temporary = 'N'
 UNION ALL       
@@ -591,7 +591,7 @@ SELECT 4 record_type,
        SUBSTR(column_name, 1, 30) column_name,
        NULL partition,
        NULL subpartition
-  FROM &&dba_object_prefix.lobs
+  FROM &&dva_object_prefix.lobs
  WHERE logging = 'NO'
 UNION ALL       
 SELECT 5 record_type,
@@ -602,7 +602,7 @@ SELECT 5 record_type,
        NULL column_name,
        partition_name partition,
        NULL subpartition
-  FROM &&dba_object_prefix.tab_partitions
+  FROM &&dva_object_prefix.tab_partitions
  WHERE logging = 'NO'
 UNION ALL       
 SELECT 6 record_type,
@@ -613,7 +613,7 @@ SELECT 6 record_type,
        NULL column_name,
        partition_name partition,
        NULL subpartition
-  FROM &&dba_object_prefix.ind_partitions
+  FROM &&dva_object_prefix.ind_partitions
  WHERE logging = 'NO'
 UNION ALL       
 SELECT 7 record_type,
@@ -624,7 +624,7 @@ SELECT 7 record_type,
        SUBSTR(column_name, 1, 30) column_name,
        partition_name partition,
        NULL subpartition
-  FROM &&dba_object_prefix.lob_partitions
+  FROM &&dva_object_prefix.lob_partitions
  WHERE logging = 'NO'
 UNION ALL       
 SELECT 8 record_type,
@@ -635,7 +635,7 @@ SELECT 8 record_type,
        NULL column_name,
        partition_name partition,
        subpartition_name subpartition
-  FROM &&dba_object_prefix.tab_subpartitions
+  FROM &&dva_object_prefix.tab_subpartitions
  WHERE logging = 'NO'
 UNION ALL       
 SELECT 9 record_type,
@@ -646,7 +646,7 @@ SELECT 9 record_type,
        NULL column_name,
        partition_name partition,
        subpartition_name subpartition
-  FROM &&dba_object_prefix.ind_subpartitions
+  FROM &&dva_object_prefix.ind_subpartitions
  WHERE logging = 'NO'
 UNION ALL       
 SELECT 10 record_type,
@@ -657,7 +657,7 @@ SELECT 10 record_type,
        SUBSTR(column_name, 1, 30) column_name,
        lob_partition_name partition,
        subpartition_name subpartition
-  FROM &&dba_object_prefix.lob_subpartitions
+  FROM &&dva_object_prefix.lob_subpartitions
  WHERE logging = 'NO'
 )
 SELECT object_type,
@@ -682,12 +682,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Unrecoverable Datafile';
-DEF main_table = 'V$DATAFILE';
+DEF main_table = '&&v_view_prefix.DATAFILE';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM v$datafile
+  FROM &&v_object_prefix.datafile
  WHERE unrecoverable_change# > 0
  ORDER BY
        file#
@@ -697,18 +697,18 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Unrecoverable Datafile after Backup';
-DEF main_table = 'V$DATAFILE';
+DEF main_table = '&&v_view_prefix.DATAFILE';
 BEGIN
   :sql_text := q'[
 -- from http://www.pythian.com/blog/oracle-what-is-an-unrecoverable-data-file/
 -- by Catherine Chow
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
 df.name data_file_name, df.unrecoverable_time
-FROM v$datafile df, v$backup bk
+FROM &&v_object_prefix.datafile df, &&v_object_prefix.backup bk
 WHERE df.file#=bk.file#
 and df.unrecoverable_change#!=0
 and df.unrecoverable_time >  
-(select max(end_time) from v$rman_backup_job_details
+(select max(end_time) FROM &&v_object_prefix.rman_backup_job_details
 where INPUT_TYPE in ('DB FULL' ,'DB INCR') and status = 'COMPLETED')
 ]';
 END;
@@ -716,7 +716,7 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Objects affected by Unrecoverable Operations';
-DEF main_table = 'V$DATAFILE';
+DEF main_table = '&&v_view_prefix.DATAFILE';
 BEGIN
   :sql_text := q'[
 -- from http://www.pythian.com/blog/oracle-what-is-an-unrecoverable-data-file/
@@ -724,8 +724,8 @@ BEGIN
 select /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
 distinct dbo.owner,dbo.object_name, dbo.object_type, dfs.tablespace_name,
 dbt.logging table_level_logging, ts.logging tablespace_level_logging
-from v$segstat ss, &&dba_object_prefix.tablespaces ts, &&dba_object_prefix.objects dbo, &&dba_object_prefix.tables dbt,
-v$datafile df, &&dba_object_prefix.data_files dfs, v$tablespace vts
+FROM &&v_object_prefix.segstat ss, &&dva_object_prefix.tablespaces ts, &&dva_object_prefix.objects dbo, &&dva_object_prefix.tables dbt,
+&&v_object_prefix.datafile df, &&dva_object_prefix.data_files dfs, &&v_object_prefix.tablespace vts
 where ss.statistic_name ='physical writes direct'
 and dbo.object_id = ss.obj#
 and vts.ts# = ss.ts#

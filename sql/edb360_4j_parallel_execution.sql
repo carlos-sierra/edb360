@@ -8,26 +8,26 @@ PRO <ol start="&&report_sequence.">
 SPO OFF;
 
 DEF title = 'DOP Limit Method';
-DEF main_table = 'V$PARALLEL_DEGREE_LIMIT_MTH';
+DEF main_table = '&&v_view_prefix.PARALLEL_DEGREE_LIMIT_MTH';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        * 
-    FROM v$parallel_degree_limit_mth
+    FROM &&v_object_prefix.parallel_degree_limit_mth
 ]';
 END;				
 /
 @@edb360_9a_pre_one.sql
 
-gv$px_buffer_advice
+&&gv_object_prefix.px_buffer_advice
 
 DEF title = 'PX Buffer Advice';
-DEF main_table = 'GV$PX_BUFFER_ADVICE';
+DEF main_table = '&&gv_view_prefix.PX_BUFFER_ADVICE';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        * 
-  FROM gv$px_buffer_advice 
+  FROM &&gv_object_prefix.px_buffer_advice 
  ORDER BY 1, 2
 ]';
 END;				
@@ -35,12 +35,12 @@ END;
 @@&&edb360_skip_px_mem.edb360_9a_pre_one.sql
 
 DEF title = 'PQ System Stats';
-DEF main_table = 'GV$PQ_SYSSTAT';
+DEF main_table = '&&gv_view_prefix.PQ_SYSSTAT';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        * 
-  FROM gv$pq_sysstat 
+  FROM &&gv_object_prefix.pq_sysstat 
  ORDER BY 1, 2
 ]';
 END;				
@@ -48,12 +48,12 @@ END;
 @@&&edb360_skip_px_mem.edb360_9a_pre_one.sql
 
 DEF title = 'PX Process System Stats';
-DEF main_table = 'GV$PX_PROCESS_SYSSTAT';
+DEF main_table = '&&gv_view_prefix.PX_PROCESS_SYSSTAT';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        * 
-  FROM gv$px_process_sysstat 
+  FROM &&gv_object_prefix.px_process_sysstat 
  ORDER BY 1, 2
 ]';
 END;				
@@ -61,12 +61,12 @@ END;
 @@&&edb360_skip_px_mem.edb360_9a_pre_one.sql
 
 DEF title = 'System Stats';
-DEF main_table = 'GV$SYSSTAT';
+DEF main_table = '&&gv_view_prefix.SYSSTAT';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        * 
-  FROM gv$sysstat 
+  FROM &&gv_object_prefix.sysstat 
  ORDER BY 1, UPPER(name)
 ]';
 END;				
@@ -74,17 +74,17 @@ END;
 @@&&edb360_skip_stat_mem.edb360_9a_pre_one.sql
 
 DEF title = 'PQ Slave';
-DEF main_table = 'GV$PQ_SLAVE';
+DEF main_table = '&&gv_view_prefix.PQ_SLAVE';
 BEGIN
   :sql_text := q'[
-SELECT * FROM gv$pq_slave ORDER BY 1, 2
+SELECT * FROM &&gv_object_prefix.pq_slave ORDER BY 1, 2
 ]';
 END;				
 /
 @@&&edb360_skip_px_mem.edb360_9a_pre_one.sql
 
 DEF title = 'PX Sessions';
-DEF main_table = 'GV$PX_SESSION';
+DEF main_table = '&&gv_view_prefix.PX_SESSION';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
@@ -106,11 +106,11 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        ses.resource_consumer_group,
        ses.module,
        ses.action
-  FROM gv$px_session pxs,
-       gv$px_process pxp,
-       gv$session ses,
-       gv$process pro,
-       gv$session_wait swt
+  FROM &&gv_object_prefix.px_session pxs,
+       &&gv_object_prefix.px_process pxp,
+       &&gv_object_prefix.session ses,
+       &&gv_object_prefix.process pro,
+       &&gv_object_prefix.session_wait swt
  WHERE pxp.inst_id(+) = pxs.inst_id
    AND pxp.sid(+) = pxs.sid
    AND pxp.serial#(+) = pxs.serial#
@@ -133,14 +133,14 @@ END;
 @@&&edb360_skip_px_mem.edb360_9a_pre_one.sql
 
 DEF title = 'PX Sessions Stats';
-DEF main_table = 'GV$PX_SESSTAT';
+DEF main_table = '&&gv_view_prefix.PX_SESSTAT';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        s.*,
        n.name
-  FROM gv$px_sesstat s,
-       gv$sysstat n
+  FROM &&gv_object_prefix.px_sesstat s,
+       &&gv_object_prefix.sysstat n
  WHERE s.value > 0
    AND n.inst_id = s.inst_id 
    AND n.statistic# = s.statistic#
@@ -151,12 +151,12 @@ END;
 @@&&edb360_skip_px_mem.edb360_9a_pre_one.sql
 
 DEF title = 'PX Processes';
-DEF main_table = 'GV$PX_PROCESS';
+DEF main_table = '&&gv_view_prefix.PX_PROCESS';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        * 
-  FROM gv$px_process 
+  FROM &&gv_object_prefix.px_process 
  ORDER BY 1, 2
 ]';
 END;				
@@ -164,24 +164,24 @@ END;
 @@&&edb360_skip_px_mem.edb360_9a_pre_one.sql
 
 DEF title = 'Services';
-DEF main_table = 'GV$SERVICES';
+DEF main_table = '&&gv_view_prefix.SERVICES';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        * 
-  FROM gv$services 
+  FROM &&gv_object_prefix.services 
  ORDER BY 1, 2
 ]';
 END;				
 /
 @@edb360_9a_pre_one.sql
 DEF title = 'IO Last Calibration Results';
-DEF main_table = '&&dba_view_prefix.RSRC_IO_CALIBRATE';
+DEF main_table = '&&dva_view_prefix.RSRC_IO_CALIBRATE';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM &&dba_object_prefix.rsrc_io_calibrate
+  FROM &&dva_object_prefix.rsrc_io_calibrate
  ORDER BY
        1, 2
 ]';
@@ -190,7 +190,7 @@ END;
 @@&&skip_10g_script.edb360_9a_pre_one.sql
 
 DEF title = 'Parallel Parameters';
-DEF main_table = 'GV$SYSTEM_PARAMETER2';
+DEF main_table = '&&gv_view_prefix.SYSTEM_PARAMETER2';
 BEGIN
   :sql_text := q'[
 -- inspired on parmsd.sql (Kerry Osborne)

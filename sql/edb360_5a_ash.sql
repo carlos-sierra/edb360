@@ -104,56 +104,56 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', 'instance_numbe
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 1;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 1;
 DEF title = 'AAS per Wait Class for Instance 1';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '1');
 @@&&skip_all.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 2;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 2;
 DEF title = 'AAS per Wait Class for Instance 2';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '2');
 @@&&skip_all.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 3;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 3;
 DEF title = 'AAS per Wait Class for Instance 3';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '3');
 @@&&skip_all.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 4;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 4;
 DEF title = 'AAS per Wait Class for Instance 4';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '4');
 @@&&skip_all.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 5;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 5;
 DEF title = 'AAS per Wait Class for Instance 5';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '5');
 @@&&skip_all.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 6;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 6;
 DEF title = 'AAS per Wait Class for Instance 6';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '6');
 @@&&skip_all.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 7;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 7;
 DEF title = 'AAS per Wait Class for Instance 7';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '7');
 @@&&skip_all.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 8;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 8;
 DEF title = 'AAS per Wait Class for Instance 8';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '8');
 @@&&skip_all.edb360_9a_pre_one.sql
@@ -183,7 +183,7 @@ DECLARE
 BEGIN
   FOR i IN 1 .. 15
   LOOP
-    SELECT COUNT(*) INTO l_count FROM gv$instance WHERE instance_number = i;
+    SELECT COUNT(*) INTO l_count FROM &&gv_object_prefix.instance WHERE instance_number = i;
     IF l_count = 0 THEN
       DBMS_OUTPUT.PUT_LINE('COL inst_'||LPAD(i, 2, '0')||' NOPRI;');
       DBMS_OUTPUT.PUT_LINE('DEF tit_'||LPAD(i, 2, '0')||' = '''';');

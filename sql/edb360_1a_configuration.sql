@@ -29,21 +29,21 @@ DEF abstract = '&&abstract_uom.';
 BEGIN
   :sql_text := q'[
 WITH /* &&section_id..&&report_sequence. */ 
-rac AS (SELECT /*+ &&sq_fact_hints. */ COUNT(*) instances, CASE COUNT(*) WHEN 1 THEN 'Single-instance' ELSE COUNT(*)||'-node RAC cluster' END db_type FROM gv$instance),
-mem AS (SELECT /*+ &&sq_fact_hints. */ SUM(value) target FROM gv$system_parameter2 WHERE name = 'memory_target'),
-sga AS (SELECT /*+ &&sq_fact_hints. */ SUM(value) target FROM gv$system_parameter2 WHERE name = 'sga_target'),
-pga AS (SELECT /*+ &&sq_fact_hints. */ SUM(value) target FROM gv$system_parameter2 WHERE name = 'pga_aggregate_target'),
-db_block AS (SELECT /*+ &&sq_fact_hints. */ value bytes FROM v$system_parameter2 WHERE name = 'db_block_size'),
-db AS (SELECT /*+ &&sq_fact_hints. */ name, platform_name FROM v$database),
-inst AS (SELECT /*+ &&sq_fact_hints. */ host_name, version db_version FROM v$instance),
-data AS (SELECT /*+ &&sq_fact_hints. */ SUM(bytes) bytes, COUNT(*) files, COUNT(DISTINCT ts#) tablespaces FROM v$datafile),
-temp AS (SELECT /*+ &&sq_fact_hints. */ SUM(bytes) bytes FROM v$tempfile),
-log AS (SELECT /*+ &&sq_fact_hints. */ SUM(bytes) * MAX(members) bytes FROM v$log),
-control AS (SELECT /*+ &&sq_fact_hints. */ SUM(block_size * file_size_blks) bytes FROM v$controlfile),
-&&skip_10g_column.&&skip_11r1_column. cell AS (SELECT /*+ &&sq_fact_hints. */ COUNT(DISTINCT cell_name) cnt FROM v$cell_state),
-core AS (SELECT /*+ &&sq_fact_hints. */ SUM(value) cnt FROM gv$osstat WHERE stat_name = 'NUM_CPU_CORES'),
-cpu AS (SELECT /*+ &&sq_fact_hints. */ SUM(value) cnt FROM gv$osstat WHERE stat_name = 'NUM_CPUS'),
-pmem AS (SELECT /*+ &&sq_fact_hints. */ SUM(value) bytes FROM gv$osstat WHERE stat_name = 'PHYSICAL_MEMORY_BYTES')
+rac AS (SELECT /*+ &&sq_fact_hints. */ COUNT(*) instances, CASE COUNT(*) WHEN 1 THEN 'Single-instance' ELSE COUNT(*)||'-node RAC cluster' END db_type FROM &&gv_object_prefix.instance),
+mem AS (SELECT /*+ &&sq_fact_hints. */ SUM(value) target FROM &&gv_object_prefix.system_parameter2 WHERE name = 'memory_target'),
+sga AS (SELECT /*+ &&sq_fact_hints. */ SUM(value) target FROM &&gv_object_prefix.system_parameter2 WHERE name = 'sga_target'),
+pga AS (SELECT /*+ &&sq_fact_hints. */ SUM(value) target FROM &&gv_object_prefix.system_parameter2 WHERE name = 'pga_aggregate_target'),
+db_block AS (SELECT /*+ &&sq_fact_hints. */ value bytes FROM &&v_object_prefix.system_parameter2 WHERE name = 'db_block_size'),
+db AS (SELECT /*+ &&sq_fact_hints. */ name, platform_name FROM &&v_object_prefix.database),
+inst AS (SELECT /*+ &&sq_fact_hints. */ host_name, version db_version FROM &&v_object_prefix.instance),
+data AS (SELECT /*+ &&sq_fact_hints. */ SUM(bytes) bytes, COUNT(*) files, COUNT(DISTINCT ts#) tablespaces FROM &&v_object_prefix.datafile),
+temp AS (SELECT /*+ &&sq_fact_hints. */ SUM(bytes) bytes FROM &&v_object_prefix.tempfile),
+log AS (SELECT /*+ &&sq_fact_hints. */ SUM(bytes) * MAX(members) bytes FROM &&v_object_prefix.log),
+control AS (SELECT /*+ &&sq_fact_hints. */ SUM(block_size * file_size_blks) bytes FROM &&v_object_prefix.controlfile),
+&&skip_10g_column.&&skip_11r1_column. cell AS (SELECT /*+ &&sq_fact_hints. */ COUNT(DISTINCT cell_name) cnt FROM &&v_object_prefix.cell_state),
+core AS (SELECT /*+ &&sq_fact_hints. */ SUM(value) cnt FROM &&gv_object_prefix.osstat WHERE stat_name = 'NUM_CPU_CORES'),
+cpu AS (SELECT /*+ &&sq_fact_hints. */ SUM(value) cnt FROM &&gv_object_prefix.osstat WHERE stat_name = 'NUM_CPUS'),
+pmem AS (SELECT /*+ &&sq_fact_hints. */ SUM(value) bytes FROM &&gv_object_prefix.osstat WHERE stat_name = 'PHYSICAL_MEMORY_BYTES')
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        'Database name:' system_item, db.name system_value FROM db
  UNION ALL
@@ -173,7 +173,7 @@ EXEC :sql_text := REPLACE(:sql_text, 'XXX', 'SUM');
 @@&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF title = 'Identification';
-DEF main_table = 'V$DATABASE';
+DEF main_table = '&&v_view_prefix.DATABASE';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
@@ -196,9 +196,9 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        '&&siebel_app_ver.' siebel_app_ver,
        '&&psft_schema.' psft_schema,
        '&&psft_tools_rel.' psft_tools_rel
-  FROM v$database d,
-       gv$instance i,
-       gv$system_parameter2 p
+  FROM &&v_object_prefix.database d,
+       &&gv_object_prefix.instance i,
+       &&gv_object_prefix.system_parameter2 p
  WHERE p.inst_id = i.inst_id
    AND p.name = 'cpu_count'
 ]';
@@ -207,36 +207,36 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Version';
-DEF main_table = 'V$VERSION';
+DEF main_table = '&&v_view_prefix.VERSION';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM v$version
+  FROM &&v_object_prefix.version
 ]';
 END;				
 /
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Database';
-DEF main_table = 'V$DATABASE';
+DEF main_table = '&&v_view_prefix.DATABASE';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM v$database
+  FROM &&v_object_prefix.database
 ]';
 END;
 /
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Instance';
-DEF main_table = 'GV$INSTANCE';
+DEF main_table = '&&gv_view_prefix.INSTANCE';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM gv$instance
+  FROM &&gv_object_prefix.instance
  ORDER BY
        inst_id
 ]';
@@ -245,11 +245,11 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Pluggable Databases';
-DEF main_table = '&&dba_view_prefix.PDBS';
+DEF main_table = '&&dva_view_prefix.PDBS';
 BEGIN
   :sql_text := q'[
 SELECT pdb1.*, pdb2.open_mode, pdb2.restricted, pdb2.open_time, pdb2.total_size, pdb2.block_size, pdb2.recovery_status
-FROM  &&dba_object_prefix.pdbs pdb1 join v$pdbs pdb2
+FROM  &&dva_object_prefix.pdbs pdb1 join &&v_object_prefix.pdbs pdb2
   on pdb1.con_id=pdb2.con_id
 ORDER BY pdb1.con_id
 ]';
@@ -281,12 +281,12 @@ END;
 @@&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF title = 'Instance Recovery';
-DEF main_table = 'GV$INSTANCE_RECOVERY';
+DEF main_table = '&&gv_view_prefix.INSTANCE_RECOVERY';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM gv$instance_recovery
+  FROM &&gv_object_prefix.instance_recovery
  ORDER BY
        inst_id
 ]';
@@ -307,13 +307,13 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Registry';
-DEF main_table = '&&dba_view_prefix.REGISTRY';
+DEF main_table = '&&dva_view_prefix.REGISTRY';
 BEGIN
   :sql_text := q'[
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM &&dba_object_prefix.registry
+  FROM &&dva_object_prefix.registry
  ORDER BY
        comp_id
 ]';
@@ -322,12 +322,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Registry SQL Patch';
-DEF main_table = '&&dba_view_prefix.REGISTRY_SQLPATCH';
+DEF main_table = '&&dva_view_prefix.REGISTRY_SQLPATCH';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM &&dba_object_prefix.registry_sqlpatch
+  FROM &&dva_object_prefix.registry_sqlpatch
  ORDER BY
        1
 ]';
@@ -336,13 +336,13 @@ END;
 @@&&skip_10g_script.&&skip_11g_script.edb360_9a_pre_one.sql
 
 DEF title = 'Registry History';
-DEF main_table = '&&dba_view_prefix.REGISTRY_HISTORY';
+DEF main_table = '&&dva_view_prefix.REGISTRY_HISTORY';
 DEF abstract = 'Review MOS 1360790.1<br />';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM &&dba_object_prefix.registry_history
+  FROM &&dva_object_prefix.registry_history
  ORDER BY
        1
 ]';
@@ -351,13 +351,13 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Registry Hierarchy';
-DEF main_table = '&&dba_view_prefix.REGISTRY_HIERARCHY';
+DEF main_table = '&&dva_view_prefix.REGISTRY_HIERARCHY';
 BEGIN
   :sql_text := q'[
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM &&dba_object_prefix.registry_hierarchy
+  FROM &&dva_object_prefix.registry_hierarchy
  ORDER BY
        1, 2, 3
 ]';
@@ -366,13 +366,13 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Feature Usage Statistics';
-DEF main_table = '&&dba_view_prefix.FEATURE_USAGE_STATISTICS';
+DEF main_table = '&&dva_view_prefix.FEATURE_USAGE_STATISTICS';
 BEGIN
   :sql_text := q'[
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM &&dba_object_prefix.feature_usage_statistics
+  FROM &&dva_object_prefix.feature_usage_statistics
  ORDER BY
        name,
        version
@@ -382,13 +382,13 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'License';
-DEF main_table = 'GV$LICENSE';
+DEF main_table = '&&gv_view_prefix.LICENSE';
 BEGIN
   :sql_text := q'[
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM gv$license
+  FROM &&gv_object_prefix.license
  ORDER BY
        inst_id
 ]';
@@ -397,13 +397,13 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Resource Limit';
-DEF main_table = 'GV$RESOURCE_LIMIT';
+DEF main_table = '&&gv_view_prefix.RESOURCE_LIMIT';
 BEGIN
   :sql_text := q'[
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM gv$resource_limit
+  FROM &&gv_object_prefix.resource_limit
  ORDER BY
        resource_name,
        inst_id
@@ -413,12 +413,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'HWM Statistics';
-DEF main_table = '&&dba_view_prefix.HIGH_WATER_MARK_STATISTICS';
+DEF main_table = '&&dva_view_prefix.HIGH_WATER_MARK_STATISTICS';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM &&dba_object_prefix.high_water_mark_statistics
+  FROM &&dva_object_prefix.high_water_mark_statistics
  ORDER BY
        dbid,
        name
@@ -428,13 +428,13 @@ END;
 @@&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF title = 'Database Links';
-DEF main_table = '&&dba_view_prefix.DB_LINKS';
+DEF main_table = '&&dva_view_prefix.DB_LINKS';
 BEGIN
   :sql_text := q'[
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM &&dba_object_prefix.db_links
+  FROM &&dva_object_prefix.db_links
  ORDER BY
        owner,
        db_link
@@ -444,12 +444,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Application Schemas';
-DEF main_table = '&&dba_view_prefix.TABLES';
+DEF main_table = '&&dva_view_prefix.TABLES';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        owner, SUM(num_rows) num_rows, SUM(blocks) blocks, COUNT(*) tables
-  FROM &&dba_object_prefix.tables
+  FROM &&dva_object_prefix.tables
  WHERE owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
  GROUP BY
@@ -463,7 +463,7 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Application Schema Objects';
-DEF main_table = '&&dba_view_prefix.OBJECTS';
+DEF main_table = '&&dva_view_prefix.OBJECTS';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
@@ -484,7 +484,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        SUM(CASE object_type WHEN 'SYNONYM' THEN 1 ELSE 0 END) synonyms,
        SUM(CASE object_type WHEN 'TYPE' THEN 1 ELSE 0 END) types,
        SUM(CASE object_type WHEN 'SEQUENCE' THEN 1 ELSE 0 END) sequences
-  FROM &&dba_object_prefix.objects
+  FROM &&dva_object_prefix.objects
  WHERE owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
    AND object_type IN ('TABLE', 'TABLE PARTITION', 'TABLE SUBPARTITION', 'INDEX', 'INDEX PARTITION', 'INDEX SUBPARTITION', 'VIEW', 
@@ -499,12 +499,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Modified Parameters';
-DEF main_table = 'GV$SYSTEM_PARAMETER2';
+DEF main_table = '&&gv_view_prefix.SYSTEM_PARAMETER2';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM gv$system_parameter2
+  FROM &&gv_object_prefix.system_parameter2
  WHERE ismodified = 'MODIFIED'
  ORDER BY
        name,
@@ -516,12 +516,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Non-default Parameters';
-DEF main_table = 'GV$SYSTEM_PARAMETER2';
+DEF main_table = '&&gv_view_prefix.SYSTEM_PARAMETER2';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM gv$system_parameter2
+  FROM &&gv_object_prefix.system_parameter2
  WHERE isdefault = 'FALSE'
  ORDER BY
        name,
@@ -533,12 +533,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'All Parameters';
-DEF main_table = 'GV$SYSTEM_PARAMETER2';
+DEF main_table = '&&gv_view_prefix.SYSTEM_PARAMETER2';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM gv$system_parameter2
+  FROM &&gv_object_prefix.system_parameter2
  ORDER BY
        name,
        inst_id,
@@ -549,12 +549,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Parameter File';
-DEF main_table = 'V$SPPARAMETER';
+DEF main_table = '&&v_view_prefix.SPPARAMETER';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM v$spparameter
+  FROM &&v_object_prefix.spparameter
  WHERE isspecified = 'TRUE'
  ORDER BY
        name,
@@ -566,7 +566,7 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'System Parameters Change Log';
-DEF main_table = 'GV$SYSTEM_PARAMETER2';
+DEF main_table = '&&gv_view_prefix.SYSTEM_PARAMETER2';
 BEGIN
   :sql_text := q'[
 WITH 
@@ -614,7 +614,7 @@ END;
 COL spfile_value FOR A12;
 COL spfile_sid FOR A10;
 DEF title = 'Memory Configuration';
-DEF main_table = 'GV$SYSTEM_PARAMETER2';
+DEF main_table = '&&gv_view_prefix.SYSTEM_PARAMETER2';
 DEF foot = 'Recommended GB to be filled out during HC.';
 BEGIN
   :sql_text := q'[
@@ -623,7 +623,7 @@ system_parameter AS (
 SELECT inst_id,
        name,
        value
-  FROM gv$system_parameter2
+  FROM &&gv_object_prefix.system_parameter2
  WHERE name IN
 ( 'memory_max_target'
 , 'memory_target'
@@ -649,8 +649,8 @@ spparameter_inst AS (
 SELECT i.inst_id,
        p.name,
        p.display_value
-  FROM v$spparameter p,
-       gv$instance i
+  FROM &&v_object_prefix.spparameter p,
+       &&gv_object_prefix.instance i
  WHERE p.isspecified = 'TRUE'
    AND p.sid <> '*'
    AND i.instance_name = p.sid
@@ -658,7 +658,7 @@ SELECT i.inst_id,
 spparameter_all AS (
 SELECT p.name,
        p.display_value
-  FROM v$spparameter p
+  FROM &&v_object_prefix.spparameter p
  WHERE p.isspecified = 'TRUE'
    AND p.sid = '*'
 )
@@ -706,7 +706,7 @@ DEF title = 'SQLTXPLAIN Version';
 DEF main_table = 'SQLTXPLAIN.SQLI$_PARAMETER';
 BEGIN
   :sql_text := q'[
-SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ /* ignore if it fails to parse */
+SELECT /* ignore if it fails to parse */ /* &&section_id..&&report_sequence. */ 
 sqltxplain.sqlt$a.get_param('tool_version') sqlt_version,
 sqltxplain.sqlt$a.get_param('tool_date') sqlt_version_date,
 sqltxplain.sqlt$a.get_param('install_date') install_date

@@ -69,7 +69,7 @@ DECLARE
 		put_line('SPO OFF;');
   END update_log;
 BEGIN
-  SELECT COUNT(*) INTO l_instances FROM gv$instance;
+  SELECT COUNT(*) INTO l_instances FROM &&gv_object_prefix.instance;
   
   -- all nodes
   IF l_instances > 1 AND '&&edb360_bypass.' IS NULL THEN
@@ -693,7 +693,7 @@ BEGIN
 
   -- each instance
   FOR i IN (SELECT instance_number
-              FROM gv$instance
+              FROM &&gv_object_prefix.instance
              WHERE '&&diagnostics_pack.' = 'Y'
                AND '&&edb360_bypass.' IS NULL
              ORDER BY

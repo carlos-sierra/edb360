@@ -7,7 +7,7 @@ PRO <h2>&&section_id.. &&section_name.</h2>
 PRO <ol start="&&report_sequence.">
 SPO OFF;
 
-DEF main_table = 'GV$ACTIVE_SESSION_HISTORY';
+DEF main_table = '&&gv_view_prefix.ACTIVE_SESSION_HISTORY';
 DEF bar_height = '65%';
 
 BEGIN
@@ -18,7 +18,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
        CASE session_state WHEN 'ON CPU' THEN session_state ELSE wait_class END wait_class,
        ROW_NUMBER () OVER (ORDER BY COUNT(*) DESC) rn,
        COUNT(*) samples
-  FROM gv$active_session_history
+  FROM &&gv_object_prefix.active_session_history
  WHERE @filter_predicate@
    AND (session_state = 'ON CPU' OR wait_class <> 'Idle')
  GROUP BY
@@ -53,56 +53,56 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', '1 = 1 /* all 
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE inst_id = 1;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE inst_id = 1;
 DEF title = 'ASH Top Timed Classes for Instance 1 from MEM';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'inst_id = 1');
 @@&&skip_all.&&edb360_skip_ash_mem.edb360_9a_pre_one.sql
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE inst_id = 2;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE inst_id = 2;
 DEF title = 'ASH Top Timed Classes for Instance 2 from MEM';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'inst_id = 2');
 @@&&skip_all.&&edb360_skip_ash_mem.edb360_9a_pre_one.sql
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE inst_id = 3;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE inst_id = 3;
 DEF title = 'ASH Top Timed Classes for Instance 3 from MEM';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'inst_id = 3');
 @@&&skip_all.&&edb360_skip_ash_mem.edb360_9a_pre_one.sql
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE inst_id = 4;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE inst_id = 4;
 DEF title = 'ASH Top Timed Classes for Instance 4 from MEM';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'inst_id = 4');
 @@&&skip_all.&&edb360_skip_ash_mem.edb360_9a_pre_one.sql
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE inst_id = 5;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE inst_id = 5;
 DEF title = 'ASH Top Timed Classes for Instance 5 from MEM';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'inst_id = 5');
 @@&&skip_all.&&edb360_skip_ash_mem.edb360_9a_pre_one.sql
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE inst_id = 6;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE inst_id = 6;
 DEF title = 'ASH Top Timed Classes for Instance 6 from MEM';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'inst_id = 6');
 @@&&skip_all.&&edb360_skip_ash_mem.edb360_9a_pre_one.sql
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE inst_id = 7;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE inst_id = 7;
 DEF title = 'ASH Top Timed Classes for Instance 7 from MEM';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'inst_id = 7');
 @@&&skip_all.&&edb360_skip_ash_mem.edb360_9a_pre_one.sql
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE inst_id = 8;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE inst_id = 8;
 DEF title = 'ASH Top Timed Classes for Instance 8 from MEM';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'inst_id = 8');
 @@&&skip_all.&&edb360_skip_ash_mem.edb360_9a_pre_one.sql
@@ -158,7 +158,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'sample_time B
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 1;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 1;
 DEF title = 'ASH Top Timed Classes for Instance 1 for 1 day';
 DEF title_suffix = '&&between_times.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_number = 1 AND sample_time BETWEEN TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'') - 1 AND TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'')');
@@ -166,7 +166,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_numb
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 2;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 2;
 DEF title = 'ASH Top Timed Classes for Instance 2 for 1 day';
 DEF title_suffix = '&&between_times.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_number = 2 AND sample_time BETWEEN TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'') - 1 AND TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'')');
@@ -174,7 +174,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_numb
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 3;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 3;
 DEF title = 'ASH Top Timed Classes for Instance 3 for 1 day';
 DEF title_suffix = '&&between_times.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_number = 3 AND sample_time BETWEEN TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'') - 1 AND TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'')');
@@ -182,7 +182,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_numb
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 4;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 4;
 DEF title = 'ASH Top Timed Classes for Instance 4 for 1 day';
 DEF title_suffix = '&&between_times.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_number = 4 AND sample_time BETWEEN TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'') - 1 AND TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'')');
@@ -190,7 +190,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_numb
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 5;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 5;
 DEF title = 'ASH Top Timed Classes for Instance 5 for 1 day';
 DEF title_suffix = '&&between_times.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_number = 5 AND sample_time BETWEEN TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'') - 1 AND TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'')');
@@ -198,7 +198,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_numb
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 6;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 6;
 DEF title = 'ASH Top Timed Classes for Instance 6 for 1 day';
 DEF title_suffix = '&&between_times.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_number = 6 AND sample_time BETWEEN TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'') - 1 AND TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'')');
@@ -206,7 +206,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_numb
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 7;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 7;
 DEF title = 'ASH Top Timed Classes for Instance 7 for 1 day';
 DEF title_suffix = '&&between_times.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_number = 7 AND sample_time BETWEEN TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'') - 1 AND TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'')');
@@ -214,7 +214,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_numb
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 8;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 8;
 DEF title = 'ASH Top Timed Classes for Instance 8 for 1 day';
 DEF title_suffix = '&&between_times.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_number = 8 AND sample_time BETWEEN TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'') - 1 AND TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'')');
@@ -233,7 +233,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'sample_time B
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 1;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 1;
 DEF title = 'ASH Top Timed Classes for Instance 1 for 5 working days';
 DEF title_suffix = '&&between_times.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_number = 1 AND sample_time BETWEEN TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'') - 7 AND TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'') AND TO_CHAR(sample_time, ''D'') BETWEEN ''&&edb360_conf_work_day_from.'' AND ''&&edb360_conf_work_day_to.'' AND TO_CHAR(sample_time, ''HH24'') BETWEEN ''&&edb360_conf_work_time_from.'' AND ''&&edb360_conf_work_time_to.''');
@@ -241,7 +241,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_numb
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 2;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 2;
 DEF title = 'ASH Top Timed Classes for Instance 2 for 5 working days';
 DEF title_suffix = '&&between_times.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_number = 2 AND sample_time BETWEEN TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'') - 7 AND TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'') AND TO_CHAR(sample_time, ''D'') BETWEEN ''&&edb360_conf_work_day_from.'' AND ''&&edb360_conf_work_day_to.'' AND TO_CHAR(sample_time, ''HH24'') BETWEEN ''&&edb360_conf_work_time_from.'' AND ''&&edb360_conf_work_time_to.''');
@@ -249,7 +249,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_numb
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 3;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 3;
 DEF title = 'ASH Top Timed Classes for Instance 3 for 5 working days';
 DEF title_suffix = '&&between_times.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_number = 3 AND sample_time BETWEEN TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'') - 7 AND TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'') AND TO_CHAR(sample_time, ''D'') BETWEEN ''&&edb360_conf_work_day_from.'' AND ''&&edb360_conf_work_day_to.'' AND TO_CHAR(sample_time, ''HH24'') BETWEEN ''&&edb360_conf_work_time_from.'' AND ''&&edb360_conf_work_time_to.''');
@@ -257,7 +257,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_numb
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 4;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 4;
 DEF title = 'ASH Top Timed Classes for Instance 4 for 5 working days';
 DEF title_suffix = '&&between_times.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_number = 4 AND sample_time BETWEEN TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'') - 7 AND TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'') AND TO_CHAR(sample_time, ''D'') BETWEEN ''&&edb360_conf_work_day_from.'' AND ''&&edb360_conf_work_day_to.'' AND TO_CHAR(sample_time, ''HH24'') BETWEEN ''&&edb360_conf_work_time_from.'' AND ''&&edb360_conf_work_time_to.''');
@@ -265,7 +265,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_numb
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 5;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 5;
 DEF title = 'ASH Top Timed Classes for Instance 5 for 5 working days';
 DEF title_suffix = '&&between_times.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_number = 5 AND sample_time BETWEEN TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'') - 7 AND TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'') AND TO_CHAR(sample_time, ''D'') BETWEEN ''&&edb360_conf_work_day_from.'' AND ''&&edb360_conf_work_day_to.'' AND TO_CHAR(sample_time, ''HH24'') BETWEEN ''&&edb360_conf_work_time_from.'' AND ''&&edb360_conf_work_time_to.''');
@@ -273,7 +273,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_numb
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 6;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 6;
 DEF title = 'ASH Top Timed Classes for Instance 6 for 5 working days';
 DEF title_suffix = '&&between_times.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_number = 6 AND sample_time BETWEEN TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'') - 7 AND TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'') AND TO_CHAR(sample_time, ''D'') BETWEEN ''&&edb360_conf_work_day_from.'' AND ''&&edb360_conf_work_day_to.'' AND TO_CHAR(sample_time, ''HH24'') BETWEEN ''&&edb360_conf_work_time_from.'' AND ''&&edb360_conf_work_time_to.''');
@@ -281,7 +281,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_numb
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 7;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 7;
 DEF title = 'ASH Top Timed Classes for Instance 7 for 5 working days';
 DEF title_suffix = '&&between_times.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_number = 7 AND sample_time BETWEEN TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'') - 7 AND TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'') AND TO_CHAR(sample_time, ''D'') BETWEEN ''&&edb360_conf_work_day_from.'' AND ''&&edb360_conf_work_day_to.'' AND TO_CHAR(sample_time, ''HH24'') BETWEEN ''&&edb360_conf_work_time_from.'' AND ''&&edb360_conf_work_time_to.''');
@@ -289,7 +289,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_numb
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 8;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 8;
 DEF title = 'ASH Top Timed Classes for Instance 8 for 5 working days';
 DEF title_suffix = '&&between_times.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_number = 8 AND sample_time BETWEEN TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'') - 7 AND TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'') AND TO_CHAR(sample_time, ''D'') BETWEEN ''&&edb360_conf_work_day_from.'' AND ''&&edb360_conf_work_day_to.'' AND TO_CHAR(sample_time, ''HH24'') BETWEEN ''&&edb360_conf_work_time_from.'' AND ''&&edb360_conf_work_time_to.''');
@@ -308,7 +308,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'sample_time B
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 1;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 1;
 DEF title = 'ASH Top Timed Classes for Instance 1 for 7 days';
 DEF title_suffix = '&&between_times.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_number = 1 AND sample_time BETWEEN TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'') - 7 AND TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'')');
@@ -316,7 +316,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_numb
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 2;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 2;
 DEF title = 'ASH Top Timed Classes for Instance 2 for 7 days';
 DEF title_suffix = '&&between_times.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_number = 2 AND sample_time BETWEEN TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'') - 7 AND TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'')');
@@ -324,7 +324,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_numb
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 3;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 3;
 DEF title = 'ASH Top Timed Classes for Instance 3 for 7 days';
 DEF title_suffix = '&&between_times.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_number = 3 AND sample_time BETWEEN TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'') - 7 AND TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'')');
@@ -332,7 +332,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_numb
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 4;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 4;
 DEF title = 'ASH Top Timed Classes for Instance 4 for 7 days';
 DEF title_suffix = '&&between_times.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_number = 4 AND sample_time BETWEEN TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'') - 7 AND TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'')');
@@ -340,7 +340,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_numb
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 5;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 5;
 DEF title = 'ASH Top Timed Classes for Instance 5 for 7 days';
 DEF title_suffix = '&&between_times.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_number = 5 AND sample_time BETWEEN TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'') - 7 AND TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'')');
@@ -348,7 +348,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_numb
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 6;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 6;
 DEF title = 'ASH Top Timed Classes for Instance 6 for 7 days';
 DEF title_suffix = '&&between_times.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_number = 6 AND sample_time BETWEEN TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'') - 7 AND TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'')');
@@ -356,7 +356,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_numb
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 7;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 7;
 DEF title = 'ASH Top Timed Classes for Instance 7 for 7 days';
 DEF title_suffix = '&&between_times.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_number = 7 AND sample_time BETWEEN TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'') - 7 AND TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'')');
@@ -364,7 +364,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_numb
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 8;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 8;
 DEF title = 'ASH Top Timed Classes for Instance 8 for 7 days';
 DEF title_suffix = '&&between_times.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_number = 8 AND sample_time BETWEEN TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'') - 7 AND TO_TIMESTAMP(''&&tool_sysdate.'', ''YYYYMMDDHH24MISS'')');
@@ -383,7 +383,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'TO_CHAR(sampl
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 1;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 1;
 DEF title = 'ASH Top Timed Classes for Instance 1 for &&hist_work_days. working days';
 DEF title_suffix = '&&between_times.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_number = 1 AND TO_CHAR(sample_time, ''D'') BETWEEN ''&&edb360_conf_work_day_from.'' AND ''&&edb360_conf_work_day_to.'' AND TO_CHAR(sample_time, ''HH24'') BETWEEN ''&&edb360_conf_work_time_from.'' AND ''&&edb360_conf_work_time_to.''');
@@ -391,7 +391,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_numb
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 2;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 2;
 DEF title = 'ASH Top Timed Classes for Instance 2 for &&hist_work_days. working days';
 DEF title_suffix = '&&between_times.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_number = 2 AND TO_CHAR(sample_time, ''D'') BETWEEN ''&&edb360_conf_work_day_from.'' AND ''&&edb360_conf_work_day_to.'' AND TO_CHAR(sample_time, ''HH24'') BETWEEN ''&&edb360_conf_work_time_from.'' AND ''&&edb360_conf_work_time_to.''');
@@ -399,7 +399,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_numb
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 3;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 3;
 DEF title = 'ASH Top Timed Classes for Instance 3 for &&hist_work_days. working days';
 DEF title_suffix = '&&between_times.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_number = 3 AND TO_CHAR(sample_time, ''D'') BETWEEN ''&&edb360_conf_work_day_from.'' AND ''&&edb360_conf_work_day_to.'' AND TO_CHAR(sample_time, ''HH24'') BETWEEN ''&&edb360_conf_work_time_from.'' AND ''&&edb360_conf_work_time_to.''');
@@ -407,7 +407,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_numb
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 4;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 4;
 DEF title = 'ASH Top Timed Classes for Instance 4 for &&hist_work_days. working days';
 DEF title_suffix = '&&between_times.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_number = 4 AND TO_CHAR(sample_time, ''D'') BETWEEN ''&&edb360_conf_work_day_from.'' AND ''&&edb360_conf_work_day_to.'' AND TO_CHAR(sample_time, ''HH24'') BETWEEN ''&&edb360_conf_work_time_from.'' AND ''&&edb360_conf_work_time_to.''');
@@ -415,7 +415,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_numb
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 5;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 5;
 DEF title = 'ASH Top Timed Classes for Instance 5 for &&hist_work_days. working days';
 DEF title_suffix = '&&between_times.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_number = 5 AND TO_CHAR(sample_time, ''D'') BETWEEN ''&&edb360_conf_work_day_from.'' AND ''&&edb360_conf_work_day_to.'' AND TO_CHAR(sample_time, ''HH24'') BETWEEN ''&&edb360_conf_work_time_from.'' AND ''&&edb360_conf_work_time_to.''');
@@ -423,7 +423,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_numb
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 6;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 6;
 DEF title = 'ASH Top Timed Classes for Instance 6 for &&hist_work_days. working days';
 DEF title_suffix = '&&between_times.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_number = 6 AND TO_CHAR(sample_time, ''D'') BETWEEN ''&&edb360_conf_work_day_from.'' AND ''&&edb360_conf_work_day_to.'' AND TO_CHAR(sample_time, ''HH24'') BETWEEN ''&&edb360_conf_work_time_from.'' AND ''&&edb360_conf_work_time_to.''');
@@ -431,7 +431,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_numb
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 7;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 7;
 DEF title = 'ASH Top Timed Classes for Instance 7 for &&hist_work_days. working days';
 DEF title_suffix = '&&between_times.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_number = 7 AND TO_CHAR(sample_time, ''D'') BETWEEN ''&&edb360_conf_work_day_from.'' AND ''&&edb360_conf_work_day_to.'' AND TO_CHAR(sample_time, ''HH24'') BETWEEN ''&&edb360_conf_work_time_from.'' AND ''&&edb360_conf_work_time_to.''');
@@ -439,7 +439,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_numb
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 8;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 8;
 DEF title = 'ASH Top Timed Classes for Instance 8 for &&hist_work_days. working days';
 DEF title_suffix = '&&between_times.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_number = 8 AND TO_CHAR(sample_time, ''D'') BETWEEN ''&&edb360_conf_work_day_from.'' AND ''&&edb360_conf_work_day_to.'' AND TO_CHAR(sample_time, ''HH24'') BETWEEN ''&&edb360_conf_work_time_from.'' AND ''&&edb360_conf_work_time_to.''');
@@ -458,7 +458,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', '1 = 1');
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 1;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 1;
 DEF title = 'ASH Top Timed Classes for Instance 1 for &&history_days. days of history';
 DEF title_suffix = '&&between_times.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_number = 1');
@@ -466,7 +466,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_numb
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 2;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 2;
 DEF title = 'ASH Top Timed Classes for Instance 2 for &&history_days. days of history';
 DEF title_suffix = '&&between_times.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_number = 2');
@@ -474,7 +474,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_numb
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 3;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 3;
 DEF title = 'ASH Top Timed Classes for Instance 3 for &&history_days. days of history';
 DEF title_suffix = '&&between_times.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_number = 3');
@@ -482,7 +482,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_numb
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 4;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 4;
 DEF title = 'ASH Top Timed Classes for Instance 4 for &&history_days. days of history';
 DEF title_suffix = '&&between_times.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_number = 4');
@@ -490,7 +490,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_numb
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 5;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 5;
 DEF title = 'ASH Top Timed Classes for Instance 5 for &&history_days. days of history';
 DEF title_suffix = '&&between_times.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_number = 5');
@@ -498,7 +498,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_numb
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 6;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 6;
 DEF title = 'ASH Top Timed Classes for Instance 6 for &&history_days. days of history';
 DEF title_suffix = '&&between_times.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_number = 6');
@@ -506,7 +506,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_numb
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 7;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 7;
 DEF title = 'ASH Top Timed Classes for Instance 7 for &&history_days. days of history';
 DEF title_suffix = '&&between_times.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_number = 7');
@@ -514,7 +514,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_numb
 
 DEF skip_bch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 8;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 8;
 DEF title = 'ASH Top Timed Classes for Instance 8 for &&history_days. days of history';
 DEF title_suffix = '&&between_times.';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'instance_number = 8');

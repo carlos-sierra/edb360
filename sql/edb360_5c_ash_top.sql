@@ -17,7 +17,7 @@ DECLARE
 BEGIN
   FOR i IN 1 .. 15
   LOOP
-    SELECT COUNT(*) INTO l_count FROM gv$instance WHERE instance_number = i;
+    SELECT COUNT(*) INTO l_count FROM &&gv_object_prefix.instance WHERE instance_number = i;
     IF l_count = 0 THEN
       DBMS_OUTPUT.PUT_LINE('COL inst_'||LPAD(i, 2, '0')||' NOPRI;');
       DBMS_OUTPUT.PUT_LINE('DEF tit_'||LPAD(i, 2, '0')||' = '''';');

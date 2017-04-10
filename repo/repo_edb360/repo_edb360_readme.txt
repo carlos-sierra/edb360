@@ -3,32 +3,37 @@ awr_ash_pre_check.sql has determined edb360 would take much longer than 24hrs.
 
 This method uses regular heap tables to host the edb360 repository.
 
+The edb360 repository is intended to be created and consumed within same database. 
+
+If you need to consume the repository on a different system, use instead the eadam3 
+repository.
+
 ****************************************************************************************
                                     Repo Create
 ****************************************************************************************
 
-1. Manually create a user to own the edb360 repository. This user needs no grants and it
-   can be locked. Be sure default tablespace for this user has at least 10GB of spare
-   space. For example, create user edb360 (any name is valid but sys).
+1. Manually create a user to own the edb360 repository. This user needs no additional 
+   grants and it can be locked. Be sure default tablespace for this user has at least 
+   10GB of spare space. For example, create user edb360 (any name is valid but sys).
    
    # cd edb360-master
    # sqlplus / as sysdba
    SQL> create user edb360 identified by <some_unique_pwd>;
    SQL> alter user edb360 default tablespace <tablespace> quota unlimited on <tablespace>; 
 
-2. Execute repo_edb360/repo_edb360_create.sql connecting as SYS or DBA. Pass as parameter 
-   the edb360 repository's owner (user created on prior step).
+2. Execute repo/repo_edb360/repo_edb360_create.sql connecting as SYS or DBA. When asked,
+   pass as parameter the edb360 repository's owner (user created on prior step).
    
    # cd edb360-master
    # sqlplus / as sysdba
-   SQL> @repo_edb360/repo_edb360_create.sql
+   SQL> @repo/repo_edb360/repo_edb360_create.sql
    tool repository user (i.e. edb360): edb360 <<< repository owner
 
 ****************************************************************************************
                                     Repo Consume
 ****************************************************************************************
 
-1. Configure edb360 to access edb360 repository instead of base views: either modify
+1. Configure edb360 to access the edb360 repository instead of base views: either modify
    sql/edb360_00_config.sql or sql/custom_config_01.sql and set tool_repo_user.
    
    DEF tool_repo_user = 'edb360'; <<< must match schema owner from prior steps
@@ -45,14 +50,15 @@ This method uses regular heap tables to host the edb360 repository.
                                      Repo Drop
 ****************************************************************************************
 
-1. Once edb360 completes you can drop the edb360 repository, and reset tool_repo_user.
+1. Once edb360 completes you can drop the edb360 repository, and reset tool_repo_user on
+   sql/edb360_00_config.sql or sql/custom_config_01.sql.
 
    # cd edb360-master
    # sqlplus / as sysdba
-   SQL> @repo_edb360/repo_edb360_drop.sql
+   SQL> @repo/repo_edb360/repo_edb360_drop.sql
    tool repository user: edb360 <<< repository owner
 
-2. You may want to drop the user who owned the repository.
+2. Drop the user who owns the repository.
 
    # sqlplus / as sysdba
    SQL> drop user edb360 cascade; <<< repository owner

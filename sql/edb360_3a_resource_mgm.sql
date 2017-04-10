@@ -8,12 +8,12 @@ PRO <ol start="&&report_sequence.">
 SPO OFF;
 
 DEF title = 'Consumer Groups';
-DEF main_table = '&&dba_view_prefix.RSRC_CONSUMER_GROUPS';
+DEF main_table = '&&dva_view_prefix.RSRC_CONSUMER_GROUPS';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM &&dba_object_prefix.rsrc_consumer_groups
+  FROM &&dva_object_prefix.rsrc_consumer_groups
  ORDER BY
        1, 2
 ]';
@@ -22,12 +22,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Consumer Group Users and Roles';
-DEF main_table = '&&dba_view_prefix.RSRC_CONSUMER_GROUP_PRIVS';
+DEF main_table = '&&dva_view_prefix.RSRC_CONSUMER_GROUP_PRIVS';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM &&dba_object_prefix.rsrc_consumer_group_privs
+  FROM &&dva_object_prefix.rsrc_consumer_group_privs
  ORDER BY
        1, 2
 ]';
@@ -36,12 +36,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Resource Groups Mappings';
-DEF main_table = '&&dba_view_prefix.RSRC_GROUP_MAPPINGS';
+DEF main_table = '&&dva_view_prefix.RSRC_GROUP_MAPPINGS';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM &&dba_object_prefix.rsrc_group_mappings
+  FROM &&dva_object_prefix.rsrc_group_mappings
  ORDER BY
        1, 2
 ]';
@@ -50,12 +50,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Resource Groups Mapping Priorities';
-DEF main_table = '&&dba_view_prefix.RSRC_MAPPING_PRIORITY';
+DEF main_table = '&&dva_view_prefix.RSRC_MAPPING_PRIORITY';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM &&dba_object_prefix.rsrc_mapping_priority
+  FROM &&dva_object_prefix.rsrc_mapping_priority
  ORDER BY
        1, 2
 ]';
@@ -64,12 +64,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Resource Plan Directives';
-DEF main_table = '&&dba_view_prefix.RSRC_PLAN_DIRECTIVES';
+DEF main_table = '&&dva_view_prefix.RSRC_PLAN_DIRECTIVES';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM &&dba_object_prefix.rsrc_plan_directives
+  FROM &&dva_object_prefix.rsrc_plan_directives
  ORDER BY
        1, 2
 ]';
@@ -78,12 +78,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Resource Plans';
-DEF main_table = '&&dba_view_prefix.RSRC_PLANS';
+DEF main_table = '&&dva_view_prefix.RSRC_PLANS';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM &&dba_object_prefix.rsrc_plans
+  FROM &&dva_object_prefix.rsrc_plans
  ORDER BY
        1, 2
 ]';
@@ -92,12 +92,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Active Resource Consumer Groups';
-DEF main_table = 'GV$RSRC_CONSUMER_GROUP';
+DEF main_table = '&&gv_view_prefix.RSRC_CONSUMER_GROUP';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM gv$rsrc_consumer_group
+  FROM &&gv_object_prefix.rsrc_consumer_group
  ORDER BY
        1, 2
 ]';
@@ -106,12 +106,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Resource Consumer Group History';
-DEF main_table = 'GV$RSRC_CONS_GROUP_HISTORY';
+DEF main_table = '&&gv_view_prefix.RSRC_CONS_GROUP_HISTORY';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM gv$rsrc_cons_group_history
+  FROM &&gv_object_prefix.rsrc_cons_group_history
  ORDER BY
        1, 2
 ]';
@@ -120,12 +120,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Resource Plan';
-DEF main_table = 'GV$RSRC_PLAN';
+DEF main_table = '&&gv_view_prefix.RSRC_PLAN';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM gv$rsrc_plan
+  FROM &&gv_object_prefix.rsrc_plan
  ORDER BY
        1, 2
 ]';
@@ -134,12 +134,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Resource Plan History';
-DEF main_table = 'GV$RSRC_PLAN_HISTORY';
+DEF main_table = '&&gv_view_prefix.RSRC_PLAN_HISTORY';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM gv$rsrc_plan_history
+  FROM &&gv_object_prefix.rsrc_plan_history
  ORDER BY
        1, 2
 ]';
@@ -148,12 +148,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'RM Stats per Session';
-DEF main_table = 'GV$RSRC_SESSION_INFO';
+DEF main_table = '&&gv_view_prefix.RSRC_SESSION_INFO';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM gv$rsrc_session_info
+  FROM &&gv_object_prefix.rsrc_session_info
  ORDER BY
        1, 2
 ]';
@@ -162,12 +162,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Resources Consumed per Consumer Group';
-DEF main_table = 'GV$RSRCMGRMETRIC';
+DEF main_table = '&&gv_view_prefix.RSRCMGRMETRIC';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM gv$rsrcmgrmetric
+  FROM &&gv_object_prefix.rsrcmgrmetric
  ORDER BY
        1, 2
 ]';
@@ -176,12 +176,12 @@ END;
 @@&&skip_10g_script.edb360_9a_pre_one.sql
 
 DEF title = 'Resources Consumed History';
-DEF main_table = 'GV$RSRCMGRMETRIC_HISTORY';
+DEF main_table = '&&gv_view_prefix.RSRCMGRMETRIC_HISTORY';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM gv$rsrcmgrmetric_history
+  FROM &&gv_object_prefix.rsrcmgrmetric_history
  ORDER BY
        1, 2
 ]';

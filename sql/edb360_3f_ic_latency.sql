@@ -282,7 +282,7 @@ DECLARE
 BEGIN
   FOR i IN 1 .. 13
   LOOP
-    SELECT COUNT(*) INTO l_count FROM gv$instance WHERE instance_number = i;
+    SELECT COUNT(*) INTO l_count FROM &&gv_object_prefix.instance WHERE instance_number = i;
     IF l_count = 0 THEN
       DBMS_OUTPUT.PUT_LINE('COL inst_'||LPAD(i, 2, '0')||' NOPRI;');
       DBMS_OUTPUT.PUT_LINE('DEF tit_'||LPAD(i + 2, 2, '0')||' = '''';');
@@ -333,7 +333,7 @@ DEF tit_02 = 'Inst Avg';
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 1;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 1;
 DEF title = '8K msg pings received from Instance 1';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '1');
 EXEC :sql_text := REPLACE(:sql_text, '@msg@', '8K');
@@ -342,7 +342,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@denorm@', 'target');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 1;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 1;
 DEF title = '8K msg pings sent to Instance 1';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '1');
 EXEC :sql_text := REPLACE(:sql_text, '@msg@', '8K');
@@ -351,7 +351,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@denorm@', 'source');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 1;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 1;
 DEF title = '500B msg pings received from Instance 1';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '1');
 EXEC :sql_text := REPLACE(:sql_text, '@msg@', '500B');
@@ -360,7 +360,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@denorm@', 'target');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 1;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 1;
 DEF title = '500B msg pings sent to Instance 1';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '1');
 EXEC :sql_text := REPLACE(:sql_text, '@msg@', '500B');
@@ -370,7 +370,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@denorm@', 'source');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 2;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 2;
 DEF title = '8K msg pings received from Instance 2';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '2');
 EXEC :sql_text := REPLACE(:sql_text, '@msg@', '8K');
@@ -379,7 +379,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@denorm@', 'target');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 2;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 2;
 DEF title = '8K msg pings sent to Instance 2';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '2');
 EXEC :sql_text := REPLACE(:sql_text, '@msg@', '8K');
@@ -388,7 +388,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@denorm@', 'source');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 2;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 2;
 DEF title = '500B msg pings received from Instance 2';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '2');
 EXEC :sql_text := REPLACE(:sql_text, '@msg@', '500B');
@@ -397,7 +397,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@denorm@', 'target');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 2;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 2;
 DEF title = '500B msg pings sent to Instance 2';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '2');
 EXEC :sql_text := REPLACE(:sql_text, '@msg@', '500B');
@@ -407,7 +407,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@denorm@', 'source');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 3;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 3;
 DEF title = '8K msg pings received from Instance 3';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '3');
 EXEC :sql_text := REPLACE(:sql_text, '@msg@', '8K');
@@ -416,7 +416,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@denorm@', 'target');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 3;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 3;
 DEF title = '8K msg pings sent to Instance 3';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '3');
 EXEC :sql_text := REPLACE(:sql_text, '@msg@', '8K');
@@ -425,7 +425,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@denorm@', 'source');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 3;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 3;
 DEF title = '500B msg pings received from Instance 3';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '3');
 EXEC :sql_text := REPLACE(:sql_text, '@msg@', '500B');
@@ -434,7 +434,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@denorm@', 'target');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 3;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 3;
 DEF title = '500B msg pings sent to Instance 3';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '3');
 EXEC :sql_text := REPLACE(:sql_text, '@msg@', '500B');
@@ -444,7 +444,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@denorm@', 'source');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 4;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 4;
 DEF title = '8K msg pings received from Instance 4';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '4');
 EXEC :sql_text := REPLACE(:sql_text, '@msg@', '8K');
@@ -453,7 +453,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@denorm@', 'target');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 4;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 4;
 DEF title = '8K msg pings sent to Instance 4';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '4');
 EXEC :sql_text := REPLACE(:sql_text, '@msg@', '8K');
@@ -462,7 +462,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@denorm@', 'source');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 4;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 4;
 DEF title = '500B msg pings received from Instance 4';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '4');
 EXEC :sql_text := REPLACE(:sql_text, '@msg@', '500B');
@@ -471,7 +471,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@denorm@', 'target');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 4;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 4;
 DEF title = '500B msg pings sent to Instance 4';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '4');
 EXEC :sql_text := REPLACE(:sql_text, '@msg@', '500B');
@@ -481,7 +481,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@denorm@', 'source');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 5;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 5;
 DEF title = '8K msg pings received from Instance 5';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '5');
 EXEC :sql_text := REPLACE(:sql_text, '@msg@', '8K');
@@ -490,7 +490,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@denorm@', 'target');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 5;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 5;
 DEF title = '8K msg pings sent to Instance 5';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '5');
 EXEC :sql_text := REPLACE(:sql_text, '@msg@', '8K');
@@ -499,7 +499,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@denorm@', 'source');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 5;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 5;
 DEF title = '500B msg pings received from Instance 5';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '5');
 EXEC :sql_text := REPLACE(:sql_text, '@msg@', '500B');
@@ -508,7 +508,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@denorm@', 'target');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 5;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 5;
 DEF title = '500B msg pings sent to Instance 5';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '5');
 EXEC :sql_text := REPLACE(:sql_text, '@msg@', '500B');
@@ -518,7 +518,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@denorm@', 'source');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 6;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 6;
 DEF title = '8K msg pings received from Instance 6';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '6');
 EXEC :sql_text := REPLACE(:sql_text, '@msg@', '8K');
@@ -527,7 +527,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@denorm@', 'target');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 6;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 6;
 DEF title = '8K msg pings sent to Instance 6';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '6');
 EXEC :sql_text := REPLACE(:sql_text, '@msg@', '8K');
@@ -536,7 +536,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@denorm@', 'source');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 6;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 6;
 DEF title = '500B msg pings received from Instance 6';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '6');
 EXEC :sql_text := REPLACE(:sql_text, '@msg@', '500B');
@@ -545,7 +545,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@denorm@', 'target');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 6;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 6;
 DEF title = '500B msg pings sent to Instance 6';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '6');
 EXEC :sql_text := REPLACE(:sql_text, '@msg@', '500B');
@@ -555,7 +555,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@denorm@', 'source');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 7;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 7;
 DEF title = '8K msg pings received from Instance 7';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '7');
 EXEC :sql_text := REPLACE(:sql_text, '@msg@', '8K');
@@ -564,7 +564,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@denorm@', 'target');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 7;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 7;
 DEF title = '8K msg pings sent to Instance 7';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '7');
 EXEC :sql_text := REPLACE(:sql_text, '@msg@', '8K');
@@ -573,7 +573,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@denorm@', 'source');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 7;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 7;
 DEF title = '500B msg pings received from Instance 7';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '7');
 EXEC :sql_text := REPLACE(:sql_text, '@msg@', '500B');
@@ -582,7 +582,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@denorm@', 'target');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 7;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 7;
 DEF title = '500B msg pings sent to Instance 7';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '7');
 EXEC :sql_text := REPLACE(:sql_text, '@msg@', '500B');
@@ -592,7 +592,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@denorm@', 'source');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 8;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 8;
 DEF title = '8K msg pings received from Instance 8';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '8');
 EXEC :sql_text := REPLACE(:sql_text, '@msg@', '8K');
@@ -601,7 +601,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@denorm@', 'target');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 8;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 8;
 DEF title = '8K msg pings sent to Instance 8';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '8');
 EXEC :sql_text := REPLACE(:sql_text, '@msg@', '8K');
@@ -610,7 +610,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@denorm@', 'source');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 8;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 8;
 DEF title = '500B msg pings received from Instance 8';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '8');
 EXEC :sql_text := REPLACE(:sql_text, '@msg@', '500B');
@@ -619,7 +619,7 @@ EXEC :sql_text := REPLACE(:sql_text, '@denorm@', 'target');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE instance_number = 8;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 8;
 DEF title = '500B msg pings sent to Instance 8';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '8');
 EXEC :sql_text := REPLACE(:sql_text, '@msg@', '500B');

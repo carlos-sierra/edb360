@@ -2,8 +2,9 @@
 VAR edb360_main_time0 NUMBER;
 EXEC :edb360_main_time0 := DBMS_UTILITY.GET_TIME;
 
+DEF v_dollar = 'V$';
 COL my_sid NEW_V my_sid;
-SELECT TO_CHAR(sid) my_sid FROM v$mystat WHERE ROWNUM = 1;
+SELECT TO_CHAR(sid) my_sid FROM &&v_dollar.mystat WHERE ROWNUM = 1;
 
 SET TERM ON;
 SPO 00000_readme_first_&&my_sid..txt
@@ -15,7 +16,7 @@ PRO eDB360 requires the Oracle seeded PLAN_TABLE, consider dropping the one in t
 WHENEVER SQLERROR EXIT;
 DECLARE
  is_plan_table_in_usr_schema NUMBER; 
- l_version v$instance.version%TYPE;
+ l_version &&v_dollar.instance.version%TYPE;
 BEGIN
  SELECT COUNT(*)
    INTO is_plan_table_in_usr_schema
@@ -25,7 +26,7 @@ BEGIN
   IF is_plan_table_in_usr_schema > 0 THEN
     RAISE_APPLICATION_ERROR(-20100, 'PLAN_TABLE physical table present in user schema '||USER||'.');
   END IF;
-  SELECT version INTO l_version FROM v$instance;
+  SELECT version INTO l_version FROM &&v_dollar.instance;
   IF SUBSTR(l_version, 1, 2) != SUBSTR('&&_o_release.', 1, 2) THEN
     RAISE_APPLICATION_ERROR(-20101, 'Set configuration parameter "edb360_sections" on sql/edb360_00_config.sql instead.');
   END IF;
@@ -120,25 +121,28 @@ PRO
 SET SUF '';
 @@&&custom_config_filename.
 SET SUF sql;
--- data dictionary views or tool repository. do not change:
+
+-- data dictionary views for tool repository. do not change values. this piece must execute after processing configuration scripts
 DEF awr_hist_prefix = 'DBA_HIST_';
 DEF awr_object_prefix = 'dba_hist_';
-DEF dba_view_prefix = 'DBA_';
-DEF dba_object_prefix = 'dba_';
+DEF dva_view_prefix = 'DBA_';
+DEF dva_object_prefix = 'dba_';
 DEF gv_view_prefix = 'GV$';
 DEF gv_object_prefix = 'gv$';
 DEF v_view_prefix = 'V$';
 DEF v_object_prefix = 'v$';
+-- when using a repository change then view prefixes
 COL awr_object_prefix NEW_V awr_object_prefix;
-COL dba_object_prefix NEW_V dba_object_prefix;
+COL dva_object_prefix NEW_V dva_object_prefix;
 COL gv_object_prefix NEW_V gv_object_prefix;
 COL v_object_prefix NEW_V v_object_prefix;
 SELECT CASE WHEN '&&tool_repo_user.' IS NULL THEN '&&awr_object_prefix.' ELSE '&&tool_repo_user..&&tool_prefix_1.' END awr_object_prefix,
-       CASE WHEN '&&tool_repo_user.' IS NULL THEN '&&dba_object_prefix.' ELSE '&&tool_repo_user..&&tool_prefix_2.' END dba_object_prefix,
+       CASE WHEN '&&tool_repo_user.' IS NULL THEN '&&dva_object_prefix.' ELSE '&&tool_repo_user..&&tool_prefix_2.' END dva_object_prefix,
        CASE WHEN '&&tool_repo_user.' IS NULL THEN '&&gv_object_prefix.'  ELSE '&&tool_repo_user..&&tool_prefix_3.' END gv_object_prefix,
        CASE WHEN '&&tool_repo_user.' IS NULL THEN '&&v_object_prefix.'   ELSE '&&tool_repo_user..&&tool_prefix_4.' END v_object_prefix
   FROM DUAL
 /
+
 -- links
 DEF edb360_conf_tool_page = '<a href="http://carlos-sierra.net/edb360-an-oracle-database-360-degree-view/" target="_blank">';
 DEF edb360_conf_all_pages_icon = '<a href="http://carlos-sierra.net/edb360-an-oracle-database-360-degree-view/" target="_blank"><img src="edb360_img.jpg" alt="eDB360" height="47" width="50" /></a>';
@@ -296,8 +300,8 @@ PRO </td><td>
 PRO
 SPO OFF;
 
-@@&&skip_diagnostics.&&edb360_7a.rpt.sql
-@@&&skip_diagnostics.&&edb360_7b.sql_sample.sql
+@@&&skip_diagnostics.&&skip_non_repo_script.&&edb360_7a.rpt.sql
+@@&&skip_diagnostics.&&skip_non_repo_column.&&edb360_7b.sql_sample.sql
 
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -316,7 +320,7 @@ COL value FOR A50;
 COL display_value FOR A50;
 COL update_comment NOPRI;
 SELECT *
-  FROM v$spparameter
+  FROM &&v_object_prefix.spparameter
  WHERE isspecified = 'TRUE'
  ORDER BY
        name,

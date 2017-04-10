@@ -8,12 +8,12 @@ PRO <ol start="&&report_sequence.">
 SPO OFF;
 
 DEF title = 'ASM Attributes';
-DEF main_table = 'V$ASM_ATTRIBUTE';
+DEF main_table = '&&v_view_prefix.ASM_ATTRIBUTE';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM v$asm_attribute
+  FROM &&v_object_prefix.asm_attribute
  ORDER BY
        1, 2
 ]';
@@ -22,12 +22,12 @@ END;
 @@&&skip_10g_script.edb360_9a_pre_one.sql
 
 DEF title = 'ASM Client';
-DEF main_table = 'V$ASM_CLIENT';
+DEF main_table = '&&v_view_prefix.ASM_CLIENT';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM v$asm_client
+  FROM &&v_object_prefix.asm_client
  ORDER BY
        1, 2
 ]';
@@ -36,12 +36,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'ASM Template';
-DEF main_table = 'V$ASM_TEMPLATE';
+DEF main_table = '&&v_view_prefix.ASM_TEMPLATE';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM v$asm_template
+  FROM &&v_object_prefix.asm_template
  ORDER BY
        1, 2
 ]';
@@ -50,12 +50,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'ASM Disk Group';
-DEF main_table = 'V$ASM_DISKGROUP';
+DEF main_table = '&&v_view_prefix.ASM_DISKGROUP';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM v$asm_diskgroup
+  FROM &&v_object_prefix.asm_diskgroup
  ORDER BY
        1, 2
 ]';
@@ -64,12 +64,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'ASM Disk Group Stat';
-DEF main_table = 'V$ASM_DISKGROUP_STAT';
+DEF main_table = '&&v_view_prefix.ASM_DISKGROUP_STAT';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM v$asm_diskgroup_stat
+  FROM &&v_object_prefix.asm_diskgroup_stat
  ORDER BY
        1, 2
 ]';
@@ -78,12 +78,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'ASM Disk';
-DEF main_table = 'V$ASM_DISK';
+DEF main_table = '&&v_view_prefix.ASM_DISK';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM v$asm_disk
+  FROM &&v_object_prefix.asm_disk
  ORDER BY
        1, 2
 ]';
@@ -92,12 +92,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'ASM Disk Stat';
-DEF main_table = 'V$ASM_DISK_STAT';
+DEF main_table = '&&v_view_prefix.ASM_DISK_STAT';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM v$asm_disk_stat
+  FROM &&v_object_prefix.asm_disk_stat
  ORDER BY
        1, 2
 ]';
@@ -106,12 +106,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'ASM Disk IO Stats';
-DEF main_table = 'GV$ASM_DISK_IOSTAT';
+DEF main_table = '&&gv_view_prefix.ASM_DISK_IOSTAT';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM gv$asm_disk_iostat
+  FROM &&gv_object_prefix.asm_disk_iostat
  ORDER BY
        1, 2, 3, 4, 5
 ]';
@@ -120,12 +120,12 @@ END;
 @@&&skip_10g_script.edb360_9a_pre_one.sql
 
 DEF title = 'ASM File';
-DEF main_table = 'V$ASM_FILE';
+DEF main_table = '&&v_view_prefix.ASM_FILE';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM v$asm_file
+  FROM &&v_object_prefix.asm_file
 ]';
 END;
 /
@@ -141,7 +141,7 @@ SPO OFF
 HOS zip -m &&edb360_zip_filename. &&one_spool_filename..txt >> &&edb360_log3..txt
 -- update main report
 SPO &&edb360_main_report..html APP;
-PRO <li title="V$ASM_DISKGROUP">DISK and CELL Failure Diskgroup Space Reserve Requirements
+PRO <li title="&&v_view_prefix.ASM_DISKGROUP">DISK and CELL Failure Diskgroup Space Reserve Requirements
 PRO <a href="&&one_spool_filename..txt">text</a>
 PRO </li>
 SPO OFF;

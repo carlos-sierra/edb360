@@ -8,7 +8,7 @@ PRO <ol start="&&report_sequence.">
 SPO OFF;
 
 DEF title = 'Average Latency per Wait Class';
-DEF main_table = 'GV$WAITCLASSMETRIC';
+DEF main_table = '&&gv_view_prefix.WAITCLASSMETRIC';
 BEGIN
   :sql_text := q'[
 -- inspired by http://www.oraclerealworld.com/wait-event-and-wait-class-metrics-vs-vsystem_event/
@@ -19,8 +19,8 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        m.wait_count,
        m.time_waited,
        ROUND(m.time_waited / 100) seconds_waited
-  FROM gv$waitclassmetric m,
-       gv$system_wait_class c
+  FROM &&gv_object_prefix.waitclassmetric m,
+       &&gv_object_prefix.system_wait_class c
  WHERE m.wait_count > 0
    AND c.inst_id = m.inst_id
    AND c.wait_class# = m.wait_class#
@@ -33,7 +33,7 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Average Latency per Wait Event';
-DEF main_table = 'GV$EVENTMETRIC';
+DEF main_table = '&&gv_view_prefix.EVENTMETRIC';
 BEGIN
   :sql_text := q'[
 -- inspired by http://www.oraclerealworld.com/wait-event-and-wait-class-metrics-vs-vsystem_event/
@@ -45,8 +45,8 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        m.wait_count,
        m.time_waited,
        ROUND(m.time_waited / 100) seconds_waited
-  FROM gv$eventmetric m,
-       gv$event_name e
+  FROM &&gv_object_prefix.eventmetric m,
+       &&gv_object_prefix.event_name e
  WHERE m.wait_count > 0
    AND e.inst_id = m.inst_id
    AND e.event_id = m.event_id
@@ -68,7 +68,7 @@ DECLARE
 BEGIN
   FOR i IN 1 .. 15
   LOOP
-    SELECT COUNT(*) INTO l_count FROM gv$instance WHERE instance_number = i;
+    SELECT COUNT(*) INTO l_count FROM &&gv_object_prefix.instance WHERE instance_number = i;
     IF l_count = 0 THEN
       DBMS_OUTPUT.PUT_LINE('COL inst_'||LPAD(i, 2, '0')||' NOPRI;');
       DBMS_OUTPUT.PUT_LINE('DEF tit_'||LPAD(i, 2, '0')||' = '''';');
@@ -162,84 +162,84 @@ END;
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE inst_id = 1;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE inst_id = 1;
 DEF title = 'User I/O Wait Time per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''User I/O''');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE inst_id = 1;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE inst_id = 1;
 DEF title = 'System I/O Wait Time per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''System I/O''');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE inst_id = 1;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE inst_id = 1;
 DEF title = 'Cluster Wait Time per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''Cluster''');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE inst_id = 1;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE inst_id = 1;
 DEF title = 'Commit Wait Time per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''Commit''');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE inst_id = 1;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE inst_id = 1;
 DEF title = 'Concurrency Wait Time per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''Concurrency''');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE inst_id = 1;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE inst_id = 1;
 DEF title = 'Application Wait Time per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''Application''');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE inst_id = 1;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE inst_id = 1;
 DEF title = 'Administrative Wait Time per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''Administrative''');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE inst_id = 1;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE inst_id = 1;
 DEF title = 'Configuration Wait Time per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''Configuration''');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE inst_id = 1;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE inst_id = 1;
 DEF title = 'Network Wait Time per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''Network''');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE inst_id = 1;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE inst_id = 1;
 DEF title = 'Queueing Wait Time per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''Queueing''');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE inst_id = 1;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE inst_id = 1;
 DEF title = 'Scheduler Wait Time per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''Scheduler''');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM gv$instance WHERE inst_id = 1;
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE inst_id = 1;
 DEF title = 'Other Wait Time per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''Other''');
 @@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql

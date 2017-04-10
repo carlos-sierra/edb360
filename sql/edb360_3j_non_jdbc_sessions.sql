@@ -8,7 +8,7 @@ PRO <ol start="&&report_sequence.">
 SPO OFF;
 
 DEF title = 'Non-JDBC Connection usage per Module';
-DEF main_table = 'GV$SESSION';
+DEF main_table = '&&gv_view_prefix.SESSION';
 BEGIN
   :sql_text := q'[
 -- from monitor_jdbc_conn.sql 
@@ -23,7 +23,7 @@ SUM(CASE status WHEN 'SNIPED' THEN 1 ELSE 0 END) sniped,
 MIN(last_call_et) min_last_call_secs,
 MAX(last_call_et) max_last_call_secs,
 MEDIAN(last_call_et) med_last_call_secs
-from gv$session 
+FROM &&gv_object_prefix.session 
 where (program IS NULL OR program not like '%JDBC%')
 group by type,module 
 order by 1 DESC, 2,3
@@ -33,7 +33,7 @@ END;
 @@edb360_9a_pre_one.sql       
 
 DEF title = 'Non-JDBC Connection usage per Process and Module';
-DEF main_table = 'GV$SESSION';
+DEF main_table = '&&gv_view_prefix.SESSION';
 BEGIN
   :sql_text := q'[
 -- from monitor_jdbc_conn.sql 
@@ -49,7 +49,7 @@ SUM(CASE status WHEN 'SNIPED' THEN 1 ELSE 0 END) sniped,
 MIN(last_call_et) min_last_call_secs,
 MAX(last_call_et) max_last_call_secs,
 MEDIAN(last_call_et) med_last_call_secs
-from gv$session 
+FROM &&gv_object_prefix.session 
 where (program IS NULL OR program not like '%JDBC%')
 group by type,process, module 
 order by 1 DESC, 2, 3, 4
@@ -59,7 +59,7 @@ END;
 @@edb360_9a_pre_one.sql       
 
 DEF title = 'Non-JDBC Connection usage per JVM';
-DEF main_table = 'GV$SESSION';
+DEF main_table = '&&gv_view_prefix.SESSION';
 BEGIN
   :sql_text := q'[
 -- from monitor_jdbc_conn.sql 
@@ -74,7 +74,7 @@ SUM(CASE status WHEN 'SNIPED' THEN 1 ELSE 0 END) sniped,
 MIN(last_call_et) min_last_call_secs,
 MAX(last_call_et) max_last_call_secs,
 MEDIAN(last_call_et) med_last_call_secs
-from gv$session 
+FROM &&gv_object_prefix.session 
 where (program IS NULL OR program not like '%JDBC%')
 group by type,machine 
 order by 1 DESC, 2, 3
@@ -84,7 +84,7 @@ END;
 @@edb360_9a_pre_one.sql       
 
 DEF title = 'Non-JDBC Connection usage per JVM Process';
-DEF main_table = 'GV$SESSION';
+DEF main_table = '&&gv_view_prefix.SESSION';
 BEGIN
   :sql_text := q'[
 -- from monitor_jdbc_conn.sql 
@@ -100,7 +100,7 @@ SUM(CASE status WHEN 'SNIPED' THEN 1 ELSE 0 END) sniped,
 MIN(last_call_et) min_last_call_secs,
 MAX(last_call_et) max_last_call_secs,
 MEDIAN(last_call_et) med_last_call_secs
-from gv$session 
+FROM &&gv_object_prefix.session 
 where (program IS NULL OR program not like '%JDBC%')
 group by type,machine, process 
 order by 1 DESC, 2, 3, 4
@@ -110,7 +110,7 @@ END;
 @@edb360_9a_pre_one.sql       
 
 DEF title = 'Non-JDBC Idle connections for more than N hours';
-DEF main_table = 'GV$SESSION';
+DEF main_table = '&&gv_view_prefix.SESSION';
 BEGIN
   :sql_text := q'[
 -- from monitor_jdbc_conn.sql 
@@ -120,7 +120,7 @@ status,
 count(*) sessions,
 CASE TRUNC(last_call_et/3600) WHEN 0 THEN ROUND(AVG(last_call_et)) END avg_secs,
 CASE TRUNC(last_call_et/3600) WHEN 0 THEN MEDIAN(last_call_et) END med_secs
-from gv$session 
+FROM &&gv_object_prefix.session 
 where (program IS NULL OR program not like '%JDBC%')
 and status <> 'ACTIVE' 
 group by type,status,TRUNC(last_call_et/3600) 
@@ -131,7 +131,7 @@ END;
 @@edb360_9a_pre_one.sql       
 
 DEF title = 'Non-JDBC Idle connections per Status, JVM and Program';
-DEF main_table = 'GV$SESSION';
+DEF main_table = '&&gv_view_prefix.SESSION';
 BEGIN
   :sql_text := q'[
 -- from monitor_jdbc_conn.sql 
@@ -143,7 +143,7 @@ program,
 count(*) sessions, 
 CASE TRUNC(last_call_et/3600) WHEN 0 THEN ROUND(AVG(last_call_et)) END avg_secs,
 CASE TRUNC(last_call_et/3600) WHEN 0 THEN MEDIAN(last_call_et) END med_secs
-from gv$session 
+FROM &&gv_object_prefix.session 
 where (program IS NULL OR program not like '%JDBC%')
 --and  last_call_et > 3600
 and status <> 'ACTIVE' 
@@ -155,13 +155,13 @@ END;
 @@edb360_9a_pre_one.sql       
 
 DEF title = 'Non-JDBC Active connections';
-DEF main_table = 'GV$SESSION';
+DEF main_table = '&&gv_view_prefix.SESSION';
 BEGIN
   :sql_text := q'[
 -- from monitor_jdbc_conn.sql 
 select s.last_call_et last_call_et_secs,  /* &&section_id..&&report_sequence. */
 s.*,  t.sql_text current_sql, t2.sql_text prev_sql 
-from gv$session s, gv$sql t, gv$sql t2
+FROM &&gv_object_prefix.session s, &&gv_object_prefix.sql t, &&gv_object_prefix.sql t2
 where s.inst_id =t.inst_id(+)
 and s.sql_address =t.address(+)  
 and s.sql_hash_value =t.hash_value(+)
@@ -181,13 +181,13 @@ END;
 @@edb360_9a_pre_one.sql       
 
 DEF title = 'Non-JDBC Idle connections';
-DEF main_table = 'GV$SESSION';
+DEF main_table = '&&gv_view_prefix.SESSION';
 BEGIN
   :sql_text := q'[
 -- from monitor_jdbc_conn.sql 
 select s.last_call_et last_call_et_secs,  /* &&section_id..&&report_sequence. */
 s.*,  t.sql_text current_sql, t2.sql_text prev_sql 
-from gv$session s, gv$sql t, gv$sql t2
+FROM &&gv_object_prefix.session s, &&gv_object_prefix.sql t, &&gv_object_prefix.sql t2
 where s.inst_id =t.inst_id(+)
 and s.sql_address =t.address(+)  
 and s.sql_hash_value =t.hash_value(+)

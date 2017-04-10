@@ -8,13 +8,13 @@ PRO <ol start="&&report_sequence.">
 SPO OFF;
 
 DEF title = 'Wait Statistics';
-DEF main_table = 'GV$WAITSTAT';
+DEF main_table = '&&gv_view_prefix.WAITSTAT';
 BEGIN
   :sql_text := q'[
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM gv$waitstat
+  FROM &&gv_object_prefix.waitstat
  WHERE count > 0
  ORDER BY
        class,
@@ -25,12 +25,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'System Wait Class';
-DEF main_table = 'GV$SYSTEM_WAIT_CLASS';
+DEF main_table = '&&gv_view_prefix.SYSTEM_WAIT_CLASS';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM gv$system_wait_class
+  FROM &&gv_object_prefix.system_wait_class
  ORDER BY
        inst_id,
        time_waited DESC
@@ -40,12 +40,12 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Segment Statistics';
-DEF main_table = 'GV$SEGSTAT';
+DEF main_table = '&&gv_view_prefix.SEGSTAT';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        statistic_name, SUM(value) value
-  FROM gv$segstat
+  FROM &&gv_object_prefix.segstat
  GROUP BY 
        statistic_name
  ORDER BY 1
@@ -56,7 +56,7 @@ END;
 
 DEF title = 'SQL Monitor Recent Executions Detail';
 DEF abstract = 'Aggregated by SQL_ID and SQL Execution. Sorted by SQL_ID and Execution Start Time.<br />';
-DEF main_table = 'GV$SQL_MONITOR';
+DEF main_table = '&&gv_view_prefix.SQL_MONITOR';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
@@ -97,7 +97,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        SUM(plsql_exec_time) plsql_exec_time,
        SUM(java_exec_time) java_exec_time,
        MAX(sql_text) sql_text
-  FROM gv$sql_monitor
+  FROM &&gv_object_prefix.sql_monitor
  WHERE status LIKE 'DONE%'
  GROUP BY
        sql_id,
@@ -115,7 +115,7 @@ END;
 
 DEF title = 'SQL Monitor Recent Executions Summary';
 DEF abstract = 'Aggregated by SQL_ID and sorted by Total Elapsed Time.<br />';
-DEF main_table = 'GV$SQL_MONITOR';
+DEF main_table = '&&gv_view_prefix.SQL_MONITOR';
 BEGIN
   :sql_text := q'[
 WITH
@@ -158,7 +158,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        SUM(plsql_exec_time) plsql_exec_time,
        SUM(java_exec_time) java_exec_time,
        MAX(sql_text) sql_text
-  FROM gv$sql_monitor
+  FROM &&gv_object_prefix.sql_monitor
  WHERE status LIKE 'DONE%'
  GROUP BY
        sql_id,
@@ -234,7 +234,7 @@ END;
 
 DEF title = 'SQL Monitor Recent Executions DONE (ERROR)';
 DEF abstract = 'Aggregated by SQL_ID and Error.<br />';
-DEF main_table = 'GV$SQL_MONITOR';
+DEF main_table = '&&gv_view_prefix.SQL_MONITOR';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
@@ -243,7 +243,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        error_facility,
        error_message,
        COUNT(*) executions
-  FROM gv$sql_monitor
+  FROM &&gv_object_prefix.sql_monitor
  WHERE status = 'DONE (ERROR)'
  GROUP BY
        sql_id,
@@ -262,7 +262,7 @@ END;
 @@&&skip_tuning.&&skip_10g_script.&&edb360_skip_sql_mon.edb360_9a_pre_one.sql
 
 DEF title = 'SQL Monitor (QUEUED)';
-DEF main_table = 'GV$SQL_MONITOR';
+DEF main_table = '&&gv_view_prefix.SQL_MONITOR';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
@@ -278,7 +278,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        elapsed_time,
        queuing_time,
        sql_text
-  FROM gv$sql_monitor
+  FROM &&gv_object_prefix.sql_monitor
  WHERE status = 'QUEUED'
  ORDER BY
        sql_id,
@@ -759,13 +759,13 @@ END;
 @@&&skip_diagnostics.edb360_9a_pre_one.sql
 
 DEF title = 'Result Cache related parameters';
-DEF main_table = 'GV$SYSTEM_PARAMETER2';
+DEF main_table = '&&gv_view_prefix.SYSTEM_PARAMETER2';
 BEGIN
   :sql_text := q'[
 -- provided by Simon Pane
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        inst_id, name "PARAMETER", value, isdefault, ismodified
-  FROM gv$system_parameter2
+  FROM &&gv_object_prefix.system_parameter2
  WHERE name IN ('result_cache_mode','result_cache_max_size','result_cache_max_result')
  ORDER BY 2,1,3
 ]';
@@ -785,13 +785,13 @@ END;
 @@&&skip_10g_script.&&skip_11r1_script.edb360_9a_pre_one.sql
 
 DEF title = 'Result Cache memory';
-DEF main_table = 'GV$RESULT_CACHE_MEMORY';
+DEF main_table = '&&gv_view_prefix.RESULT_CACHE_MEMORY';
 BEGIN
   :sql_text := q'[
 -- provided by Simon Pane
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        inst_id, free, count(*)
-  FROM gv$result_cache_memory
+  FROM &&gv_object_prefix.result_cache_memory
  GROUP BY inst_id, free
 ]';
 END;
@@ -799,13 +799,13 @@ END;
 @@&&skip_10g_script.&&skip_11r1_script.edb360_9a_pre_one.sql
 
 DEF title = 'Result Cache statistics';
-DEF main_table = 'GV$RESULT_CACHE_STATISTICS';
+DEF main_table = '&&gv_view_prefix.RESULT_CACHE_STATISTICS';
 BEGIN
   :sql_text := q'[
 -- provided by Simon Pane
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
        inst_id, name, value
-  FROM gv$result_cache_statistics
+  FROM &&gv_object_prefix.result_cache_statistics
  ORDER BY 1, 2
 ]';
 END;
@@ -827,7 +827,7 @@ END;
 @@&&skip_10g_script.&&skip_11r1_script.edb360_9a_pre_one.sql
 
 DEF title = 'AAS for past minute';
-DEF main_table = 'GV$WAITCLASSMETRIC';
+DEF main_table = '&&gv_view_prefix.WAITCLASSMETRIC';
 COL aas FOR 999990.000;
 BEGIN
   :sql_text := q'[
@@ -843,7 +843,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        sm.begin_time,
        sm.end_time,
        ROUND(sm.value / 100, 3) aas --(/ 100 is to convert from cs to sec)
-  FROM gv$sysmetric sm
+  FROM &&gv_object_prefix.sysmetric sm
  WHERE sm.metric_name='CPU Usage Per Sec'
    AND sm.group_id = 2 -- 1 minute
 ),
@@ -855,8 +855,8 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        sm.begin_time,
        sm.end_time,
        ROUND((sm.value / 100) * TO_NUMBER(p.value), 3) aas -- (/ 100 is to convert % to fraction)
-  FROM gv$sysmetric sm,
-       gv$system_parameter2 p
+  FROM &&gv_object_prefix.sysmetric sm,
+       &&gv_object_prefix.system_parameter2 p
  WHERE sm.metric_name='Host CPU Utilization (%)'
    AND sm.group_id = 2 -- 1 minute
    AND sm.inst_id = p.inst_id
@@ -870,8 +870,8 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        wcm.begin_time,
        wcm.end_time,
        ROUND(wcm.time_waited/wcm.intsize_csec, 3) aas
-  FROM gv$waitclassmetric wcm,
-       gv$system_wait_class wc
+  FROM &&gv_object_prefix.waitclassmetric wcm,
+       &&gv_object_prefix.system_wait_class wc
  WHERE wcm.inst_id = wc.inst_id
    AND wcm.wait_class_id = wc.wait_class_id
    AND wcm.wait_class# = wc.wait_class#
@@ -896,7 +896,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        tw.begin_time,
        tw.end_time,
        ROUND(COUNT(*) / ((tw.end_time - tw.begin_time) * 24 * 60 * 60), 3) aas -- samples over time in secs
-  FROM gv$active_session_history ash,
+  FROM &&gv_object_prefix.active_session_history ash,
        time_window tw
  WHERE ash.session_state = 'ON CPU'
    AND CAST(sample_time AS DATE) BETWEEN tw.begin_time AND tw.end_time
@@ -957,7 +957,7 @@ END;
 @@&&skip_diagnostics.edb360_9a_pre_one.sql       
 
 DEF title = 'Wait Class Metric for past minute';
-DEF main_table = 'GV$WAITCLASSMETRIC';
+DEF main_table = '&&gv_view_prefix.WAITCLASSMETRIC';
 BEGIN
   :sql_text := q'[
 -- inspired by Kyle Hailey blogs
@@ -969,8 +969,8 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        ROUND(wcm.time_waited/wcm.intsize_csec, 3) aas,
        CASE WHEN wc.wait_class = 'User I/O' THEN 
        ROUND(10 * wcm.time_waited  / wcm.wait_count, 3) END avg_io_ms
-  FROM gv$waitclassmetric wcm,
-       gv$system_wait_class wc
+  FROM &&gv_object_prefix.waitclassmetric wcm,
+       &&gv_object_prefix.system_wait_class wc
  WHERE wcm.inst_id = wc.inst_id
    AND wcm.wait_class_id = wc.wait_class_id
    AND wcm.wait_class# = wc.wait_class#
@@ -987,7 +987,7 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Event Metric for past minute';
-DEF main_table = 'GV$EVENTMETRIC';
+DEF main_table = '&&gv_view_prefix.EVENTMETRIC';
 BEGIN
   :sql_text := q'[
 -- inspired by Kyle Hailey blogs
@@ -999,8 +999,8 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        em.*,
        ROUND(em.time_waited / em.intsize_csec, 3) aas,
        CASE WHEN en.wait_class = 'User I/O' THEN 10 * em.time_waited  / em.wait_count END avg_io_ms
-  FROM gv$eventmetric em,
-       gv$event_name en
+  FROM &&gv_object_prefix.eventmetric em,
+       &&gv_object_prefix.event_name en
  WHERE em.inst_id = en.inst_id
    AND em.event_id = en.event_id
    AND em.event# = en.event#
@@ -1017,7 +1017,7 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'System Metric for past minute';
-DEF main_table = 'GV$SYSMETRIC';
+DEF main_table = '&&gv_view_prefix.SYSMETRIC';
 BEGIN
   :sql_text := q'[
 -- inspired by Kyle Hailey blogs
@@ -1025,7 +1025,7 @@ BEGIN
 -- http://www.kylehailey.com/oracle-cpu-time/
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM gv$sysmetric
+  FROM &&gv_object_prefix.sysmetric
  WHERE group_id = 2 -- 1 minute
  ORDER BY
        inst_id,
@@ -1036,7 +1036,7 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'System Metric Summary for past hour';
-DEF main_table = 'GV$SYSMETRIC_SUMMARY';
+DEF main_table = '&&gv_view_prefix.SYSMETRIC_SUMMARY';
 BEGIN
   :sql_text := q'[
 -- inspired by Kyle Hailey blogs
@@ -1044,7 +1044,7 @@ BEGIN
 -- http://www.kylehailey.com/oracle-cpu-time/
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM gv$sysmetric_summary
+  FROM &&gv_object_prefix.sysmetric_summary
  ORDER BY
        inst_id,
        metric_name

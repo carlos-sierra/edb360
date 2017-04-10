@@ -19,7 +19,8 @@ SPO &&edb360_log..txt APP;
 COL edb360_bypass NEW_V edb360_bypass;
 SELECT ' echo timeout ' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds
 /
-SELECT 'Elapsed Hours so far: '||ROUND((DBMS_UTILITY.GET_TIME - :edb360_time0) / 100 / 3600, 3) FROM DUAL
+--SELECT 'Elapsed Hours so far: '||ROUND((DBMS_UTILITY.GET_TIME - :edb360_time0) / 100 / 3600, 3) FROM DUAL
+SELECT 'Elapsed Hours so far: '||TO_CHAR(ROUND((DBMS_UTILITY.GET_TIME - :edb360_time0) / 100 / 3600, 3), '990.000') FROM DUAL
 /
 PRO
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -31,6 +32,8 @@ PRO &&hh_mm_ss. &&title.&&title_suffix.
 PRINT sql_text;
 --SELECT '0' row_num FROM DUAL;
 PRO &&hh_mm_ss. &&section_id..&&report_sequence.
+SELECT 'Elapsed Hours so far: '||TO_CHAR(ROUND((DBMS_UTILITY.GET_TIME - :edb360_time0) / 100 / 3600, 3), '990.000') FROM DUAL
+/
 EXEC :sql_text_display := REPLACE(REPLACE(TRIM(CHR(10) FROM :sql_text)||';', '<', CHR(38)||'lt;'), '>', CHR(38)||'gt;');
 SET TIMI ON;
 SET SERVEROUT ON;
@@ -63,7 +66,7 @@ HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt
 -- dummy call
 COL edb360_prev_sql_id NEW_V edb360_prev_sql_id NOPRI;
 COL edb360_prev_child_number NEW_V edb360_prev_child_number NOPRI;
-SELECT prev_sql_id edb360_prev_sql_id, TO_CHAR(prev_child_number) edb360_prev_child_number FROM v$session WHERE sid = SYS_CONTEXT('USERENV', 'SID')
+SELECT prev_sql_id edb360_prev_sql_id, TO_CHAR(prev_child_number) edb360_prev_child_number FROM &&v_dollar.session WHERE sid = SYS_CONTEXT('USERENV', 'SID')
 /
 
 -- execute one sql
@@ -81,7 +84,7 @@ HOS zip &&edb360_zip_filename. &&edb360_log3..txt
 -- sql monitor long executions of sql from edb360
 SELECT 'N' edb360_tuning_pack_for_sqlmon, ' echo skip sqlmon' skip_sqlmon_exec FROM DUAL
 /
-SELECT '&&tuning_pack.' edb360_tuning_pack_for_sqlmon, NULL skip_sqlmon_exec, SUBSTR(sql_text, 1, 100) edb360_sql_text_100, elapsed_time FROM v$sql 
+SELECT '&&tuning_pack.' edb360_tuning_pack_for_sqlmon, NULL skip_sqlmon_exec, SUBSTR(sql_text, 1, 100) edb360_sql_text_100, elapsed_time FROM &&v_dollar.sql 
 WHERE sql_id = '&&edb360_prev_sql_id.' AND elapsed_time / 1e6 > 60 /* seconds */
 /
 @@&&skip_tuning.&&skip_sqlmon_exec.sqlmon.sql &&edb360_tuning_pack_for_sqlmon. &&edb360_prev_sql_id.

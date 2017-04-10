@@ -31,7 +31,7 @@ SELECT a.samples,
        CASE a.current_obj# WHEN 0 THEN 'UNDO' ELSE o.object_name END object_name,
        CASE a.current_obj# WHEN 0 THEN NULL ELSE o.subobject_name END subobject_name
   FROM ash a,
-       &&dba_object_prefix.objects o
+       &&dva_object_prefix.objects o
  WHERE o.object_id(+) = a.current_obj#
  ORDER BY
        a.samples DESC,
@@ -447,7 +447,7 @@ COL cv_cellversion    HEAD CELLSRV_VERSION  FOR A20
 COL cv_flashcachemode HEAD FLASH_CACHE_MODE FOR A20
 
 DEF title = 'Cell IORM Status';
-DEF main_table = 'V$CELL_CONFIG';
+DEF main_table = '&&v_view_prefix.CELL_CONFIG';
 BEGIN
   :sql_text := q'[
 -- celliorm.sql (v1.0) 
@@ -461,7 +461,7 @@ SELECT
   , CAST(extract(xmltype(confval), '/cli-output/interdatabaseplan/catPlan/text()')   AS VARCHAR2(30)) cat_plan
   , CAST(extract(xmltype(confval), '/cli-output/interdatabaseplan/dbPlan/text()')    AS VARCHAR2(30)) db_plan
 FROM 
-    v$cell_config  -- gv$ isn't needed, all cells should be visible in all instances
+    &&v_object_prefix.cell_config  -- gv isn't needed, all cells should be visible in all instances
 WHERE 
     conftype = 'IORM'
 ORDER BY
@@ -476,7 +476,7 @@ COL cv_cellversion    HEAD CELLSRV_VERSION  FOR A20
 COL cv_flashcachemode HEAD FLASH_CACHE_MODE FOR A20
 
 DEF title = 'Cell Physical Disk Summary';
-DEF main_table = 'V$CELL_CONFIG';
+DEF main_table = '&&v_view_prefix.CELL_CONFIG';
 BEGIN
   :sql_text := q'[
 -- cellpd.sql (v1.0) 
@@ -522,8 +522,8 @@ FROM (
       , CAST(EXTRACTVALUE(VALUE(v), '/physicaldisk/errSeekCount/text()')                  AS VARCHAR2(20)) errSeekCount      
       , CAST(EXTRACTVALUE(VALUE(v), '/physicaldisk/sectorRemapCount/text()')              AS VARCHAR2(20)) sectorRemapCount  
     FROM
-        v$cell_config c
-      , TABLE(XMLSEQUENCE(EXTRACT(XMLTYPE(c.confval), '/cli-output/physicaldisk'))) v  -- gv$ isn't needed, all cells should be visible in all instances
+        &&v_object_prefix.cell_config c
+      , TABLE(XMLSEQUENCE(EXTRACT(XMLTYPE(c.confval), '/cli-output/physicaldisk'))) v  -- gv isn't needed, all cells should be visible in all instances
     WHERE 
         c.conftype = 'PHYSICALDISKS'
 )
@@ -544,7 +544,7 @@ COL cv_cellversion    HEAD CELLSRV_VERSION  FOR A20
 COL cv_flashcachemode HEAD FLASH_CACHE_MODE FOR A20
 
 DEF title = 'Cell Physical Disk Detail';
-DEF main_table = 'V$CELL_CONFIG';
+DEF main_table = '&&v_view_prefix.CELL_CONFIG';
 BEGIN
   :sql_text := q'[
 -- cellpdx.sql (v1.0) 
@@ -578,8 +578,8 @@ SELECT * FROM (
       , CAST(EXTRACTVALUE(VALUE(v), '/physicaldisk/errOtherCount/text()')                 AS VARCHAR2(20)) errOtherCount     
       , CAST(EXTRACTVALUE(VALUE(v), '/physicaldisk/errSeekCount/text()')                  AS VARCHAR2(20)) errSeekCount      
     FROM
-        v$cell_config c
-      , TABLE(XMLSEQUENCE(EXTRACT(XMLTYPE(c.confval), '/cli-output/physicaldisk'))) v  -- gv$ isn't needed, all cells should be visible in all instances
+        &&v_object_prefix.cell_config c
+      , TABLE(XMLSEQUENCE(EXTRACT(XMLTYPE(c.confval), '/cli-output/physicaldisk'))) v  -- gv isn't needed, all cells should be visible in all instances
     WHERE 
         c.conftype = 'PHYSICALDISKS'
 )
@@ -597,7 +597,7 @@ COL cv_cellversion    HEAD CELLSRV_VERSION  FOR A20
 COL cv_flashcachemode HEAD FLASH_CACHE_MODE FOR A20
 
 DEF title = 'Cell Details';
-DEF main_table = 'V$CELL_CONFIG';
+DEF main_table = '&&v_view_prefix.CELL_CONFIG';
 BEGIN
   :sql_text := q'[
 -- cellver.sql (v1.0) 
@@ -613,7 +613,7 @@ SELECT
   , CAST(extract(xmltype(confval), '/cli-output/cell/kernelVersion/text()')  AS VARCHAR2(30))  kernel_version
   , CAST(extract(xmltype(confval), '/cli-output/cell/makeModel/text()')      AS VARCHAR2(50))  make_model
 FROM 
-    v$cell_config  -- gv$ isn't needed, all cells should be visible in all instances
+    &&v_object_prefix.cell_config  -- gv isn't needed, all cells should be visible in all instances
 WHERE 
     conftype = 'CELL'
 ORDER BY
@@ -631,7 +631,7 @@ COL asmdisk_name        HEAD ASMDISK        FOR A30
 BREAK ON asm_diskgroup SKIP 1 ON asm_disk
 
 DEF title = 'Cell Disk Topology';
-DEF main_table = 'V$CELL_CONFIG';
+DEF main_table = '&&v_view_prefix.CELL_CONFIG';
 BEGIN
   :sql_text := q'[
 -- exadisktopo.sql (v1.0) 
@@ -666,8 +666,8 @@ WITH
       , CAST(EXTRACTVALUE(VALUE(v), '/physicaldisk/errSeekCount/text()')                  AS VARCHAR2(100)) errSeekCount      
       , CAST(EXTRACTVALUE(VALUE(v), '/physicaldisk/sectorRemapCount/text()')              AS VARCHAR2(100)) sectorRemapCount  
     FROM
-        v$cell_config c
-      , TABLE(XMLSEQUENCE(EXTRACT(XMLTYPE(c.confval), '/cli-output/physicaldisk'))) v  -- gv$ isn't needed, all cells should be visible in all instances
+        &&v_object_prefix.cell_config c
+      , TABLE(XMLSEQUENCE(EXTRACT(XMLTYPE(c.confval), '/cli-output/physicaldisk'))) v  -- gv isn't needed, all cells should be visible in all instances
     WHERE 
         c.conftype = 'PHYSICALDISKS'
 ),
@@ -689,8 +689,8 @@ WITH
       , CAST(EXTRACTVALUE(VALUE(v), '/celldisk/size           /text()')                   AS VARCHAR2(100)) disk_size
       , CAST(EXTRACTVALUE(VALUE(v), '/celldisk/status         /text()')                   AS VARCHAR2(100)) status
     FROM
-        v$cell_config c
-      , TABLE(XMLSEQUENCE(EXTRACT(XMLTYPE(c.confval), '/cli-output/celldisk'))) v  -- gv$ isn't needed, all cells should be visible in all instances
+        &&v_object_prefix.cell_config c
+      , TABLE(XMLSEQUENCE(EXTRACT(XMLTYPE(c.confval), '/cli-output/celldisk'))) v  -- gv isn't needed, all cells should be visible in all instances
     WHERE 
         c.conftype = 'CELLDISKS'
 ),
@@ -714,8 +714,8 @@ WITH
       , CAST(EXTRACTVALUE(VALUE(v), '/griddisk/status          /text()')                   AS VARCHAR2(100)) status
       , CAST(EXTRACTVALUE(VALUE(v), '/griddisk/cachedBy        /text()')                   AS VARCHAR2(100)) cachedBy
     FROM
-        v$cell_config c
-      , TABLE(XMLSEQUENCE(EXTRACT(XMLTYPE(c.confval), '/cli-output/griddisk'))) v  -- gv$ isn't needed, all cells should be visible in all instances
+        &&v_object_prefix.cell_config c
+      , TABLE(XMLSEQUENCE(EXTRACT(XMLTYPE(c.confval), '/cli-output/griddisk'))) v  -- gv isn't needed, all cells should be visible in all instances
     WHERE 
         c.conftype = 'GRIDDISKS'
 ),
@@ -734,13 +734,13 @@ WITH
       , CAST(EXTRACTVALUE(VALUE(v), '/lun/lunWriteCacheMode/text()')              AS VARCHAR2(100)) lunWriteCacheMode
       , CAST(EXTRACTVALUE(VALUE(v), '/lun/status           /text()')              AS VARCHAR2(100)) status        
     FROM
-        v$cell_config c
-      , TABLE(XMLSEQUENCE(EXTRACT(XMLTYPE(c.confval), '/cli-output/lun'))) v  -- gv$ isn't needed, all cells should be visible in all instances
+        &&v_object_prefix.cell_config c
+      , TABLE(XMLSEQUENCE(EXTRACT(XMLTYPE(c.confval), '/cli-output/lun'))) v  -- gv isn't needed, all cells should be visible in all instances
     WHERE 
         c.conftype = 'LUNS'
 )
- , ad  AS (SELECT /*+ MATERIALIZE */ * FROM v$asm_disk)
- , adg AS (SELECT /*+ MATERIALIZE */ * FROM v$asm_diskgroup)
+ , ad  AS (SELECT /*+ MATERIALIZE */ * FROM &&v_object_prefix.asm_disk)
+ , adg AS (SELECT /*+ MATERIALIZE */ * FROM &&v_object_prefix.asm_diskgroup)
 SELECT 
     adg.name                        asm_diskgroup
   , ad.name                         asm_disk
@@ -794,7 +794,7 @@ COL asmdisk_name        HEAD ASMDISK        FOR A30
 BREAK ON cellname SKIP 1
 
 DEF title = 'Cell Disk Topology2';
-DEF main_table = 'V$CELL_CONFIG';
+DEF main_table = '&&v_view_prefix.CELL_CONFIG';
 BEGIN
   :sql_text := q'[
 -- exadisktopo2.sql (v1.0) 
@@ -829,8 +829,8 @@ WITH
       , CAST(EXTRACTVALUE(VALUE(v), '/physicaldisk/errSeekCount/text()')                  AS VARCHAR2(100)) errSeekCount      
       , CAST(EXTRACTVALUE(VALUE(v), '/physicaldisk/sectorRemapCount/text()')              AS VARCHAR2(100)) sectorRemapCount  
     FROM
-        v$cell_config c
-      , TABLE(XMLSEQUENCE(EXTRACT(XMLTYPE(c.confval), '/cli-output/physicaldisk'))) v  -- gv$ isn't needed, all cells should be visible in all instances
+        &&v_object_prefix.cell_config c
+      , TABLE(XMLSEQUENCE(EXTRACT(XMLTYPE(c.confval), '/cli-output/physicaldisk'))) v  -- gv isn't needed, all cells should be visible in all instances
     WHERE 
         c.conftype = 'PHYSICALDISKS'
 ),
@@ -852,8 +852,8 @@ WITH
       , CAST(EXTRACTVALUE(VALUE(v), '/celldisk/size           /text()')                   AS VARCHAR2(100)) disk_size
       , CAST(EXTRACTVALUE(VALUE(v), '/celldisk/status         /text()')                   AS VARCHAR2(100)) status
     FROM
-        v$cell_config c
-      , TABLE(XMLSEQUENCE(EXTRACT(XMLTYPE(c.confval), '/cli-output/celldisk'))) v  -- gv$ isn't needed, all cells should be visible in all instances
+        &&v_object_prefix.cell_config c
+      , TABLE(XMLSEQUENCE(EXTRACT(XMLTYPE(c.confval), '/cli-output/celldisk'))) v  -- gv isn't needed, all cells should be visible in all instances
     WHERE 
         c.conftype = 'CELLDISKS'
 ),
@@ -876,8 +876,8 @@ WITH
       , CAST(EXTRACTVALUE(VALUE(v), '/griddisk/size            /text()')                   AS VARCHAR2(100)) disk_size
       , CAST(EXTRACTVALUE(VALUE(v), '/griddisk/status          /text()')                   AS VARCHAR2(100)) status
     FROM
-        v$cell_config c
-      , TABLE(XMLSEQUENCE(EXTRACT(XMLTYPE(c.confval), '/cli-output/griddisk'))) v  -- gv$ isn't needed, all cells should be visible in all instances
+        &&v_object_prefix.cell_config c
+      , TABLE(XMLSEQUENCE(EXTRACT(XMLTYPE(c.confval), '/cli-output/griddisk'))) v  -- gv isn't needed, all cells should be visible in all instances
     WHERE 
         c.conftype = 'GRIDDISKS'
 ),
@@ -896,13 +896,13 @@ WITH
       , CAST(EXTRACTVALUE(VALUE(v), '/lun/lunWriteCacheMode/text()')              AS VARCHAR2(100)) lunWriteCacheMode
       , CAST(EXTRACTVALUE(VALUE(v), '/lun/status           /text()')              AS VARCHAR2(100)) status        
     FROM
-        v$cell_config c
-      , TABLE(XMLSEQUENCE(EXTRACT(XMLTYPE(c.confval), '/cli-output/lun'))) v  -- gv$ isn't needed, all cells should be visible in all instances
+        &&v_object_prefix.cell_config c
+      , TABLE(XMLSEQUENCE(EXTRACT(XMLTYPE(c.confval), '/cli-output/lun'))) v  -- gv isn't needed, all cells should be visible in all instances
     WHERE 
         c.conftype = 'LUNS'
 )
- , ad  AS (SELECT /*+ MATERIALIZE */ * FROM v$asm_disk)
- , adg AS (SELECT /*+ MATERIALIZE */ * FROM v$asm_diskgroup)
+ , ad  AS (SELECT /*+ MATERIALIZE */ * FROM &&v_object_prefix.asm_disk)
+ , adg AS (SELECT /*+ MATERIALIZE */ * FROM &&v_object_prefix.asm_diskgroup)
 SELECT 
     pd.cellname
   , SUBSTR(lun.deviceName,1,20)     lun_devicename

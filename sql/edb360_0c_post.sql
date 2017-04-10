@@ -49,8 +49,8 @@ SELECT UPPER(SYS_CONTEXT('USERENV', 'DB_NAME')) db_name_upper FROM DUAL;
 SELECT LOWER(SYS_CONTEXT('USERENV', 'DB_NAME')) db_name_lower FROM DUAL;
 SELECT UPPER(SYS_CONTEXT('USERENV', 'INSTANCE_NAME')) instance_name_upper FROM DUAL;
 SELECT LOWER(SYS_CONTEXT('USERENV', 'INSTANCE_NAME')) instance_name_lower FROM DUAL;
-SELECT value background_dump_dest FROM v$parameter WHERE name = 'background_dump_dest';
-SELECT value diagnostic_dest FROM v$parameter WHERE name = 'diagnostic_dest';
+SELECT value background_dump_dest FROM &&v_dollar.parameter WHERE name = 'background_dump_dest';
+SELECT value diagnostic_dest FROM &&v_dollar.parameter WHERE name = 'diagnostic_dest';
 -- pre 12c 
 HOS &&skip_extras. cp &&background_dump_dest./alert_&&db_name_upper.*.log . >> &&edb360_log3..txt
 HOS &&skip_extras. cp &&background_dump_dest./alert_&&db_name_lower.*.log . >> &&edb360_log3..txt
@@ -104,12 +104,14 @@ HOS unzip -l &&edb360_zip_filename. >> &&edb360_log3..txt
 HOS zip -m &&edb360_zip_filename. &&edb360_log3..txt
 SET TERM ON;
 
+/*
 -- meta360
 -- prefix &&skip_extras. is to bypass meta360 when a section is requested
 DEF _md_top_schemas = '';
 DEF _md_tool = '';
 @@&&skip_extras.&&edb360_skip_metadata. get_top_N_schemas.sql
 HOS &&skip_extras. &&edb360_skip_metadata. zip -m &&edb360_zip_filename. TOP_&&_md_top_schemas._&&_md_tool..zip
+*/
 
 -- optional move of zip file
 COL edb360_mv_host_command NEW_V edb360_mv_host_command

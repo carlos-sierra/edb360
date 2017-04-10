@@ -73,7 +73,7 @@ DECLARE
                    TRIM(TO_CHAR(ROUND(r.io_time_hrs, 2), '99990.00')) io_time_hrs,
                    r.rank_num,
                    NVL((SELECT a.name FROM audit_actions a WHERE a.action = h.command_type), TO_CHAR(h.command_type)) command_type,
-                   NVL((SELECT u.username FROM &&dba_object_prefix.users u WHERE u.user_id = r.user_id), TO_CHAR(r.user_id)) username,
+                   NVL((SELECT u.username FROM &&dva_object_prefix.users u WHERE u.user_id = r.user_id), TO_CHAR(r.user_id)) username,
                    r.module,
                    --h.sql_text,
                    CASE 
@@ -90,7 +90,7 @@ DECLARE
             SELECT /*+ &&sq_fact_hints. &&section_id..&&report_sequence. */
                    sql_id, COUNT(*) child_cursors,
                    RANK() OVER (ORDER BY COUNT(*) DESC NULLS LAST) AS sql_rank
-              FROM gv$sql_shared_cursor
+              FROM &&gv_object_prefix.sql_shared_cursor
              WHERE sql_id NOT IN (SELECT sql_id FROM top_sql)
              GROUP BY
                    sql_id
@@ -103,7 +103,7 @@ DECLARE
                    ns.child_cursors,
                    ns.sql_id,
                    REPLACE(REPLACE(REPLACE(REPLACE(DBMS_LOB.SUBSTR(s.sql_fulltext, 1000), CHR(10), ' '), '"', CHR(38)||'#34;'), '>', CHR(38)||'#62;'), '<', CHR(38)||'#60;') sql_text_1000
-              FROM not_shared ns, gv$sql s
+              FROM not_shared ns, &&gv_object_prefix.sql s
              WHERE s.sql_id(+) = ns.sql_id
                AND ns.sql_rank <= &&edb360_conf_top_cur.
             ),
@@ -248,7 +248,7 @@ BEGIN
     put_line('HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
     put_line('EXEC :repo_seq := :repo_seq + 1;');
     put_line('SELECT TO_CHAR(:repo_seq) report_sequence FROM DUAL;');
-    IF sql_rec.rank_num <= &&edb360_conf_planx_top. AND sql_rec.sql_id != '0ckwjf2su2rpx' /* Beckman */ THEN
+    IF sql_rec.rank_num <= &&edb360_conf_planx_top. AND '&&skip_non_repo_script.' IS NULL THEN
       put_line('COL edb360_bypass NEW_V edb360_bypass;');
       put_line('SELECT '' echo timeout '' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
       update_log('PLANX rank:'||sql_rec.rank_num||' SQL_ID:'||sql_rec.sql_id||' TOP_type:'||sql_rec.top_type);
@@ -261,7 +261,7 @@ BEGIN
       put_line('HOS zip -m &&edb360_zip_filename. planx_'||sql_rec.sql_id||'_'||CHR(38)||chr(38)||'current_time..txt >> &&edb360_log3..txt');
       put_line('HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
     END IF;
-    IF sql_rec.rank_num <= &&edb360_conf_sqlmon_top. AND '&&skip_10g_script.' IS NULL AND '&&skip_diagnostics.' IS NULL AND '&&skip_tuning.' IS NULL THEN
+    IF sql_rec.rank_num <= &&edb360_conf_sqlmon_top. AND '&&skip_10g_script.' IS NULL AND '&&skip_diagnostics.' IS NULL AND '&&skip_tuning.' IS NULL AND '&&skip_non_repo_script.' IS NULL THEN
       put_line('COL edb360_bypass NEW_V edb360_bypass;');
       put_line('SELECT '' echo timeout '' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
       update_log('SQLMON rank:'||sql_rec.rank_num||' SQL_ID:'||sql_rec.sql_id||' TOP_type:'||sql_rec.top_type);
@@ -274,7 +274,7 @@ BEGIN
       put_line('HOS zip -m &&edb360_zip_filename. sqlmon_'||sql_rec.sql_id||'_'||CHR(38)||chr(38)||'current_time..zip >> &&edb360_log3..txt');
       put_line('HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
     END IF;
-    IF sql_rec.rank_num <= &&edb360_conf_sqlash_top. AND '&&skip_diagnostics.' IS NULL THEN
+    IF sql_rec.rank_num <= &&edb360_conf_sqlash_top. AND '&&skip_diagnostics.' IS NULL AND '&&skip_non_repo_script.' IS NULL THEN
       put_line('COL edb360_bypass NEW_V edb360_bypass;');
       put_line('SELECT '' echo timeout '' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
       update_log('SQLASH rank:'||sql_rec.rank_num||' SQL_ID:'||sql_rec.sql_id||' TOP_type:'||sql_rec.top_type);
@@ -287,7 +287,7 @@ BEGIN
       put_line('HOS zip -m &&edb360_zip_filename. sqlash_'||sql_rec.sql_id||'.zip >> &&edb360_log3..txt');
       put_line('HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
     END IF;
-    IF sql_rec.rank_num <= &&edb360_conf_sqlhc_top. THEN
+    IF sql_rec.rank_num <= &&edb360_conf_sqlhc_top. AND '&&skip_non_repo_script.' IS NULL THEN
       put_line('COL edb360_bypass NEW_V edb360_bypass;');
       put_line('SELECT '' echo timeout '' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
       update_log('SQLHC rank:'||sql_rec.rank_num||' SQL_ID:'||sql_rec.sql_id||' TOP_type:'||sql_rec.top_type);
@@ -493,5 +493,4 @@ SET HEA ON LIN 32767 NEWP NONE PAGES &&def_max_rows. LONG 32000000 LONGC 2000 WR
 SPO &&edb360_main_report..html APP;
 PRO </ol>
 SPO OFF;
-
 

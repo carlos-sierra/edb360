@@ -34,7 +34,7 @@ SET COLSEP ' ';
 -- get sql_id
 COL edb360_prev_sql_id NEW_V edb360_prev_sql_id NOPRI;
 COL edb360_prev_child_number NEW_V edb360_prev_child_number NOPRI;
-SELECT prev_sql_id edb360_prev_sql_id, TO_CHAR(prev_child_number) edb360_prev_child_number FROM v$session WHERE sid = SYS_CONTEXT('USERENV', 'SID')
+SELECT prev_sql_id edb360_prev_sql_id, TO_CHAR(prev_child_number) edb360_prev_child_number FROM &&v_dollar.session WHERE sid = SYS_CONTEXT('USERENV', 'SID')
 /
 
 -- footer

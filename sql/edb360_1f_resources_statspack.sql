@@ -36,7 +36,7 @@ COL skip_if_missing NEW_V skip_if_missing;
 SELECT NULL skip_if_missing FROM DUAL WHERE TO_NUMBER('&&sp_minimum_snap_id.') > -1 AND TO_NUMBER('&&sp_maximum_snap_id.') > -1;
 
 DEF title = 'Memory Size (MEM)';
-DEF main_table = 'GV$SYSTEM_PARAMETER2';
+DEF main_table = '&&gv_view_prefix.SYSTEM_PARAMETER2';
 DEF abstract = 'Consolidated view of Memory requirements.<br />'
 DEF abstract2 = 'It considers AMM if setup, else ASMM if setup, else no memory management settings (individual pools size).<br />'
 DEF foot = 'Consider "Giga Bytes (GB)" column for sizing.'
@@ -57,9 +57,9 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        SUM(CASE p.name WHEN 'sga_target' THEN TO_NUMBER(value) END) sga_target,
        SUM(CASE p.name WHEN 'sga_max_size' THEN TO_NUMBER(value) END) sga_max_size,
        SUM(CASE p.name WHEN 'pga_aggregate_target' THEN TO_NUMBER(value) END) pga_aggregate_target
-  FROM gv$instance i,
-       gv$database d,
-       gv$system_parameter2 p
+  FROM &&gv_object_prefix.instance i,
+       &&gv_object_prefix.database d,
+       &&gv_object_prefix.system_parameter2 p
  WHERE d.inst_id = i.inst_id
    AND p.inst_id = i.inst_id
    AND p.name IN ('memory_target', 'memory_max_target', 'sga_target', 'sga_max_size', 'pga_aggregate_target')
@@ -75,14 +75,14 @@ sga_max AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        inst_id,
        bytes
-  FROM gv$sgainfo
+  FROM &&gv_object_prefix.sgainfo
  WHERE name = 'Maximum SGA Size'
 ),
 pga_max AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        inst_id,
        value bytes
-  FROM gv$pgastat
+  FROM &&gv_object_prefix.pgastat
  WHERE name = 'maximum PGA allocated'
 ),
 pga AS (
@@ -324,8 +324,7 @@ BEGIN
   :sql_text := q'[
 WITH
 max_snap AS (
-SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
-       /* ignore if it fails to parse */
+SELECT /* ignore if it fails to parse */ /* &&section_id..&&report_sequence. */
        MAX(snap_id) snap_id,
        dbid,
        instance_number,
@@ -663,7 +662,7 @@ END;
 @@&&skip_if_missing.edb360_9a_pre_one.sql
 
 DEF title = 'Database Size on Disk';
-DEF main_table = 'GV$DATABASE';
+DEF main_table = '&&gv_view_prefix.DATABASE';
 DEF abstract = 'Displays Space on Disk including datafiles, tempfiles, log and control files.<br />'
 DEF foot = 'Consider "Tera Bytes (TB)" column for sizing.'
 BEGIN
@@ -673,19 +672,19 @@ sizes AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        'Data' file_type,
        SUM(bytes) bytes
-  FROM v$datafile
+  FROM &&v_object_prefix.datafile
  UNION ALL
 SELECT 'Temp' file_type,
        SUM(bytes) bytes
-  FROM v$tempfile
+  FROM &&v_object_prefix.tempfile
  UNION ALL
 SELECT 'Log' file_type,
        SUM(bytes) * MAX(members) bytes
-  FROM v$log
+  FROM &&v_object_prefix.log
  UNION ALL
 SELECT 'Control' file_type,
        SUM(block_size * file_size_blks) bytes
-  FROM v$controlfile
+  FROM &&v_object_prefix.controlfile
 ),
 dbsize AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
@@ -704,7 +703,7 @@ SELECT d.dbid,
        WHEN s.bytes > POWER(10,6) THEN ROUND(s.bytes/POWER(10,6),3)||' M'
        WHEN s.bytes > POWER(10,3) THEN ROUND(s.bytes/POWER(10,3),3)||' K'
        WHEN s.bytes > 0 THEN s.bytes||' B' END approx
-  FROM v$database d,
+  FROM &&v_object_prefix.database d,
        sizes s
  UNION ALL
 SELECT d.dbid,
@@ -718,7 +717,7 @@ SELECT d.dbid,
        WHEN s.bytes > POWER(10,6) THEN ROUND(s.bytes/POWER(10,6),3)||' M'
        WHEN s.bytes > POWER(10,3) THEN ROUND(s.bytes/POWER(10,3),3)||' K'
        WHEN s.bytes > 0 THEN s.bytes||' B' END approx
-  FROM v$database d,
+  FROM &&v_object_prefix.database d,
        dbsize s
 ]';
 END;
@@ -733,8 +732,7 @@ BEGIN
   :sql_text := q'[
 WITH 
 sysstat_io AS (
-SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
-       /* ignore if it fails to parse */
+SELECT /* ignore if it fails to parse */ /* &&section_id..&&report_sequence. */
        snap_id,
        dbid,
        instance_number,
@@ -1447,13 +1445,12 @@ BEGIN
   :sql_text := q'[
 WITH 
 sys_cpu AS (
-SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
-       /* ignore if it fails to parse */
+SELECT /* ignore if it fails to parse */ /* &&section_id..&&report_sequence. */
        ss.snap_id snap_id,
        ss.dbid dbid,
        ss.instance_number instance_number,
        SUM(CASE WHEN vs.stat_name IN ('DB CPU','background cpu time') THEN ss.value ELSE 0 END) cpu
- FROM &&statspack_user..stats$sys_time_model ss, v$sys_time_model vs
+ FROM &&statspack_user..stats$sys_time_model ss, &&v_object_prefix.sys_time_model vs
  WHERE 1=1
    AND ss.snap_id BETWEEN &&sp_minimum_snap_id. AND &&sp_maximum_snap_id.
    AND vs.stat_name IN ('DB CPU','background cpu time')

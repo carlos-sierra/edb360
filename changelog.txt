@@ -1,6 +1,12 @@
 Changelog
 =========
 
+v1711 (2017-04-10)
+=====
+1. eDB360 repository contains now 222 tables up from 26
+2. eAdam 3.0 is enabled as a new repository for eDB360 with 22 tables
+3. Disabled META360
+
 v1710 (2017-04-03)
 =====
 1. Cleanup of section 3e Operating System (OS) Statistics History

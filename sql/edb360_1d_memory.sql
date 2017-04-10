@@ -8,7 +8,7 @@ PRO <ol start="&&report_sequence.">
 SPO OFF;
 
 DEF title = 'SGA';
-DEF main_table = 'GV$SGA';
+DEF main_table = '&&gv_view_prefix.SGA';
 DEF abstract = '&&abstract_uom.';
 BEGIN
   :sql_text := q'[
@@ -23,7 +23,7 @@ SELECT /*+ RESULT_CACHE */
        WHEN value > POWER(2,20) THEN ROUND(value/POWER(2,20),1)||' M'
        WHEN value > POWER(2,10) THEN ROUND(value/POWER(2,10),1)||' K'
        ELSE value||' B' END approx
-  FROM gv$sga
+  FROM &&gv_object_prefix.sga
  ORDER BY
        name,
        inst_id
@@ -33,7 +33,7 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'SGA Info';
-DEF main_table = 'GV$SGAINFO';
+DEF main_table = '&&gv_view_prefix.SGAINFO';
 DEF abstract = '&&abstract_uom.';
 BEGIN
   :sql_text := q'[
@@ -49,7 +49,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        WHEN bytes > POWER(2,10) THEN ROUND(bytes/POWER(2,10),1)||' K'
        ELSE bytes||' B' END approx,
        resizeable
-  FROM gv$sgainfo
+  FROM &&gv_object_prefix.sgainfo
  ORDER BY
        name,
        inst_id
@@ -59,7 +59,7 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'SGA Stat';
-DEF main_table = 'GV$SGASTAT';
+DEF main_table = '&&gv_view_prefix.SGASTAT';
 DEF abstract = '&&abstract_uom.';
 BEGIN
   :sql_text := q'[
@@ -75,7 +75,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        WHEN bytes > POWER(2,20) THEN ROUND(bytes/POWER(2,20),1)||' M'
        WHEN bytes > POWER(2,10) THEN ROUND(bytes/POWER(2,10),1)||' K'
        ELSE bytes||' B' END approx
-  FROM gv$sgastat
+  FROM &&gv_object_prefix.sgastat
  ORDER BY
        pool NULLS FIRST,
        name,
@@ -86,7 +86,7 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'PGA Stat';
-DEF main_table = 'GV$PGASTAT';
+DEF main_table = '&&gv_view_prefix.PGASTAT';
 DEF abstract = '&&abstract_uom.';
 BEGIN
   :sql_text := q'[
@@ -104,7 +104,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        WHEN value > POWER(2,10) THEN ROUND(value/POWER(2,10),1)||' K'
        ELSE value||' B' END 
        END approx
-  FROM gv$pgastat
+  FROM &&gv_object_prefix.pgastat
  ORDER BY
        name,
        inst_id
@@ -114,13 +114,13 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Memory Dynamic Components';
-DEF main_table = 'GV$MEMORY_DYNAMIC_COMPONENTS';
+DEF main_table = '&&gv_view_prefix.MEMORY_DYNAMIC_COMPONENTS';
 BEGIN
   :sql_text := q'[
 -- requested by Rodrigo Righetti
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM gv$memory_dynamic_components
+  FROM &&gv_object_prefix.memory_dynamic_components
 
 ]';
 END;
@@ -128,13 +128,13 @@ END;
 @@&&skip_10g_script.edb360_9a_pre_one.sql
 
 DEF title = 'Memory Target Advice';
-DEF main_table = 'GV$MEMORY_TARGET_ADVICE';
+DEF main_table = '&&gv_view_prefix.MEMORY_TARGET_ADVICE';
 BEGIN
   :sql_text := q'[
 -- requested by Rodrigo Righetti
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM gv$memory_target_advice
+  FROM &&gv_object_prefix.memory_target_advice
 
 ]';
 END;
@@ -142,13 +142,13 @@ END;
 @@&&skip_10g_script.edb360_9a_pre_one.sql
 
 DEF title = 'SGA Target Advice';
-DEF main_table = 'GV$SGA_TARGET_ADVICE';
+DEF main_table = '&&gv_view_prefix.SGA_TARGET_ADVICE';
 BEGIN
   :sql_text := q'[
 -- requested by Rodrigo Righetti
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM gv$sga_target_advice
+  FROM &&gv_object_prefix.sga_target_advice
 
 ]';
 END;
@@ -156,13 +156,13 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'PGA Target Advice';
-DEF main_table = 'GV$PGA_TARGET_ADVICE';
+DEF main_table = '&&gv_view_prefix.PGA_TARGET_ADVICE';
 BEGIN
   :sql_text := q'[
 -- requested by Rodrigo Righetti
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM gv$pga_target_advice
+  FROM &&gv_object_prefix.pga_target_advice
 
 ]';
 END;
@@ -170,13 +170,13 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'SQL Workarea Histogram';
-DEF main_table = 'GV$SQL_WORKAREA_HISTOGRAM';
+DEF main_table = '&&gv_view_prefix.SQL_WORKAREA_HISTOGRAM';
 BEGIN
   :sql_text := q'[
 -- requested by Dimas Chbane
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM gv$sql_workarea_histogram
+  FROM &&gv_object_prefix.sql_workarea_histogram
 
 ]';
 END;
@@ -184,13 +184,13 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Memory Resize Operations';
-DEF main_table = 'GV$MEMORY_RESIZE_OPS';
+DEF main_table = '&&gv_view_prefix.MEMORY_RESIZE_OPS';
 BEGIN
   :sql_text := q'[
 -- requested by Rodrigo Righetti
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM gv$memory_resize_ops
+  FROM &&gv_object_prefix.memory_resize_ops
  ORDER BY
        inst_id,
        start_time DESC,
@@ -201,13 +201,13 @@ END;
 @@&&skip_10g_script.edb360_9a_pre_one.sql
 
 DEF title = 'Memory Current Resize Operations';
-DEF main_table = 'GV$MEMORY_CURRENT_RESIZE_OPS';
+DEF main_table = '&&gv_view_prefix.MEMORY_CURRENT_RESIZE_OPS';
 BEGIN
   :sql_text := q'[
 -- requested by Rodrigo Righetti
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM gv$memory_current_resize_ops
+  FROM &&gv_object_prefix.memory_current_resize_ops
  ORDER BY
        inst_id,
        start_time DESC,
