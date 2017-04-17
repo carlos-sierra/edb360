@@ -22,7 +22,7 @@ SELECT CASE
        END query_predicate
   FROM dba_tab_columns
  WHERE owner = 'SYS'
-   AND table_name = UPPER(TRIM('&&dd_view_name.'))
+   AND table_name = REPLACE(UPPER(TRIM('&&dd_view_name.')), 'V$', 'V_$')
    AND column_name = 'SNAP_ID';
 
 -- computes if view contains_long_column
@@ -31,7 +31,7 @@ SELECT CASE
        END contains_long_column
   FROM dba_tab_columns
  WHERE owner = 'SYS'
-   AND table_name = UPPER(TRIM('&&dd_view_name.'))
+   AND table_name = REPLACE(UPPER(TRIM('&&dd_view_name.')), 'V$', 'V_$')
    AND data_type = 'LONG'
    AND ROWNUM = 1;
 
@@ -41,7 +41,7 @@ SELECT CASE
        END contains_xmltype_column
   FROM dba_tab_columns
  WHERE owner = 'SYS'
-   AND table_name = UPPER(TRIM('&&dd_view_name.'))
+   AND table_name = REPLACE(UPPER(TRIM('&&dd_view_name.')), 'V$', 'V_$')
    AND data_type = 'XMLTYPE'
    AND ROWNUM = 1;
 
@@ -78,21 +78,21 @@ DECLARE
 BEGIN
   IF /* view exists */ '&&view_exists.' = 'Y' THEN
     IF /* view contains LONG or XMLTYPE column(s) */ '&&contains_long_column.' = 'Y' OR '&&contains_xmltype_column.' = 'Y' THEN                                                 
-      FOR i IN (SELECT column_name, data_type, data_length FROM dba_tab_columns WHERE owner = 'SYS' AND table_name = UPPER(TRIM('&&dd_view_name.')) ORDER BY column_id)                                                                                                  
+      FOR i IN (SELECT column_name, data_type, data_length FROM dba_tab_columns WHERE owner = 'SYS' AND table_name = REPLACE(UPPER(TRIM('&&dd_view_name.')), 'V$', 'V_$') ORDER BY column_id)                                                                                                  
       LOOP                                                                                                  
         -- regular select list for query on ctas
         IF i.data_type = 'LONG' THEN                                                                                                  
-          l_list_sel_tbl := l_list_sel_tbl||', TO_LOB('||i.column_name||') '||i.column_name;
+          l_list_sel_tbl := l_list_sel_tbl||', TO_LOB('||LOWER(i.column_name)||') '||LOWER(i.column_name);
         ELSIF i.data_type = 'XMLTYPE' THEN
-          l_list_sel_tbl := l_list_sel_tbl||', v.'||i.column_name||'.getclobval() XMLTYPE_'||i.column_name;
+          l_list_sel_tbl := l_list_sel_tbl||', v.'||LOWER(i.column_name)||'.getclobval() XMLTYPE_'||LOWER(i.column_name);
         ELSE                                                                                                  
-          l_list_sel_tbl := l_list_sel_tbl||', '||i.column_name;                                                                                                  
+          l_list_sel_tbl := l_list_sel_tbl||', '||LOWER(i.column_name);                                                                                                  
         END IF;
         -- exceptional select list on view for tables with xmltype                                                 
         IF i.data_type = 'XMLTYPE' THEN                                                 
-          l_list_sel_vw := l_list_sel_vw||', CASE WHEN XMLTYPE_'||i.column_name||' IS NOT NULL THEN xmltype(XMLTYPE_'||i.column_name||') END '||i.column_name;                                                 
+          l_list_sel_vw := l_list_sel_vw||', CASE WHEN XMLTYPE_'||LOWER(i.column_name)||' IS NOT NULL THEN xmltype(XMLTYPE_'||LOWER(i.column_name)||') END '||LOWER(i.column_name);                                                 
         ELSE                                                 
-          l_list_sel_vw := l_list_sel_vw||', '||i.column_name;                                                 
+          l_list_sel_vw := l_list_sel_vw||', '||LOWER(i.column_name);                                                 
         END IF;                                                     
       END LOOP;                                                                                                  
       IF /* view contains XMLTYPE column(s) and possibly LONG column(s) */ '&&contains_xmltype_column.' = 'Y' THEN

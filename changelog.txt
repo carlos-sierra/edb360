@@ -1,6 +1,10 @@
 Changelog
 =========
 
+v1712 (2017-04-16)
+=====
+1. eAdam 3.0 and 2.0 are now fully functional
+
 v1711 (2017-04-10)
 =====
 1. eDB360 repository contains now 222 tables up from 26

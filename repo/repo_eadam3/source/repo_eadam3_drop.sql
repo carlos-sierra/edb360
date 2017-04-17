@@ -1,7 +1,17 @@
-SPO repo_edb360_drop_log.txt;
-EXEC DBMS_APPLICATION_INFO.SET_MODULE('EDB360','DROP');
+SPO repo_eadam3_drop_log.txt;
+EXEC DBMS_APPLICATION_INFO.SET_MODULE('EADAM3','DROP');
 WHENEVER SQLERROR EXIT SQL.SQLCODE;
-SET ECHO ON VER ON TIM ON TIMI ON LONG 32000000 LONGC 2000 PAGES 1000 LIN 1000 TRIMS ON SERVEROUT ON; 
+SET ECHO ON;
+SET HEA ON;
+SET LIN 1000;
+SET LONG 32000000;
+SET LONGC 2000;
+SET PAGES 1000;
+SET SERVEROUT ON;
+SET TIM ON;
+SET TIMI ON;
+SET TRIMS ON;
+SET VER ON;
 
 -- prefix for eadam3 tables
 DEF tool_prefix_0 = 'eadam3#';
@@ -18,10 +28,11 @@ DEF tool_prefix_4 = 'v#';
 SELECT owner, COUNT(*) tables FROM dba_tables WHERE (table_name LIKE UPPER('&&tool_prefix_0.')||'%' OR table_name LIKE UPPER('&&tool_prefix_1.')||'%' OR table_name LIKE UPPER('&&tool_prefix_2.')||'%' OR table_name LIKE UPPER('&&tool_prefix_3.')||'%' OR table_name LIKE UPPER('&&tool_prefix_4.')||'%') GROUP BY owner;
 
 -- parameter
+PRO
 ACC tool_repo_user PROMPT 'tool repository user: '
 
 ------------------------------------------------------------------------------------------
--- repository tables
+-- drop repository tables and views
 ------------------------------------------------------------------------------------------
 
 DECLARE
@@ -34,6 +45,10 @@ BEGIN
   FOR i IN (SELECT owner, table_name FROM dba_tables WHERE owner = UPPER('&&tool_repo_user.') AND (table_name LIKE UPPER('&&tool_prefix_0.%') OR table_name LIKE UPPER('&&tool_prefix_1.%') OR table_name LIKE UPPER('&&tool_prefix_2.%') OR table_name LIKE UPPER('&&tool_prefix_3.%') OR table_name LIKE UPPER('&&tool_prefix_4.%')) ORDER BY table_name)
   LOOP
     execute_immediate('DROP TABLE '||i.owner||'.'||i.table_name);
+  END LOOP;
+  FOR i IN (SELECT owner, view_name FROM dba_views WHERE owner = UPPER('&&tool_repo_user.') AND (view_name LIKE UPPER('&&tool_prefix_0.%') OR view_name LIKE UPPER('&&tool_prefix_1.%') OR view_name LIKE UPPER('&&tool_prefix_2.%') OR view_name LIKE UPPER('&&tool_prefix_3.%') OR view_name LIKE UPPER('&&tool_prefix_4.%')) ORDER BY view_name)
+  LOOP
+    execute_immediate('DROP VIEW '||i.owner||'.'||i.view_name);
   END LOOP;
 END;
 /

@@ -1,9 +1,24 @@
+HOS rm repo_edb360_create_log1.txt
+
 SPO repo_edb360_create_log.txt;
 EXEC DBMS_APPLICATION_INFO.SET_MODULE('EDB360','CREATE');
-WHENEVER SQLERROR EXIT SQL.SQLCODE;
-SET ECHO ON VER ON TIM ON TIMI ON LONG 32000000 LONGC 2000 PAGES 1000 LIN 1000 TRIMS ON SERVEROUT ON; 
+--WHENEVER SQLERROR EXIT SQL.SQLCODE;
+SET ECHO ON;
+SET HEA ON;
+SET LIN 1000;
+SET LONG 32000000;
+SET LONGC 2000;
+SET PAGES 1000;
+SET SERVEROUT ON;
+SET TERM ON;
+SET TIM ON;
+SET TIMI ON;
+SET TRIMS ON;
+SET VER ON;
+CL COL;
 
 -- parameter
+PRO
 ACC tool_repo_user PROMPT 'tool repository user (i.e. edb360): '
 
 BEGIN
@@ -43,6 +58,53 @@ COL repo_table_name NEW_V repo_table_name;
 COL query_predicate NEW_V query_predicate;
 COL contains_long_column NEW_V contains_long_column;
 COL view_exists NEW_V view_exists;
+
+------------------------------------------------------------------------------------------
+-- session configuration as per edb360 experiences.
+------------------------------------------------------------------------------------------
+
+-- dates format
+DEF tool_date_mask = 'YYYY-MM-DD"T"HH24:MI:SS';
+DEF tool_timestamp_mask = 'YYYY-MM-DD"T"HH24:MI:SS.FF6';
+DEF tool_timestamp_tz_mask = 'YYYY-MM-DD"T"HH24:MI:SS.FF6 TZH:TZM';
+-- exadata
+ALTER SESSION SET "_serial_direct_read" = ALWAYS;
+ALTER SESSION SET "_small_table_threshold" = 1001;
+-- nls
+ALTER SESSION SET NLS_NUMERIC_CHARACTERS = ".,";
+ALTER SESSION SET NLS_DATE_FORMAT = '&&tool_date_mask.';
+ALTER SESSION SET NLS_TIMESTAMP_FORMAT = '&&tool_timestamp_mask.';
+ALTER SESSION SET NLS_TIMESTAMP_TZ_FORMAT = '&&tool_timestamp_tz_mask.';
+-- adding to prevent slow access to ASH with non default NLS settings
+ALTER SESSION SET NLS_SORT = 'BINARY';
+ALTER SESSION SET NLS_COMP = 'BINARY';
+-- workaround fairpoint
+COL db_vers_ofe NEW_V db_vers_ofe;
+SELECT TRIM('.' FROM TRIM('0' FROM version)) db_vers_ofe FROM v$instance;
+ALTER SESSION SET optimizer_features_enable = '&&db_vers_ofe.';
+-- to work around bug 12672969
+ALTER SESSION SET "_optimizer_order_by_elimination_enabled"=false; 
+-- workaround Siebel
+ALTER SESSION SET optimizer_index_cost_adj = 100;
+ALTER SESSION SET "_always_semi_join" = CHOOSE;
+ALTER SESSION SET "_and_pruning_enabled" = TRUE;
+ALTER SESSION SET "_subquery_pruning_enabled" = TRUE;
+-- workaround bug 19567916
+ALTER SESSION SET "_optimizer_aggr_groupby_elim" = FALSE;
+-- workaround nigeria
+ALTER SESSION SET "_gby_hash_aggregation_enabled" = TRUE;
+ALTER SESSION SET "_hash_join_enabled" = TRUE;
+ALTER SESSION SET "_optim_peek_user_binds" = TRUE;
+ALTER SESSION SET "_optimizer_skip_scan_enabled" = TRUE;
+ALTER SESSION SET "_optimizer_sortmerge_join_enabled" = TRUE;
+ALTER SESSION SET cursor_sharing = EXACT;
+ALTER SESSION SET db_file_multiblock_read_count = 128;
+ALTER SESSION SET optimizer_index_caching = 0;
+ALTER SESSION SET optimizer_index_cost_adj = 100;
+-- workaround 21150273 and 20465582
+ALTER SESSION SET optimizer_dynamic_sampling = 0;
+ALTER SESSION SET "_optimizer_dsdir_usage_control"=0;
+ALTER SESSION SET "_sql_plan_directive_mgmt_control" = 0;
 
 ------------------------------------------------------------------------------------------
 -- create tool repository. it overrides existing tables.
@@ -286,9 +348,11 @@ SELECT ROUND(MIN(TO_NUMBER(p.value)) * SUM(blocks) / POWER(10,9), 3) approx_repo
 AND (table_name LIKE UPPER('&&tool_prefix_1.%') OR table_name LIKE UPPER('&&tool_prefix_2.%') OR table_name LIKE UPPER('&&tool_prefix_3.%') OR table_name LIKE UPPER('&&tool_prefix_4.%'));
 
 SPO OFF;
-WHENEVER SQLERROR CONTINUE;
 
 -- list files created on current directory
-HOS ls -lat repo_edb360_*.*
+HOS ls -lat repo_edb360_create_log1.txt
 
+--WHENEVER SQLERROR CONTINUE;
 EXEC DBMS_APPLICATION_INFO.SET_MODULE(NULL,NULL);
+
+UNDEF 1;

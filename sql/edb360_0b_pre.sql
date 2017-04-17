@@ -1,5 +1,5 @@
-DEF edb360_vYYNN = 'v1711';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2017-04-10)';
+DEF edb360_vYYNN = 'v1712';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2017-04-16)';
 DEF edb360_copyright = ' (c) 2017';
 
 SET TERM OFF;

@@ -1,7 +1,17 @@
 SPO repo_eadam3_clone_log.txt;
 EXEC DBMS_APPLICATION_INFO.SET_MODULE('EADAM3','CLONE');
-WHENEVER SQLERROR EXIT SQL.SQLCODE;
-SET ECHO ON VER ON TIM ON TIMI ON LONG 32000000 LONGC 2000 PAGES 1000 LIN 1000 TRIMS ON SERVEROUT ON; 
+--WHENEVER SQLERROR EXIT SQL.SQLCODE;
+SET ECHO ON;
+SET HEA ON;
+SET LIN 1000;
+SET LONG 32000000;
+SET LONGC 2000;
+SET PAGES 1000;
+SET SERVEROUT ON;
+SET TIM ON;
+SET TIMI ON;
+SET TRIMS ON;
+SET VER ON;
 
 -- prefix for eadam3 tables
 DEF tool_prefix_0 = 'eadam3#';
@@ -16,10 +26,22 @@ DEF tool_prefix_4 = 'v#';
 -- compression clause
 DEF compression_clause = 'COMPRESS';
 
+------------------------------------------------------------------------------------------
+-- Parallel Execution
+------------------------------------------------------------------------------------------
+
+ALTER SESSION ENABLE PARALLEL QUERY;
+ALTER SESSION ENABLE PARALLEL DML;
+ALTER SESSION ENABLE PARALLEL DDL;
+DEF select_hints = 'PARALLEL(4)';
+DEF insert_hints = 'APPEND PARALLEL(4)';
+DEF parallel_clause = 'PARALLEL 4'
+
 -- list of repository owners
 SELECT owner, COUNT(*) tables FROM dba_tables WHERE (table_name LIKE UPPER('&&tool_prefix_0.')||'%' OR table_name LIKE UPPER('&&tool_prefix_1.')||'%' OR table_name LIKE UPPER('&&tool_prefix_2.')||'%' OR table_name LIKE UPPER('&&tool_prefix_3.')||'%' OR table_name LIKE UPPER('&&tool_prefix_4.')||'%') GROUP BY owner;
 
 -- parameter 1
+PRO
 ACC tool_repo_user_source PROMPT 'tool repository user source (i.e. eadam3): '
 
 BEGIN
@@ -68,14 +90,14 @@ BEGIN
   FOR i IN (SELECT owner, table_name FROM dba_tables WHERE owner = UPPER('&&tool_repo_user_source.') AND table_name NOT LIKE '%\_T' ESCAPE '\' AND (table_name LIKE UPPER('&&tool_prefix_0.%') OR table_name LIKE UPPER('&&tool_prefix_1.%') OR table_name LIKE UPPER('&&tool_prefix_2.%') OR table_name LIKE UPPER('&&tool_prefix_3.%') OR table_name LIKE UPPER('&&tool_prefix_4.%')) ORDER BY table_name)
   LOOP
     drop_table(LOWER('&&tool_repo_user_target..'||i.table_name));                                                 
-    execute_immediate('CREATE TABLE '||LOWER('&&tool_repo_user_target..'||i.table_name)||' &&compression_clause. AS SELECT * FROM '||LOWER(i.owner||'.'||i.table_name));
+    execute_immediate('CREATE TABLE '||LOWER('&&tool_repo_user_target..'||i.table_name)||' &&compression_clause. &&parallel_clause. AS SELECT /*+ &&select_hints. */ * FROM '||LOWER(i.owner||'.'||i.table_name));
     execute_immediate('GRANT SELECT ON '||LOWER('&&tool_repo_user_target..'||i.table_name)||' TO SELECT_CATALOG_ROLE');
     DBMS_STATS.GATHER_TABLE_STATS(UPPER('&&tool_repo_user_target.'),i.table_name);
   END LOOP;
   FOR i IN (SELECT owner, view_name FROM dba_views WHERE owner = UPPER('&&tool_repo_user_source.') AND (view_name LIKE UPPER('&&tool_prefix_0.%') OR view_name LIKE UPPER('&&tool_prefix_1.%') OR view_name LIKE UPPER('&&tool_prefix_2.%') OR view_name LIKE UPPER('&&tool_prefix_3.%') OR view_name LIKE UPPER('&&tool_prefix_4.%')) ORDER BY view_name)
   LOOP
     drop_table(LOWER('&&tool_repo_user_target..'||i.view_name));                                                 
-    execute_immediate('CREATE TABLE '||LOWER('&&tool_repo_user_target..'||i.view_name)||' &&compression_clause. AS SELECT * FROM '||LOWER(i.owner||'.'||i.view_name));
+    execute_immediate('CREATE TABLE '||LOWER('&&tool_repo_user_target..'||i.view_name)||' &&compression_clause. &&parallel_clause. AS SELECT /*+ &&select_hints. */ * FROM '||LOWER(i.owner||'.'||i.view_name));
     execute_immediate('GRANT SELECT ON '||LOWER('&&tool_repo_user_target..'||i.view_name)||' TO SELECT_CATALOG_ROLE');
     DBMS_STATS.GATHER_TABLE_STATS(UPPER('&&tool_repo_user_target.'),i.view_name);
   END LOOP;
@@ -106,5 +128,5 @@ AND (table_name LIKE UPPER('&&tool_prefix_1.%') OR table_name LIKE UPPER('&&tool
 SELECT owner, COUNT(*) tables FROM dba_tables WHERE (table_name LIKE UPPER('&&tool_prefix_0.')||'%' OR table_name LIKE UPPER('&&tool_prefix_1.')||'%' OR table_name LIKE UPPER('&&tool_prefix_2.')||'%' OR table_name LIKE UPPER('&&tool_prefix_3.')||'%' OR table_name LIKE UPPER('&&tool_prefix_4.')||'%') GROUP BY owner;
 
 SPO OFF;
-WHENEVER SQLERROR CONTINUE;
+--WHENEVER SQLERROR CONTINUE;
 EXEC DBMS_APPLICATION_INFO.SET_MODULE(NULL,NULL);

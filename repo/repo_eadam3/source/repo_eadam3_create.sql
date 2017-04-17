@@ -1,9 +1,24 @@
+HOS rm repo_eadam3_logs.zip
+
 SPO repo_eadam3_create_log1.txt;
 EXEC DBMS_APPLICATION_INFO.SET_MODULE('EADAM3','CREATE');
-WHENEVER SQLERROR EXIT SQL.SQLCODE;
-SET ECHO ON VER ON TIM ON TIMI ON LONG 32000000 LONGC 2000 PAGES 1000 LIN 1000 TRIMS ON SERVEROUT ON; 
+--WHENEVER SQLERROR EXIT SQL.SQLCODE;
+SET ECHO ON;
+SET HEA ON;
+SET LIN 1000;
+SET LONG 32000000;
+SET LONGC 2000;
+SET PAGES 1000;
+SET SERVEROUT ON;
+SET TERM ON;
+SET TIM ON;
+SET TIMI ON;
+SET TRIMS ON;
+SET VER ON;
+CL COL;
 
 -- parameter
+PRO
 ACC tool_repo_user PROMPT 'tool repository user (i.e. eadam3): '
 
 BEGIN
@@ -38,6 +53,7 @@ COL eadam3_directory_path NEW_V eadam3_directory_path;
 SELECT directory_path eadam3_directory_path FROM dba_directories WHERE directory_name = UPPER('&&eadam3_dir.');
 
 -- list files on directory path
+HOS echo 'dummy' >> repo_eadam3_create_log2.txt
 HOS rm repo_eadam3_create_log2.txt
 HOS echo '*************** directory content - begin ****************' >> repo_eadam3_create_log2.txt
 HOS ls -lat &&eadam3_directory_path. >> repo_eadam3_create_log2.txt
@@ -66,6 +82,61 @@ DEF tool_extt_syntax = 'ORGANIZATION EXTERNAL (TYPE ORACLE_DATAPUMP DEFAULT DIRE
 COL dmp_file_name NEW_V dmp_file_name;
 COL dmp_file_name_t NEW_V dmp_file_name_t;
 COL log_file_name NEW_V log_file_name;
+
+------------------------------------------------------------------------------------------
+-- session configuration as per edb360 experiences.
+------------------------------------------------------------------------------------------
+
+--WHENEVER SQLERROR CONTINUE;
+
+-- dates format
+DEF tool_date_mask = 'YYYY-MM-DD"T"HH24:MI:SS';
+DEF tool_timestamp_mask = 'YYYY-MM-DD"T"HH24:MI:SS.FF6';
+DEF tool_timestamp_tz_mask = 'YYYY-MM-DD"T"HH24:MI:SS.FF6 TZH:TZM';
+-- exadata
+ALTER SESSION SET "_serial_direct_read" = ALWAYS;
+ALTER SESSION SET "_small_table_threshold" = 1001;
+-- some NLS settings
+ALTER SESSION SET NLS_TERRITORY = 'AMERICA';
+ALTER SESSION SET NLS_LANGUAGE = 'AMERICAN';
+ALTER SESSION SET NLS_LENGTH_SEMANTICS = 'CHAR';
+-- adding to prevent slow access to ASH with non default NLS settings
+ALTER SESSION SET NLS_SORT = 'BINARY';
+ALTER SESSION SET NLS_COMP = 'BINARY';
+-- nls
+ALTER SESSION SET NLS_NUMERIC_CHARACTERS = ".,";
+ALTER SESSION SET NLS_DATE_FORMAT = '&&tool_date_mask.';
+ALTER SESSION SET NLS_TIMESTAMP_FORMAT = '&&tool_timestamp_mask.';
+ALTER SESSION SET NLS_TIMESTAMP_TZ_FORMAT = '&&tool_timestamp_tz_mask.';
+-- workaround fairpoint
+COL db_vers_ofe NEW_V db_vers_ofe;
+SELECT TRIM('.' FROM TRIM('0' FROM version)) db_vers_ofe FROM v$instance;
+ALTER SESSION SET optimizer_features_enable = '&&db_vers_ofe.';
+-- to work around bug 12672969
+ALTER SESSION SET "_optimizer_order_by_elimination_enabled"=false; 
+-- workaround Siebel
+ALTER SESSION SET optimizer_index_cost_adj = 100;
+ALTER SESSION SET "_always_semi_join" = CHOOSE;
+ALTER SESSION SET "_and_pruning_enabled" = TRUE;
+ALTER SESSION SET "_subquery_pruning_enabled" = TRUE;
+-- workaround bug 19567916
+ALTER SESSION SET "_optimizer_aggr_groupby_elim" = FALSE;
+-- workaround nigeria
+ALTER SESSION SET "_gby_hash_aggregation_enabled" = TRUE;
+ALTER SESSION SET "_hash_join_enabled" = TRUE;
+ALTER SESSION SET "_optim_peek_user_binds" = TRUE;
+ALTER SESSION SET "_optimizer_skip_scan_enabled" = TRUE;
+ALTER SESSION SET "_optimizer_sortmerge_join_enabled" = TRUE;
+ALTER SESSION SET cursor_sharing = EXACT;
+ALTER SESSION SET db_file_multiblock_read_count = 128;
+ALTER SESSION SET optimizer_index_caching = 0;
+ALTER SESSION SET optimizer_index_cost_adj = 100;
+-- workaround 21150273 and 20465582
+ALTER SESSION SET optimizer_dynamic_sampling = 0;
+ALTER SESSION SET "_optimizer_dsdir_usage_control"=0;
+ALTER SESSION SET "_sql_plan_directive_mgmt_control" = 0;
+
+--WHENEVER SQLERROR EXIT SQL.SQLCODE;
 
 ------------------------------------------------------------------------------------------
 -- create tool repository. it overrides existing tables.
@@ -301,9 +372,9 @@ EXEC DBMS_METADATA.SET_TRANSFORM_PARAM(DBMS_METADATA.SESSION_TRANSFORM, 'SQLTERM
 HOS rm &&eadam3_directory_path./&&tool_repo_user..eadam3_tables.dmp >> repo_eadam3_create_log2.txt
 HOS rm &&eadam3_directory_path./EADAM3#TABLES*.log >> repo_eadam3_create_log2.txt
 
-WHENEVER SQLERROR CONTINUE;
+--WHENEVER SQLERROR CONTINUE;
 DROP TABLE &&tool_repo_user..&&tool_prefix_0.tables;
-WHENEVER SQLERROR EXIT SQL.SQLCODE;
+--WHENEVER SQLERROR EXIT SQL.SQLCODE;
 CREATE TABLE &&tool_repo_user..&&tool_prefix_0.tables &&tool_extt_syntax.'&&tool_repo_user..eadam3_tables.dmp')) AS 
 SELECT DBMS_METADATA.GET_DDL('TABLE', table_name, owner) ddl FROM dba_external_tables WHERE owner = UPPER('&&tool_repo_user.') 
 AND (table_name LIKE UPPER('&&tool_prefix_1.%') OR table_name LIKE UPPER('&&tool_prefix_2.%') OR table_name LIKE UPPER('&&tool_prefix_3.%') OR table_name LIKE UPPER('&&tool_prefix_4.%')) ORDER BY table_name;
@@ -312,9 +383,9 @@ AND (table_name LIKE UPPER('&&tool_prefix_1.%') OR table_name LIKE UPPER('&&tool
 HOS rm &&eadam3_directory_path./&&tool_repo_user..eadam3_views.dmp >> repo_eadam3_create_log2.txt
 HOS rm &&eadam3_directory_path./EADAM3#VIEWS*.log >> repo_eadam3_create_log2.txt
 
-WHENEVER SQLERROR CONTINUE;
+--WHENEVER SQLERROR CONTINUE;
 DROP TABLE &&tool_repo_user..&&tool_prefix_0.views;
-WHENEVER SQLERROR EXIT SQL.SQLCODE;
+--WHENEVER SQLERROR EXIT SQL.SQLCODE;
 CREATE TABLE &&tool_repo_user..&&tool_prefix_0.views &&tool_extt_syntax.'&&tool_repo_user..eadam3_views.dmp')) AS 
 SELECT DBMS_METADATA.GET_DDL('VIEW', view_name, owner) ddl FROM dba_views WHERE owner = UPPER('&&tool_repo_user.') 
 AND (view_name LIKE UPPER('&&tool_prefix_1.%') OR view_name LIKE UPPER('&&tool_prefix_2.%') OR view_name LIKE UPPER('&&tool_prefix_3.%') OR view_name LIKE UPPER('&&tool_prefix_4.%')) ORDER BY view_name;
@@ -323,11 +394,11 @@ AND (view_name LIKE UPPER('&&tool_prefix_1.%') OR view_name LIKE UPPER('&&tool_p
 HOS rm &&eadam3_directory_path./&&tool_repo_user..eadam3_control.dmp >> repo_eadam3_create_log2.txt
 HOS rm &&eadam3_directory_path./EADAM3#CONTROL*.log >> repo_eadam3_create_log2.txt
 
-WHENEVER SQLERROR CONTINUE;
+--WHENEVER SQLERROR CONTINUE;
 DROP TABLE &&tool_repo_user..&&tool_prefix_0.control;
-WHENEVER SQLERROR EXIT SQL.SQLCODE;
+--WHENEVER SQLERROR EXIT SQL.SQLCODE;
 CREATE TABLE &&tool_repo_user..&&tool_prefix_0.control &&tool_extt_syntax.'&&tool_repo_user..eadam3_control.dmp')) AS 
-SELECT SYSDATE eadam3_date, MAX(d.dbid) db_id, MAX(d.name) db_name, MAX(d.platform_name) platform_name, MAX(i.version) version, COUNT(*) instances, MIN(host_name) min_host_name, MAX(host_name) max_host_name
+SELECT SYSDATE eadam3_date, MAX(d.dbid) db_id, MAX(d.name) db_name, MAX(d.platform_name) platform_name, MAX(i.version) version, COUNT(*) instances, MIN(i.host_name) min_host_name, MAX(i.host_name) max_host_name, '3.0' eadam3_version
 FROM v$database d, gv$instance i;
 
 ------------------------------------------------------------------------------------------
@@ -351,7 +422,6 @@ SELECT ROUND(MIN(TO_NUMBER(p.value)) * SUM(blocks) / POWER(10,9), 3) approx_repo
 AND (table_name LIKE UPPER('&&tool_prefix_1.%') OR table_name LIKE UPPER('&&tool_prefix_2.%') OR table_name LIKE UPPER('&&tool_prefix_3.%') OR table_name LIKE UPPER('&&tool_prefix_4.%'));
 
 SPO OFF;
-WHENEVER SQLERROR CONTINUE;
 
 ------------------------------------------------------------------------------------------
 -- metadata ddl commands to create new external tables and views on target system
@@ -388,10 +458,13 @@ HOS echo '*************** directory content - end ****************' >> repo_eada
 HOS ls -lat &&eadam3_directory_path. >> repo_eadam3_create_log2.txt
 
 -- zip and copy ddl script and execution logs to eadam3 directory
-HOS zip -m repo_eadam3_logs repo_eadam3_ddl.sql repo_eadam3_*_log*.txt
+HOS zip -mq repo_eadam3_logs repo_eadam3_ddl.sql repo_eadam3_create_log1.txt repo_eadam3_create_log2.txt
 HOS cp repo_eadam3_logs.zip &&eadam3_directory_path.
 
 -- list file created on current directory
 HOS ls -lat repo_eadam3_logs.zip
 
+--WHENEVER SQLERROR CONTINUE;
 EXEC DBMS_APPLICATION_INFO.SET_MODULE(NULL,NULL);
+
+UNDEF 1;

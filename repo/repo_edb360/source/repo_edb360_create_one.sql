@@ -16,7 +16,7 @@ SELECT CASE
        END query_predicate
   FROM dba_tab_columns
  WHERE owner = 'SYS'
-   AND table_name = UPPER(TRIM('&&dd_view_name.'))
+   AND table_name = REPLACE(UPPER(TRIM('&&dd_view_name.')), 'V$', 'V_$')
    AND column_name = 'SNAP_ID';
 
 -- computes if view contains_long_column
@@ -25,7 +25,7 @@ SELECT CASE
        END contains_long_column
   FROM dba_tab_columns
  WHERE owner = 'SYS'
-   AND table_name = UPPER(TRIM('&&dd_view_name.'))
+   AND table_name = REPLACE(UPPER(TRIM('&&dd_view_name.')), 'V$', 'V_$')
    AND data_type = 'LONG'
    AND ROWNUM = 1;
 
@@ -59,17 +59,17 @@ BEGIN
   IF /* view exists */ '&&view_exists.' = 'Y' THEN
     drop_table('&&repo_table_name.');                                                 
     IF /* view contains LONG column(s) */ '&&contains_long_column.' = 'Y' THEN                                                 
-      FOR i IN (SELECT column_name, data_type, data_length FROM dba_tab_columns WHERE owner = 'SYS' AND table_name = UPPER(TRIM('&&dd_view_name.')) ORDER BY column_id)                                                                                                  
+      FOR i IN (SELECT column_name, data_type, data_length FROM dba_tab_columns WHERE owner = 'SYS' AND table_name = REPLACE(UPPER(TRIM('&&dd_view_name.')), 'V$', 'V_$') ORDER BY column_id)                                                                                                  
       LOOP                                                                                                  
-        l_list_ddl := l_list_ddl||','||i.column_name||' '||REPLACE(i.data_type,'LONG','CLOB');                                                                                                  
+        l_list_ddl := l_list_ddl||','||LOWER(i.column_name)||' '||REPLACE(i.data_type,'LONG','CLOB');                                                                                                  
         IF i.data_type IN ('VARCHAR2', 'CHAR', 'RAW') THEN                                                                                                  
           l_list_ddl := l_list_ddl||'('||i.data_length||')';                                                                                                  
         END IF;                                                                                                  
-        l_list_ins := l_list_ins||','||i.column_name;                                                                                                  
+        l_list_ins := l_list_ins||','||LOWER(i.column_name);                                                                                                  
         IF i.data_type = 'LONG' THEN                                                                                                  
-          l_list_sel := l_list_sel||', TO_LOB('||i.column_name||')';                                                                                                  
+          l_list_sel := l_list_sel||', TO_LOB('||LOWER(i.column_name)||')';                                                                                                  
         ELSE                                                                                                  
-          l_list_sel := l_list_sel||', '||i.column_name;                                                                                                  
+          l_list_sel := l_list_sel||', '||LOWER(i.column_name);                                                                                                  
         END IF;                                                                                                      
       END LOOP;                                                                                                  
       execute_immediate('CREATE TABLE &&repo_table_name. ('||TRIM(',' FROM l_list_ddl)||') &&compression_clause.');                                                                                                  

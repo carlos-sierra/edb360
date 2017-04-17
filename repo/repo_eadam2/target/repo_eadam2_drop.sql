@@ -1,10 +1,20 @@
-SPO repo_eadam3_drop_log.txt;
-EXEC DBMS_APPLICATION_INFO.SET_MODULE('EADAM3','DROP');
+SPO repo_eadam2_drop_log.txt;
+EXEC DBMS_APPLICATION_INFO.SET_MODULE('EADAM2','DROP');
 WHENEVER SQLERROR EXIT SQL.SQLCODE;
-SET ECHO ON VER ON TIM ON TIMI ON LONG 32000000 LONGC 2000 PAGES 1000 LIN 1000 TRIMS ON SERVEROUT ON; 
+SET ECHO ON;
+SET HEA ON;
+SET LIN 1000;
+SET LONG 32000000;
+SET LONGC 2000;
+SET PAGES 1000;
+SET SERVEROUT ON;
+SET TIM ON;
+SET TIMI ON;
+SET TRIMS ON;
+SET VER ON;
 
--- prefix for eadam3 tables
-DEF tool_prefix_0 = 'eadam3#';
+-- prefix for eadam2 tables
+DEF tool_prefix_0 = 'eadam2#';
 -- prefix for AWR "dba_hist_" views
 DEF tool_prefix_1 = 'dba_hist#';
 -- prefix for data dictionary "dba_" views
