@@ -1,6 +1,15 @@
 Changelog
 =========
 
+v1713 (2017-05-03)
+=====
+1. New logo
+2. New CSS with white as background
+3. Added "Files Count per Disk Group" and "Data and Temp Files Count per Disk Group" under 2c
+4. Added PDBS info into 1a "System Under Observation"
+5. Split Exadata efficiency chart on 5e from one into four
+
+
 v1712 (2017-04-16)
 =====
 1. eAdam 3.0 and 2.0 are now fully functional

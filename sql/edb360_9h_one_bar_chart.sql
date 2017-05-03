@@ -71,7 +71,7 @@ PRO        ]);;
 PRO        
 PRO        var options = {
 PRO          chartArea:{left:90, top:90, width:'85%', height:'&&bar_height.'},
-PRO          backgroundColor: {fill: '#fcfcf0', stroke: '#336699', strokeWidth: 1},
+PRO          backgroundColor: {fill: 'white', stroke: '#336699', strokeWidth: 1},
 PRO          title: '&&section_id..&&report_sequence.. &&title.&&title_suffix.',
 PRO          titleTextStyle: {fontSize: 18, bold: false},
 PRO          legend: {position: 'none'},

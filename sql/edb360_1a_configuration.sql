@@ -35,6 +35,7 @@ sga AS (SELECT /*+ &&sq_fact_hints. */ SUM(value) target FROM &&gv_object_prefix
 pga AS (SELECT /*+ &&sq_fact_hints. */ SUM(value) target FROM &&gv_object_prefix.system_parameter2 WHERE name = 'pga_aggregate_target'),
 db_block AS (SELECT /*+ &&sq_fact_hints. */ value bytes FROM &&v_object_prefix.system_parameter2 WHERE name = 'db_block_size'),
 db AS (SELECT /*+ &&sq_fact_hints. */ name, platform_name FROM &&v_object_prefix.database),
+&&skip_10g_column.&&skip_11g_column. pdbs AS (SELECT /*+ &&sq_fact_hints. */ * FROM v$pdbs), -- need 12c flag
 inst AS (SELECT /*+ &&sq_fact_hints. */ host_name, version db_version FROM &&v_object_prefix.instance),
 data AS (SELECT /*+ &&sq_fact_hints. */ SUM(bytes) bytes, COUNT(*) files, COUNT(DISTINCT ts#) tablespaces FROM &&v_object_prefix.datafile),
 temp AS (SELECT /*+ &&sq_fact_hints. */ SUM(bytes) bytes FROM &&v_object_prefix.tempfile),
@@ -46,7 +47,9 @@ cpu AS (SELECT /*+ &&sq_fact_hints. */ SUM(value) cnt FROM &&gv_object_prefix.os
 pmem AS (SELECT /*+ &&sq_fact_hints. */ SUM(value) bytes FROM &&gv_object_prefix.osstat WHERE stat_name = 'PHYSICAL_MEMORY_BYTES')
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        'Database name:' system_item, db.name system_value FROM db
- UNION ALL
+UNION ALL
+&&skip_10g_column.&&skip_11g_column. SELECT '    pdb:'||name, 'Open Mode:'||open_mode FROM pdbs -- need 12c flag
+&&skip_10g_column.&&skip_11g_column.  UNION ALL
 SELECT 'Oracle Database version:', inst.db_version FROM inst
  UNION ALL
 SELECT 'Database block size:', TRIM(TO_CHAR(db_block.bytes / POWER(2,10), '90'))||' KB' FROM db_block

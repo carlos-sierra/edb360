@@ -181,11 +181,14 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        /* "cell physical IO bytes eligible for predicate offload" / "physical read total bytes" */
        CASE WHEN prtb > 0 THEN ROUND(100 * eligible / prtb, 1) ELSE 0 END "Eligible Percent", 
        /* ("cell physical IO bytes eligible for predicate offload" - "cell physical IO interconnect bytes returned by smart scan")/ "cell physical IO bytes eligible for predicate offload" */
-       CASE WHEN eligible > ibrss THEN ROUND(100 * (eligible - ibrss) / eligible, 1) ELSE 0 END "IO Saved Percent", 
+       --CASE WHEN eligible > ibrss THEN ROUND(100 * (eligible - ibrss) / eligible, 1) ELSE 0 END "IO Saved Percent", 
        /* "cell physical IO bytes saved by storage index" / "cell physical IO bytes eligible for predicate offload" */
-       CASE WHEN eligible > 0 THEN ROUND(100 * bssi / eligible, 1) ELSE 0 END "Storage Index effic Perc", 
+       --CASE WHEN eligible > 0 THEN ROUND(100 * bssi / eligible, 1) ELSE 0 END "Storage Index effic Perc", 
        /* "cell flash cache read hits" / "physical read total IO requests" */
-       CASE WHEN prtior > 0 THEN ROUND(100 * cfcrh / prtior, 1) ELSE 0 END "Flash Cache effic Perc", 
+       --CASE WHEN prtior > 0 THEN ROUND(100 * cfcrh / prtior, 1) ELSE 0 END "Flash Cache effic Perc", 
+       0 dummy_02,
+       0 dummy_03,
+       0 dummy_04,
        0 dummy_05,
        0 dummy_06,
        0 dummy_07,
@@ -205,12 +208,15 @@ END;
 /
 
 DEF skip_lch = '';
-DEF title = 'Smart Scan efficiency';
+DEF title = 'Offloading Eligibility';
 DEF vaxis = 'Percent %';
-DEF tit_01 = 'Eligible Percent';
-DEF tit_02 = 'IO Saved Percent';
-DEF tit_03 = 'Storage Index efficiency Percent';
-DEF tit_04 = 'Flash Cache efficiency Percent';
+DEF tit_01 = 'Offloading Eligible';
+--DEF tit_02 = 'IO Saved Percent';
+--DEF tit_03 = 'Storage Index efficiency Percent';
+--DEF tit_04 = 'Flash Cache efficiency Percent';
+DEF tit_02 = '';
+DEF tit_03 = '';
+DEF tit_04 = '';
 DEF tit_05 = '';
 DEF tit_06 = '';
 DEF tit_07 = '';
@@ -223,6 +229,368 @@ DEF tit_13 = '';
 DEF tit_14 = '';
 DEF tit_15 = '';
 @@edb360_9a_pre_one.sql
+
+/*****************************************************************************************/
+
+BEGIN
+  :sql_text := q'[
+WITH
+selected_stat_name AS (
+SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
+       h.snap_id,
+       h.instance_number,
+       s.begin_interval_time,
+       s.end_interval_time,
+       (s.startup_time - LAG(s.startup_time) OVER (PARTITION BY h.dbid, h.instance_number, h.stat_id ORDER BY h.snap_id)) startup_time_interval,
+       h.stat_name,
+       (h.value - LAG(h.value) OVER (PARTITION BY h.dbid, h.instance_number, h.stat_id ORDER BY h.snap_id)) value
+       --h.value
+  FROM &&awr_object_prefix.sysstat h,
+       &&awr_object_prefix.snapshot s
+ WHERE h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND h.dbid = &&edb360_dbid.
+   AND h.stat_name IN ('physical read total bytes', 
+                       'physical write total bytes', 
+                       'physical read total IO requests',
+                       'cell flash cache read hits',
+                       'cell physical IO bytes eligible for predicate offload', 
+                       'cell physical IO interconnect bytes', 
+                       'cell physical IO interconnect bytes returned by smart scan', 
+                       'cell physical IO bytes saved by storage index')
+   AND s.snap_id = h.snap_id
+   AND s.dbid = h.dbid
+   AND s.instance_number = h.instance_number
+   AND s.end_interval_time - s.begin_interval_time > TO_DSINTERVAL('+00 00:01:00.000000') -- exclude snaps less than 1m appart
+),
+stat_name_per_snap AS (
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
+       snap_id,
+       MIN(begin_interval_time) begin_interval_time,
+       MIN(end_interval_time) end_interval_time,
+       stat_name,
+       SUM(value) value
+       --ROUND(SUM(value)/1e9, 3) value
+  FROM selected_stat_name
+ WHERE startup_time_interval = TO_DSINTERVAL('+00 00:00:00.000000') -- include only snaps from same startup
+   AND value >= 0 
+ GROUP BY
+       snap_id,
+       stat_name
+),
+stats_per_snap AS (
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
+       snap_id,
+       TO_CHAR(MIN(begin_interval_time), 'YYYY-MM-DD HH24:MI:SS') begin_time,
+       TO_CHAR(MIN(end_interval_time), 'YYYY-MM-DD HH24:MI:SS') end_time,
+       SUM(CASE stat_name WHEN 'physical read total bytes' THEN value ELSE 0 END) prtb,
+       SUM(CASE stat_name WHEN 'physical write total bytes' THEN value ELSE 0 END) pwtb,
+       SUM(CASE stat_name WHEN 'physical read total IO requests' THEN value ELSE 0 END) prtior,
+       SUM(CASE stat_name WHEN 'cell flash cache read hits' THEN value ELSE 0 END) cfcrh,
+       SUM(CASE stat_name WHEN 'cell physical IO bytes eligible for predicate offload' THEN value ELSE 0 END) eligible,
+       SUM(CASE stat_name WHEN 'cell physical IO interconnect bytes' THEN value ELSE 0 END) ib,
+       SUM(CASE stat_name WHEN 'cell physical IO interconnect bytes returned by smart scan' THEN value ELSE 0 END) ibrss,
+       SUM(CASE stat_name WHEN 'cell physical IO bytes saved by storage index' THEN value ELSE 0 END) bssi
+  FROM stat_name_per_snap
+ GROUP BY
+       snap_id
+)
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
+       snap_id,
+       begin_time,
+       end_time,
+       /* "cell physical IO bytes eligible for predicate offload" / "physical read total bytes" */
+       --CASE WHEN prtb > 0 THEN ROUND(100 * eligible / prtb, 1) ELSE 0 END "Eligible Percent", 
+       /* ("cell physical IO bytes eligible for predicate offload" - "cell physical IO interconnect bytes returned by smart scan")/ "cell physical IO bytes eligible for predicate offload" */
+       CASE WHEN eligible > ibrss THEN ROUND(100 * (eligible - ibrss) / eligible, 1) ELSE 0 END "IO Saved Percent", 
+       /* "cell physical IO bytes saved by storage index" / "cell physical IO bytes eligible for predicate offload" */
+       --CASE WHEN eligible > 0 THEN ROUND(100 * bssi / eligible, 1) ELSE 0 END "Storage Index effic Perc", 
+       /* "cell flash cache read hits" / "physical read total IO requests" */
+       --CASE WHEN prtior > 0 THEN ROUND(100 * cfcrh / prtior, 1) ELSE 0 END "Flash Cache effic Perc", 
+       0 dummy_02,
+       0 dummy_03,
+       0 dummy_04,
+       0 dummy_05,
+       0 dummy_06,
+       0 dummy_07,
+       0 dummy_08,
+       0 dummy_09,
+       0 dummy_10,
+       0 dummy_11,
+       0 dummy_12,
+       0 dummy_13,
+       0 dummy_14,
+       0 dummy_15
+  FROM stats_per_snap
+ ORDER BY
+       snap_id
+]';
+END;
+/
+
+DEF skip_lch = '';
+DEF title = 'Offloading Efficiency';
+DEF vaxis = 'Percent %';
+--DEF tit_01 = 'Eligible Percent';
+DEF tit_01 = 'Offloaded';
+--DEF tit_03 = 'Storage Index efficiency Percent';
+--DEF tit_04 = 'Flash Cache efficiency Percent';
+DEF tit_02 = '';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
+@@edb360_9a_pre_one.sql
+
+/*****************************************************************************************/
+
+BEGIN
+  :sql_text := q'[
+WITH
+selected_stat_name AS (
+SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
+       h.snap_id,
+       h.instance_number,
+       s.begin_interval_time,
+       s.end_interval_time,
+       (s.startup_time - LAG(s.startup_time) OVER (PARTITION BY h.dbid, h.instance_number, h.stat_id ORDER BY h.snap_id)) startup_time_interval,
+       h.stat_name,
+       (h.value - LAG(h.value) OVER (PARTITION BY h.dbid, h.instance_number, h.stat_id ORDER BY h.snap_id)) value
+       --h.value
+  FROM &&awr_object_prefix.sysstat h,
+       &&awr_object_prefix.snapshot s
+ WHERE h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND h.dbid = &&edb360_dbid.
+   AND h.stat_name IN ('physical read total bytes', 
+                       'physical write total bytes', 
+                       'physical read total IO requests',
+                       'cell flash cache read hits',
+                       'cell physical IO bytes eligible for predicate offload', 
+                       'cell physical IO interconnect bytes', 
+                       'cell physical IO interconnect bytes returned by smart scan', 
+                       'cell physical IO bytes saved by storage index')
+   AND s.snap_id = h.snap_id
+   AND s.dbid = h.dbid
+   AND s.instance_number = h.instance_number
+   AND s.end_interval_time - s.begin_interval_time > TO_DSINTERVAL('+00 00:01:00.000000') -- exclude snaps less than 1m appart
+),
+stat_name_per_snap AS (
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
+       snap_id,
+       MIN(begin_interval_time) begin_interval_time,
+       MIN(end_interval_time) end_interval_time,
+       stat_name,
+       SUM(value) value
+       --ROUND(SUM(value)/1e9, 3) value
+  FROM selected_stat_name
+ WHERE startup_time_interval = TO_DSINTERVAL('+00 00:00:00.000000') -- include only snaps from same startup
+   AND value >= 0 
+ GROUP BY
+       snap_id,
+       stat_name
+),
+stats_per_snap AS (
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
+       snap_id,
+       TO_CHAR(MIN(begin_interval_time), 'YYYY-MM-DD HH24:MI:SS') begin_time,
+       TO_CHAR(MIN(end_interval_time), 'YYYY-MM-DD HH24:MI:SS') end_time,
+       SUM(CASE stat_name WHEN 'physical read total bytes' THEN value ELSE 0 END) prtb,
+       SUM(CASE stat_name WHEN 'physical write total bytes' THEN value ELSE 0 END) pwtb,
+       SUM(CASE stat_name WHEN 'physical read total IO requests' THEN value ELSE 0 END) prtior,
+       SUM(CASE stat_name WHEN 'cell flash cache read hits' THEN value ELSE 0 END) cfcrh,
+       SUM(CASE stat_name WHEN 'cell physical IO bytes eligible for predicate offload' THEN value ELSE 0 END) eligible,
+       SUM(CASE stat_name WHEN 'cell physical IO interconnect bytes' THEN value ELSE 0 END) ib,
+       SUM(CASE stat_name WHEN 'cell physical IO interconnect bytes returned by smart scan' THEN value ELSE 0 END) ibrss,
+       SUM(CASE stat_name WHEN 'cell physical IO bytes saved by storage index' THEN value ELSE 0 END) bssi
+  FROM stat_name_per_snap
+ GROUP BY
+       snap_id
+)
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
+       snap_id,
+       begin_time,
+       end_time,
+       /* "cell physical IO bytes eligible for predicate offload" / "physical read total bytes" */
+       --CASE WHEN prtb > 0 THEN ROUND(100 * eligible / prtb, 1) ELSE 0 END "Eligible Percent", 
+       /* ("cell physical IO bytes eligible for predicate offload" - "cell physical IO interconnect bytes returned by smart scan")/ "cell physical IO bytes eligible for predicate offload" */
+       --CASE WHEN eligible > ibrss THEN ROUND(100 * (eligible - ibrss) / eligible, 1) ELSE 0 END "IO Saved Percent", 
+       /* "cell physical IO bytes saved by storage index" / "cell physical IO bytes eligible for predicate offload" */
+       CASE WHEN eligible > 0 THEN ROUND(100 * bssi / eligible, 1) ELSE 0 END "Storage Index effic Perc", 
+       /* "cell flash cache read hits" / "physical read total IO requests" */
+       --CASE WHEN prtior > 0 THEN ROUND(100 * cfcrh / prtior, 1) ELSE 0 END "Flash Cache effic Perc", 
+       0 dummy_02,
+       0 dummy_03,
+       0 dummy_04,
+       0 dummy_05,
+       0 dummy_06,
+       0 dummy_07,
+       0 dummy_08,
+       0 dummy_09,
+       0 dummy_10,
+       0 dummy_11,
+       0 dummy_12,
+       0 dummy_13,
+       0 dummy_14,
+       0 dummy_15
+  FROM stats_per_snap
+ ORDER BY
+       snap_id
+]';
+END;
+/
+
+DEF skip_lch = '';
+DEF title = 'Storage Index efficiency';
+DEF vaxis = 'Percent %';
+--DEF tit_01 = 'Eligible Percent';
+--DEF tit_02 = 'IO Saved Percent';
+DEF tit_01 = 'Storage Index';
+--DEF tit_04 = 'Flash Cache efficiency Percent';
+DEF tit_02 = '';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
+@@edb360_9a_pre_one.sql
+
+/*****************************************************************************************/
+
+BEGIN
+  :sql_text := q'[
+WITH
+selected_stat_name AS (
+SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
+       h.snap_id,
+       h.instance_number,
+       s.begin_interval_time,
+       s.end_interval_time,
+       (s.startup_time - LAG(s.startup_time) OVER (PARTITION BY h.dbid, h.instance_number, h.stat_id ORDER BY h.snap_id)) startup_time_interval,
+       h.stat_name,
+       (h.value - LAG(h.value) OVER (PARTITION BY h.dbid, h.instance_number, h.stat_id ORDER BY h.snap_id)) value
+       --h.value
+  FROM &&awr_object_prefix.sysstat h,
+       &&awr_object_prefix.snapshot s
+ WHERE h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND h.dbid = &&edb360_dbid.
+   AND h.stat_name IN ('physical read total bytes', 
+                       'physical write total bytes', 
+                       'physical read total IO requests',
+                       'cell flash cache read hits',
+                       'cell physical IO bytes eligible for predicate offload', 
+                       'cell physical IO interconnect bytes', 
+                       'cell physical IO interconnect bytes returned by smart scan', 
+                       'cell physical IO bytes saved by storage index')
+   AND s.snap_id = h.snap_id
+   AND s.dbid = h.dbid
+   AND s.instance_number = h.instance_number
+   AND s.end_interval_time - s.begin_interval_time > TO_DSINTERVAL('+00 00:01:00.000000') -- exclude snaps less than 1m appart
+),
+stat_name_per_snap AS (
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
+       snap_id,
+       MIN(begin_interval_time) begin_interval_time,
+       MIN(end_interval_time) end_interval_time,
+       stat_name,
+       SUM(value) value
+       --ROUND(SUM(value)/1e9, 3) value
+  FROM selected_stat_name
+ WHERE startup_time_interval = TO_DSINTERVAL('+00 00:00:00.000000') -- include only snaps from same startup
+   AND value >= 0 
+ GROUP BY
+       snap_id,
+       stat_name
+),
+stats_per_snap AS (
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
+       snap_id,
+       TO_CHAR(MIN(begin_interval_time), 'YYYY-MM-DD HH24:MI:SS') begin_time,
+       TO_CHAR(MIN(end_interval_time), 'YYYY-MM-DD HH24:MI:SS') end_time,
+       SUM(CASE stat_name WHEN 'physical read total bytes' THEN value ELSE 0 END) prtb,
+       SUM(CASE stat_name WHEN 'physical write total bytes' THEN value ELSE 0 END) pwtb,
+       SUM(CASE stat_name WHEN 'physical read total IO requests' THEN value ELSE 0 END) prtior,
+       SUM(CASE stat_name WHEN 'cell flash cache read hits' THEN value ELSE 0 END) cfcrh,
+       SUM(CASE stat_name WHEN 'cell physical IO bytes eligible for predicate offload' THEN value ELSE 0 END) eligible,
+       SUM(CASE stat_name WHEN 'cell physical IO interconnect bytes' THEN value ELSE 0 END) ib,
+       SUM(CASE stat_name WHEN 'cell physical IO interconnect bytes returned by smart scan' THEN value ELSE 0 END) ibrss,
+       SUM(CASE stat_name WHEN 'cell physical IO bytes saved by storage index' THEN value ELSE 0 END) bssi
+  FROM stat_name_per_snap
+ GROUP BY
+       snap_id
+)
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
+       snap_id,
+       begin_time,
+       end_time,
+       /* "cell physical IO bytes eligible for predicate offload" / "physical read total bytes" */
+       --CASE WHEN prtb > 0 THEN ROUND(100 * eligible / prtb, 1) ELSE 0 END "Eligible Percent", 
+       /* ("cell physical IO bytes eligible for predicate offload" - "cell physical IO interconnect bytes returned by smart scan")/ "cell physical IO bytes eligible for predicate offload" */
+       --CASE WHEN eligible > ibrss THEN ROUND(100 * (eligible - ibrss) / eligible, 1) ELSE 0 END "IO Saved Percent", 
+       /* "cell physical IO bytes saved by storage index" / "cell physical IO bytes eligible for predicate offload" */
+       --CASE WHEN eligible > 0 THEN ROUND(100 * bssi / eligible, 1) ELSE 0 END "Storage Index effic Perc", 
+       /* "cell flash cache read hits" / "physical read total IO requests" */
+       CASE WHEN prtior > 0 THEN ROUND(100 * cfcrh / prtior, 1) ELSE 0 END "Flash Cache effic Perc", 
+       0 dummy_02,
+       0 dummy_03,
+       0 dummy_04,
+       0 dummy_05,
+       0 dummy_06,
+       0 dummy_07,
+       0 dummy_08,
+       0 dummy_09,
+       0 dummy_10,
+       0 dummy_11,
+       0 dummy_12,
+       0 dummy_13,
+       0 dummy_14,
+       0 dummy_15
+  FROM stats_per_snap
+ ORDER BY
+       snap_id
+]';
+END;
+/
+
+DEF skip_lch = '';
+DEF title = 'Flash Cache efficiency';
+DEF vaxis = 'Percent %';
+--DEF tit_01 = 'Eligible Percent';
+--DEF tit_02 = 'IO Saved Percent';
+--DEF tit_03 = 'Storage Index efficiency Percent';
+DEF tit_01 = 'Flash Cache';
+DEF tit_02 = '';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
+@@edb360_9a_pre_one.sql
+
+/*****************************************************************************************/
 
 DEF skip_lch = 'Y';
 DEF tit_01 = '';

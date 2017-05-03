@@ -122,30 +122,9 @@ SET SUF '';
 @@&&custom_config_filename.
 SET SUF sql;
 
--- data dictionary views for tool repository. do not change values. this piece must execute after processing configuration scripts
-DEF awr_hist_prefix = 'DBA_HIST_';
-DEF awr_object_prefix = 'dba_hist_';
-DEF dva_view_prefix = 'DBA_';
-DEF dva_object_prefix = 'dba_';
-DEF gv_view_prefix = 'GV$';
-DEF gv_object_prefix = 'gv$';
-DEF v_view_prefix = 'V$';
-DEF v_object_prefix = 'v$';
--- when using a repository change then view prefixes
-COL awr_object_prefix NEW_V awr_object_prefix;
-COL dva_object_prefix NEW_V dva_object_prefix;
-COL gv_object_prefix NEW_V gv_object_prefix;
-COL v_object_prefix NEW_V v_object_prefix;
-SELECT CASE WHEN '&&tool_repo_user.' IS NULL THEN '&&awr_object_prefix.' ELSE '&&tool_repo_user..&&tool_prefix_1.' END awr_object_prefix,
-       CASE WHEN '&&tool_repo_user.' IS NULL THEN '&&dva_object_prefix.' ELSE '&&tool_repo_user..&&tool_prefix_2.' END dva_object_prefix,
-       CASE WHEN '&&tool_repo_user.' IS NULL THEN '&&gv_object_prefix.'  ELSE '&&tool_repo_user..&&tool_prefix_3.' END gv_object_prefix,
-       CASE WHEN '&&tool_repo_user.' IS NULL THEN '&&v_object_prefix.'   ELSE '&&tool_repo_user..&&tool_prefix_4.' END v_object_prefix
-  FROM DUAL
-/
-
 -- links
 DEF edb360_conf_tool_page = '<a href="http://carlos-sierra.net/edb360-an-oracle-database-360-degree-view/" target="_blank">';
-DEF edb360_conf_all_pages_icon = '<a href="http://carlos-sierra.net/edb360-an-oracle-database-360-degree-view/" target="_blank"><img src="edb360_img.jpg" alt="eDB360" height="47" width="50" /></a>';
+DEF edb360_conf_all_pages_icon = '<a href="http://carlos-sierra.net/edb360-an-oracle-database-360-degree-view/" target="_blank"><img src="edb360_img.jpg" alt="eDB360" height="33" width="52" /></a>';
 DEF edb360_conf_all_pages_logo = '';
 DEF edb360_conf_google_charts = '<script type="text/javascript" src="https://www.google.com/jsapi"></script>';
 PRO
@@ -174,7 +153,7 @@ PRO <td class="c">5/&&max_col_number.</td>
 PRO <td class="c">6/&&max_col_number.</td>
 PRO <td class="c">7/&&max_col_number.</td>
 PRO </tr><tr class="main"><td>
-PRO &&edb360_conf_tool_page.<img src="edb360_img.jpg" alt="eDB360" height="234" width="248" /></a>
+PRO &&edb360_conf_tool_page.<img src="edb360_img.jpg" alt="eDB360" height="201" width="313" /></a>
 PRO <br />
 SPO OFF;
 

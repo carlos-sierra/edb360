@@ -1,5 +1,5 @@
-DEF edb360_vYYNN = 'v1712';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2017-04-16)';
+DEF edb360_vYYNN = 'v1713';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2017-05-03)';
 DEF edb360_copyright = ' (c) 2017';
 
 SET TERM OFF;
@@ -12,6 +12,27 @@ SELECT 'Tool Execution Hours so far: '||ROUND((DBMS_UTILITY.GET_TIME - :edb360_m
 EXEC :edb360_max_seconds := &&edb360_conf_max_hours. * 3600;
 COL edb360_bypass NEW_V edb360_bypass;
 SELECT NULL edb360_bypass FROM DUAL;
+
+-- data dictionary views for tool repository. do not change values. this piece must execute after processing configuration scripts
+DEF awr_hist_prefix = 'DBA_HIST_';
+DEF awr_object_prefix = 'dba_hist_';
+DEF dva_view_prefix = 'DBA_';
+DEF dva_object_prefix = 'dba_';
+DEF gv_view_prefix = 'GV$';
+DEF gv_object_prefix = 'gv$';
+DEF v_view_prefix = 'V$';
+DEF v_object_prefix = 'v$';
+-- when using a repository change then view prefixes
+COL awr_object_prefix NEW_V awr_object_prefix;
+COL dva_object_prefix NEW_V dva_object_prefix;
+COL gv_object_prefix NEW_V gv_object_prefix;
+COL v_object_prefix NEW_V v_object_prefix;
+SELECT CASE WHEN '&&tool_repo_user.' IS NULL THEN '&&awr_object_prefix.' ELSE '&&tool_repo_user..&&tool_prefix_1.' END awr_object_prefix,
+       CASE WHEN '&&tool_repo_user.' IS NULL THEN '&&dva_object_prefix.' ELSE '&&tool_repo_user..&&tool_prefix_2.' END dva_object_prefix,
+       CASE WHEN '&&tool_repo_user.' IS NULL THEN '&&gv_object_prefix.'  ELSE '&&tool_repo_user..&&tool_prefix_3.' END gv_object_prefix,
+       CASE WHEN '&&tool_repo_user.' IS NULL THEN '&&v_object_prefix.'   ELSE '&&tool_repo_user..&&tool_prefix_4.' END v_object_prefix
+  FROM DUAL
+/
 
 -- snaps
 SELECT startup_time, dbid, instance_number, COUNT(*) snaps,

@@ -64,7 +64,7 @@ PRO
 PRO        var options = {
 PRO          chartArea: {left:25, top:75, width:'95%', height:'80%'},
 PRO          is3D: false,
-PRO          backgroundColor: {fill: '#fcfcf0', stroke: '#336699', strokeWidth: 1},
+PRO          backgroundColor: {fill: 'white', stroke: '#336699', strokeWidth: 1},
 PRO          title: '&&section_id..&&report_sequence.. &&title.&&title_suffix.',
 PRO          titleTextStyle: {fontSize: 18, bold: false},
 PRO          legend: {position: 'right', textStyle: {fontSize: 14}},

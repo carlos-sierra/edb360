@@ -115,3 +115,5 @@ DEF tool_prefix_4 = 'v#';
 -- If you need to modify any parameter create a new custom configuration file with a
 -- subset of the DEF above, and place on same edb360-master/sql directory; then when
 -- you execute edb360.sql, pass on second parameter the name of your configuration file
+
+DEF edb360_sections = '';

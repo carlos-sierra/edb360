@@ -90,7 +90,7 @@ PRO        ]);;
 PRO        
 PRO        var options = {
 PRO          chartArea:{left:120, top:80, width:'70%', height:'70%'},
-PRO          backgroundColor: {fill: '#fcfcf0', stroke: '#336699', strokeWidth: 1},
+PRO          backgroundColor: {fill: 'white', stroke: '#336699', strokeWidth: 1},
 PRO          explorer: {actions: ['dragToZoom', 'rightClickToReset'], maxZoomIn: 0.01},
 PRO          series: { 0: {targetAxisIndex: 0}, 1: {targetAxisIndex: 1} },
 PRO          vAxes: { 0: {title: '&&vaxis1.', titleTextStyle: {fontSize: 16, bold: false}}, 1: {title: '&&vaxis2.', titleTextStyle: {fontSize: 16, bold: false}}},

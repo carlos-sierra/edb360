@@ -131,6 +131,43 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+DEF title = 'Files Count per Disk Group';
+DEF main_table = '&&v_view_prefix.DATAFILE';
+BEGIN
+  :sql_text := q'[
+select /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
+count(*) files, name disk_group, 'Datafile' file_type
+from
+(select regexp_substr(name, '[^/]+', 1, 1) name from &&v_object_prefix.datafile)
+group by name
+union all
+select count(*) files, name disk_group, 'Tempfile' file_type
+from
+(select regexp_substr(name, '[^/]+', 1, 1) name from &&v_object_prefix.tempfile)
+group by name
+order by 1 desc, 2, 3
+]';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+DEF title = 'Data and Temp Files Count per Disk Group';
+DEF main_table = '&&v_view_prefix.DATAFILE';
+BEGIN
+  :sql_text := q'[
+select /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
+count(*) files, name disk_group
+from
+(select regexp_substr(name, '[^/]+', 1, 1) name from &&v_object_prefix.datafile
+union all
+select regexp_substr(name, '[^/]+', 1, 1) name from &&v_object_prefix.tempfile)
+group by name
+order by 1 desc
+]';
+END;
+/
+@@edb360_9a_pre_one.sql
+
 -- special addition from MOS 1551288.1
 -- add seq to spool_filename
 EXEC :file_seq := :file_seq + 1;
