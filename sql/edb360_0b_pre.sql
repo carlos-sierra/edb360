@@ -1,5 +1,5 @@
-DEF edb360_vYYNN = 'v1713';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2017-05-03)';
+DEF edb360_vYYNN = 'v1714';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2017-06-11)';
 DEF edb360_copyright = ' (c) 2017';
 
 SET TERM OFF;
@@ -187,6 +187,8 @@ COL edb360_6i NEW_V edb360_6i;
 COL edb360_6j NEW_V edb360_6j;
 COL edb360_6k NEW_V edb360_6k;
 COL edb360_6l NEW_V edb360_6l;
+COL edb360_6m NEW_V edb360_6m;
+COL edb360_6n NEW_V edb360_6n;
 COL edb360_7a NEW_V edb360_7a;
 COL edb360_7b NEW_V edb360_7b;
 COL edb360_7c NEW_V edb360_7c;
@@ -244,6 +246,8 @@ SELECT CASE WHEN '6i' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6
 SELECT CASE WHEN '6j' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6j_' ELSE ' echo skip ' END edb360_6j FROM DUAL;
 SELECT CASE WHEN '6k' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6k_' ELSE ' echo skip ' END edb360_6k FROM DUAL;
 SELECT CASE WHEN '6l' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6l_' ELSE ' echo skip ' END edb360_6l FROM DUAL;
+SELECT CASE WHEN '6m' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6m_' ELSE ' echo skip ' END edb360_6m FROM DUAL;
+SELECT CASE WHEN '6n' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6n_' ELSE ' echo skip ' END edb360_6n FROM DUAL;
 SELECT CASE WHEN '7a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_7a_' ELSE ' echo skip ' END edb360_7a FROM DUAL;
 SELECT CASE WHEN '7b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_7b_' ELSE ' echo skip ' END edb360_7b FROM DUAL;
 SELECT CASE WHEN '7c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_7c_' ELSE ' echo skip ' END edb360_7c FROM DUAL;
@@ -411,21 +415,31 @@ COL skip_10g_column NEW_V skip_10g_column;
 DEF skip_10g_script = '';
 COL skip_10g_script NEW_V skip_10g_script;
 SELECT ' -- skip 10g ' skip_10g_column, ' echo skip 10g ' skip_10g_script FROM &&v_object_prefix.instance WHERE version LIKE '10%';
+--
 DEF skip_11g_column = '';
 COL skip_11g_column NEW_V skip_11g_column;
 DEF skip_11g_script = '';
 COL skip_11g_script NEW_V skip_11g_script;
 SELECT ' -- skip 11g ' skip_11g_column, ' echo skip 11g ' skip_11g_script FROM &&v_object_prefix.instance WHERE version LIKE '11%';
+--
 DEF skip_11r1_column = '';
 COL skip_11r1_column NEW_V skip_11r1_column;
 DEF skip_11r1_script = '';
 COL skip_11r1_script NEW_V skip_11r1_script;
 SELECT ' -- skip 11gR1 ' skip_11r1_column, ' echo skip 11gR1 ' skip_11r1_script FROM &&v_object_prefix.instance WHERE version LIKE '11.1%';
+--
 DEF skip_non_repo_column = '';
 COL skip_non_repo_column NEW_V skip_non_repo_column;
 DEF skip_non_repo_script = '';
 COL skip_non_repo_script NEW_V skip_non_repo_script;
 SELECT ' -- skip non-repository ' skip_non_repo_column, ' echo skip non-repository ' skip_non_repo_script FROM DUAL WHERE '&&tool_repo_user.' IS NOT NULL;
+--
+DEF skip_12c_column = '';
+COL skip_12c_column NEW_V skip_12c_column;
+DEF skip_12c_script = '';
+COL skip_12c_script NEW_V skip_12c_script;
+SELECT ' -- skip 12c ' skip_12c_column, ' echo skip 12c ' skip_12c_script FROM &&v_object_prefix.instance WHERE version LIKE '12%';
+--
 
 -- get average number of CPUs
 COL avg_cpu_count NEW_V avg_cpu_count FOR A6;
@@ -483,8 +497,15 @@ COL ebs_release NEW_V ebs_release;
 COL ebs_system_name NEW_V ebs_system_name;
 SELECT /* ignore if it fails to parse */ release_name ebs_release, applications_system_name ebs_system_name FROM applsys.fnd_product_groups WHERE ROWNUM = 1;
 
+-- 12c container
+DEF edb360_con_id = '-1';
+COL edb360_con_id NEW_V edb360_con_id;
+-- 0-1:CDB$ROOT 2:PDB$SEED >2:PDB
+--SELECT /* ignore if it fails to parse */ con_id edb360_con_id FROM v$instance;
+SELECT /* ignore if it fails to parse */ SYS_CONTEXT('USERENV','CON_ID') edb360_con_id FROM DUAL;
+
 -- siebel
-DEF siebel_schema = 'siebel_schema';
+DEF siebel_schema = 'NOT_A_SIEBEL_DB';
 DEF siebel_app_ver = '';
 COL siebel_schema NEW_V siebel_schema;
 COL siebel_app_ver NEW_V siebel_app_ver;
@@ -492,7 +513,7 @@ SELECT owner siebel_schema FROM &&dva_object_prefix.tab_columns WHERE table_name
 SELECT /* ignore if it fails to parse */ app_ver siebel_app_ver FROM &&siebel_schema..s_app_ver WHERE ROWNUM = 1;
 
 -- psft
-DEF psft_schema = 'psft_schema';
+DEF psft_schema = 'NOT_A_PSFT_DB';
 DEF psft_tools_rel = '';
 COL psft_schema NEW_V psft_schema;
 COL psft_tools_rel NEW_V psft_tools_rel;
@@ -588,6 +609,36 @@ DEF tit_12 = '';
 DEF tit_13 = '';
 DEF tit_14 = '';
 DEF tit_15 = '';
+COL cont_01 NEW_V cont_01;
+COL cont_02 NEW_V cont_02;
+COL cont_03 NEW_V cont_03;
+COL cont_04 NEW_V cont_04;
+COL cont_05 NEW_V cont_05;
+COL cont_06 NEW_V cont_06;
+COL cont_07 NEW_V cont_07;
+COL cont_08 NEW_V cont_08;
+COL cont_09 NEW_V cont_09;
+COL cont_10 NEW_V cont_10;
+COL cont_11 NEW_V cont_11;
+COL cont_12 NEW_V cont_12;
+COL cont_13 NEW_V cont_13;
+COL cont_14 NEW_V cont_14;
+COL cont_15 NEW_V cont_15;
+DEF cont_01 = '-1';
+DEF cont_02 = '-1';
+DEF cont_03 = '-1';
+DEF cont_04 = '-1';
+DEF cont_05 = '-1';
+DEF cont_06 = '-1';
+DEF cont_07 = '-1';
+DEF cont_08 = '-1';
+DEF cont_09 = '-1';
+DEF cont_10 = '-1';
+DEF cont_11 = '-1';
+DEF cont_12 = '-1';
+DEF cont_13 = '-1';
+DEF cont_14 = '-1';
+DEF cont_15 = '-1';
 DEF wait_class_01 = '';
 DEF event_name_01 = '';
 DEF wait_class_02 = '';

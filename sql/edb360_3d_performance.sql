@@ -378,6 +378,8 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
 HAVING ABS(REGR_SLOPE(t.time_per_exec_over_med, t.days_ago)) > &&min_slope_threshold.
 )
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
+       DISTINCT
+       r.rank_num,
        r.sql_id,
        r.change,
        r.slope,
@@ -709,6 +711,7 @@ GROUP BY
        h.dbid
 ), hist2 as (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
+       DISTINCT
        h.sql_id
      , h.sql_plan_hash_value
      , h.dbid

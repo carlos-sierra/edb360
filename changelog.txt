@@ -1,6 +1,20 @@
 Changelog
 =========
 
+v1714 (2017-06-11)
+=====
+1. Fix 6c on 12c where when executed from CDB it shows duplicate rows per SQL_ID on 6c Top SQL
+2. Added new configuration parameter edb360_conf_incl_source with default of 'Y'
+3. Added Sections 6m and 6n "Top PDBs" for 12c (shown only when executed from CDB$ROOT)
+4. Display NOT_A_SIEBEL_DB and NOT_A_PSFT_DB instead of siebel_schema and psft_schema
+5. edb360_conf_incl_ash_analy_rpt, edb360_conf_incl_addm_rpt and edb360_conf_incl_ash_rpt default to N
+6. Reduce edb360_conf_top_sql from 48 to 16
+7. Reduce edb360_conf_top_cur from 4 to 2
+8. Reduce edb360_conf_top_sig from 4 to 2
+9. Reduce edb360_conf_planx_top from 48 to 16
+10. Reduce edb360_conf_sqld360_top from 16 to 8
+11. Create set of parameters to regulate how many reports to create on each max category, med and min
+
 v1713 (2017-05-03)
 =====
 1. New logo
@@ -8,7 +22,6 @@ v1713 (2017-05-03)
 3. Added "Files Count per Disk Group" and "Data and Temp Files Count per Disk Group" under 2c
 4. Added PDBS info into 1a "System Under Observation"
 5. Split Exadata efficiency chart on 5e from one into four
-
 
 v1712 (2017-04-16)
 =====

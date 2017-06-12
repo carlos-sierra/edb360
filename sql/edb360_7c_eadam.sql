@@ -71,7 +71,8 @@ SELECT /*+ &&ds_hint.
     * FROM &&awr_object_prefix.active_sess_history h
 WHERE h.dbid = &&edb360_dbid. 
 AND h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
-AND (h.sql_id IN (SELECT operation FROM plan_table WHERE statement_id = 'SQLD360_SQLID') OR h.snap_id IN (&&edb360_eadam_snaps.));
+AND (h.sql_id IN (SELECT operation FROM plan_table WHERE statement_id = 'SQLD360_SQLID') OR h.snap_id IN (&&edb360_eadam_snaps.))
+AND ROWNUM <= &&edb360_eadam_row_limit.;
 SPO OFF;
 HOS gzip &&awr_object_prefix.active_sess_history.txt
 HOS tar -rf &&edb360_tar_filename..tar &&awr_object_prefix.active_sess_history.txt.gz

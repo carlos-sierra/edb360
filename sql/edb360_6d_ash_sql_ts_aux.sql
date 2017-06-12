@@ -4,6 +4,20 @@ DEF stacked = 'isStacked: true,';
 DEF vaxis = 'Average Active Sessions AAS (stacked)';
 DEF vbaseline = '';
 DEF tit_01 = 'Others';
+DEF tit_02 = '';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
 DEF title_suffix = '&&between_times.';
 
 WITH

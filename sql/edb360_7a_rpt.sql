@@ -109,6 +109,7 @@ BEGIN
                  AND TO_CHAR(end_date, 'D') BETWEEN '2' AND '6' /* between Monday and Friday */
                  AND TO_CHAR(end_date, 'HH24MM') BETWEEN '&&edb360_conf_work_time_from.' AND '&&edb360_conf_work_time_to.' 
                  AND &&history_days. > 10
+                 AND &&edb360_max_work_days_peaks. >= 1
               ),
               max_&&hist_work_days.wd2 AS (
               SELECT /*+ &&sq_fact_hints. &&section_id. */ MAX(value) value
@@ -117,6 +118,7 @@ BEGIN
                  AND TO_CHAR(end_date, 'D') BETWEEN '2' AND '6' /* between Monday and Friday */
                  AND TO_CHAR(end_date, 'HH24MM') BETWEEN '&&edb360_conf_work_time_from.' AND '&&edb360_conf_work_time_to.' 
                  AND &&history_days. > 10
+                 AND &&edb360_max_work_days_peaks. >= 2
                  AND value NOT IN (SELECT value FROM max_&&hist_work_days.wd1)
               ),
               max_&&hist_work_days.wd3 AS (
@@ -126,6 +128,7 @@ BEGIN
                  AND TO_CHAR(end_date, 'D') BETWEEN '2' AND '6' /* between Monday and Friday */
                  AND TO_CHAR(end_date, 'HH24MM') BETWEEN '&&edb360_conf_work_time_from.' AND '&&edb360_conf_work_time_to.' 
                  AND &&history_days. > 10
+                 AND &&edb360_max_work_days_peaks. >= 3
                  AND value NOT IN (SELECT value FROM max_&&hist_work_days.wd1
                                    UNION
                                    SELECT value FROM max_&&hist_work_days.wd2)
@@ -137,12 +140,14 @@ BEGIN
                  AND TO_CHAR(end_date, 'D') BETWEEN '2' AND '6' /* between Monday and Friday */
                  AND TO_CHAR(end_date, 'HH24MM') BETWEEN '&&edb360_conf_work_time_from.' AND '&&edb360_conf_work_time_to.' 
                  AND &&history_days. > 10
+                 AND &&edb360_min_work_days_peaks. >= 1
               ),
               max_&&history_days.d1 AS (
               SELECT /*+ &&sq_fact_hints. &&section_id. */ MAX(value) value
                 FROM expensive
                WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - &&history_days. AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 -- avoids selecting same twice
                  AND &&history_days. > 10
+                 AND &&edb360_max_history_peaks. >= 1
                  AND value NOT IN (SELECT value FROM max_&&hist_work_days.wd1
                                    UNION
                                    SELECT value FROM max_&&hist_work_days.wd2
@@ -154,6 +159,7 @@ BEGIN
                 FROM expensive
                WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - &&history_days. AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 -- avoids selecting same twice
                  AND &&history_days. > 10
+                 AND &&edb360_max_history_peaks. >= 2
                  AND value NOT IN (SELECT value FROM max_&&hist_work_days.wd1
                                    UNION 
                                    SELECT value FROM max_&&hist_work_days.wd2
@@ -167,6 +173,7 @@ BEGIN
                 FROM expensive
                WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - &&history_days. AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 -- avoids selecting same twice
                  AND &&history_days. > 10
+                 AND &&edb360_max_history_peaks. >= 3
                  AND value NOT IN (SELECT value FROM max_&&hist_work_days.wd1
                                    UNION 
                                    SELECT value FROM max_&&hist_work_days.wd2
@@ -182,6 +189,7 @@ BEGIN
                 FROM expensive
                WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - &&history_days. AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 -- avoids selecting same twice
                  AND &&history_days. > 10
+                 AND &&edb360_med_history. >= 1
               ),
               max_5wd1 AS (
               SELECT /*+ &&sq_fact_hints. &&section_id. */ MAX(value) value
@@ -190,6 +198,7 @@ BEGIN
                  AND TO_CHAR(end_date, 'D') BETWEEN '2' AND '6' /* between Monday and Friday */
                  AND TO_CHAR(end_date, 'HH24MM') BETWEEN '&&edb360_conf_work_time_from.' AND '&&edb360_conf_work_time_to.' 
                  --AND &&history_days. > 10
+                 AND &&edb360_max_5wd_peaks. >= 1
               ),
               max_5wd2 AS (
               SELECT /*+ &&sq_fact_hints. &&section_id. */ MAX(value) value
@@ -198,6 +207,7 @@ BEGIN
                  AND TO_CHAR(end_date, 'D') BETWEEN '2' AND '6' /* between Monday and Friday */
                  AND TO_CHAR(end_date, 'HH24MM') BETWEEN '&&edb360_conf_work_time_from.' AND '&&edb360_conf_work_time_to.' 
                  --AND &&history_days. > 10
+                 AND &&edb360_max_5wd_peaks. >= 2
                  AND value NOT IN (SELECT value FROM max_5wd1)
               ),
               max_5wd3 AS (
@@ -207,6 +217,7 @@ BEGIN
                  AND TO_CHAR(end_date, 'D') BETWEEN '2' AND '6' /* between Monday and Friday */
                  AND TO_CHAR(end_date, 'HH24MM') BETWEEN '&&edb360_conf_work_time_from.' AND '&&edb360_conf_work_time_to.' 
                  --AND &&history_days. > 10
+                 AND &&edb360_max_5wd_peaks. >= 3
                  AND value NOT IN (SELECT value FROM max_5wd1
                                    UNION
                                    SELECT value FROM max_5wd2)
@@ -218,12 +229,14 @@ BEGIN
                  AND TO_CHAR(end_date, 'D') BETWEEN '2' AND '6' /* between Monday and Friday */
                  AND TO_CHAR(end_date, 'HH24MM') BETWEEN '&&edb360_conf_work_time_from.' AND '&&edb360_conf_work_time_to.' 
                  --AND &&history_days. > 10
+                 AND &&edb360_min_5wd_peaks. >= 1
               ),
               max_7d1 AS (
               SELECT /*+ &&sq_fact_hints. &&section_id. */ MAX(value) value
                 FROM expensive
                WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 1 -- avoids selecting same twice
                  --AND &&history_days. > 10
+                 AND &&edb360_max_7d_peaks. >= 1
                  AND value NOT IN (SELECT value FROM max_5wd1
                                    UNION
                                    SELECT value FROM max_5wd2
@@ -235,6 +248,7 @@ BEGIN
                 FROM expensive
                WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 1 -- avoids selecting same twice
                  --AND &&history_days. > 10
+                 AND &&edb360_max_7d_peaks. >= 2
                  AND value NOT IN (SELECT value FROM max_5wd1
                                    UNION
                                    SELECT value FROM max_5wd2
@@ -248,6 +262,7 @@ BEGIN
                 FROM expensive
                WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 1 -- avoids selecting same twice
                  --AND &&history_days. > 10
+                 AND &&edb360_max_7d_peaks. >= 3
                  AND value NOT IN (SELECT value FROM max_5wd1
                                    UNION
                                    SELECT value FROM max_5wd2
@@ -263,6 +278,7 @@ BEGIN
                 FROM expensive
                WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 1 -- avoids selecting same twice
                  --AND &&history_days. > 10
+                 AND &&edb360_med_7d. >= 1
               ),
               small_range AS (
               SELECT /*+ &&sq_fact_hints. &&section_id. */ e.dbid, e.bid, e.eid, e.begin_date, e.end_date, 'max&&hist_work_days.wd1' rep, 50 ob
@@ -378,9 +394,11 @@ BEGIN
                UNION ALL
               SELECT dbid, bid, eid, begin_date, end_date, rep, ob
                 FROM max_&&history_days.d
+               WHERE '&&edb360_conf_incl_awr_range_rpt.' = 'Y'
                UNION ALL
               SELECT dbid, bid, eid, begin_date, end_date, rep, ob
                 FROM max_7d
+               WHERE '&&edb360_conf_incl_awr_range_rpt.' = 'Y'
                ORDER BY 7)
     LOOP
       IF j.ob < 20 THEN
@@ -617,7 +635,7 @@ BEGIN
         END IF;
         
         -- ash all nodes
-        IF '&&edb360_conf_incl_ash_rpt.' = 'Y' AND l_instances > 1 AND '&&db_version.' >= '11.2' THEN
+        IF ('&&edb360_conf_incl_ash_rpt.' = 'Y' OR '&&edb360_conf_incl_ash_analy_rpt.' = 'Y') AND l_instances > 1 AND '&&db_version.' >= '11.2' THEN
           put_line('COL edb360_bypass NEW_V edb360_bypass;');
           put_line('SELECT '' echo timeout '' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
           l_standard_filename := 'ashrpt_rac_'||j.bid||'_'||j.eid||'_'||j.rep;
@@ -631,21 +649,25 @@ BEGIN
           put_line('PRO');
           put_line('PRO '||CHR(38)||CHR(38)||'hh_mm_ss. '||l_spool_filename);
           put_line('SPO OFF;');
+          
           IF '&&edb360_skip_html.' IS NULL THEN
-            :file_seq := :file_seq + 1;
-            l_one_spool_filename := LPAD(:file_seq, 5, '0')||'_'||l_spool_filename;
-            update_log(l_one_spool_filename||'.html');
-            put_line('SPO '||l_one_spool_filename||'.html;');
-            put_line('SELECT output /* &&section_id. */ FROM TABLE(DBMS_WORKLOAD_REPOSITORY.ash_global_report_html(:lv_dbid,:lv_inst_num,TO_DATE(:lv_begin_date,''YYYYMMDDHH24MISS''),TO_DATE(:lv_end_date,''YYYYMMDDHH24MISS''))) WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NULL;');
-            put_line('SELECT ''*** time limit exceeded ***'' FROM DUAL WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NOT NULL;');
-            put_line('SPO OFF;');
-            put_line('-- update main report');
-            put_line('SPO &&edb360_main_report..html APP;');
-            put_line('PRO <a href="'||l_one_spool_filename||'.html">ash html</a>');
-            put_line('SPO OFF;');
-            put_line('-- zip');
-            put_line('HOS zip -m &&edb360_zip_filename. '||l_one_spool_filename||'.html >> &&edb360_log3..txt');
-            put_line('HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
+            IF '&&edb360_conf_incl_ash_rpt.' = 'Y' THEN
+              :file_seq := :file_seq + 1;
+              l_one_spool_filename := LPAD(:file_seq, 5, '0')||'_'||l_spool_filename;
+              update_log(l_one_spool_filename||'.html');
+              put_line('SPO '||l_one_spool_filename||'.html;');
+              put_line('SELECT output /* &&section_id. */ FROM TABLE(DBMS_WORKLOAD_REPOSITORY.ash_global_report_html(:lv_dbid,:lv_inst_num,TO_DATE(:lv_begin_date,''YYYYMMDDHH24MISS''),TO_DATE(:lv_end_date,''YYYYMMDDHH24MISS''))) WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NULL;');
+              put_line('SELECT ''*** time limit exceeded ***'' FROM DUAL WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NOT NULL;');
+              put_line('SPO OFF;');
+              put_line('-- update main report');
+              put_line('SPO &&edb360_main_report..html APP;');
+              put_line('PRO <a href="'||l_one_spool_filename||'.html">ash html</a>');
+              put_line('SPO OFF;');
+              put_line('-- zip');
+              put_line('HOS zip -m &&edb360_zip_filename. '||l_one_spool_filename||'.html >> &&edb360_log3..txt');
+              put_line('HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
+            END IF;
+            
             IF '&&edb360_conf_incl_ash_analy_rpt.' = 'Y' AND '&&db_version.' >= '12.1' THEN
               :file_seq := :file_seq + 1;
               l_one_spool_filename := LPAD(:file_seq, 5, '0')||'_'||l_spool_filename||'_analy';
@@ -663,6 +685,7 @@ BEGIN
               put_line('HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
             END IF;
           END IF;
+          
           IF '&&edb360_skip_text.' IS NULL THEN
             :file_seq := :file_seq + 1;
             l_one_spool_filename := LPAD(:file_seq, 5, '0')||'_'||l_spool_filename;
@@ -736,6 +759,7 @@ BEGIN
                  AND TO_CHAR(end_date, 'D') BETWEEN '2' AND '6' /* between Monday and Friday */
                  AND TO_CHAR(end_date, 'HH24MM') BETWEEN '&&edb360_conf_work_time_from.' AND '&&edb360_conf_work_time_to.' 
                  AND &&history_days. > 10
+                 AND &&edb360_max_work_days_peaks. >= 1
               ),
               max_&&hist_work_days.wd2 AS (
               SELECT /*+ &&sq_fact_hints. &&section_id. */ MAX(value) value
@@ -744,6 +768,7 @@ BEGIN
                  AND TO_CHAR(end_date, 'D') BETWEEN '2' AND '6' /* between Monday and Friday */
                  AND TO_CHAR(end_date, 'HH24MM') BETWEEN '&&edb360_conf_work_time_from.' AND '&&edb360_conf_work_time_to.' 
                  AND &&history_days. > 10
+                 AND &&edb360_max_work_days_peaks. >= 2
                  AND value NOT IN (SELECT value FROM max_&&hist_work_days.wd1)
               ),
               max_&&hist_work_days.wd3 AS (
@@ -753,6 +778,7 @@ BEGIN
                  AND TO_CHAR(end_date, 'D') BETWEEN '2' AND '6' /* between Monday and Friday */
                  AND TO_CHAR(end_date, 'HH24MM') BETWEEN '&&edb360_conf_work_time_from.' AND '&&edb360_conf_work_time_to.' 
                  AND &&history_days. > 10
+                 AND &&edb360_max_work_days_peaks. >= 3
                  AND value NOT IN (SELECT value FROM max_&&hist_work_days.wd1
                                    UNION
                                    SELECT value FROM max_&&hist_work_days.wd2)
@@ -764,12 +790,14 @@ BEGIN
                  AND TO_CHAR(end_date, 'D') BETWEEN '2' AND '6' /* between Monday and Friday */
                  AND TO_CHAR(end_date, 'HH24MM') BETWEEN '&&edb360_conf_work_time_from.' AND '&&edb360_conf_work_time_to.' 
                  AND &&history_days. > 10
+                 AND &&edb360_min_work_days_peaks. >= 1
               ),
               max_&&history_days.d1 AS (
               SELECT /*+ &&sq_fact_hints. &&section_id. */ MAX(value) value
                 FROM expensive
                WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - &&history_days. AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 -- avoids selecting same twice
                  AND &&history_days. > 10
+                 AND &&edb360_max_history_peaks. >= 1
                  AND value NOT IN (SELECT value FROM max_&&hist_work_days.wd1
                                    UNION
                                    SELECT value FROM max_&&hist_work_days.wd2
@@ -781,6 +809,7 @@ BEGIN
                 FROM expensive
                WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - &&history_days. AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 -- avoids selecting same twice
                  AND &&history_days. > 10
+                 AND &&edb360_max_history_peaks. >= 2
                  AND value NOT IN (SELECT value FROM max_&&hist_work_days.wd1
                                    UNION 
                                    SELECT value FROM max_&&hist_work_days.wd2
@@ -794,6 +823,7 @@ BEGIN
                 FROM expensive
                WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - &&history_days. AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 -- avoids selecting same twice
                  AND &&history_days. > 10
+                 AND &&edb360_max_history_peaks. >= 3
                  AND value NOT IN (SELECT value FROM max_&&hist_work_days.wd1
                                    UNION 
                                    SELECT value FROM max_&&hist_work_days.wd2
@@ -809,6 +839,7 @@ BEGIN
                 FROM expensive
                WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - &&history_days. AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 -- avoids selecting same twice
                  AND &&history_days. > 10
+                 AND &&edb360_med_history. >= 1
               ),
               max_5wd1 AS (
               SELECT /*+ &&sq_fact_hints. &&section_id. */ MAX(value) value
@@ -817,6 +848,7 @@ BEGIN
                  AND TO_CHAR(end_date, 'D') BETWEEN '2' AND '6' /* between Monday and Friday */
                  AND TO_CHAR(end_date, 'HH24MM') BETWEEN '&&edb360_conf_work_time_from.' AND '&&edb360_conf_work_time_to.' 
                  --AND &&history_days. > 10
+                 AND &&edb360_max_5wd_peaks. >= 1
               ),
               max_5wd2 AS (
               SELECT /*+ &&sq_fact_hints. &&section_id. */ MAX(value) value
@@ -825,6 +857,7 @@ BEGIN
                  AND TO_CHAR(end_date, 'D') BETWEEN '2' AND '6' /* between Monday and Friday */
                  AND TO_CHAR(end_date, 'HH24MM') BETWEEN '&&edb360_conf_work_time_from.' AND '&&edb360_conf_work_time_to.' 
                  --AND &&history_days. > 10
+                 AND &&edb360_max_5wd_peaks. >= 2
                  AND value NOT IN (SELECT value FROM max_5wd1)
               ),
               max_5wd3 AS (
@@ -834,6 +867,7 @@ BEGIN
                  AND TO_CHAR(end_date, 'D') BETWEEN '2' AND '6' /* between Monday and Friday */
                  AND TO_CHAR(end_date, 'HH24MM') BETWEEN '&&edb360_conf_work_time_from.' AND '&&edb360_conf_work_time_to.' 
                  --AND &&history_days. > 10
+                 AND &&edb360_max_5wd_peaks. >= 3
                  AND value NOT IN (SELECT value FROM max_5wd1
                                    UNION
                                    SELECT value FROM max_5wd2)
@@ -845,12 +879,14 @@ BEGIN
                  AND TO_CHAR(end_date, 'D') BETWEEN '2' AND '6' /* between Monday and Friday */
                  AND TO_CHAR(end_date, 'HH24MM') BETWEEN '&&edb360_conf_work_time_from.' AND '&&edb360_conf_work_time_to.' 
                  --AND &&history_days. > 10
+                 AND &&edb360_min_5wd_peaks. >= 1
               ),
               max_7d1 AS (
               SELECT /*+ &&sq_fact_hints. &&section_id. */ MAX(value) value
                 FROM expensive
                WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 1 -- avoids selecting same twice
                  --AND &&history_days. > 10
+                 AND &&edb360_max_7d_peaks. >= 1
                  AND value NOT IN (SELECT value FROM max_5wd1
                                    UNION
                                    SELECT value FROM max_5wd2
@@ -862,6 +898,7 @@ BEGIN
                 FROM expensive
                WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 1 -- avoids selecting same twice
                  --AND &&history_days. > 10
+                 AND &&edb360_max_7d_peaks. >= 2
                  AND value NOT IN (SELECT value FROM max_5wd1
                                    UNION
                                    SELECT value FROM max_5wd2
@@ -875,6 +912,7 @@ BEGIN
                 FROM expensive
                WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 1 -- avoids selecting same twice
                  --AND &&history_days. > 10
+                 AND &&edb360_max_7d_peaks. >= 3
                  AND value NOT IN (SELECT value FROM max_5wd1
                                    UNION
                                    SELECT value FROM max_5wd2
@@ -890,6 +928,7 @@ BEGIN
                 FROM expensive
                WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 1 -- avoids selecting same twice
                  --AND &&history_days. > 10
+                 AND &&edb360_med_7d. >= 1
               ),
               small_range AS (
               SELECT /*+ &&sq_fact_hints. &&section_id. */ e.dbid, e.bid, e.eid, e.begin_date, e.end_date, 'max&&hist_work_days.wd1' rep, 50 ob
@@ -1005,9 +1044,11 @@ BEGIN
                UNION ALL
               SELECT dbid, bid, eid, begin_date, end_date, rep, ob
                 FROM max_&&history_days.d
+               WHERE '&&edb360_conf_incl_awr_range_rpt.' = 'Y'
                UNION ALL
               SELECT dbid, bid, eid, begin_date, end_date, rep, ob
                 FROM max_7d
+               WHERE '&&edb360_conf_incl_awr_range_rpt.' = 'Y'
                ORDER BY 7)
     LOOP
       IF j.ob < 20 THEN
@@ -1242,7 +1283,7 @@ BEGIN
         END IF;
     
         -- ash one node
-        IF '&&edb360_conf_incl_ash_rpt.' = 'Y' THEN 
+        IF ('&&edb360_conf_incl_ash_rpt.' = 'Y' OR '&&edb360_conf_incl_ash_analy_rpt.' = 'Y') THEN 
           put_line('COL edb360_bypass NEW_V edb360_bypass;');
           put_line('SELECT '' echo timeout '' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
           l_standard_filename := 'ashrpt_'||i.instance_number||'_'||j.bid||'_'||j.eid||'_'||j.rep;
@@ -1256,21 +1297,25 @@ BEGIN
           put_line('PRO');
           put_line('PRO '||CHR(38)||CHR(38)||'hh_mm_ss. '||l_spool_filename);
           put_line('SPO OFF;');
+          
           IF '&&edb360_skip_html.' IS NULL THEN
-            :file_seq := :file_seq + 1;
-            l_one_spool_filename := LPAD(:file_seq, 5, '0')||'_'||l_spool_filename;
-            update_log(l_one_spool_filename||'.html');
-            put_line('SPO '||l_one_spool_filename||'.html;');
-            put_line('SELECT output /* &&section_id. */ FROM TABLE(DBMS_WORKLOAD_REPOSITORY.ash_report_html(:lv_dbid,:lv_inst_num,TO_DATE(:lv_begin_date,''YYYYMMDDHH24MISS''),TO_DATE(:lv_end_date,''YYYYMMDDHH24MISS''))) WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NULL;');
-            put_line('SELECT ''*** time limit exceeded ***'' FROM DUAL WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NOT NULL;');
-            put_line('SPO OFF;');
-            put_line('-- update main report');
-            put_line('SPO &&edb360_main_report..html APP;');
-            put_line('PRO <a href="'||l_one_spool_filename||'.html">ash html</a>');
-            put_line('SPO OFF;');
-            put_line('-- zip');
-            put_line('HOS zip -m &&edb360_zip_filename. '||l_one_spool_filename||'.html >> &&edb360_log3..txt');
-            put_line('HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
+            IF '&&edb360_conf_incl_ash_rpt.' = 'Y' THEN
+              :file_seq := :file_seq + 1;
+              l_one_spool_filename := LPAD(:file_seq, 5, '0')||'_'||l_spool_filename;
+              update_log(l_one_spool_filename||'.html');
+              put_line('SPO '||l_one_spool_filename||'.html;');
+              put_line('SELECT output /* &&section_id. */ FROM TABLE(DBMS_WORKLOAD_REPOSITORY.ash_report_html(:lv_dbid,:lv_inst_num,TO_DATE(:lv_begin_date,''YYYYMMDDHH24MISS''),TO_DATE(:lv_end_date,''YYYYMMDDHH24MISS''))) WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NULL;');
+              put_line('SELECT ''*** time limit exceeded ***'' FROM DUAL WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NOT NULL;');
+              put_line('SPO OFF;');
+              put_line('-- update main report');
+              put_line('SPO &&edb360_main_report..html APP;');
+              put_line('PRO <a href="'||l_one_spool_filename||'.html">ash html</a>');
+              put_line('SPO OFF;');
+              put_line('-- zip');
+              put_line('HOS zip -m &&edb360_zip_filename. '||l_one_spool_filename||'.html >> &&edb360_log3..txt');
+              put_line('HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
+            END IF;
+            
             IF '&&edb360_conf_incl_ash_analy_rpt.' = 'Y' AND '&&db_version.' >= '12.1' THEN
               :file_seq := :file_seq + 1;
               l_one_spool_filename := LPAD(:file_seq, 5, '0')||'_'||l_spool_filename||'_analy';

@@ -121,6 +121,7 @@ PRO
 SET SUF '';
 @@&&custom_config_filename.
 SET SUF sql;
+@@&&custom_config_filename.
 
 -- links
 DEF edb360_conf_tool_page = '<a href="http://carlos-sierra.net/edb360-an-oracle-database-360-degree-view/" target="_blank">';
@@ -268,6 +269,8 @@ SPO OFF;
 @@&&skip_diagnostics.&&edb360_6j.ash_services.sql
 @@&&skip_diagnostics.&&edb360_6k.ash_phv.sql
 @@&&skip_diagnostics.&&skip_10g_script.&&edb360_6l.ash_signature.sql
+@@&&skip_diagnostics.&&skip_10g_script.&&skip_11g_script.&&edb360_6m.ash_pdbs.sql
+@@&&skip_diagnostics.&&skip_10g_script.&&skip_11g_script.&&edb360_6n.ash_pdbs_ts.sql
 
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

@@ -1545,6 +1545,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
    AND h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND h.dbid = &&edb360_dbid.
    AND s.sql_id(+) = h.sql_id AND s.dbid(+) = &&edb360_dbid.
+   &&skip_11g_column.&&skip_10g_column.AND s.con_id(+) = h.con_id
  GROUP BY
        h.sql_id,
        DBMS_LOB.SUBSTR(s.sql_text, 1000)
@@ -1572,6 +1573,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
    AND h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND h.dbid = &&edb360_dbid.
    AND s.sql_id(+) = h.sql_id AND s.dbid(+) = &&edb360_dbid.
+   &&skip_11g_column.&&skip_10g_column.AND s.con_id(+) = h.con_id
  GROUP BY
        h.sql_id,
        DBMS_LOB.SUBSTR(s.sql_text, 1000) 
@@ -1876,7 +1878,8 @@ WITH
 lines_with_api AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */ *
   FROM &&dva_object_prefix.source
- WHERE REPLACE(UPPER(text), ' ') LIKE '%DBMS_STATS.%'
+ WHERE '&&edb360_conf_incl_source.' = 'Y'
+   AND REPLACE(UPPER(text), ' ') LIKE '%DBMS_STATS.%'
    AND UPPER(text) NOT LIKE '%--%DBMS_STATS%'
    AND owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
@@ -1885,7 +1888,8 @@ include_nearby_lines AS (
 SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */ DISTINCT s.*
   FROM lines_with_api l,
        &&dva_object_prefix.source s
- WHERE s.owner = l.owner
+ WHERE '&&edb360_conf_incl_source.' = 'Y'
+   AND s.owner = l.owner
    AND s.name = l.name
    AND s.type = l.type
    AND s.line BETWEEN l.line - 8 AND l.line + 8
@@ -1909,7 +1913,8 @@ BEGIN
   :sql_text := q'[
 SELECT *
   FROM &&dva_object_prefix.source
- WHERE UPPER(text) LIKE '%ALTER%SESSION%'
+ WHERE '&&edb360_conf_incl_source.' = 'Y'
+   AND UPPER(text) LIKE '%ALTER%SESSION%'
    AND UPPER(text) NOT LIKE '%--%ALTER%SESSION%'
    AND owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
@@ -1927,6 +1932,7 @@ BEGIN
 SELECT *
   FROM &&dva_object_prefix.source
  WHERE (REPLACE(UPPER(text), ' ') LIKE '%''ANALYZETABLE%' OR REPLACE(UPPER(text), ' ') LIKE '%''ANALYZEINDEX%')
+   AND '&&edb360_conf_incl_source.' = 'Y'
    AND UPPER(text) NOT LIKE '%--%ANALYZE %'
    AND owner NOT IN &&exclusion_list.
    AND owner NOT IN &&exclusion_list2.
@@ -2042,7 +2048,8 @@ BEGIN
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
   FROM &&dva_object_prefix.source
- WHERE line < 21
+ WHERE '&&edb360_conf_incl_source.' = 'Y'
+   AND line < 21
    AND text LIKE '%$Header%'
  ORDER BY
        1, 2, 3, 4

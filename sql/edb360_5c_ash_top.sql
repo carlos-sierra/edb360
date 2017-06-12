@@ -259,6 +259,7 @@ WITH
 hist AS (
 SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
        /* &&section_id..&&report_sequence. */
+       &&skip_11g_column.&&skip_10g_column.con_id,
        sql_id,
        dbid,
        program,
@@ -271,6 +272,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
    AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
  GROUP BY
+       &&skip_11g_column.&&skip_10g_column.con_id,
        sql_id,
        dbid,
        program,
@@ -289,6 +291,7 @@ SELECT SUBSTR(TRIM(h.sql_id||' '||h.program||' '||
        &&awr_object_prefix.sqltext s 
  WHERE h.samples >= t.samples / 1000 AND rn <= 14
    AND s.sql_id(+) = h.sql_id AND s.dbid(+) = h.dbid
+   &&skip_11g_column.&&skip_10g_column.AND s.con_id(+) = h.con_id
  UNION ALL
 SELECT 'Others' source,
        NVL(SUM(h.samples), 0) samples,

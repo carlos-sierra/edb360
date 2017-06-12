@@ -125,6 +125,7 @@ WITH
 ash AS (
 SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
        /* &&section_id..&&report_sequence. */
+       &&skip_11g_column.&&skip_10g_column.con_id,
        NVL(h.sql_id, 'null_sql_id') sql_id,
        COUNT(DISTINCT h.program) programs,
        MIN(h.program) min_program,
@@ -141,6 +142,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3.
    AND h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND h.dbid = &&edb360_dbid.
  GROUP BY
+       &&skip_11g_column.&&skip_10g_column.h.con_id,
        h.sql_id
  ORDER BY
        COUNT(DISTINCT h.snap_id||'.'||h.instance_number||'.'||h.session_id||'.'||h.session_serial#) DESC
@@ -161,6 +163,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
   FROM ash s, &&awr_object_prefix.sqltext t
  WHERE t.sql_id(+) = s.sql_id 
    AND t.dbid(+) = &&edb360_dbid.
+   &&skip_11g_column.&&skip_10g_column.AND t.con_id(+) = s.con_id
    AND ROWNUM < 101
 ]';
 END;
@@ -282,6 +285,7 @@ WITH
 totals AS (
 SELECT /*+ &&sq_fact_hints. &&ds_hint. */ 
        /* &&section_id..&&report_sequence. */
+       &&skip_11g_column.&&skip_10g_column.con_id,
        sql_id,
        SUM(executions_delta) executions,
        SUM(rows_processed_delta) rows_processed,
@@ -310,6 +314,7 @@ SELECT /*+ &&sq_fact_hints. &&ds_hint. */
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
  GROUP BY
+       &&skip_11g_column.&&skip_10g_column.con_id,
        sql_id
  ORDER BY
        SUM(executions_delta) DESC
@@ -344,6 +349,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
   FROM totals s, &&awr_object_prefix.sqltext t
  WHERE t.sql_id(+) = s.sql_id 
    AND t.dbid(+) = &&edb360_dbid.
+   &&skip_11g_column.&&skip_10g_column.AND t.con_id(+) = s.con_id
    AND ROWNUM < 101 
 ]';
 END;
@@ -502,6 +508,7 @@ SELECT /* active_sessions */
    AND sq.inst_id = se.inst_id
    AND sq.sql_id = se.sql_id
    AND sq.child_number = se.sql_child_number
+&&skip_11g_column.&&skip_10g_column.and sq.con_id = se.con_id
    AND sq.sql_text NOT LIKE 'SELECT /* active_sessions */%'
  ORDER BY
        se.inst_id, se.sid, se.serial#   
@@ -530,6 +537,7 @@ where a.status = 'ACTIVE'
 and a.username is not null
 and a.sql_id = b.sql_id
 and a.inst_id = b.inst_id
+&&skip_11g_column.&&skip_10g_column.and a.con_id = b.con_id
 and a.sid = c.sid
 and a.inst_id = c.inst_id
 and a.inst_id = d.inst_id
@@ -621,9 +629,11 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
    AND ws.inst_id(+) = w.inst_id
    AND ws.sql_id(+) = w.sql_id
    AND ws.child_number(+) = w.sql_child_number
+   &&skip_11g_column.&&skip_10g_column.AND ws.con_id(+) = w.con_id
    AND bs.inst_id(+) = b.inst_id
    AND bs.sql_id(+) = b.sql_id
    AND bs.child_number(+) = b.sql_child_number
+   &&skip_11g_column.&&skip_10g_column.AND bs.con_id(+) = b.con_id
  ORDER BY
        b.inst_id,
        b.sql_id,
@@ -723,6 +733,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
        w_sql_id
 )
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
+       DISTINCT
        (10 * w2.w_samples) w_seconds,
        w2.w_sql_id,
        w2.w_event,

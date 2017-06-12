@@ -55,12 +55,19 @@ DEF edb360_conf_incl_px_mem = 'Y';
 -- note: some releases of Oracle produce suboptimal plans when no segment_name is passed
 DEF edb360_conf_incl_segments = 'Y';
 
+-- include DBA_SOURCE
+-- note: applications such as EBS may take long to query such views
+DEF edb360_conf_incl_source = 'Y';
+
 -- include DBMS_METADATA calls (default Y)
 -- note: some releases of Oracle take very long to generate metadata
 DEF edb360_conf_incl_metadata = 'Y';
 
--- include eadam for top SQL and peak snaps (default Y)
+-- include eAdam for top SQL and peak snaps (default Y)
 DEF edb360_conf_incl_eadam = 'Y';
+
+-- limits the size of ASH extracted by eAdam
+DEF edb360_eadam_row_limit = 10000000;
 
 -- tool repository. set only if edb360 or eadam repository has been created
 DEF tool_repo_user = '';
@@ -83,20 +90,38 @@ DEF edb360_conf_incl_bar  = 'Y';
 DEF edb360_conf_incl_perfhub = 'Y';
 DEF edb360_conf_incl_awr_rpt = 'Y';
 DEF edb360_conf_incl_awr_diff_rpt = 'Y';
-DEF edb360_conf_incl_addm_rpt = 'Y';
-DEF edb360_conf_incl_ash_rpt = 'Y';
-DEF edb360_conf_incl_ash_analy_rpt = 'Y';
+DEF edb360_conf_incl_awr_range_rpt = 'N';
+DEF edb360_conf_incl_addm_rpt = 'N';
+DEF edb360_conf_incl_ash_rpt = 'N';
+DEF edb360_conf_incl_ash_analy_rpt = 'N';
 DEF edb360_conf_incl_tkprof = 'Y';
 
+-- up to how many max peaks to consider for reports for entire history work days (between 0 and 3)
+DEF edb360_max_work_days_peaks = 3;
+-- consider min peaks for entire history work days reports? (0 or 1)
+DEF edb360_min_work_days_peaks = 1;
+-- up to how many max peaks to consider for reports for entire history (between 0 and 3)
+DEF edb360_max_history_peaks = 3;
+-- consider median for entire history reports? (0 or 1)
+DEF edb360_med_history = 1;
+-- up to how many max peaks to consider for reports for last 5 work days (between 0 and 3)
+DEF edb360_max_5wd_peaks = 3;
+-- consider min peaks for last 5 work days reports? (0 or 1)
+DEF edb360_min_5wd_peaks = 1;
+-- up to how many max peaks to consider for reports for last 7 days (between 0 and 3)
+DEF edb360_max_7d_peaks = 3;
+-- consider median for last 7 days reports? (0 or 1)
+DEF edb360_med_7d = 1;
+
 -- top sql to execute further diagnostics (range 0-128)
-DEF edb360_conf_top_sql = '48';
-DEF edb360_conf_top_cur = '4';
-DEF edb360_conf_top_sig = '4';
-DEF edb360_conf_planx_top = '48';
+DEF edb360_conf_top_sql = '16';
+DEF edb360_conf_top_cur = '2';
+DEF edb360_conf_top_sig = '2';
+DEF edb360_conf_planx_top = '16';
 DEF edb360_conf_sqlmon_top = '0';
 DEF edb360_conf_sqlash_top = '0';
 DEF edb360_conf_sqlhc_top = '0';
-DEF edb360_conf_sqld360_top = '16';
+DEF edb360_conf_sqld360_top = '8';
 DEF edb360_conf_sqld360_top_tc = '0';
 
 /*********************************** must match repo ************************************/
@@ -116,4 +141,3 @@ DEF tool_prefix_4 = 'v#';
 -- subset of the DEF above, and place on same edb360-master/sql directory; then when
 -- you execute edb360.sql, pass on second parameter the name of your configuration file
 
-DEF edb360_sections = '';
