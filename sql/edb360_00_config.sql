@@ -75,6 +75,10 @@ DEF tool_repo_user = '';
 -- move generated edb360 zip file to directory (i.e.: /home/oracle/csierra/edb360/prod/)
 DEF edb360_move_directory = '';
 
+-- use only if you have to skip esp and escp (value --skip--) else null
+--DEF skip_esp_and_escp = '--skip--';
+DEF skip_esp_and_escp = '';
+
 /**************************** not recommended to modify *********************************/
 
 -- excluding report types reduce usability while providing marginal performance gain

@@ -21,6 +21,7 @@ DEF sqld360_conf_incl_pie    = 'Y';
 DEF sqld360_conf_incl_bar    = 'Y';
 DEF sqld360_conf_incl_tree   = 'Y';
 DEF sqld360_conf_incl_bubble = 'Y';
+DEF sqld360_conf_incl_scatt  = 'Y';
 
 -- include/exclude SQL Monitor reports
 DEF sqld360_conf_incl_sqlmon = 'Y';
@@ -59,7 +60,7 @@ DEF sqld360_conf_incl_tcb = 'N';
 DEF sqld360_conf_incl_sta = 'Y';
 
 -- include/exclude GV$SQL_OPTIMIZER_ENV (workaround of bug 22468781)
-DEF sqld360_conf_incl_cboenv = 'N';
+DEF sqld360_conf_incl_cboenv = 'Y';
 
 -- TCB data, sampling percentage, 0 means no data, any other value between 1 and 100 is ok (only for standalone execs, always skipped for eDB360 execs) 
 -- THIS OPTION IS INTENTIONALLY INGORED, email me if you'd like to have TCB with data
@@ -88,7 +89,10 @@ DEF sqld360_conf_num_sqlmon_rep = '12';
 DEF sqld360_conf_avg_et_percth = '90';
 
 -- include/exclude v$object_dependency (tends to pollute the report, but brings more views)
-DEF sqld360_conf_incl_obj_dept = 'N';
+DEF sqld360_conf_incl_obj_dept = 'Y';
+
+-- include/exclude object rediscovery based on ASH (tends to pollute the report)
+DEF sqld360_conf_incl_obj_ashbased = 'N';
 
 -- enable / disable SQLd360 tracing itself (0 => OFF, everything else is ON)
 DEF sqld360_sqltrace_level = '0';

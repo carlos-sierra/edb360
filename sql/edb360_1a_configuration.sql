@@ -260,6 +260,18 @@ END;
 /
 @@&&skip_10g_script.&&skip_11g_script.edb360_9a_pre_one.sql
 
+DEF title = 'Pluggable Databases Saved States';
+DEF main_table = '&&dva_view_prefix.PDB_SAVED_STATES';
+BEGIN
+  :sql_text := q'[
+SELECT *
+FROM  &&dva_object_prefix.pdb_saved_states 
+ORDER BY 1
+]';
+END;
+/
+@@&&skip_10g_script.&&skip_11g_script.edb360_9a_pre_one.sql
+
 DEF title = 'Database and Instance History';
 DEF main_table = '&&awr_hist_prefix.DATABASE_INSTANCE';
 BEGIN
@@ -568,6 +580,32 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+DEF title = 'PDB Parameter File';
+DEF main_table = 'PDB_SPFILE$';
+BEGIN
+  :sql_text := q'[
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
+         pdb.pdb_id
+       , pdb.pdb_name
+       --, SUBSTR(pst.inst_name, 1, 9) db_name
+       , UPPER(spf.db_uniq_name) db_unique_name
+       , spf.sid
+       , spf.name
+       , spf.value$ value
+       --, spf.pdb_uid
+       --, pst.pdb_guid
+  FROM pdb_spfile$ spf,
+       pdbstate$ pst,
+       dba_pdbs pdb
+ WHERE pst.pdb_uid = spf.pdb_uid
+   AND pdb.guid = pst.pdb_guid
+ ORDER BY
+       1, 2, 3, 4, 5
+]';
+END;
+/
+@@&&skip_10g_script.&&skip_11g_script.edb360_9a_pre_one.sql
+
 DEF title = 'System Parameters Change Log';
 DEF main_table = '&&gv_view_prefix.SYSTEM_PARAMETER2';
 BEGIN
@@ -577,12 +615,15 @@ all_parameters AS (
 SELECT /*+ &&sq_fact_hints. &&ds_hint. */ /* &&section_id..&&report_sequence. */
        snap_id,
        dbid,
+       &&skip_10g_column.&&skip_11g_column.con_id,
        instance_number,
        parameter_name,
        value,
        isdefault,
        ismodified,
-       lag(value) OVER (PARTITION BY dbid, instance_number, parameter_hash ORDER BY snap_id) prior_value
+       lag(value) OVER (PARTITION BY dbid, 
+       &&skip_10g_column.&&skip_11g_column.con_id,
+       instance_number, parameter_hash ORDER BY snap_id) prior_value
   FROM &&awr_object_prefix.parameter
  WHERE snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
    AND dbid = &&edb360_dbid.
@@ -591,6 +632,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        TO_CHAR(s.begin_interval_time, 'YYYY-MM-DD HH24:MI:SS') begin_time,
        TO_CHAR(s.end_interval_time, 'YYYY-MM-DD HH24:MI:SS') end_time,
        p.snap_id,
+       &&skip_10g_column.&&skip_11g_column.p.con_id,
        --p.dbid,
        p.instance_number,
        p.parameter_name,

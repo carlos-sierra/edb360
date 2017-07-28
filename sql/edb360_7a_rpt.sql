@@ -92,7 +92,8 @@ BEGIN
                  AND s.dbid = h.dbid
                  AND s.instance_number = h.instance_number
                  AND s.end_interval_time - s.begin_interval_time > TO_DSINTERVAL('+00 00:01:00.000000') -- exclude snaps less than 1m appart
-                 AND s.end_interval_time BETWEEN TO_TIMESTAMP('&&edb360_date_to.', '&&edb360_date_format.') - TO_DSINTERVAL('+&&history_days. 00:00:00.000000') AND TO_TIMESTAMP('&&edb360_date_to.', '&&edb360_date_format.') -- includes all options
+                 --AND s.end_interval_time BETWEEN TO_TIMESTAMP('&&edb360_date_to.', '&&edb360_date_format.') - TO_DSINTERVAL('+&&history_days. 00:00:00.000000') AND TO_TIMESTAMP('&&edb360_date_to.', '&&edb360_date_format.') -- includes all options
+                 --AND s.end_interval_time BETWEEN TO_TIMESTAMP('&&edb360_date_from.', '&&edb360_date_format.') AND TO_TIMESTAMP('&&edb360_date_to.', '&&edb360_date_format.') -- includes all options
               ),
               expensive AS (
               SELECT /*+ &&sq_fact_hints. &&section_id. */ dbid, bid, eid, begin_date, end_date, SUM(value) value
@@ -194,7 +195,7 @@ BEGIN
               max_5wd1 AS (
               SELECT /*+ &&sq_fact_hints. &&section_id. */ MAX(value) value
                 FROM expensive
-               WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 1 -- avoids selecting same twice
+               WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') /* -1 */ -- avoids selecting same twice
                  AND TO_CHAR(end_date, 'D') BETWEEN '2' AND '6' /* between Monday and Friday */
                  AND TO_CHAR(end_date, 'HH24MM') BETWEEN '&&edb360_conf_work_time_from.' AND '&&edb360_conf_work_time_to.' 
                  --AND &&history_days. > 10
@@ -203,7 +204,7 @@ BEGIN
               max_5wd2 AS (
               SELECT /*+ &&sq_fact_hints. &&section_id. */ MAX(value) value
                 FROM expensive
-               WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 1 -- avoids selecting same twice
+               WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') /* -1 */ -- avoids selecting same twice
                  AND TO_CHAR(end_date, 'D') BETWEEN '2' AND '6' /* between Monday and Friday */
                  AND TO_CHAR(end_date, 'HH24MM') BETWEEN '&&edb360_conf_work_time_from.' AND '&&edb360_conf_work_time_to.' 
                  --AND &&history_days. > 10
@@ -213,7 +214,7 @@ BEGIN
               max_5wd3 AS (
               SELECT /*+ &&sq_fact_hints. &&section_id. */ MAX(value) value
                 FROM expensive
-               WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 1 -- avoids selecting same twice
+               WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') /* -1 */ -- avoids selecting same twice
                  AND TO_CHAR(end_date, 'D') BETWEEN '2' AND '6' /* between Monday and Friday */
                  AND TO_CHAR(end_date, 'HH24MM') BETWEEN '&&edb360_conf_work_time_from.' AND '&&edb360_conf_work_time_to.' 
                  --AND &&history_days. > 10
@@ -225,7 +226,7 @@ BEGIN
               min_5wd AS (
               SELECT /*+ &&sq_fact_hints. &&section_id. */ MIN(value) value
                 FROM expensive
-               WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 1 -- avoids selecting same twice
+               WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') /* -1 */ -- avoids selecting same twice
                  AND TO_CHAR(end_date, 'D') BETWEEN '2' AND '6' /* between Monday and Friday */
                  AND TO_CHAR(end_date, 'HH24MM') BETWEEN '&&edb360_conf_work_time_from.' AND '&&edb360_conf_work_time_to.' 
                  --AND &&history_days. > 10
@@ -234,7 +235,7 @@ BEGIN
               max_7d1 AS (
               SELECT /*+ &&sq_fact_hints. &&section_id. */ MAX(value) value
                 FROM expensive
-               WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 1 -- avoids selecting same twice
+               WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') /* -1 */ -- avoids selecting same twice
                  --AND &&history_days. > 10
                  AND &&edb360_max_7d_peaks. >= 1
                  AND value NOT IN (SELECT value FROM max_5wd1
@@ -246,7 +247,7 @@ BEGIN
               max_7d2 AS (
               SELECT /*+ &&sq_fact_hints. &&section_id. */ MAX(value) value
                 FROM expensive
-               WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 1 -- avoids selecting same twice
+               WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') /* -1 */ -- avoids selecting same twice
                  --AND &&history_days. > 10
                  AND &&edb360_max_7d_peaks. >= 2
                  AND value NOT IN (SELECT value FROM max_5wd1
@@ -260,7 +261,7 @@ BEGIN
               max_7d3 AS (
               SELECT /*+ &&sq_fact_hints. &&section_id. */ MAX(value) value
                 FROM expensive
-               WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 1 -- avoids selecting same twice
+               WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') /* -1 */ -- avoids selecting same twice
                  --AND &&history_days. > 10
                  AND &&edb360_max_7d_peaks. >= 3
                  AND value NOT IN (SELECT value FROM max_5wd1
@@ -276,7 +277,7 @@ BEGIN
               med_7d AS (
               SELECT /*+ &&sq_fact_hints. &&section_id. */ PERCENTILE_DISC(0.5) WITHIN GROUP (ORDER BY value) value
                 FROM expensive
-               WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 1 -- avoids selecting same twice
+               WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') /* -1 */ -- avoids selecting same twice
                  --AND &&history_days. > 10
                  AND &&edb360_med_7d. >= 1
               ),
@@ -742,7 +743,8 @@ BEGIN
                  AND s.dbid = h.dbid
                  AND s.instance_number = h.instance_number
                  AND s.end_interval_time - s.begin_interval_time > TO_DSINTERVAL('+00 00:01:00.000000') -- exclude snaps less than 1m appart
-                 AND s.end_interval_time BETWEEN TO_TIMESTAMP('&&edb360_date_to.', '&&edb360_date_format.') - TO_DSINTERVAL('+&&history_days. 00:00:00.000000') AND TO_TIMESTAMP('&&edb360_date_to.', '&&edb360_date_format.') -- includes all options
+                 --AND s.end_interval_time BETWEEN TO_TIMESTAMP('&&edb360_date_to.', '&&edb360_date_format.') - TO_DSINTERVAL('+&&history_days. 00:00:00.000000') AND TO_TIMESTAMP('&&edb360_date_to.', '&&edb360_date_format.') -- includes all options
+                 --AND s.end_interval_time BETWEEN TO_TIMESTAMP('&&edb360_date_from.', '&&edb360_date_format.') AND TO_TIMESTAMP('&&edb360_date_to.', '&&edb360_date_format.') -- includes all options
               ),
               expensive AS (
               SELECT /*+ &&sq_fact_hints. &&section_id. */ dbid, bid, eid, begin_date, end_date, SUM(value) value
@@ -844,7 +846,7 @@ BEGIN
               max_5wd1 AS (
               SELECT /*+ &&sq_fact_hints. &&section_id. */ MAX(value) value
                 FROM expensive
-               WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 1 -- avoids selecting same twice
+               WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') /* -1 */ -- avoids selecting same twice
                  AND TO_CHAR(end_date, 'D') BETWEEN '2' AND '6' /* between Monday and Friday */
                  AND TO_CHAR(end_date, 'HH24MM') BETWEEN '&&edb360_conf_work_time_from.' AND '&&edb360_conf_work_time_to.' 
                  --AND &&history_days. > 10
@@ -853,7 +855,7 @@ BEGIN
               max_5wd2 AS (
               SELECT /*+ &&sq_fact_hints. &&section_id. */ MAX(value) value
                 FROM expensive
-               WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 1 -- avoids selecting same twice
+               WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') /* -1 */ -- avoids selecting same twice
                  AND TO_CHAR(end_date, 'D') BETWEEN '2' AND '6' /* between Monday and Friday */
                  AND TO_CHAR(end_date, 'HH24MM') BETWEEN '&&edb360_conf_work_time_from.' AND '&&edb360_conf_work_time_to.' 
                  --AND &&history_days. > 10
@@ -863,7 +865,7 @@ BEGIN
               max_5wd3 AS (
               SELECT /*+ &&sq_fact_hints. &&section_id. */ MAX(value) value
                 FROM expensive
-               WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 1 -- avoids selecting same twice
+               WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') /* -1 */ -- avoids selecting same twice
                  AND TO_CHAR(end_date, 'D') BETWEEN '2' AND '6' /* between Monday and Friday */
                  AND TO_CHAR(end_date, 'HH24MM') BETWEEN '&&edb360_conf_work_time_from.' AND '&&edb360_conf_work_time_to.' 
                  --AND &&history_days. > 10
@@ -875,7 +877,7 @@ BEGIN
               min_5wd AS (
               SELECT /*+ &&sq_fact_hints. &&section_id. */ MIN(value) value
                 FROM expensive
-               WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 1 -- avoids selecting same twice
+               WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') /* -1 */ -- avoids selecting same twice
                  AND TO_CHAR(end_date, 'D') BETWEEN '2' AND '6' /* between Monday and Friday */
                  AND TO_CHAR(end_date, 'HH24MM') BETWEEN '&&edb360_conf_work_time_from.' AND '&&edb360_conf_work_time_to.' 
                  --AND &&history_days. > 10
@@ -884,7 +886,7 @@ BEGIN
               max_7d1 AS (
               SELECT /*+ &&sq_fact_hints. &&section_id. */ MAX(value) value
                 FROM expensive
-               WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 1 -- avoids selecting same twice
+               WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') /* -1 */ -- avoids selecting same twice
                  --AND &&history_days. > 10
                  AND &&edb360_max_7d_peaks. >= 1
                  AND value NOT IN (SELECT value FROM max_5wd1
@@ -896,7 +898,7 @@ BEGIN
               max_7d2 AS (
               SELECT /*+ &&sq_fact_hints. &&section_id. */ MAX(value) value
                 FROM expensive
-               WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 1 -- avoids selecting same twice
+               WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') /* -1 */ -- avoids selecting same twice
                  --AND &&history_days. > 10
                  AND &&edb360_max_7d_peaks. >= 2
                  AND value NOT IN (SELECT value FROM max_5wd1
@@ -910,7 +912,7 @@ BEGIN
               max_7d3 AS (
               SELECT /*+ &&sq_fact_hints. &&section_id. */ MAX(value) value
                 FROM expensive
-               WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 1 -- avoids selecting same twice
+               WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') /* -1 */ -- avoids selecting same twice
                  --AND &&history_days. > 10
                  AND &&edb360_max_7d_peaks. >= 3
                  AND value NOT IN (SELECT value FROM max_5wd1
@@ -926,7 +928,7 @@ BEGIN
               med_7d AS (
               SELECT /*+ &&sq_fact_hints. &&section_id. */ PERCENTILE_DISC(0.5) WITHIN GROUP (ORDER BY value) value
                 FROM expensive
-               WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 1 -- avoids selecting same twice
+               WHERE end_date BETWEEN TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') - 8 AND TO_DATE('&&edb360_date_to.', '&&edb360_date_format.') /* -1 */ -- avoids selecting same twice
                  --AND &&history_days. > 10
                  AND &&edb360_med_7d. >= 1
               ),

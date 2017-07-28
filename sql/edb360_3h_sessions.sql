@@ -496,6 +496,32 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+DEF title = 'Processes Memory Aggregate';
+DEF main_table = '&&gv_view_prefix.PROCESS_MEMORY';
+DEF foot = 'Content of &&main_table. is very dynamic. This report just tells state at the time when edb360 was executed.';
+BEGIN
+  :sql_text := q'[
+SELECT category,
+       SUM(allocated) sum_allocated,
+       SUM(used) sum_used,
+       SUM(max_allocated) sum_max_allocated,
+       ROUND(AVG(allocated)) avg_allocated,
+       ROUND(AVG(used)) avg_used,
+       ROUND(AVG(max_allocated)) avg_max_allocated,
+       MEDIAN(allocated) median_allocated,
+       MEDIAN(used) median_used,
+       MEDIAN(max_allocated) median_max_allocated,
+       MAX(allocated) max_allocated,
+       MAX(used) max_used,
+       MAX(max_allocated) max_max_allocated
+  FROM &&gv_object_prefix.process_memory
+ GROUP BY
+       category
+]';
+END;
+/
+@@edb360_9a_pre_one.sql
+
 DEF title = 'Active Sessions (detail)';
 DEF main_table = '&&gv_view_prefix.SESSION';
 BEGIN

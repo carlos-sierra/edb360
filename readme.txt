@@ -1,4 +1,4 @@
-edb360 v1714 (2017-06-11) by Carlos Sierra
+edb360 v1715 (2017-07-28) by Carlos Sierra
 ~~~~~~~~~~~~
 edb360 is a "free to use" tool to perform an initial assessment of an Oracle database. 
 

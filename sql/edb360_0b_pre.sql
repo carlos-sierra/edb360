@@ -1,5 +1,5 @@
-DEF edb360_vYYNN = 'v1714';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2017-06-11)';
+DEF edb360_vYYNN = 'v1715';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2017-07-28)';
 DEF edb360_copyright = ' (c) 2017';
 
 SET TERM OFF;
@@ -262,6 +262,18 @@ DEF ecr_collection_key = '';
 -- dummy
 DEF skip_script = 'sql/edb360_0f_skip_script.sql ';
 
+-- get 12c container
+DEF edb360_con_id = '-1';
+COL edb360_con_id NEW_V edb360_con_id;
+-- 0-1:CDB$ROOT 2:PDB$SEED >2:PDB
+--SELECT /* ignore if it fails to parse */ con_id edb360_con_id FROM v$instance;
+SELECT /* ignore if it fails to parse */ SYS_CONTEXT('USERENV','CON_ID') edb360_con_id FROM DUAL;
+
+-- get 12c PDB name
+COL edb360_pdb_name NEW_V edb360_pdb_name;
+SELECT 'NONE' edb360_pdb_name FROM DUAL;
+SELECT SYS_CONTEXT('USERENV', 'CON_NAME') edb360_pdb_name FROM DUAL;
+
 -- get dbid
 COL edb360_dbid NEW_V edb360_dbid;
 SELECT TRIM(TO_CHAR(dbid)) edb360_dbid FROM &&v_object_prefix.database;
@@ -390,7 +402,7 @@ BEGIN
 END;
 /
 -- esp collection. note: skip if executing for one section
-@&&skip_diagnostics.&&skip_extras.sql/esp_master.sql
+@&&skip_diagnostics.&&skip_extras.&&skip_esp_and_escp.sql/esp_master.sql
 SET TERM OFF; 
 
 -- nls (2nd time as esp may change them)
@@ -496,13 +508,6 @@ DEF ebs_system_name = '';
 COL ebs_release NEW_V ebs_release;
 COL ebs_system_name NEW_V ebs_system_name;
 SELECT /* ignore if it fails to parse */ release_name ebs_release, applications_system_name ebs_system_name FROM applsys.fnd_product_groups WHERE ROWNUM = 1;
-
--- 12c container
-DEF edb360_con_id = '-1';
-COL edb360_con_id NEW_V edb360_con_id;
--- 0-1:CDB$ROOT 2:PDB$SEED >2:PDB
---SELECT /* ignore if it fails to parse */ con_id edb360_con_id FROM v$instance;
-SELECT /* ignore if it fails to parse */ SYS_CONTEXT('USERENV','CON_ID') edb360_con_id FROM DUAL;
 
 -- siebel
 DEF siebel_schema = 'NOT_A_SIEBEL_DB';
@@ -770,6 +775,7 @@ SET HEA ON;
 SET LIN 32767; 
 SET NEWP NONE; 
 SET PAGES &&def_max_rows.; 
+SET TAB OFF;
 SET LONG 32000000; 
 SET LONGC 2000; 
 SET WRA ON; 

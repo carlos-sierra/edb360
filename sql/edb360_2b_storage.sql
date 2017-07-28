@@ -1059,6 +1059,105 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+
+
+-- special addition from https://carlos-sierra.net/2017/07/12/script-to-identify-index-rebuild-candidates-on-12c/
+-- add seq to spool_filename
+EXEC :file_seq := :file_seq + 1;
+SELECT LPAD(:file_seq, 5, '0')||'_&&common_edb360_prefix._&&section_id._&&report_sequence._indexes_with_actual_size_greater_than_estimated' one_spool_filename FROM DUAL;
+SPO &&one_spool_filename..txt
+
+
+-- select only those indexes with an estimated space saving percent greater than 25%
+VAR savings_percent NUMBER;
+EXEC :savings_percent := 25;
+-- select only indexes with current size (as per cbo stats) greater then 10MB
+VAR minimum_size_mb NUMBER;
+EXEC :minimum_size_mb := 10;
+
+SET SERVEROUT ON ECHO OFF FEED OFF VER OFF TAB OFF LINES 300;
+
+COL report_date NEW_V report_date;
+SELECT TO_CHAR(SYSDATE, 'YYYY-MM-DD"T"HH24:MI:SS') report_date FROM DUAL;
+
+DECLARE
+  l_used_bytes  NUMBER;
+  l_alloc_bytes NUMBER;
+  l_percent     NUMBER;
+BEGIN
+  DBMS_OUTPUT.PUT_LINE('PDB: '||SYS_CONTEXT('USERENV', 'CON_NAME'));
+  DBMS_OUTPUT.PUT_LINE('---');
+  DBMS_OUTPUT.PUT_LINE(
+    RPAD('TABLE_NAME', 30)||' '||
+    RPAD('OWNER.INDEX_NAME', 35)||' '||
+    LPAD('SAVING %', 10)||' '||
+    LPAD('CURRENT SIZE', 20)||' '||
+    LPAD('ESTIMATED SIZE', 20)||'  '||
+    RPAD('COMMAND', 75));
+  DBMS_OUTPUT.PUT_LINE(
+    RPAD('-', 30, '-')||' '||
+    RPAD('-', 35, '-')||' '||
+    LPAD('-', 10, '-')||' '||
+    LPAD('-', 20, '-')||' '||
+    LPAD('-', 20, '-')||'  '||
+    RPAD('-', 75, '-'));
+  FOR i IN (SELECT x.table_name, x.owner, x.index_name, SUM(s.leaf_blocks) * TO_NUMBER(p.value) index_size,
+                   REPLACE(DBMS_METADATA.GET_DDL('INDEX',x.index_name,x.owner),CHR(10),CHR(32)) ddl
+              FROM dba_ind_statistics s, dba_indexes x, dba_users u, v$parameter p
+             WHERE x.owner NOT IN &&exclusion_list. -- exclude non-application schemas
+               AND x.owner NOT IN &&exclusion_list2. -- exclude more non-application schemas
+               &&skip_10g_column.&&skip_11g_column.AND u.oracle_maintained = 'N'
+               AND x.owner = u.username
+               AND x.tablespace_name NOT IN ('SYSTEM','SYSAUX')
+               AND x.index_type LIKE '%NORMAL%'
+               AND x.table_type = 'TABLE'
+               AND x.status = 'VALID'
+               AND x.temporary = 'N'
+               AND x.dropped = 'NO'
+               &&skip_10g_column.&&skip_11g_column.AND x.visibility = 'VISIBLE'
+               &&skip_10g_column.&&skip_11g_column.AND x.segment_created = 'YES'
+               &&skip_10g_column.&&skip_11g_column.AND x.orphaned_entries = 'NO'
+               AND p.name = 'db_block_size'
+               AND s.owner = x.owner
+               AND s.index_name = x.index_name
+             GROUP BY
+                   x.table_name, x.owner, x.index_name, p.value
+             HAVING
+                   SUM(s.leaf_blocks) * TO_NUMBER(p.value) > :minimum_size_mb * POWER(2,20)
+             ORDER BY
+                   index_size DESC)
+  LOOP
+    DBMS_SPACE.CREATE_INDEX_COST(i.ddl,l_used_bytes,l_alloc_bytes);
+    IF i.index_size * (100 - :savings_percent) / 100 > l_alloc_bytes THEN 
+      l_percent := 100 * (i.index_size - l_alloc_bytes) / i.index_size;
+      DBMS_OUTPUT.PUT_LINE(
+        RPAD(i.table_name, 30)||' '||
+        RPAD(i.owner||'.'||i.index_name, 35)||' '||
+        LPAD(TO_CHAR(ROUND(l_percent, 1), '990.0')||' % ', 10)||' '||
+        LPAD(TO_CHAR(ROUND(i.index_size / POWER(2,20), 1), '999,999,990.0')||' MB', 20)||' '||
+        LPAD(TO_CHAR(ROUND(l_alloc_bytes / POWER(2,20), 1), '999,999,990.0')||' MB', 20)||'  '||
+        RPAD('ALTER INDEX '||LOWER(i.owner||'.'||i.index_name)||' REBUILD ONLINE;', 75));
+    END IF;
+  END LOOP;
+END;
+/
+
+
+SPO OFF
+HOS zip -m &&edb360_zip_filename. &&one_spool_filename..txt >> &&edb360_log3..txt
+-- update main report
+SPO &&edb360_main_report..html APP;
+PRO <li title="&&dva_view_prefix.INDEXES">Indexes with actual size greater than estimated
+PRO <a href="&&one_spool_filename..txt">text</a>
+PRO </li>
+SPO OFF;
+HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt
+-- report sequence
+EXEC :repo_seq := :repo_seq + 1;
+SELECT TO_CHAR(:repo_seq) report_sequence FROM DUAL;
+
+
+/*
 DEF title = 'Indexes with actual size greater than estimated';
 DEF abstract = 'Actual and Estimated sizes for Indexes.<br />';
 DEF main_table = '&&dva_view_prefix.INDEXES';
@@ -1085,7 +1184,7 @@ PRO
 DECLARE
   sql_text CLOB;
 BEGIN
-  IF '&&edb360_conf_incl_metadata.' = 'Y' /*AND '&&db_version.' < '11.2.0.3'*/ AND '&&db_version.' >= '11.2.0.4' THEN -- avoids DBMS_METADATA.GET_DDL: Query Against SYS.KU$_INDEX_VIEW Is Slow In 11.2.0.3 as per 1459841.1
+  IF '&&edb360_conf_incl_metadata.' = 'Y' /*AND '&&db_version.' < '11.2.0.3'* / AND '&&db_version.' >= '11.2.0.4' THEN -- avoids DBMS_METADATA.GET_DDL: Query Against SYS.KU$_INDEX_VIEW Is Slow In 11.2.0.3 as per 1459841.1
     FOR i IN (SELECT idx.owner, idx.index_name
                 FROM &&dva_object_prefix.indexes idx,
                      &&dva_object_prefix.tables tbl
@@ -1131,7 +1230,7 @@ BEGIN
 -- http://carlos-sierra.net/2014/07/18/free-script-to-very-quickly-and-cheaply-estimate-the-size-of-an-index-if-it-were-to-be-rebuilt/
 WITH 
 indexes AS (
-SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. * /
        pt.object_owner, 
        pt.object_name,
        TO_NUMBER(EXTRACTVALUE(VALUE(d), '/info')) estimated_bytes
@@ -1143,7 +1242,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
    AND EXTRACTVALUE(VALUE(d), '/info/@type') = 'index_size' -- grab index_size type
 ),
 segments AS (
-SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. * /
        owner, segment_name, SUM(bytes) actual_bytes
   FROM &&dva_object_prefix.segments
  WHERE '&&edb360_conf_incl_segments.' = 'Y'
@@ -1156,7 +1255,7 @@ HAVING SUM(bytes) > POWER(10,6) -- only indexes with actual size > 1 MB
        segment_name
 ),
 list_bytes AS (
-SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. * /
        (s.actual_bytes - i.estimated_bytes) actual_minus_estimated,
        s.actual_bytes,
        i.estimated_bytes,
@@ -1168,7 +1267,7 @@ SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
    AND s.owner(+) = i.object_owner
    AND s.segment_name(+) = i.object_name
 )
-SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. * /
        ROUND(actual_minus_estimated / POWER(10,6)) actual_minus_estimated,
        ROUND(actual_bytes / POWER(10,6)) actual_mb,
        ROUND(estimated_bytes / POWER(10,6)) estimated_mb,
@@ -1185,6 +1284,7 @@ END;
 /
 @@edb360_9a_pre_one.sql
 DELETE plan_table WHERE statement_id IN (:random1, :random2);
+*/
 
 SPO &&edb360_main_report..html APP;
 PRO </ol>

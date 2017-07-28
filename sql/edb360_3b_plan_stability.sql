@@ -7,6 +7,8 @@ PRO <h2>&&section_id.. &&section_name.</h2>
 PRO <ol start="&&report_sequence.">
 SPO OFF;
 
+@@&&skip_tuning.&&skip_10g_script.&&skip_11r1_script.edb360_3b_autotunereport.sql
+
 DEF title = 'SQL Patches';
 DEF main_table = '&&dva_view_prefix.SQL_PATCHES';
 BEGIN
@@ -166,10 +168,24 @@ DEF title = 'SQL Plan Directives';
 DEF main_table = '&&dva_view_prefix.SQL_PLAN_DIRECTIVES';
 BEGIN
   :sql_text := q'[
-SELECT *
-  FROM &&dva_object_prefix.sql_plan_directives
- ORDER BY
-       1
+SELECT d.dir_id,
+       d.type,
+       d.enabled,
+       (CASE WHEN d.internal_state = 'HAS_STATS' OR d.redundant = 'YES' THEN 'SUPERSEDED'
+             WHEN d.internal_state IN ('NEW', 'MISSING_STATS', 'PERMANENT') THEN 'USABLE'
+             ELSE 'UNKNOWN' 
+         END) state,
+       d.auto_drop,
+       f.reason,
+       d.created,
+       d.last_modified,
+       d.last_used,
+       d.internal_state,
+       d.redundant
+  FROM sys."_BASE_OPT_DIRECTIVE" d,
+       sys."_BASE_OPT_FINDING" f
+  WHERE d.f_id = f.f_id
+ ORDER BY 1
 ]';
 END;
 /
@@ -183,11 +199,10 @@ SELECT *
   FROM &&dva_object_prefix.sql_plan_dir_objects
  ORDER BY
        1,2,3,4
-]';
+ ]';
 END;
 /
 @@&&skip_10g_script.&&skip_11g_script.edb360_9a_pre_one.sql       
-
 
 SPO &&edb360_main_report..html APP;
 PRO </ol>

@@ -1056,8 +1056,6 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
-@@&&skip_tuning.&&skip_10g_script.&&skip_11r1_script.edb360_3d_autotunereport.sql
-
 SPO &&edb360_main_report..html APP;
 PRO </ol>
 SPO OFF;

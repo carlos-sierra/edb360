@@ -1,6 +1,22 @@
 Changelog
 =========
 
+v1715 (2017-07-28)
+=====
+1. Moved the Report Auto Tuning Task from 3d to 3b
+2. Added DBA_CDB_RSRC_PLAN_DIRECTIVES, DBA_CDB_RSRC_PLANS and DBA_PDB_SAVED_STATES
+3. Added DBA_AUTOTASK_JOB_HISTORY, DBA_ADVISOR_PARAMETERS, DBA_ADVISOR_EXECUTION_TYPES, DBA_ADVISOR_TASKS and DBA_ADVISOR_EXECUTIONS
+4. Query on DBA_SQL_PLAN_DIRECTIVES is using now base tables taking out the embedded function call from view
+5. Added DBA_AUTOTASK_TASK
+6. Added few scheduler and auto task CDB views
+7. Added Processes Memory Aggregate
+8. Connecting to respective PDB for planx.sql and SQLd360.sql
+9. Added configuration parameters skip_ash_validation and skip_esp_and_escp
+10. Added PDB_SPFILE$ to 1a for 12c
+11. Remove WHERE clause on DBA_OBJ_AUDIT_OPTS query (1c)
+12. SQLd360 is now executed considering PDB of the SQL
+13. Fixed a bug where eDB360 would not include any AWR report if dates from and to where set to same value
+
 v1714 (2017-06-11)
 =====
 1. Fix 6c on 12c where when executed from CDB it shows duplicate rows per SQL_ID on 6c Top SQL

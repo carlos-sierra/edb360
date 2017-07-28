@@ -69,6 +69,7 @@ DECLARE
             ),
             top_sql AS (
             SELECT /*+ &&sq_fact_hints. &&section_id..&&report_sequence. */
+                   &&skip_11g_column.&&skip_10g_column.r.con_id,
                    r.sql_id,
                    TRIM(TO_CHAR(ROUND(r.db_time_hrs, 2), '99990.00')) db_time_hrs,
                    TRIM(TO_CHAR(ROUND(r.cpu_time_hrs, 2), '99990.00')) cpu_time_hrs,
@@ -91,11 +92,13 @@ DECLARE
             ),
             not_shared AS (
             SELECT /*+ &&sq_fact_hints. &&section_id..&&report_sequence. */
+                   &&skip_11g_column.&&skip_10g_column.con_id,
                    sql_id, COUNT(*) child_cursors,
                    RANK() OVER (ORDER BY COUNT(*) DESC NULLS LAST) AS sql_rank
               FROM &&gv_object_prefix.sql_shared_cursor
              WHERE sql_id NOT IN (SELECT sql_id FROM top_sql)
              GROUP BY
+                   &&skip_11g_column.&&skip_10g_column.con_id,
                    sql_id
             HAVING COUNT(*) > 100
             ),
@@ -104,16 +107,18 @@ DECLARE
                    DISTINCT
                    ns.sql_rank,
                    ns.child_cursors,
+                   &&skip_11g_column.&&skip_10g_column.ns.con_id,
                    ns.sql_id,
                    REPLACE(REPLACE(REPLACE(REPLACE(DBMS_LOB.SUBSTR(s.sql_fulltext, 1000), CHR(10), ' '), '"', CHR(38)||'#34;'), '>', CHR(38)||'#62;'), '<', CHR(38)||'#60;') sql_text_1000
               FROM not_shared ns, &&gv_object_prefix.sql s
              WHERE s.sql_id(+) = ns.sql_id
+               &&skip_11g_column.&&skip_10g_column.AND s.con_id(+) = ns.con_id
                AND ns.sql_rank <= &&edb360_conf_top_cur.
             ),
             by_signature AS (
             SELECT /*+ FULL(ts) FULL(ns) USE_HASH(ts ns h) &&sq_fact_hints. &&ds_hint. &&ash_hints1. &&ash_hints2. &&ash_hints3. */ 
                    /* &&section_id..&&report_sequence. */
-                   &&skip_11g_column.&&skip_10g_column.con_id,
+                   &&skip_11g_column.&&skip_10g_column.h.con_id,
                    h.force_matching_signature,
                    h.dbid,
                    ROW_NUMBER () OVER (ORDER BY COUNT(*) DESC) rn,
@@ -128,12 +133,14 @@ DECLARE
                AND h.snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
                AND h.dbid = &&edb360_dbid.
                AND h.sql_id = ts.sql_id(+)
+               &&skip_11g_column.&&skip_10g_column.AND h.con_id = ts.con_id(+)
                AND h.sql_id = ns.sql_id(+)
+               &&skip_11g_column.&&skip_10g_column.AND h.con_id = ns.con_id(+)
                AND ts.sql_id(+) IS NULL
                AND ns.sql_id(+) IS NULL
                AND '&&edb360_bypass.' IS NULL
              GROUP BY
-                   &&skip_11g_column.&&skip_10g_column.con_id,
+                   &&skip_11g_column.&&skip_10g_column.h.con_id,
                    h.force_matching_signature,
                    h.dbid
             HAVING COUNT(*) > 60 -- >10min
@@ -141,6 +148,7 @@ DECLARE
             top_signature AS (
             SELECT /*+ &&sq_fact_hints. &&section_id..&&report_sequence. */
                    r.rn,
+                   &&skip_11g_column.&&skip_10g_column.r.con_id,
                    r.force_matching_signature,
                    r.distinct_sql_id,
                    r.sample_sql_id,
@@ -157,6 +165,10 @@ DECLARE
                AND h.sql_id(+) = r.sample_sql_id
             )
             SELECT rank_num,
+                   &&skip_11g_column.&&skip_10g_column.con_id,
+                   &&skip_12c_column.TO_NUMBER(NULL) con_id,
+                   &&skip_11g_column.&&skip_10g_column.(SELECT pd.pdb_name FROM dba_pdbs pd WHERE pd.con_id = ts.con_id) pdb_name,
+                   &&skip_12c_column.NULL pdb_name,
                    sql_id,
                    db_time_hrs, -- not null means Top as per DB time
                    cpu_time_hrs, -- not null means Top as per DB time
@@ -169,9 +181,13 @@ DECLARE
                    0 child_cursors, -- <> 0 means Top as per number of cursors
                    0 signature, -- <> 0 means Top as per signature
                    0 distinct_sql_id -- <> 0 means Top as per signature
-              FROM top_sql
+              FROM top_sql ts
              UNION ALL
             SELECT sql_rank rank_num,
+                   &&skip_11g_column.&&skip_10g_column.con_id,
+                   &&skip_12c_column.TO_NUMBER(NULL) con_id,
+                   &&skip_11g_column.&&skip_10g_column.(SELECT pd.pdb_name FROM dba_pdbs pd WHERE pd.con_id = ns.con_id) pdb_name,
+                   &&skip_12c_column.NULL pdb_name,
                    sql_id,
                    NULL db_time_hrs, -- not null means Top as per DB time
                    NULL cpu_time_hrs, -- not null means Top as per DB time
@@ -185,9 +201,13 @@ DECLARE
                    child_cursors, -- <> 0 means Top as per number of cursors
                    0 signature, -- <> 0 means Top as per signature
                    0 distinct_sql_id -- <> 0 means Top as per signature
-              FROM top_not_shared             
+              FROM top_not_shared ns    
              UNION ALL
             SELECT rn rank_num,
+                   &&skip_11g_column.&&skip_10g_column.con_id,
+                   &&skip_12c_column.TO_NUMBER(NULL) con_id,
+                   &&skip_11g_column.&&skip_10g_column.(SELECT pd.pdb_name FROM dba_pdbs pd WHERE pd.con_id = ts.con_id) pdb_name,
+                   &&skip_12c_column.NULL pdb_name,
                    sample_sql_id sql_id,
                    NULL db_time_hrs, -- not null means Top as per DB time
                    NULL cpu_time_hrs, -- not null means Top as per DB time
@@ -200,7 +220,7 @@ DECLARE
                    0 child_cursors, -- <> 0 means Top as per number of cursors
                    force_matching_signature signature, -- <> 0 means Top as per signature
                    distinct_sql_id -- <> 0 means Top as per signature
-              FROM top_signature             
+              FROM top_signature ts
               ORDER BY 1, 10, 3 DESC, 2;
   sql_rec sql_cur%ROWTYPE;
   PROCEDURE put_line(p_line IN VARCHAR2) IS
@@ -209,19 +229,17 @@ DECLARE
   END put_line;
   PROCEDURE update_log(p_module IN VARCHAR2) IS
   BEGIN
-        put_line('COL hh_mm_ss NEW_V hh_mm_ss NOPRI FOR A8;');
-		put_line('SELECT TO_CHAR(SYSDATE, ''HH24:MI:SS'') hh_mm_ss FROM DUAL;');
-		put_line('PRO PRO update log');
-		put_line('SPO &&edb360_log..txt APP;');
-        put_line('SET HEAD OFF TERM ON;');
-		put_line('PRO '||CHR(38)||chr(38)||'hh_mm_ss. '||p_module);
-		put_line('SELECT ''Elapsed Hours so far: ''||ROUND((DBMS_UTILITY.GET_TIME - :edb360_time0) / 100 / 3600, 3) FROM DUAL;');
-        put_line('SET HEAD ON TERM OFF;');
-		put_line('SPO OFF;');
+    put_line('COL hh_mm_ss NEW_V hh_mm_ss NOPRI FOR A8;');
+    put_line('SELECT TO_CHAR(SYSDATE, ''HH24:MI:SS'') hh_mm_ss FROM DUAL;');
+    put_line('PRO PRO update log');
+    put_line('SPO &&edb360_log..txt APP;');
+    put_line('SET HEAD OFF TERM ON;');
+    put_line('PRO '||CHR(38)||chr(38)||'hh_mm_ss. '||p_module);
+    put_line('SELECT ''Elapsed Hours so far: ''||ROUND((DBMS_UTILITY.GET_TIME - :edb360_time0) / 100 / 3600, 3) FROM DUAL;');
+    put_line('SET HEAD ON TERM OFF;');
+    put_line('SPO OFF;');
   END update_log;
 BEGIN
-  put_line('PRO PRO deleting content of global temporary table "plan_table" as preparation to execute planx and others');
-  put_line('DELETE plan_table;');
   OPEN sql_cur;
   LOOP
     FETCH sql_cur INTO sql_rec;
@@ -239,7 +257,7 @@ BEGIN
     put_line('HOS zip &&edb360_zip_filename. &&edb360_log3..txt');
     put_line('PRO PRO update main report1');
     put_line('SPO &&edb360_main_report..html APP;');
-    put_line('PRO <li title="user:'||sql_rec.username||' module:'||sql_rec.module);
+    put_line('PRO <li title="pdb:'||sql_rec.pdb_name||' user:'||sql_rec.username||' module:'||sql_rec.module);
     put_line('PRO '||sql_rec.sql_text_1000||'">');
     IF sql_rec.top_type = 1 THEN
       put_line('PRO rank:'||sql_rec.rank_num||' '||sql_rec.sql_id||' et:'||sql_rec.db_time_hrs||'h cpu:'||sql_rec.cpu_time_hrs||'h io:'||sql_rec.io_time_hrs||'h type:'||SUBSTR(sql_rec.command_type, 1, 6));
@@ -254,6 +272,16 @@ BEGIN
     put_line('HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
     put_line('EXEC :repo_seq := :repo_seq + 1;');
     put_line('SELECT TO_CHAR(:repo_seq) report_sequence FROM DUAL;');
+    IF '&&db_version.' >= '12' AND sql_rec.pdb_name IS NOT NULL THEN
+      put_line('SPO &&edb360_log..txt APP;');
+      put_line('PRO PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
+      put_line('PRO PRO changes PDB to '||sql_rec.pdb_name);
+      put_line('ALTER SESSION SET CONTAINER = '||sql_rec.pdb_name||';');
+      put_line('PRO PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
+      put_line('SPO OFF;');
+      put_line('HOS zip &&edb360_zip_filename. &&edb360_log..txt >> &&edb360_log3..txt');
+      put_line('HOS zip &&edb360_zip_filename. &&edb360_log3..txt');
+    END IF;
     IF sql_rec.rank_num <= &&edb360_conf_planx_top. AND '&&skip_non_repo_script.' IS NULL THEN
       put_line('COL edb360_bypass NEW_V edb360_bypass;');
       put_line('SELECT '' echo timeout '' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
@@ -307,18 +335,7 @@ BEGIN
       put_line('HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
     END IF;
     IF sql_rec.rank_num <= &&edb360_conf_sqld360_top. THEN
-      /* moved down into its own cursor loop (to avoid planx hanging 
-      put_line('COL edb360_bypass NEW_V edb360_bypass;');
-      put_line('SELECT '' echo timeout '' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
-      update_log('SQLD360');
-      put_line('PRO PRO prepares execution of sqld360');
-      IF sql_rec.rank_num <= &&edb360_conf_sqld360_top_tc. THEN
-        put_line('INSERT INTO plan_table (statement_id, operation, options) VALUES (''SQLD360_SQLID'', '''||sql_rec.sql_id||''', ''&&call_sqld360_bitmask_tc.'');');
-      ELSE
-        put_line('INSERT INTO plan_table (statement_id, operation, options) VALUES (''SQLD360_SQLID'', '''||sql_rec.sql_id||''', ''&&call_sqld360_bitmask.'');');
-      END IF;
-      put_line('DELETE plan_table WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NOT NULL AND statement_id = ''SQLD360_SQLID'' AND operation = '''||sql_rec.sql_id||''';');
-      */
+      /* moved down into its own cursor loop (to avoid planx hanging */
       put_line('PRO PRO update main report6');
       put_line('SPO &&edb360_main_report..html APP;');
       put_line('PRO <a href="sqld360_&&edb360_dbmod._'||sql_rec.sql_id||'_&&host_hash._&&edb360_file_time..zip">sqld360(zip)</a>');
@@ -333,6 +350,16 @@ BEGIN
     put_line('HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
   END LOOP;
   CLOSE sql_cur;
+  IF '&&db_version.' >= '12' AND '&&edb360_pdb_name.' <> 'NONE' THEN
+    put_line('SPO &&edb360_log..txt APP;');
+    put_line('PRO PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
+    put_line('PRO PRO changes PDB to &&edb360_pdb_name.');
+    put_line('ALTER SESSION SET CONTAINER = &&edb360_pdb_name.;');
+    put_line('PRO PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
+    put_line('SPO OFF;');
+    put_line('HOS zip &&edb360_zip_filename. &&edb360_log..txt >> &&edb360_log3..txt');
+    put_line('HOS zip &&edb360_zip_filename. &&edb360_log3..txt');
+  END IF;
   -- SQLd360
   put_line('PRO');
   put_line('PRO PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
@@ -347,26 +374,13 @@ BEGIN
     EXIT WHEN sql_cur%NOTFOUND;
     l_count := l_count + 1;
     IF sql_rec.rank_num <= &&edb360_conf_sqld360_top. THEN
-      --put_line('COL edb360_bypass NEW_V edb360_bypass;');
-      --put_line('SELECT '' echo timeout '' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds;');
       update_log('SQLD360 rank:'||sql_rec.rank_num||' SQL_ID:'||sql_rec.sql_id||' TOP_type:'||sql_rec.top_type);
       put_line('PRO PRO prepares execution of sqld360');
       IF sql_rec.rank_num <= &&edb360_conf_sqld360_top_tc. THEN
-        --put_line('INSERT INTO plan_table (statement_id, operation, options) VALUES (''SQLD360_SQLID'', '''||sql_rec.sql_id||''', ''&&call_sqld360_bitmask_tc.'');');
-        put_line('INSERT INTO plan_table (id, statement_id, operation, options) SELECT '||sql_rec.rank_num||', ''SQLD360_SQLID'', '''||sql_rec.sql_id||''', ''&&call_sqld360_bitmask_tc.'' FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  <  :edb360_max_seconds;');
+        put_line('INSERT INTO plan_table (id, statement_id, operation, options, object_node) SELECT '||sql_rec.rank_num||', ''SQLD360_SQLID'', '''||sql_rec.sql_id||''', ''&&call_sqld360_bitmask_tc.'', '''||sql_rec.pdb_name||''' FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  <  :edb360_max_seconds;');
       ELSE
-        --put_line('INSERT INTO plan_table (statement_id, operation, options) VALUES (''SQLD360_SQLID'', '''||sql_rec.sql_id||''', ''&&call_sqld360_bitmask.'');');
-        put_line('INSERT INTO plan_table (id, statement_id, operation, options) SELECT '||sql_rec.rank_num||', ''SQLD360_SQLID'', '''||sql_rec.sql_id||''', ''&&call_sqld360_bitmask.'' FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  <  :edb360_max_seconds;');
+        put_line('INSERT INTO plan_table (id, statement_id, operation, options, object_node) SELECT '||sql_rec.rank_num||', ''SQLD360_SQLID'', '''||sql_rec.sql_id||''', ''&&call_sqld360_bitmask.'', '''||sql_rec.pdb_name||''' FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  <  :edb360_max_seconds;');
       END IF;
-      --put_line('DELETE plan_table WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NOT NULL AND statement_id = ''SQLD360_SQLID'' AND operation = '''||sql_rec.sql_id||''';');
-      /* remains on original cursor loop above
-      put_line('PRO PRO update main report6');
-      put_line('SPO &&edb360_main_report..html APP;');
-      put_line('PRO <a href="sqld360_&&edb360_dbmod._'||sql_rec.sql_id||'_&&host_hash._&&edb360_file_time..zip">sqld360(zip)</a>');
-      put_line('SPO OFF;');
-      put_line('PRO PRO zip');
-      put_line('HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
-      */
     END IF;
   END LOOP;
   CLOSE sql_cur;
@@ -376,7 +390,7 @@ BEGIN
     put_line('SPO &&edb360_log..txt APP;');
     put_line('PRO PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
     put_line('PRO PRO plan_table content before calling sqld360');
-    put_line('SELECT operation||'' ''||options sql_and_flags FROM plan_table WHERE statement_id = ''SQLD360_SQLID'';');
+    put_line('SELECT operation||'' ''||object_node||'' ''||options||'' ''||object_node FROM plan_table WHERE statement_id = ''SQLD360_SQLID'';');
     put_line('SPO OFF;');
     put_line('HOS zip &&edb360_zip_filename. &&edb360_log..txt >> &&edb360_log3..txt');
     put_line('HOS zip &&edb360_zip_filename. &&edb360_log3..txt');
@@ -411,7 +425,18 @@ BEGIN
     put_line('SPO OFF;');
     put_line('HOS zip &&edb360_zip_filename. &&edb360_log..txt >> &&edb360_log3..txt');
     put_line('HOS zip &&edb360_zip_filename. &&edb360_log3..txt');
+    -- actual execution of sql/sqld360.sql
     put_line('@@sql/'||CHR(38)||CHR(38)||'edb360_bypass.sqld360.sql');
+    IF '&&db_version.' >= '12' AND '&&edb360_pdb_name.' NOT IN ('NONE', 'CDB$ROOT', 'PDB$SEED') THEN
+      put_line('SPO &&edb360_log..txt APP;');
+      put_line('PRO PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
+      put_line('PRO PRO returns to original PDB');
+      put_line('ALTER SESSION SET CONTAINER = &&edb360_pdb_name.;');
+      put_line('PRO PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
+      put_line('SPO OFF;');
+      put_line('HOS zip &&edb360_zip_filename. &&edb360_log..txt >> &&edb360_log3..txt');
+      put_line('HOS zip &&edb360_zip_filename. &&edb360_log3..txt');
+    END IF;
   END IF;
 END;
 /
@@ -453,7 +478,7 @@ BEGIN
   put_line('SPO &&edb360_log..txt APP;');
   put_line('PRO PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
   put_line('PRO PRO plan_table after calling sqld360');
-  put_line('SELECT operation||'' ''||remarks FROM plan_table WHERE statement_id = ''SQLD360_SQLID'';');
+  put_line('SELECT operation||'' ''||object_node||'' ''||remarks FROM plan_table WHERE statement_id = ''SQLD360_SQLID'';');
   put_line('SPO OFF;');
   put_line('HOS zip &&edb360_zip_filename. &&edb360_log..txt >> &&edb360_log3..txt');
   put_line('HOS zip &&edb360_zip_filename. &&edb360_log3..txt');
@@ -463,16 +488,27 @@ BEGIN
     put_line('HOS mv '||i.remarks||' sqld360_&&edb360_dbmod._'||i.operation||'_&&host_hash._&&edb360_file_time..zip >> &&edb360_log3..txt');
     put_line('HOS zip -m &&edb360_zip_filename. sqld360_&&edb360_dbmod._'||i.operation||'_&&host_hash._&&edb360_file_time..zip >> &&edb360_log3..txt');
   END LOOP;
+  put_line('SPO &&edb360_log..txt APP;');
   IF l_count > 0 THEN
     put_line('PRO PRO just in case individual file "mv" failed');
     put_line('HOS zip -m &&edb360_zip_filename. sqld360_*.zip >> &&edb360_log3..txt');
     -- do not delete plan_table since eadam script(next) needs it
-    --put_line('PRO PRO deleting content of global temporary table "plan_table" as cleanup after sqld360');
-    --put_line('PRO PRO this delete affects nothing');
-    --put_line('DELETE plan_table;');
   END IF;
-  put_line('PRO PRO deleting content of global temporary table "plan_table" as cleanup after sqld360');
-  put_line('DELETE plan_table;');
+  --put_line('PRO PRO deleting content of global temporary table "plan_table" as cleanup after sqld360');
+  --put_line('DELETE plan_table;');
+  put_line('SPO OFF;');
+  put_line('HOS zip &&edb360_zip_filename. &&edb360_log..txt >> &&edb360_log3..txt');
+  put_line('HOS zip &&edb360_zip_filename. &&edb360_log3..txt');
+  IF '&&db_version.' >= '12' AND '&&edb360_pdb_name.' <> 'NONE' THEN
+    put_line('SPO &&edb360_log..txt APP;');
+    put_line('PRO PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
+    put_line('PRO PRO changes PDB to &&edb360_pdb_name.');
+    put_line('ALTER SESSION SET CONTAINER = &&edb360_pdb_name.;');
+    put_line('PRO PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
+    put_line('SPO OFF;');
+    put_line('HOS zip &&edb360_zip_filename. &&edb360_log..txt >> &&edb360_log3..txt');
+    put_line('HOS zip &&edb360_zip_filename. &&edb360_log3..txt');
+  END IF;
 END;
 /
 SPO OFF;

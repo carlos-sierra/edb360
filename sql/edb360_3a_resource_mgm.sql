@@ -91,6 +91,34 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+DEF title = 'Resource Plan Directives for PDBs';
+DEF main_table = '&&dva_view_prefix.CDB_RSRC_PLAN_DIRECTIVES';
+BEGIN
+  :sql_text := q'[
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
+       *
+  FROM &&dva_object_prefix.cdb_rsrc_plan_directives
+ ORDER BY
+       1, 2
+]';
+END;
+/
+@@&&skip_10g_script.&&skip_11g_script.edb360_9a_pre_one.sql
+
+DEF title = 'Resource Plans for PDBs';
+DEF main_table = '&&dva_view_prefix.CDB_RSRC_PLANS';
+BEGIN
+  :sql_text := q'[
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
+       *
+  FROM &&dva_object_prefix.cdb_rsrc_plans
+ ORDER BY
+       1, 2
+]';
+END;
+/
+@@&&skip_10g_script.&&skip_11g_script.edb360_9a_pre_one.sql
+
 DEF title = 'Active Resource Consumer Groups';
 DEF main_table = '&&gv_view_prefix.RSRC_CONSUMER_GROUP';
 BEGIN
