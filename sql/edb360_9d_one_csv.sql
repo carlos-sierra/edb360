@@ -22,7 +22,7 @@ EXEC :get_time_t0 := DBMS_UTILITY.get_time;
 GET &&common_edb360_prefix._query.sql
 
 -- header
-SPO &&one_spool_filename..csv;
+SPO &&edb360_output_directory.&&one_spool_filename..csv;
 
 -- body
 SET PAGES 50000;
@@ -55,4 +55,4 @@ SPO OFF;
 SET HEA ON;
 
 -- zip
-HOS zip -m &&edb360_zip_filename. &&one_spool_filename..csv >> &&edb360_log3..txt
+HOS zip -mj &&edb360_zip_filename. &&edb360_output_directory.&&one_spool_filename..csv >> &&edb360_log3..txt

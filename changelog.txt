@@ -1,6 +1,28 @@
 Changelog
 =========
 
+v1801 (2018-01-15)
+=====
+1. Remove SQLT references
+2. Use GV$ instead of V$ for flashback views on "2d. Backup and Recovery"
+3. Fix ORA-01476: divisor is equal to zero, on "3e.NNN. CPU Time Percent for Instance"
+4. Exclude GSMADMIN_INTERNAL from "2.b.NNN. Segments in Reserved Tablespaces"
+5. Add "Last DDL by date" and "Last DDL by pdb and date" to "2a Database Administration"
+6. New edb360_config_dbid configuration parameter allows to execute eDB360 for a dbid on AWR other than v$database.dbid
+7. Added "Statistics Gathering History Report" for 12c (DBMS_STATS.REPORT_STATS_OPERATIONS) under "3c. Cost-based Optimizer (CBO) Statistics"
+8. Report "2b.NNN. Tables with excessive wasted space" considers now partitioned tables
+9. New report "2b.NNN. Tables with actual size greater than estimated" is added for 12c
+10. Added SGA Allocation (x$ksmssinfo) under "4a. System Global Area (SGA) Statistics History"
+11. Added "OS Load and CPU Subscription Threshold" charts under "3e. Operating System (OS) Statistics History"
+12. Added db_unique_name to 0c alert log copy section
+13. New parameter edb360_output_directory allows to create zip and most staging files into a directory other than "."
+14. Added Tablespace Usage Metrics (CDB_TABLESPACE_USAGE_METRICS) under "2b Storage"
+15. Added configuration parameters to optionally add host_name suffix to haxis in all charts
+16. Added "Open Cursors Count per Session" under "2.a Database Administration"
+17. Added "Session Cursor Cache Misses per Session" under "2.a Database Administration"
+18. Added "Session Cursor Cache (total and hits)" under "5.d System Statistics per Snap Interval"
+19. Added "Cached Cursors List per Session" under "2.a Database Administration"
+
 v1715 (2017-07-28)
 =====
 1. Moved the Report Auto Tuning Task from 3d to 3b

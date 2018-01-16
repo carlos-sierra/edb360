@@ -7,6 +7,32 @@ PRO <h2>&&section_id.. &&section_name.</h2>
 PRO <ol start="&&report_sequence.">
 SPO OFF;
 
+DEF title = 'Tablespace Usage Metrics';
+DEF main_table = 'CDB_TABLESPACE_USAGE_METRICS';
+BEGIN
+  :sql_text := q'[
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
+       SUBSTR(c.pdb_name, 1, 30) pdb_name,
+       m.tablespace_name,
+       m.used_space,
+       m.tablespace_size,
+       ROUND(m.used_percent, 1) used_percent,
+       ROUND(m.used_space * p.block_size / POWER(2,30), 3) used_space_gb,
+       ROUND(m.tablespace_size * p.block_size / POWER(2,30), 3) tablespace_size_gb
+  FROM cdb_tablespace_usage_metrics m,
+       cdb_pdbs c,
+       cdb_tablespaces p
+ WHERE c.con_id = m.con_id
+   AND p.con_id = m.con_id
+   AND p.tablespace_name = m.tablespace_name
+ ORDER BY
+       c.pdb_name,
+       m.tablespace_name
+]';
+END;
+/
+@@&&skip_10g_script.&&skip_11g_script.edb360_9a_pre_one.sql
+
 DEF title = 'Tablespace';
 DEF main_table = '&&v_view_prefix.TABLESPACE';
 BEGIN
@@ -955,7 +981,9 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
   FROM &&dva_object_prefix.segments s
  WHERE '&&edb360_conf_incl_segments.' = 'Y'
    AND s.owner NOT IN ('SYS','SYSTEM','OUTLN','AURORA$JIS$UTILITY$','OSE$HTTP$ADMIN','ORACACHE','ORDSYS',
-                       'CTXSYS','DBSNMP','DMSYS','EXFSYS','MDSYS','OLAPSYS','SYSMAN','TSMSYS','WMSYS','XDB')
+                       'CTXSYS','DBSNMP','DMSYS','EXFSYS','MDSYS','OLAPSYS','SYSMAN','TSMSYS','WMSYS','XDB',
+                       'GSMADMIN_INTERNAL'
+                      )
    AND s.tablespace_name IN ('SYSTEM','SYSAUX','TEMP','TEMPORARY','RBS','ROLLBACK','ROLLBACKS','RBSEGS')
    AND s.tablespace_name NOT IN (SELECT tablespace_name
                                    FROM &&dva_object_prefix.tablespaces
@@ -1028,45 +1056,143 @@ HAVING ROUND(SUM(r.space * t.block_size) / POWER(10,6)) > 0
 END;
 /
 @@edb360_9a_pre_one.sql
-   
+
+/****************************************************************************************/
+
+-- add seq to spool_filename
+EXEC :file_seq := :file_seq + 1;
+SELECT LPAD(:file_seq, 5, '0')||'_&&common_edb360_prefix._&&section_id._&&report_sequence._tables_with_actual_size_greater_than_estimated' one_spool_filename FROM DUAL;
+SPO &&edb360_output_directory.&&one_spool_filename..txt
+
+-- select only those tables with an estimated space saving percent greater than 25%
+VAR savings_percent NUMBER;
+EXEC :savings_percent := 25;
+-- select only tables with current size (as per cbo stats) greater then 10MB
+VAR minimum_size_mb NUMBER;
+EXEC :minimum_size_mb := 10;
+
+SET SERVEROUT ON ECHO OFF FEED OFF VER OFF TAB OFF LINES 300;
+
+COL report_date NEW_V report_date;
+SELECT TO_CHAR(SYSDATE, 'YYYY-MM-DD"T"HH24:MI:SS') report_date FROM DUAL;
+
+DECLARE
+  l_used_bytes  NUMBER;
+  l_alloc_bytes NUMBER;
+  l_percent     NUMBER;
+BEGIN
+  DBMS_OUTPUT.PUT_LINE('PDB: '||SYS_CONTEXT('USERENV', 'CON_NAME'));
+  DBMS_OUTPUT.PUT_LINE('---');
+  DBMS_OUTPUT.PUT_LINE(
+    RPAD('OWNER.TABLE_NAME', 35)||' '||
+    LPAD('SAVING %', 10)||' '||
+    LPAD('CURRENT SIZE', 20)||' '||
+    LPAD('ESTIMATED SIZE', 20)||'  '||
+    RPAD('COMMAND', 150));
+  DBMS_OUTPUT.PUT_LINE(
+    RPAD('-', 35, '-')||' '||
+    LPAD('-', 10, '-')||' '||
+    LPAD('-', 20, '-')||' '||
+    LPAD('-', 20, '-')||'  '||
+    RPAD('-', 150, '-'));
+  FOR i IN (SELECT x.table_name, x.owner, 
+                   x.tablespace_name, MAX(s.avg_row_len) avg_row_len, SUM(s.num_rows) num_rows, x.pct_free,  
+                   SUM(s.blocks) * TO_NUMBER(p.value) table_size,
+                   REPLACE(DBMS_METADATA.GET_DDL('TABLE',x.table_name,x.owner),CHR(10),CHR(32)) ddl
+              FROM dba_tab_statistics s, dba_tables x, dba_users u, v$parameter p
+             WHERE x.owner NOT IN &&exclusion_list. -- exclude non-application schemas
+               AND x.owner NOT IN &&exclusion_list2. -- exclude more non-application schemas
+               &&skip_10g_column.&&skip_11g_column.AND u.oracle_maintained = 'N'
+               AND x.owner = u.username
+               AND x.tablespace_name NOT IN ('SYSTEM','SYSAUX')
+               AND x.iot_type IS NULL
+               AND x.nested = 'NO'
+               AND x.status = 'VALID'
+               AND x.temporary = 'N'
+               AND x.dropped = 'NO'
+               &&skip_10g_column.&&skip_11g_column.AND x.segment_created = 'YES'
+               AND p.name = 'db_block_size'
+               AND s.owner = x.owner
+               AND s.table_name = x.table_name
+             GROUP BY
+                   x.tablespace_name, x.table_name, x.owner, x.pct_free, p.value
+             HAVING
+                   SUM(s.blocks) * TO_NUMBER(p.value) > :minimum_size_mb * POWER(2,20)
+             ORDER BY
+                   table_size DESC)
+  LOOP
+    DBMS_SPACE.CREATE_TABLE_COST(i.tablespace_name,i.avg_row_len,i.num_rows,i.pct_free,l_used_bytes,l_alloc_bytes);
+    IF i.table_size * (100 - :savings_percent) / 100 > l_alloc_bytes THEN 
+      l_percent := 100 * (i.table_size - l_alloc_bytes) / i.table_size;
+      DBMS_OUTPUT.PUT_LINE(
+        RPAD(i.owner||'.'||i.table_name, 35)||' '||
+        LPAD(TO_CHAR(ROUND(l_percent, 1), '990.0')||' % ', 10)||' '||
+        LPAD(TO_CHAR(ROUND(i.table_size / POWER(2,20), 1), '999,999,990.0')||' MB', 20)||' '||
+        LPAD(TO_CHAR(ROUND(l_alloc_bytes / POWER(2,20), 1), '999,999,990.0')||' MB', 20)||'  '||
+        RPAD('EXEC DBMS_REDEFINITION.REDEF_TABLE(uname=>'''||LOWER(i.owner)||''',tname=>'''||LOWER(i.table_name)||''',table_part_tablespace=>'''||LOWER(i.tablespace_name)||''');', 150));
+    END IF;
+  END LOOP;
+END;
+/
+
+SPO OFF
+HOS zip -mj &&edb360_zip_filename. &&edb360_output_directory.&&one_spool_filename..txt >> &&edb360_log3..txt
+-- update main report
+SPO &&edb360_main_report..html APP;
+PRO <li title="&&dva_view_prefix.TABLES">Tables with actual size greater than estimated
+PRO <a href="&&one_spool_filename..txt">text</a>
+PRO </li>
+SPO OFF;
+HOS zip -j &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt
+-- report sequence
+EXEC :repo_seq := :repo_seq + 1;
+SELECT TO_CHAR(:repo_seq) report_sequence FROM DUAL;
+
+/****************************************************************************************/
+
 DEF title = 'Tables with excessive wasted space';
 DEF main_table = '&&dva_view_prefix.TABLES';
 BEGIN
   :sql_text := q'[
 -- incarnation from health_check_4.4 (Jon Adams and Jack Agustin)
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
-   (round(blocks * block_size / POWER(10,6))) - 
-      (round(num_rows * avg_row_len * (1+(pct_free/100)) * decode (compression,'ENABLED',0.50,1.00) / POWER(10,6))) over_allocated_mb,
-   owner, table_name, blocks, block_size, pct_free,
-   round(blocks * block_size / POWER(10,6)) actual_mb,
-   round(num_rows * avg_row_len * (1+(pct_free/100)) * decode (compression,'ENABLED',0.50,1.00) / POWER(10,6)) estimate_mb,
-   num_rows, avg_row_len, degree, compression, sample_size, to_char(last_analyzed,'MM/DD/RRRR') last_analyzed
+   (round(SUM(s.blocks) * x.block_size / POWER(10,6))) - 
+      (round(SUM(s.num_rows) * MAX(s.avg_row_len) * (1+(t.pct_free/100)) * decode (t.compression,'ENABLED',0.50,1.00) / POWER(10,6))) over_allocated_mb,
+   t.owner, t.table_name, SUM(s.blocks), x.block_size, t.pct_free,
+   round(SUM(s.blocks) * x.block_size / POWER(10,6)) actual_mb,
+   round(SUM(s.num_rows) * MAX(s.avg_row_len) * (1+(t.pct_free/100)) * decode (t.compression,'ENABLED',0.50,1.00) / POWER(10,6)) estimate_mb,
+   SUM(s.num_rows), MAX(s.avg_row_len), t.compression
 from
-   &&dva_object_prefix.tables,
-   &&dva_object_prefix.tablespaces
+   &&dva_object_prefix.tables t,
+   &&dva_object_prefix.tab_statistics s,
+   &&dva_object_prefix.tablespaces x
 where
-   &&dva_object_prefix.tablespaces.tablespace_name = &&dva_object_prefix.tables.tablespace_name and
-   (blocks * block_size / POWER(10,6)) >= 100 and -- actual_mb 
-   abs(round(blocks * block_size / POWER(10,6)) - round(num_rows * avg_row_len * (1+(pct_free/100)) * decode (compression,'ENABLED',0.50,1.00) / POWER(10,6))) / 
-      (round(blocks * block_size / POWER(10,6))) >= 0.25 and
-   owner not in &&exclusion_list. and
-   owner not in &&exclusion_list2.
+   s.owner = t.owner and
+   s.table_name = t.table_name and
+   x.tablespace_name = t.tablespace_name and
+   t.owner not in &&exclusion_list. and
+   t.owner not in &&exclusion_list2.
+group by
+   t.owner, t.table_name, x.block_size, t.pct_free, t.compression
+having
+   (SUM(s.blocks) * x.block_size / POWER(10,6)) >= 100 and -- actual_mb 
+   abs(round(SUM(s.blocks) * x.block_size / POWER(10,6)) - round(SUM(s.num_rows) * MAX(s.avg_row_len) * (1+(t.pct_free/100)) * decode (t.compression,'ENABLED',0.50,1.00) / POWER(10,6))) / 
+      (round(SUM(s.blocks) * x.block_size / POWER(10,6))) >= 0.25
 order by 
    1 desc,
-   owner, table_name
+   t.owner, t.table_name
 ]';
 END;
 /
 @@edb360_9a_pre_one.sql
 
-
+/****************************************************************************************/
 
 -- special addition from https://carlos-sierra.net/2017/07/12/script-to-identify-index-rebuild-candidates-on-12c/
 -- add seq to spool_filename
 EXEC :file_seq := :file_seq + 1;
 SELECT LPAD(:file_seq, 5, '0')||'_&&common_edb360_prefix._&&section_id._&&report_sequence._indexes_with_actual_size_greater_than_estimated' one_spool_filename FROM DUAL;
-SPO &&one_spool_filename..txt
-
+SPO &&edb360_output_directory.&&one_spool_filename..txt
 
 -- select only those indexes with an estimated space saving percent greater than 25%
 VAR savings_percent NUMBER;
@@ -1142,19 +1268,20 @@ BEGIN
 END;
 /
 
-
 SPO OFF
-HOS zip -m &&edb360_zip_filename. &&one_spool_filename..txt >> &&edb360_log3..txt
+HOS zip -mj &&edb360_zip_filename. &&edb360_output_directory.&&one_spool_filename..txt >> &&edb360_log3..txt
 -- update main report
 SPO &&edb360_main_report..html APP;
 PRO <li title="&&dva_view_prefix.INDEXES">Indexes with actual size greater than estimated
 PRO <a href="&&one_spool_filename..txt">text</a>
 PRO </li>
 SPO OFF;
-HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt
+HOS zip -j &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt
 -- report sequence
 EXEC :repo_seq := :repo_seq + 1;
 SELECT TO_CHAR(:repo_seq) report_sequence FROM DUAL;
+
+/****************************************************************************************/
 
 
 /*

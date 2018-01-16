@@ -2,7 +2,7 @@
 DEF section_id = '7a';
 DEF section_name = 'AWR/ADDM/ASH Reports';
 EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
-SET VER OFF FEED OFF SERVEROUT ON HEAD OFF PAGES 50000 LIN 32767 TRIMS ON TRIM ON TI OFF TIMI OFF ARRAY 1000;
+SET VER OFF FEED OFF SERVEROUT ON HEAD OFF PAGES 50000 LIN 32767 TRIMS ON TRIM ON TI OFF TIMI OFF;
 SET SERVEROUT ON SIZE 1000000;
 SET SERVEROUT ON SIZE UNL;
 SPO &&edb360_main_report..html APP;
@@ -19,7 +19,7 @@ COL edb360_bypass NEW_V edb360_bypass;
 SELECT ' echo timeout ' edb360_bypass FROM DUAL WHERE (DBMS_UTILITY.GET_TIME - :edb360_time0) / 100  >  :edb360_max_seconds
 /
 COL hh_mm_ss NEW_V hh_mm_ss NOPRI FOR A8;
-SPO 99910_&&common_edb360_prefix._rpt_driver.sql;
+SPO &&edb360_output_directory.99910_&&common_edb360_prefix._rpt_driver.sql;
 PRO PRO
 PRO VAR lv_inst_num      VARCHAR2(1023);;
 PRO VAR lv_dbid          NUMBER;; 
@@ -437,7 +437,7 @@ BEGIN
         put_line('PRO <li>rac_'||j.bid||'_'||j.eid||'_'||j.rep||' <small><em>('||TO_CHAR(j.begin_date,'&&edb360_date_format.')||' to '||TO_CHAR(j.end_date,'&&edb360_date_format.')||')</em></small><br />');
         put_line('SELECT ''*** time limit exceeded ***'' FROM DUAL WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NOT NULL;');
         put_line('SPO OFF;');
-        put_line('HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
+        put_line('HOS zip -j &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
         put_line('EXEC :repo_seq := :repo_seq + 1;');
         put_line('SELECT TO_CHAR(:repo_seq) report_sequence FROM DUAL;');
         
@@ -461,12 +461,12 @@ BEGIN
           put_line('PRO');
           put_line('PRO '||CHR(38)||CHR(38)||'hh_mm_ss. '||l_spool_filename);
           put_line('SPO OFF;');
-          put_line('HOS zip &&edb360_zip_filename. &&edb360_log..txt >> &&edb360_log3..txt');
-          put_line('HOS zip &&edb360_zip_filename. &&edb360_log3..txt');
+          put_line('HOS zip -j &&edb360_zip_filename. &&edb360_log..txt >> &&edb360_log3..txt');
+          put_line('HOS zip -j &&edb360_zip_filename. &&edb360_log3..txt');
           :file_seq := :file_seq + 1;
           l_one_spool_filename := LPAD(:file_seq, 5, '0')||'_'||l_spool_filename;
           update_log(l_one_spool_filename||'.html');
-          put_line('SPO '||l_one_spool_filename||'.html;');
+          put_line('SPO &&edb360_output_directory.'||l_one_spool_filename||'.html;');
           put_line('SELECT /* &&section_id. */ DBMS_PERF.REPORT_PERFHUB(0,GREATEST(TO_DATE(:lv_begin_date,''YYYYMMDDHH24MISS'')-(12/24),TO_DATE(''&&edb360_date_from.'',''&&edb360_date_format.'')),LEAST(TO_DATE(:lv_end_date,''YYYYMMDDHH24MISS'')+(12/24),TO_DATE(''&&edb360_date_to.'',''&&edb360_date_format.'')),TO_DATE(:lv_begin_date,''YYYYMMDDHH24MISS'')-(1/24),TO_DATE(:lv_end_date,''YYYYMMDDHH24MISS'')+(1/24),:lv_inst_num,:lv_dbid) FROM DUAL WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NULL;');
           put_line('SELECT ''*** time limit exceeded ***'' FROM DUAL WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NOT NULL;');
           put_line('SPO OFF;');
@@ -475,8 +475,8 @@ BEGIN
           put_line('PRO <a href="'||l_one_spool_filename||'.html">perfhub html</a>');
           put_line('SPO OFF;');
           put_line('-- zip');
-          put_line('HOS zip -m &&edb360_zip_filename. '||l_one_spool_filename||'.html >> &&edb360_log3..txt');
-          put_line('HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
+          put_line('HOS zip -mj &&edb360_zip_filename. &&edb360_output_directory.'||l_one_spool_filename||'.html >> &&edb360_log3..txt');
+          put_line('HOS zip -j &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
         END IF;
 
         -- awr all modes
@@ -494,14 +494,14 @@ BEGIN
           put_line('PRO');
           put_line('PRO '||CHR(38)||CHR(38)||'hh_mm_ss. '||l_spool_filename);
           put_line('SPO OFF;');
-          put_line('HOS zip &&edb360_zip_filename. &&edb360_log..txt >> &&edb360_log3..txt');
-          put_line('HOS zip &&edb360_zip_filename. &&edb360_log3..txt');
+          put_line('HOS zip -j &&edb360_zip_filename. &&edb360_log..txt >> &&edb360_log3..txt');
+          put_line('HOS zip -j &&edb360_zip_filename. &&edb360_log3..txt');
           
           IF '&&edb360_skip_html.' IS NULL THEN
             :file_seq := :file_seq + 1;
             l_one_spool_filename := LPAD(:file_seq, 5, '0')||'_'||l_spool_filename;
             update_log(l_one_spool_filename||'.html');
-            put_line('SPO '||l_one_spool_filename||'.html;');
+            put_line('SPO &&edb360_output_directory.'||l_one_spool_filename||'.html;');
             put_line('SELECT output /* &&section_id. */ FROM TABLE(DBMS_WORKLOAD_REPOSITORY.awr_global_report_html(:lv_dbid,:lv_inst_num,:lv_bid,:lv_eid,9)) WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NULL;');
             put_line('SELECT ''*** time limit exceeded ***'' FROM DUAL WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NOT NULL;');
             put_line('SPO OFF;');
@@ -510,8 +510,8 @@ BEGIN
             put_line('PRO <a href="'||l_one_spool_filename||'.html">awr html</a>');
             put_line('SPO OFF;');
             put_line('-- zip');
-            put_line('HOS zip -m &&edb360_zip_filename. '||l_one_spool_filename||'.html >> &&edb360_log3..txt');
-            put_line('HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
+            put_line('HOS zip -mj &&edb360_zip_filename. &&edb360_output_directory.'||l_one_spool_filename||'.html >> &&edb360_log3..txt');
+            put_line('HOS zip -j &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
             
             IF '&&edb360_conf_incl_awr_diff_rpt.' = 'Y' AND j.rep IN ('max&&hist_work_days.wd1', 'max&&hist_work_days.wd2', 'max&&hist_work_days.wd3', 
                                                                       'max&&history_days.d1', 'max&&history_days.d2', 'max&&history_days.d3', 
@@ -521,7 +521,7 @@ BEGIN
               :file_seq := :file_seq + 1;
               l_one_spool_filename := LPAD(:file_seq, 5, '0')||'_'||l_spool_filename||'_diff';
               update_log(l_one_spool_filename||'.html');
-              put_line('SPO '||l_one_spool_filename||'.html;');
+              put_line('SPO &&edb360_output_directory.'||l_one_spool_filename||'.html;');
               IF j.rep IN ('max5wd1', 'max5wd2', 'max5wd3', 'max7d1', 'max7d2', 'max7d3') THEN
                 put_line('SELECT output /* &&section_id. */ FROM TABLE(DBMS_WORKLOAD_REPOSITORY.awr_global_diff_report_html(:lv_m1_dbid,:lv_m1_inst_num,:lv_m1_bid,:lv_m1_eid,:lv_dbid,:lv_inst_num,:lv_bid,:lv_eid)) WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NULL;');
               ELSIF j.rep IN ('max&&hist_work_days.wd1', 'max&&hist_work_days.wd2', 'max&&hist_work_days.wd3', 'max&&history_days.d1', 'max&&history_days.d2', 'max&&history_days.d3') THEN
@@ -538,8 +538,8 @@ BEGIN
               END IF;
               put_line('SPO OFF;');
               put_line('-- zip');
-              put_line('HOS zip -m &&edb360_zip_filename. '||l_one_spool_filename||'.html >> &&edb360_log3..txt');
-              put_line('HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
+              put_line('HOS zip -mj &&edb360_zip_filename. &&edb360_output_directory.'||l_one_spool_filename||'.html >> &&edb360_log3..txt');
+              put_line('HOS zip -j &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
             END IF;
           END IF;
           
@@ -547,7 +547,7 @@ BEGIN
             :file_seq := :file_seq + 1;
             l_one_spool_filename := LPAD(:file_seq, 5, '0')||'_'||l_spool_filename;
             update_log(l_one_spool_filename||'.txt');
-            put_line('SPO '||l_one_spool_filename||'.txt;');
+            put_line('SPO &&edb360_output_directory.'||l_one_spool_filename||'.txt;');
             put_line('SELECT output /* &&section_id. */ FROM TABLE(DBMS_WORKLOAD_REPOSITORY.awr_global_report_text(:lv_dbid,:lv_inst_num,:lv_bid,:lv_eid,9)) WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NULL;');
             put_line('SELECT ''*** time limit exceeded ***'' FROM DUAL WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NOT NULL;');
             put_line('SPO OFF;');
@@ -556,8 +556,8 @@ BEGIN
             put_line('PRO <a href="'||l_one_spool_filename||'.txt">awr text</a>');
             put_line('SPO OFF;');
             put_line('-- zip');
-            put_line('HOS zip -m &&edb360_zip_filename. '||l_one_spool_filename||'.txt >> &&edb360_log3..txt');
-            put_line('HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
+            put_line('HOS zip -mj &&edb360_zip_filename. &&edb360_output_directory.'||l_one_spool_filename||'.txt >> &&edb360_log3..txt');
+            put_line('HOS zip -j &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
             
             IF '&&edb360_conf_incl_awr_diff_rpt.' = 'Y' AND j.rep IN ('max&&hist_work_days.wd1', 'max&&hist_work_days.wd2', 'max&&hist_work_days.wd3', 
                                                                       'max&&history_days.d1', 'max&&history_days.d2', 'max&&history_days.d3', 
@@ -567,7 +567,7 @@ BEGIN
               :file_seq := :file_seq + 1;
               l_one_spool_filename := LPAD(:file_seq, 5, '0')||'_'||l_spool_filename||'_diff';
               update_log(l_one_spool_filename||'.txt');
-              put_line('SPO '||l_one_spool_filename||'.txt;');
+              put_line('SPO &&edb360_output_directory.'||l_one_spool_filename||'.txt;');
               IF j.rep IN ('max5wd1', 'max5wd2', 'max5wd3', 'max7d1', 'max7d2', 'max7d3') THEN
                 put_line('SELECT output /* &&section_id. */ FROM TABLE(DBMS_WORKLOAD_REPOSITORY.awr_global_diff_report_text(:lv_m1_dbid,:lv_m1_inst_num,:lv_m1_bid,:lv_m1_eid,:lv_dbid,:lv_inst_num,:lv_bid,:lv_eid)) WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NULL;');
               ELSIF j.rep IN ('max&&hist_work_days.wd1', 'max&&hist_work_days.wd2', 'max&&hist_work_days.wd3', 'max&&history_days.d1', 'max&&history_days.d2', 'max&&history_days.d3') THEN
@@ -584,8 +584,8 @@ BEGIN
               END IF;
               put_line('SPO OFF;');
               put_line('-- zip');
-              put_line('HOS zip -m &&edb360_zip_filename. '||l_one_spool_filename||'.txt >> &&edb360_log3..txt');
-              put_line('HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
+              put_line('HOS zip -mj &&edb360_zip_filename. &&edb360_output_directory.'||l_one_spool_filename||'.txt >> &&edb360_log3..txt');
+              put_line('HOS zip -j &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
             END IF;
           END IF;
         END IF;
@@ -620,7 +620,7 @@ BEGIN
             :file_seq := :file_seq + 1;
             l_one_spool_filename := LPAD(:file_seq, 5, '0')||'_'||l_spool_filename;
             update_log(l_one_spool_filename||'.txt');
-            put_line('SPO '||l_one_spool_filename||'.txt;');
+            put_line('SPO &&edb360_output_directory.'||l_one_spool_filename||'.txt;');
             put_line('SELECT /* &&section_id. */ DBMS_ADVISOR.get_task_report(:l_task_name) FROM DUAL WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NULL;');
             put_line('SELECT ''*** time limit exceeded ***'' FROM DUAL WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NOT NULL;');
             put_line('SPO OFF;');
@@ -629,8 +629,8 @@ BEGIN
             put_line('PRO <a href="'||l_one_spool_filename||'.txt">addm text</a>');
             put_line('SPO OFF;');
             put_line('-- zip');
-            put_line('HOS zip -m &&edb360_zip_filename. '||l_one_spool_filename||'.txt >> &&edb360_log3..txt');
-            put_line('HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
+            put_line('HOS zip -mj &&edb360_zip_filename. &&edb360_output_directory.'||l_one_spool_filename||'.txt >> &&edb360_log3..txt');
+            put_line('HOS zip -j &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
           --END IF;
           put_line('EXEC DBMS_ADVISOR.DELETE_TASK(task_name => :l_task_name);');
         END IF;
@@ -656,7 +656,7 @@ BEGIN
               :file_seq := :file_seq + 1;
               l_one_spool_filename := LPAD(:file_seq, 5, '0')||'_'||l_spool_filename;
               update_log(l_one_spool_filename||'.html');
-              put_line('SPO '||l_one_spool_filename||'.html;');
+              put_line('SPO &&edb360_output_directory.'||l_one_spool_filename||'.html;');
               put_line('SELECT output /* &&section_id. */ FROM TABLE(DBMS_WORKLOAD_REPOSITORY.ash_global_report_html(:lv_dbid,:lv_inst_num,TO_DATE(:lv_begin_date,''YYYYMMDDHH24MISS''),TO_DATE(:lv_end_date,''YYYYMMDDHH24MISS''))) WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NULL;');
               put_line('SELECT ''*** time limit exceeded ***'' FROM DUAL WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NOT NULL;');
               put_line('SPO OFF;');
@@ -665,15 +665,15 @@ BEGIN
               put_line('PRO <a href="'||l_one_spool_filename||'.html">ash html</a>');
               put_line('SPO OFF;');
               put_line('-- zip');
-              put_line('HOS zip -m &&edb360_zip_filename. '||l_one_spool_filename||'.html >> &&edb360_log3..txt');
-              put_line('HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
+              put_line('HOS zip -mj &&edb360_zip_filename. &&edb360_output_directory.'||l_one_spool_filename||'.html >> &&edb360_log3..txt');
+              put_line('HOS zip -j &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
             END IF;
             
             IF '&&edb360_conf_incl_ash_analy_rpt.' = 'Y' AND '&&db_version.' >= '12.1' THEN
               :file_seq := :file_seq + 1;
               l_one_spool_filename := LPAD(:file_seq, 5, '0')||'_'||l_spool_filename||'_analy';
               update_log(l_one_spool_filename||'.html');
-              put_line('SPO '||l_one_spool_filename||'.html;');
+              put_line('SPO &&edb360_output_directory.'||l_one_spool_filename||'.html;');
               put_line('SELECT /* &&section_id. */ DBMS_WORKLOAD_REPOSITORY.ash_report_analytics(:lv_dbid,:lv_inst_num,TO_DATE(:lv_begin_date,''YYYYMMDDHH24MISS''),TO_DATE(:lv_end_date,''YYYYMMDDHH24MISS'')) FROM DUAL WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NULL;');
               put_line('SELECT ''*** time limit exceeded ***'' FROM DUAL WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NOT NULL;');
               put_line('SPO OFF;');
@@ -682,8 +682,8 @@ BEGIN
               put_line('PRO <a href="'||l_one_spool_filename||'.html">ash analy html</a>');
               put_line('SPO OFF;');
               put_line('-- zip');
-              put_line('HOS zip -m &&edb360_zip_filename. '||l_one_spool_filename||'.html >> &&edb360_log3..txt');
-              put_line('HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
+              put_line('HOS zip -mj &&edb360_zip_filename. &&edb360_output_directory.'||l_one_spool_filename||'.html >> &&edb360_log3..txt');
+              put_line('HOS zip -j &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
             END IF;
           END IF;
           
@@ -691,7 +691,7 @@ BEGIN
             :file_seq := :file_seq + 1;
             l_one_spool_filename := LPAD(:file_seq, 5, '0')||'_'||l_spool_filename;
             update_log(l_one_spool_filename||'.txt');
-            put_line('SPO '||l_one_spool_filename||'.txt;');
+            put_line('SPO &&edb360_output_directory.'||l_one_spool_filename||'.txt;');
             put_line('SELECT output /* &&section_id. */ FROM TABLE(DBMS_WORKLOAD_REPOSITORY.ash_global_report_text(:lv_dbid,:lv_inst_num,TO_DATE(:lv_begin_date,''YYYYMMDDHH24MISS''),TO_DATE(:lv_end_date,''YYYYMMDDHH24MISS''))) WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NULL;');
             put_line('SELECT ''*** time limit exceeded ***'' FROM DUAL WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NOT NULL;');
             put_line('SPO OFF;');
@@ -700,8 +700,8 @@ BEGIN
             put_line('PRO <a href="'||l_one_spool_filename||'.txt">ash text</a>');
             put_line('SPO OFF;');
             put_line('-- zip');
-            put_line('HOS zip -m &&edb360_zip_filename. '||l_one_spool_filename||'.txt >> &&edb360_log3..txt');
-            put_line('HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
+            put_line('HOS zip -mj &&edb360_zip_filename. &&edb360_output_directory.'||l_one_spool_filename||'.txt >> &&edb360_log3..txt');
+            put_line('HOS zip -j &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
           END IF;
         END IF;
                 
@@ -710,7 +710,7 @@ BEGIN
         put_line('SPO &&edb360_main_report..html APP;');
         put_line('PRO </li>');
         put_line('SPO OFF;');
-        put_line('HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
+        put_line('HOS zip -j &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
       END IF;
     END LOOP;
   END IF;
@@ -1088,7 +1088,7 @@ BEGIN
         put_line('PRO <li>'||i.instance_number||'_'||j.bid||'_'||j.eid||'_'||j.rep||' <small><em>('||TO_CHAR(j.begin_date,'&&edb360_date_format.')||' to '||TO_CHAR(j.end_date,'&&edb360_date_format.')||')</em></small><br />');
         put_line('SELECT ''*** time limit exceeded ***'' FROM DUAL WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NOT NULL;');
         put_line('SPO OFF;');
-        put_line('HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
+        put_line('HOS zip -j &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
         put_line('EXEC :repo_seq := :repo_seq + 1;');
         put_line('SELECT TO_CHAR(:repo_seq) report_sequence FROM DUAL;');
   
@@ -1107,12 +1107,12 @@ BEGIN
           put_line('PRO');
           put_line('PRO '||CHR(38)||CHR(38)||'hh_mm_ss. '||l_spool_filename);
           put_line('SPO OFF;');
-          put_line('HOS zip &&edb360_zip_filename. &&edb360_log..txt >> &&edb360_log3..txt');
-          put_line('HOS zip &&edb360_zip_filename. &&edb360_log3..txt');
+          put_line('HOS zip -j &&edb360_zip_filename. &&edb360_log..txt >> &&edb360_log3..txt');
+          put_line('HOS zip -j &&edb360_zip_filename. &&edb360_log3..txt');
           :file_seq := :file_seq + 1;
           l_one_spool_filename := LPAD(:file_seq, 5, '0')||'_'||l_spool_filename;
           update_log(l_one_spool_filename||'.html');
-          put_line('SPO '||l_one_spool_filename||'.html;');
+          put_line('SPO &&edb360_output_directory.'||l_one_spool_filename||'.html;');
           put_line('SELECT /* &&section_id. */ DBMS_PERF.REPORT_PERFHUB(0,GREATEST(TO_DATE(:lv_begin_date,''YYYYMMDDHH24MISS'')-(12/24),TO_DATE(''&&edb360_date_from.'',''&&edb360_date_format.'')),LEAST(TO_DATE(:lv_end_date,''YYYYMMDDHH24MISS'')+(12/24),TO_DATE(''&&edb360_date_to.'',''&&edb360_date_format.'')),TO_DATE(:lv_begin_date,''YYYYMMDDHH24MISS'')-(1/24),TO_DATE(:lv_end_date,''YYYYMMDDHH24MISS'')+(1/24),:lv_inst_num,:lv_dbid) FROM DUAL WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NULL;');
           put_line('SELECT ''*** time limit exceeded ***'' FROM DUAL WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NOT NULL;');
           put_line('SPO OFF;');
@@ -1121,8 +1121,8 @@ BEGIN
           put_line('PRO <a href="'||l_one_spool_filename||'.html">perfhub html</a>');
           put_line('SPO OFF;');
           put_line('-- zip');
-          put_line('HOS zip -m &&edb360_zip_filename. '||l_one_spool_filename||'.html >> &&edb360_log3..txt');
-          put_line('HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
+          put_line('HOS zip -mj &&edb360_zip_filename. &&edb360_output_directory.'||l_one_spool_filename||'.html >> &&edb360_log3..txt');
+          put_line('HOS zip -j &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
         END IF;
 
         -- awr one node
@@ -1140,14 +1140,14 @@ BEGIN
           put_line('PRO');
           put_line('PRO '||CHR(38)||CHR(38)||'hh_mm_ss. '||l_spool_filename);
           put_line('SPO OFF;');
-          put_line('HOS zip &&edb360_zip_filename. &&edb360_log..txt >> &&edb360_log3..txt');
-          put_line('HOS zip &&edb360_zip_filename. &&edb360_log3..txt');
+          put_line('HOS zip -j &&edb360_zip_filename. &&edb360_log..txt >> &&edb360_log3..txt');
+          put_line('HOS zip -j &&edb360_zip_filename. &&edb360_log3..txt');
           
           IF '&&edb360_skip_html.' IS NULL THEN
             :file_seq := :file_seq + 1;
             l_one_spool_filename := LPAD(:file_seq, 5, '0')||'_'||l_spool_filename;
             update_log(l_one_spool_filename||'.html');
-            put_line('SPO '||l_one_spool_filename||'.html;');
+            put_line('SPO &&edb360_output_directory.'||l_one_spool_filename||'.html;');
             put_line('SELECT output /* &&section_id. */ FROM TABLE(DBMS_WORKLOAD_REPOSITORY.awr_report_html(:lv_dbid,:lv_inst_num,:lv_bid,:lv_eid,9)) WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NULL;');
             put_line('SELECT ''*** time limit exceeded ***'' FROM DUAL WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NOT NULL;');
             put_line('SPO OFF;');
@@ -1156,8 +1156,8 @@ BEGIN
             put_line('PRO <a href="'||l_one_spool_filename||'.html">awr html</a>');
             put_line('SPO OFF;');
             put_line('-- zip');
-            put_line('HOS zip -m &&edb360_zip_filename. '||l_one_spool_filename||'.html >> &&edb360_log3..txt');
-            put_line('HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
+            put_line('HOS zip -mj &&edb360_zip_filename. &&edb360_output_directory.'||l_one_spool_filename||'.html >> &&edb360_log3..txt');
+            put_line('HOS zip -j &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
             
             IF '&&edb360_conf_incl_awr_diff_rpt.' = 'Y' AND j.rep IN ('max&&hist_work_days.wd1', 'max&&hist_work_days.wd2', 'max&&hist_work_days.wd3', 
                                                                       'max&&history_days.d1', 'max&&history_days.d2', 'max&&history_days.d3', 
@@ -1167,7 +1167,7 @@ BEGIN
               :file_seq := :file_seq + 1;
               l_one_spool_filename := LPAD(:file_seq, 5, '0')||'_'||l_spool_filename||'_diff';
               update_log(l_one_spool_filename||'.html');
-              put_line('SPO '||l_one_spool_filename||'.html;');
+              put_line('SPO &&edb360_output_directory.'||l_one_spool_filename||'.html;');
               IF j.rep IN ('max5wd1', 'max5wd2', 'max5wd3', 'max7d1', 'max7d2', 'max7d3') THEN
                 put_line('SELECT output /* &&section_id. */ FROM TABLE(DBMS_WORKLOAD_REPOSITORY.awr_diff_report_html(:lv_m1_dbid,:lv_m1_inst_num,:lv_m1_bid,:lv_m1_eid,:lv_dbid,:lv_inst_num,:lv_bid,:lv_eid)) WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NULL;');
               ELSIF j.rep IN ('max&&hist_work_days.wd1', 'max&&hist_work_days.wd2', 'max&&hist_work_days.wd3', 'max&&history_days.d1', 'max&&history_days.d2', 'max&&history_days.d3') THEN
@@ -1184,8 +1184,8 @@ BEGIN
               END IF;
               put_line('SPO OFF;');
               put_line('-- zip');
-              put_line('HOS zip -m &&edb360_zip_filename. '||l_one_spool_filename||'.html >> &&edb360_log3..txt');
-              put_line('HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
+              put_line('HOS zip -mj &&edb360_zip_filename. &&edb360_output_directory.'||l_one_spool_filename||'.html >> &&edb360_log3..txt');
+              put_line('HOS zip -j &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
             END IF;
           END IF;
           
@@ -1193,7 +1193,7 @@ BEGIN
             :file_seq := :file_seq + 1;
             l_one_spool_filename := LPAD(:file_seq, 5, '0')||'_'||l_spool_filename;
             update_log(l_one_spool_filename||'.txt');
-            put_line('SPO '||l_one_spool_filename||'.txt;');
+            put_line('SPO &&edb360_output_directory.'||l_one_spool_filename||'.txt;');
             put_line('SELECT output /* &&section_id. */ FROM TABLE(DBMS_WORKLOAD_REPOSITORY.awr_report_text(:lv_dbid,:lv_inst_num,:lv_bid,:lv_eid,9)) WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NULL;');
             put_line('SELECT ''*** time limit exceeded ***'' FROM DUAL WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NOT NULL;');
             put_line('SPO OFF;');
@@ -1202,8 +1202,8 @@ BEGIN
             put_line('PRO <a href="'||l_one_spool_filename||'.txt">awr text</a>');
             put_line('SPO OFF;');
             put_line('-- zip');
-            put_line('HOS zip -m &&edb360_zip_filename. '||l_one_spool_filename||'.txt >> &&edb360_log3..txt');
-            put_line('HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
+            put_line('HOS zip -mj &&edb360_zip_filename. &&edb360_output_directory.'||l_one_spool_filename||'.txt >> &&edb360_log3..txt');
+            put_line('HOS zip -j &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
             
             IF '&&edb360_conf_incl_awr_diff_rpt.' = 'Y' AND j.rep IN ('max&&hist_work_days.wd1', 'max&&hist_work_days.wd2', 'max&&hist_work_days.wd3', 
                                                                       'max&&history_days.d1', 'max&&history_days.d2', 'max&&history_days.d3', 
@@ -1213,7 +1213,7 @@ BEGIN
               :file_seq := :file_seq + 1;
               l_one_spool_filename := LPAD(:file_seq, 5, '0')||'_'||l_spool_filename||'_diff';
               update_log(l_one_spool_filename||'.txt');
-              put_line('SPO '||l_one_spool_filename||'.txt;');
+              put_line('SPO &&edb360_output_directory.'||l_one_spool_filename||'.txt;');
               IF j.rep IN ('max5wd1', 'max5wd2', 'max5wd3', 'max7d1', 'max7d2', 'max7d3') THEN
                 put_line('SELECT output /* &&section_id. */ FROM TABLE(DBMS_WORKLOAD_REPOSITORY.awr_diff_report_text(:lv_m1_dbid,:lv_m1_inst_num,:lv_m1_bid,:lv_m1_eid,:lv_dbid,:lv_inst_num,:lv_bid,:lv_eid)) WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NULL;');
               ELSIF j.rep IN ('max&&hist_work_days.wd1', 'max&&hist_work_days.wd2', 'max&&hist_work_days.wd3', 'max&&history_days.d1', 'max&&history_days.d2', 'max&&history_days.d3') THEN
@@ -1230,8 +1230,8 @@ BEGIN
               END IF;
               put_line('SPO OFF;');
               put_line('-- zip');
-              put_line('HOS zip -m &&edb360_zip_filename. '||l_one_spool_filename||'.txt >> &&edb360_log3..txt');
-              put_line('HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
+              put_line('HOS zip -mj &&edb360_zip_filename. &&edb360_output_directory.'||l_one_spool_filename||'.txt >> &&edb360_log3..txt');
+              put_line('HOS zip -j &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
             END IF;
           END IF;
        END IF;
@@ -1263,13 +1263,13 @@ BEGIN
           put_line('PRO');
           put_line('PRO '||CHR(38)||CHR(38)||'hh_mm_ss. '||l_spool_filename);
           put_line('SPO OFF;');
-          put_line('HOS zip &&edb360_zip_filename. &&edb360_log..txt >> &&edb360_log3..txt');
-          put_line('HOS zip &&edb360_zip_filename. &&edb360_log3..txt');
+          put_line('HOS zip -j &&edb360_zip_filename. &&edb360_log..txt >> &&edb360_log3..txt');
+          put_line('HOS zip -j &&edb360_zip_filename. &&edb360_log3..txt');
           --IF '&&edb360_skip_text.' IS NULL THEN
             :file_seq := :file_seq + 1;
             l_one_spool_filename := LPAD(:file_seq, 5, '0')||'_'||l_spool_filename;
             update_log(l_one_spool_filename||'.txt');
-            put_line('SPO '||l_one_spool_filename||'.txt;');
+            put_line('SPO &&edb360_output_directory.'||l_one_spool_filename||'.txt;');
             put_line('SELECT /* &&section_id. */ DBMS_ADVISOR.get_task_report(:l_task_name) FROM DUAL WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NULL;');
             put_line('SELECT ''*** time limit exceeded ***'' FROM DUAL WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NOT NULL;');
             put_line('SPO OFF;');
@@ -1278,8 +1278,8 @@ BEGIN
             put_line('PRO <a href="'||l_one_spool_filename||'.txt">addm text</a>');
             put_line('SPO OFF;');
             put_line('-- zip');
-            put_line('HOS zip -m &&edb360_zip_filename. '||l_one_spool_filename||'.txt >> &&edb360_log3..txt');
-            put_line('HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
+            put_line('HOS zip -mj &&edb360_zip_filename. &&edb360_output_directory.'||l_one_spool_filename||'.txt >> &&edb360_log3..txt');
+            put_line('HOS zip -j &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
           --END IF;
           put_line('EXEC DBMS_ADVISOR.DELETE_TASK(task_name => :l_task_name);');
         END IF;
@@ -1305,7 +1305,7 @@ BEGIN
               :file_seq := :file_seq + 1;
               l_one_spool_filename := LPAD(:file_seq, 5, '0')||'_'||l_spool_filename;
               update_log(l_one_spool_filename||'.html');
-              put_line('SPO '||l_one_spool_filename||'.html;');
+              put_line('SPO &&edb360_output_directory.'||l_one_spool_filename||'.html;');
               put_line('SELECT output /* &&section_id. */ FROM TABLE(DBMS_WORKLOAD_REPOSITORY.ash_report_html(:lv_dbid,:lv_inst_num,TO_DATE(:lv_begin_date,''YYYYMMDDHH24MISS''),TO_DATE(:lv_end_date,''YYYYMMDDHH24MISS''))) WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NULL;');
               put_line('SELECT ''*** time limit exceeded ***'' FROM DUAL WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NOT NULL;');
               put_line('SPO OFF;');
@@ -1314,15 +1314,15 @@ BEGIN
               put_line('PRO <a href="'||l_one_spool_filename||'.html">ash html</a>');
               put_line('SPO OFF;');
               put_line('-- zip');
-              put_line('HOS zip -m &&edb360_zip_filename. '||l_one_spool_filename||'.html >> &&edb360_log3..txt');
-              put_line('HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
+              put_line('HOS zip -mj &&edb360_zip_filename. &&edb360_output_directory.'||l_one_spool_filename||'.html >> &&edb360_log3..txt');
+              put_line('HOS zip -j &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
             END IF;
             
             IF '&&edb360_conf_incl_ash_analy_rpt.' = 'Y' AND '&&db_version.' >= '12.1' THEN
               :file_seq := :file_seq + 1;
               l_one_spool_filename := LPAD(:file_seq, 5, '0')||'_'||l_spool_filename||'_analy';
               update_log(l_one_spool_filename||'.html');
-              put_line('SPO '||l_one_spool_filename||'.html;');
+              put_line('SPO &&edb360_output_directory.'||l_one_spool_filename||'.html;');
               put_line('SELECT /* &&section_id. */ DBMS_WORKLOAD_REPOSITORY.ash_report_analytics(:lv_dbid,:lv_inst_num,TO_DATE(:lv_begin_date,''YYYYMMDDHH24MISS''),TO_DATE(:lv_end_date,''YYYYMMDDHH24MISS'')) FROM DUAL WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NULL;');
               put_line('SELECT ''*** time limit exceeded ***'' FROM DUAL WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NOT NULL;');
               put_line('SPO OFF;');
@@ -1331,15 +1331,15 @@ BEGIN
               put_line('PRO <a href="'||l_one_spool_filename||'.html">ash analy html</a>');
               put_line('SPO OFF;');
               put_line('-- zip');
-              put_line('HOS zip -m &&edb360_zip_filename. '||l_one_spool_filename||'.html >> &&edb360_log3..txt');
-              put_line('HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
+              put_line('HOS zip -mj &&edb360_zip_filename. &&edb360_output_directory.'||l_one_spool_filename||'.html >> &&edb360_log3..txt');
+              put_line('HOS zip -j &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
             END IF;
           END IF;
           IF '&&edb360_skip_text.' IS NULL THEN
             :file_seq := :file_seq + 1;
             l_one_spool_filename := LPAD(:file_seq, 5, '0')||'_'||l_spool_filename;
             update_log(l_one_spool_filename||'.txt');
-            put_line('SPO '||l_one_spool_filename||'.txt;');
+            put_line('SPO &&edb360_output_directory.'||l_one_spool_filename||'.txt;');
             put_line('SELECT output /* &&section_id. */ FROM TABLE(DBMS_WORKLOAD_REPOSITORY.ash_report_text(:lv_dbid,:lv_inst_num,TO_DATE(:lv_begin_date,''YYYYMMDDHH24MISS''),TO_DATE(:lv_end_date,''YYYYMMDDHH24MISS''))) WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NULL;');
             put_line('SELECT ''*** time limit exceeded ***'' FROM DUAL WHERE '''||CHR(38)||CHR(38)||'edb360_bypass.'' IS NOT NULL;');
             put_line('SPO OFF;');
@@ -1348,8 +1348,8 @@ BEGIN
             put_line('PRO <a href="'||l_one_spool_filename||'.txt">ash text</a>');
             put_line('SPO OFF;');
             put_line('-- zip');
-            put_line('HOS zip -m &&edb360_zip_filename. '||l_one_spool_filename||'.txt >> &&edb360_log3..txt');
-            put_line('HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
+            put_line('HOS zip -mj &&edb360_zip_filename. &&edb360_output_directory.'||l_one_spool_filename||'.txt >> &&edb360_log3..txt');
+            put_line('HOS zip -j &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
           END IF;
         END IF;
   
@@ -1358,7 +1358,7 @@ BEGIN
         put_line('SPO &&edb360_main_report..html APP;');
         put_line('PRO </li>');
         put_line('SPO OFF;');
-        put_line('HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
+        put_line('HOS zip -j &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt');
       END IF;
     END LOOP;
   END LOOP;
@@ -1368,9 +1368,9 @@ SPO OFF;
 SET TERM ON;
 PRO Please wait ...
 SET TERM OFF; 
-@99910_&&common_edb360_prefix._rpt_driver.sql;
+@&&edb360_output_directory.99910_&&common_edb360_prefix._rpt_driver.sql;
 SET SERVEROUT OFF HEAD ON PAGES &&def_max_rows.;
-HOS zip -m &&edb360_zip_filename. 99910_&&common_edb360_prefix._rpt_driver.sql >> &&edb360_log3..txt
+HOS zip -mj &&edb360_zip_filename. &&edb360_output_directory.99910_&&common_edb360_prefix._rpt_driver.sql >> &&edb360_log3..txt
 
 SPO &&edb360_main_report..html APP;
 PRO </ol>

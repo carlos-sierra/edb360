@@ -1,7 +1,7 @@
 /*****************************************************************************************
    
-    EDB360 - Enkitec's Oracle Database 360-degree View
-    edb360_copyright (C) 2016  Carlos Sierra
+    EDB360 - An Oracle Database 360-degree View
+    edb360_copyright (C) 2018  Carlos Sierra
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

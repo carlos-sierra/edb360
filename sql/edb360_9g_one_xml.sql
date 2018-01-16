@@ -33,7 +33,7 @@ END;
 SET HEA OFF;
 SET LONG 20000000; 
 SET LONGC    2000; 
-SPO &&one_spool_filename..xml;
+SPO &&edb360_output_directory.&&one_spool_filename..xml;
 PRINT :r;
 SPO OFF;
 SET HEA ON;
@@ -55,4 +55,4 @@ SPO OFF;
 SET HEA ON;
 
 -- zip
-HOS zip -m &&edb360_zip_filename. &&one_spool_filename..xml >> &&edb360_log3..txt
+HOS zip -mj &&edb360_zip_filename. &&edb360_output_directory.&&one_spool_filename..xml >> &&edb360_log3..txt

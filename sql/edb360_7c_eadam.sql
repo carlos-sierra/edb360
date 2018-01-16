@@ -6,7 +6,7 @@
 DEF section_id = '7c';
 EXEC DBMS_APPLICATION_INFO.SET_MODULE('&&edb360_prefix.','&&section_id.');
 
-SET TERM OFF ECHO OFF ARRAY 1000;
+SET TERM OFF ECHO OFF;
 
 DEF date_mask = 'YYYY-MM-DD/HH24:MI:SS';
 DEF timestamp_mask = 'YYYY-MM-DD/HH24:MI:SS.FF6';
@@ -22,7 +22,7 @@ SELECT TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS') eadam_current_time FROM DUAL;
 
 /* ------------------------------------------------------------------------- */
 
-SET TERM OFF ECHO OFF DEF ON FEED OFF FLU OFF HEA OFF NUM 30 LIN 32767 LONG 4000000 LONGC 4000 NEWP NONE PAGES 0 SHOW OFF SQLC MIX TAB OFF TRIMS ON VER OFF TIM OFF TIMI OFF ARRAY 1000 SQLP SQL> BLO . RECSEP OFF COLSEP '&&fields_delimiter.';
+SET TERM OFF ECHO OFF DEF ON FEED OFF FLU OFF HEA OFF NUM 30 LIN 32767 LONG 4000000 LONGC 4000 NEWP NONE PAGES 0 SHOW OFF SQLC MIX TAB OFF TRIMS ON VER OFF TIM OFF TIMI OFF SQLP SQL> BLO . RECSEP OFF COLSEP '&&fields_delimiter.';
 
 SPO &&awr_object_prefix.xtr_control.txt;
 SELECT d.dbid, d.name dbname, d.db_unique_name, d.platform_name,
@@ -82,4 +82,4 @@ HOS rm &&awr_object_prefix.active_sess_history.txt.gz
 
 SET TERM ON COLSEP '';
 
-HOS zip -m &&edb360_zip_filename. &&edb360_tar_filename..tar >> &&edb360_log3..txt
+HOS zip -mj &&edb360_zip_filename. &&edb360_tar_filename..tar >> &&edb360_log3..txt

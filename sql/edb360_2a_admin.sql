@@ -1782,12 +1782,36 @@ END;
 /
 @@&&skip_diagnostics.&&skip_10g_script.&&skip_11r1_script.edb360_9a_pre_one.sql
 
-DEF title = 'Open Cursors Count per Session';
+DEF title = 'Opened Cursors Current - Count per Session';
+DEF main_table = '&&gv_view_prefix.SESSTAT';
+DEF abstract = 'Open cursors for each session<br />';
+BEGIN
+  :sql_text := q'[
+-- from http://www.orafaq.com/node/758
+select /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
+       to_number(a.value) opened_cursors_current, a.inst_id, 
+       s.sid, s.serial#, s.username, s.machine, s.program, s.module, s.action
+from &&gv_object_prefix.sesstat a, &&gv_object_prefix.statname b, &&gv_object_prefix.session s
+where a.statistic# = b.statistic#  
+  and a.inst_id = b.inst_id
+  and s.sid=a.sid
+  and s.inst_id = a.inst_id
+  and b.name = 'opened cursors current'
+  and to_number(a.value) < 1.844E+19 -- bug
+  and to_number(a.value) > 0
+order by 1 desc, 2, 3
+]';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+DEF title = 'Cached Cursors Count per Session';
 DEF main_table = '&&gv_view_prefix.OPEN_CURSOR';
+DEF abstract = 'Cursors in the "session cursor cache" for each session<br />';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
-       COUNT(*) open_cursors, inst_id, sid, user_name
+       COUNT(*) cached_cursors, inst_id, sid, user_name
   FROM &&gv_object_prefix.open_cursor
  GROUP BY
        inst_id, sid, user_name
@@ -1798,13 +1822,13 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
-DEF title = 'Open Cursors Count per SQL_ID';
+DEF title = 'Cached Cursors Count per SQL_ID';
 DEF main_table = '&&gv_view_prefix.OPEN_CURSOR';
-DEF abstract = 'SQL statements with more than 50 Open Cursors<br />';
+DEF abstract = 'SQL statements with more than 50 cached cursors in the "session cursor cache".<br />';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
-       COUNT(*) open_cursors, COUNT(DISTINCT inst_id||'.'||sid) sessions, sql_id, hash_value, sql_text, cursor_type,
+       COUNT(*) cached_cursors, COUNT(DISTINCT inst_id||'.'||sid) sessions, sql_id, hash_value, sql_text, cursor_type,
        MIN(user_name) min_user_name, MAX(user_name) max_user_name, MAX(last_sql_active_time) last_sql_active_time
   FROM &&gv_object_prefix.open_cursor
  GROUP BY
@@ -1817,6 +1841,71 @@ HAVING COUNT(*) >= 50
 END;
 /
 @@&&skip_10g_script.edb360_9a_pre_one.sql
+
+DEF title = 'Cached Cursors List per Session';
+DEF main_table = '&&gv_view_prefix.OPEN_CURSOR';
+BEGIN
+  :sql_text := q'[
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
+       *
+  FROM &&gv_object_prefix.open_cursor
+ ORDER BY 
+       inst_id, sid, sql_id
+       &&skip_10g_column., sql_exec_id
+]';
+END;
+/
+@@&&skip_10g_script.edb360_9a_pre_one.sql
+
+DEF title = 'Session Cursor Cache Misses per Session';
+DEF main_table = '&&gv_view_prefix.SESSTAT';
+BEGIN
+  :sql_text := q'[
+WITH 
+session_cache AS (
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
+       p.value - c.value session_cache_misses,
+       c.value session_cache_hits,
+       p.value total_parse_count,
+       c.inst_id,
+       c.sid
+  FROM &&gv_object_prefix.sesstat c,
+       &&gv_object_prefix.statname n1,
+       &&gv_object_prefix.sesstat p,
+       &&gv_object_prefix.statname n2
+ WHERE n1.inst_id = c.inst_id
+   AND n1.statistic# = c.statistic#
+   AND n1.name = 'session cursor cache hits'
+   AND n2.inst_id = p.inst_id
+   AND n2.statistic# = p.statistic#
+   AND n2.name = 'parse count (total)'
+   AND p.inst_id = c.inst_id
+   AND p.sid = c.sid
+)
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
+       c.session_cache_misses,
+       c.session_cache_hits,
+       c.total_parse_count,
+       c.inst_id,
+       c.sid,
+       s.serial#,
+       s.username,
+       s.machine,
+       s.program,
+       s.module,
+       s.action
+  FROM session_cache c,
+       &&gv_object_prefix.session s
+ WHERE c.session_cache_misses > 0
+   AND s.inst_id = c.inst_id
+   AND s.sid = c.sid
+ ORDER BY
+       c.session_cache_misses DESC,
+       c.session_cache_hits, c.total_parse_count
+]';
+END;
+/
+@@edb360_9a_pre_one.sql
 
 DEF title = 'High Cursor Count';
 DEF main_table = '&&gv_view_prefix.SQL';
@@ -2280,6 +2369,42 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
 END;
 /
 @@edb360_9a_pre_one.sql
+
+DEF title = 'Last DDL by date';
+DEF main_table = 'CDB_OBJECTS';
+BEGIN
+  :sql_text := q'[
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
+       owner, TO_CHAR(TRUNC(last_ddl_time), 'YYYY-MM-DD') last_ddl_time, COUNT(*) objects
+  FROM dba_objects
+ WHERE last_ddl_time >= TRUNC(SYSDATE) - 30
+   AND owner NOT IN &&exclusion_list.
+   AND owner NOT IN &&exclusion_list2.
+ GROUP BY  owner, TRUNC(last_ddl_time)
+ ORDER BY 
+       2 DESC
+]';
+END;
+/
+@@edb360_9a_pre_one.sql
+
+DEF title = 'Last DDL by pdb and date';
+DEF main_table = 'CDB_OBJECTS';
+BEGIN
+  :sql_text := q'[
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
+       con_id, owner, TO_CHAR(TRUNC(last_ddl_time), 'YYYY-MM-DD') last_ddl_time, COUNT(*) objects
+  FROM cdb_objects
+ WHERE last_ddl_time >= TRUNC(SYSDATE) - 30
+   AND owner NOT IN &&exclusion_list.
+   AND owner NOT IN &&exclusion_list2.
+ GROUP BY con_id, owner, TRUNC(last_ddl_time)
+ ORDER BY 
+       1, 3 DESC
+]';
+END;
+/
+@@&&skip_10g_script.&&skip_11g_script.edb360_9a_pre_one.sql
 
 SPO &&edb360_main_report..html APP;
 PRO </ol>

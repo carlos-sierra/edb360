@@ -11,7 +11,7 @@ SPO OFF;
 SET SERVEROUT ON;
 SET SERVEROUT ON SIZE 1000000;
 SET SERVEROUT ON SIZE UNL;
-SPO 99830_&&common_edb360_prefix._chart_setup_driver2.sql;
+SPO &&edb360_output_directory.99830_&&common_edb360_prefix._chart_setup_driver2.sql;
 DECLARE
   l_count NUMBER;
 BEGIN
@@ -30,8 +30,8 @@ END;
 /
 SPO OFF;
 SET SERVEROUT OFF;
-@99830_&&common_edb360_prefix._chart_setup_driver2.sql;
-HOS zip -m &&edb360_zip_filename. 99830_&&common_edb360_prefix._chart_setup_driver2.sql >> &&edb360_log3..txt
+@&&edb360_output_directory.99830_&&common_edb360_prefix._chart_setup_driver2.sql;
+HOS zip -mj &&edb360_zip_filename. &&edb360_output_directory.99830_&&common_edb360_prefix._chart_setup_driver2.sql >> &&edb360_log3..txt
 
 DEF main_table = '&&awr_hist_prefix.ACTIVE_SESS_HISTORY';
 DEF chartype = 'AreaChart';

@@ -172,17 +172,17 @@ END;
 -- add seq to spool_filename
 EXEC :file_seq := :file_seq + 1;
 SELECT LPAD(:file_seq, 5, '0')||'_&&common_edb360_prefix._&&section_id._&&report_sequence._failure_diskgroup_space_reserve_requirements' one_spool_filename FROM DUAL;
-SPO &&one_spool_filename..txt
+SPO &&edb360_output_directory.&&one_spool_filename..txt
 @@ck_free_17.sql
 SPO OFF
-HOS zip -m &&edb360_zip_filename. &&one_spool_filename..txt >> &&edb360_log3..txt
+HOS zip -mj &&edb360_zip_filename. &&edb360_output_directory.&&one_spool_filename..txt >> &&edb360_log3..txt
 -- update main report
 SPO &&edb360_main_report..html APP;
 PRO <li title="&&v_view_prefix.ASM_DISKGROUP">DISK and CELL Failure Diskgroup Space Reserve Requirements
 PRO <a href="&&one_spool_filename..txt">text</a>
 PRO </li>
 SPO OFF;
-HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt
+HOS zip -j &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt
 -- report sequence
 EXEC :repo_seq := :repo_seq + 1;
 SELECT TO_CHAR(:repo_seq) report_sequence FROM DUAL;

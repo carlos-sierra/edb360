@@ -47,7 +47,7 @@ SET TIMI OFF;
 SET SERVEROUT OFF;
 PRO
 SPO OFF;
-HOS zip &&edb360_zip_filename. &&edb360_log..txt >> &&edb360_log3..txt
+HOS zip -j &&edb360_zip_filename. &&edb360_log..txt >> &&edb360_log3..txt
 
 -- spools query
 SPO &&common_edb360_prefix._query.sql;
@@ -61,7 +61,7 @@ SET TERM OFF;
 SPO &&edb360_main_report..html APP;
 PRO <li title="&&main_table.">&&edb360_bypass.&&title.
 SPO OFF;
-HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt
+HOS zip -j &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt
 
 -- dummy call
 COL edb360_prev_sql_id NEW_V edb360_prev_sql_id NOPRI;
@@ -78,8 +78,8 @@ SELECT prev_sql_id edb360_prev_sql_id, TO_CHAR(prev_child_number) edb360_prev_ch
 @@&&edb360_bypass.&&skip_lch2.&&edb360_skip_line.edb360_9e_two_line_chart.sql
 @@&&edb360_bypass.&&skip_pch.&&edb360_skip_pie.edb360_9f_one_pie_chart.sql
 @@&&edb360_bypass.&&skip_bch.&&edb360_skip_bar.edb360_9h_one_bar_chart.sql
-HOS zip &&edb360_zip_filename. &&edb360_log2..txt >> &&edb360_log3..txt
-HOS zip &&edb360_zip_filename. &&edb360_log3..txt
+HOS zip -j &&edb360_zip_filename. &&edb360_log2..txt >> &&edb360_log3..txt
+HOS zip -j &&edb360_zip_filename. &&edb360_log3..txt
 
 -- sql monitor long executions of sql from edb360
 SELECT 'N' edb360_tuning_pack_for_sqlmon, ' echo skip sqlmon' skip_sqlmon_exec FROM DUAL
@@ -88,7 +88,7 @@ SELECT '&&tuning_pack.' edb360_tuning_pack_for_sqlmon, NULL skip_sqlmon_exec, SU
 WHERE sql_id = '&&edb360_prev_sql_id.' AND elapsed_time / 1e6 > 60 /* seconds */
 /
 @@&&skip_tuning.&&skip_sqlmon_exec.sqlmon.sql &&edb360_tuning_pack_for_sqlmon. &&edb360_prev_sql_id.
-HOS zip -m &&edb360_zip_filename. sqlmon_&&edb360_prev_sql_id._&&current_time..zip >> &&edb360_log3..txt
+HOS zip -mj &&edb360_zip_filename. sqlmon_&&edb360_prev_sql_id._&&current_time..zip >> &&edb360_log3..txt
 
 -- needed reset after eventual sqlmon above
 SET TERM OFF; 
@@ -103,7 +103,6 @@ SET TRIMS ON;
 SET TRIM ON; 
 SET TI OFF; 
 SET TIMI OFF; 
-SET ARRAY 1000; 
 SET NUM 20; 
 SET SQLBL ON; 
 SET BLO .; 
@@ -124,15 +123,14 @@ DEF skip_lch2 = '--skip--';
 DEF skip_pch = '--skip--';
 DEF skip_bch = '--skip--';
 DEF title_suffix = '';
---DEF haxis = '&&db_version. dbmod:&&edb360_dbmod. host:&&host_hash. (avg cpu_count: &&avg_cpu_count.)';
-DEF haxis = '&&db_version. &&cores_threads_hosts.';
+DEF haxis = '&&host_name_suffix. &&db_version. &&cores_threads_hosts.';
 
 -- update main report
 SPO &&edb360_main_report..html APP;
 PRO <small><em> (&&row_num.) </em></small>
 PRO </li>
 SPO OFF;
-HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt
+HOS zip -j &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt
 
 -- report sequence
 EXEC :repo_seq := :repo_seq + 1;

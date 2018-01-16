@@ -92,7 +92,8 @@ WITH vsql           AS (SELECT /*+ MATERIALIZE */ DISTINCT plan_hash_value, opti
                                partition_id sql_exec_id,
                                TO_NUMBER(SUBSTR(partition_start,INSTR(partition_start,',',1,2)+1,INSTR(partition_start,',',1,3)-INSTR(partition_start,',',1,2)-1)) p1,
                                TO_NUMBER(SUBSTR(partition_start,INSTR(partition_start,',',1,4)+1,INSTR(partition_start,',',1,5)-INSTR(partition_start,',',1,4)-1)) p2,
-                               TO_NUMBER(SUBSTR(partition_start,INSTR(partition_start,',',1,6)+1,INSTR(partition_start,',',1,7)-INSTR(partition_start,',',1,6)-1)) p3 
+                               TO_NUMBER(SUBSTR(partition_start,INSTR(partition_start,',',1,6)+1,INSTR(partition_start,',',1,7)-INSTR(partition_start,',',1,6)-1)) p3,
+                               object_instance obj# 
                           FROM plan_table 
                          WHERE statement_id 
                           LIKE 'SQLD360_ASH_DATA%' 
@@ -192,6 +193,23 @@ SELECT scope, message
                   FROM ashdata
                  GROUP BY sql_plan_hash_value)
          WHERE potential_parse_time >= 0.1
+         UNION ALL
+        SELECT 'POTENTIAL_HWM_DESYNC', 'Object#: '||obj#||' block class#: '||p3||' sampled '||COUNT(*)||' times'
+          FROM ashdata,
+               (SELECT name 
+                  FROM v$event_name
+                 WHERE parameter3 = 'class#' 
+                    OR (name LIKE '%-way' AND parameter3 IS NULL) --parameter3 not named even though it is populated
+               ) e
+         WHERE e.name = ashdata.event
+           AND p3 IN (8,9,10,11,12)
+         GROUP BY obj#, p3
+         UNION ALL
+        SELECT 'LARGE_PERC_PHV0', 'Large number of ASH samples ('||perc_0||'%) have PHV 0 with a valid SQL_EXEC_ID, very likely unresolved adaptive plan (some info based on ASH could be misleading)'
+          FROM (SELECT TRUNC(SUM(CASE WHEN sql_plan_hash_value = 0 AND sql_exec_id IS NOT NULL THEN 1 ELSE 0 END)/COUNT(*),3)*100 perc_0
+                  FROM ashdata
+                 WHERE '&&sqld360_is_insert.' <> 'Y')
+         WHERE perc_0 >= 2
         )
  ORDER BY scope, message
 ]';
@@ -257,20 +275,20 @@ WITH tablespaces AS (SELECT /*+ MATERIALIZE */ tablespace_name, block_size
                      AND idx.owner = col.index_owner
                      AND idx.index_name = col.index_name
                    GROUP BY col.index_owner,col.index_name,col.table_owner,col.table_name,idx.index_type,idx.uniqueness)
-     &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h., tab_stats_history AS (SELECT o.owner, o.object_name, h.analyzetime, h.rowcnt
-     &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h.                          FROM sys.wri$_optstat_tab_history h,
-     &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h.                               dba_objects o
-     &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h.                         WHERE (o.owner, o.object_name) IN (SELECT object_owner, object_name 
-     &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h.                                                              FROM plan_table 
-     &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h.                                                             WHERE statement_id = 'LIST_OF_TABLES' 
-     &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h.                                                               AND remarks = '&&sqld360_sqlid.')
-     &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h.                           AND o.object_type = 'TABLE'
-     &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h.                           AND o.object_id = h.obj#
-     &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h.                           AND '&&diagnostics_pack.' = 'Y'
-     &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h.                         UNION ALL
-     &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h.                        SELECT owner, table_name, last_analyzed, num_rows
-     &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h.                          FROM tables
-     &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h.                       ) 
+     &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h.&&skip_10g.&&skip_11g., tab_stats_history AS (SELECT o.owner, o.object_name, h.analyzetime, h.rowcnt
+     &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h.&&skip_10g.&&skip_11g.                          FROM sys.wri$_optstat_tab_history h,
+     &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h.&&skip_10g.&&skip_11g.                               dba_objects o
+     &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h.&&skip_10g.&&skip_11g.                         WHERE (o.owner, o.object_name) IN (SELECT object_owner, object_name 
+     &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h.&&skip_10g.&&skip_11g.                                                              FROM plan_table 
+     &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h.&&skip_10g.&&skip_11g.                                                             WHERE statement_id = 'LIST_OF_TABLES' 
+     &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h.&&skip_10g.&&skip_11g.                                                               AND remarks = '&&sqld360_sqlid.')
+     &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h.&&skip_10g.&&skip_11g.                           AND o.object_type = 'TABLE'
+     &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h.&&skip_10g.&&skip_11g.                           AND o.object_id = h.obj#
+     &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h.&&skip_10g.&&skip_11g.                           AND '&&diagnostics_pack.' = 'Y'
+     &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h.&&skip_10g.&&skip_11g.                         UNION ALL
+     &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h.&&skip_10g.&&skip_11g.                        SELECT owner, table_name, last_analyzed, num_rows
+     &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h.&&skip_10g.&&skip_11g.                          FROM tables
+     &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h.&&skip_10g.&&skip_11g.                       ) 
 SELECT scope, owner, table_name, message
   FROM (SELECT 'TABLE_STATS' scope, owner, table_name,  'Table '||table_name||' has statistics more than a month old ('||TRUNC(SYSDATE-last_analyzed)||' days old)' message
           FROM tables
@@ -355,22 +373,22 @@ SELECT scope, owner, table_name, message
            AND i.index_name != r.index_name
            AND i.indexed_columns LIKE r.indexed_columns||':%'
            AND r.uniqueness = 'NONUNIQUE'
-        &&skip_10g.&&skip_11g. UNION ALL
-        &&skip_10g.&&skip_11g. SELECT 'TABLE_STATS_HISTORY', owner, table_name, 'Stats were 0 at some point, starting '||init_zero||' up until stats gathering on '||end_zero
-        &&skip_10g.&&skip_11g.   FROM (SELECT owner, object_name table_name, to_char(init_zero,'YYYY-MM-DD/HH24:MI:SS') init_zero, to_char(end_zero,'YYYY-MM-DD/HH24:MI:SS') end_zero
-        &&skip_10g.&&skip_11g.           FROM tab_stats_history
-        &&skip_10g.&&skip_11g.           MATCH_RECOGNIZE (
-        &&skip_10g.&&skip_11g.             PARTITION BY owner, object_name ORDER BY analyzetime
-        &&skip_10g.&&skip_11g.             MEASURES FIRST(iszero.analyzetime) init_zero,
-        &&skip_10g.&&skip_11g.                      FIRST(a_nonzero.analyzetime) end_zero
-        &&skip_10g.&&skip_11g.             --ALL ROWS PER MATCH
-        &&skip_10g.&&skip_11g.             AFTER MATCH SKIP TO FIRST a_nonzero
-        &&skip_10g.&&skip_11g.             PATTERN (b_nonzero+ iszero+ a_nonzero+)  
-        &&skip_10g.&&skip_11g.             DEFINE b_nonzero AS rowcnt <> 0,
-        &&skip_10g.&&skip_11g.                    iszero  AS rowcnt = 0,
-        &&skip_10g.&&skip_11g.                    a_nonzero AS rowcnt <> 0
-        &&skip_10g.&&skip_11g.           )
-        &&skip_10g.&&skip_11g.        )
+        &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h.&&skip_10g.&&skip_11g. UNION ALL
+        &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h.&&skip_10g.&&skip_11g. SELECT 'TABLE_STATS_HISTORY', owner, table_name, 'Stats were 0 at some point, starting '||init_zero||' up until stats gathering on '||end_zero
+        &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h.&&skip_10g.&&skip_11g.   FROM (SELECT owner, object_name table_name, to_char(init_zero,'YYYY-MM-DD/HH24:MI:SS') init_zero, to_char(end_zero,'YYYY-MM-DD/HH24:MI:SS') end_zero
+        &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h.&&skip_10g.&&skip_11g.           FROM tab_stats_history
+        &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h.&&skip_10g.&&skip_11g.           MATCH_RECOGNIZE (
+        &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h.&&skip_10g.&&skip_11g.             PARTITION BY owner, object_name ORDER BY analyzetime
+        &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h.&&skip_10g.&&skip_11g.             MEASURES FIRST(iszero.analyzetime) init_zero,
+        &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h.&&skip_10g.&&skip_11g.                      FIRST(a_nonzero.analyzetime) end_zero
+        &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h.&&skip_10g.&&skip_11g.             --ALL ROWS PER MATCH
+        &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h.&&skip_10g.&&skip_11g.             AFTER MATCH SKIP TO FIRST a_nonzero
+        &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h.&&skip_10g.&&skip_11g.             PATTERN (b_nonzero+ iszero+ a_nonzero+)  
+        &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h.&&skip_10g.&&skip_11g.             DEFINE b_nonzero AS rowcnt <> 0,
+        &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h.&&skip_10g.&&skip_11g.                    iszero  AS rowcnt = 0,
+        &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h.&&skip_10g.&&skip_11g.                    a_nonzero AS rowcnt <> 0
+        &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h.&&skip_10g.&&skip_11g.           )
+        &&sqld360_no_read_stats_h.&&sqld360_skip_stats_h.&&skip_10g.&&skip_11g.        )
         )
  ORDER BY owner, table_name, scope DESC
 ]';

@@ -208,24 +208,24 @@ END;
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Flashback Statistics';
-DEF main_table = '&&v_view_prefix.FLASHBACK_DATABASE_STAT';
+DEF main_table = '&&gv_view_prefix.FLASHBACK_DATABASE_STAT';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM &&v_object_prefix.flashback_database_stat
+  FROM &&gv_object_prefix.flashback_database_stat
 ]';
 END;
 /
 @@edb360_9a_pre_one.sql
 
 DEF title = 'Flashback Log';
-DEF main_table = '&&v_view_prefix.FLASHBACK_DATABASE_LOG';
+DEF main_table = '&&gv_view_prefix.FLASHBACK_DATABASE_LOG';
 BEGIN
   :sql_text := q'[
 SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
        *
-  FROM &&v_object_prefix.flashback_database_log
+  FROM &&gv_object_prefix.flashback_database_log
 ]';
 END;
 /
@@ -525,18 +525,18 @@ SELECT LPAD(:file_seq, 5, '0')||'_&&common_edb360_prefix._&&section_id._&&report
 SET SERVEROUT ON
 SET SERVEROUT ON SIZE 1000000;
 SET SERVEROUT ON SIZE UNL;
-SPO &&one_spool_filename..html
+SPO &&edb360_output_directory.&&one_spool_filename..html
 @@2016-03-08-RedoLogSizeHeatMap.sql
 SPO OFF
 SET SERVEROUT OFF
-HOS zip -m &&edb360_zip_filename. &&one_spool_filename..html >> &&edb360_log3..txt
+HOS zip -mj &&edb360_zip_filename. &&edb360_output_directory.&&one_spool_filename..html >> &&edb360_log3..txt
 -- update main report
 SPO &&edb360_main_report..html APP;
 PRO <li title="&&v_view_prefix.ARCHIVED_LOG">ARCHIVED REDO LOG Heat Map for past 31 Days
 PRO <a href="&&one_spool_filename..html">html</a>
 PRO </li>
 SPO OFF;
-HOS zip &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt
+HOS zip -j &&edb360_zip_filename. &&edb360_main_report..html >> &&edb360_log3..txt
 -- report sequence
 EXEC :repo_seq := :repo_seq + 1;
 SELECT TO_CHAR(:repo_seq) report_sequence FROM DUAL;

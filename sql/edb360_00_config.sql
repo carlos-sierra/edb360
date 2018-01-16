@@ -72,12 +72,26 @@ DEF edb360_eadam_row_limit = 10000000;
 -- tool repository. set only if edb360 or eadam repository has been created
 DEF tool_repo_user = '';
 
--- move generated edb360 zip file to directory (i.e.: /home/oracle/csierra/edb360/prod/)
+-- output directory for most staging files part of the zip (e.g.: "" or "./" or "/tmp/" or "/home/oracle/csierra/edb360/prod/")
+DEF edb360_output_directory = '';
+
+-- move generated edb360 zip file to directory (e.g.: "" or "./" or "/tmp/" or "/home/oracle/csierra/edb360/prod/")
 DEF edb360_move_directory = '';
 
 -- use only if you have to skip esp and escp (value --skip--) else null
 --DEF skip_esp_and_escp = '--skip--';
 DEF skip_esp_and_escp = '';
+
+-- use if you need tool to act on a dbid stored on AWR, but that is not the current v$database.dbid
+DEF edb360_config_dbid = '';
+
+-- the following 3 allow the display of host_name suffix on charts
+-- for example, to display ad2.r1 when host_name is iod-db-kiev-02008.node.ad2.r1, set them to 
+-- separator = '.', position = '1' and occurrence = '2'
+-- when all 3 are null then host_name suffix remains null
+DEF edb360_host_name_separator = '';
+DEF edb360_host_name_position = '';
+DEF edb360_host_name_occurrence = '';
 
 /**************************** not recommended to modify *********************************/
 

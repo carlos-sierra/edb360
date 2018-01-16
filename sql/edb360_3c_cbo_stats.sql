@@ -559,6 +559,8 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
+@@&&skip_10g_script.&&skip_11r1_script.edb360_3c_dbms_stats.sql
+
 DEF title = 'SYS Stats for WRH$, WRI$, WRM$ and WRR$ Tables';
 DEF main_table = '&&dva_view_prefix.TABLES';
 BEGIN

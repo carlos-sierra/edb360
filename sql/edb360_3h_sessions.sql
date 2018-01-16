@@ -778,12 +778,7 @@ SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
    AND s2.sql_id(+) = b.b_sql_id 
    AND s2.dbid(+) = b.dbid
  ORDER BY
-       w3.w_samples DESC,
-       w2.w_samples DESC,
-       w2.w_sql_id,
-       w2.w_event,
-       b.b_samples DESC,
-       b.b_sql_id
+       1 DESC, 2, 3, 4 DESC, 5
 ]';
 END;
 /

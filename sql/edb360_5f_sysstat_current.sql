@@ -78,7 +78,7 @@ END;
 /
 
 DEF skip_lch = '';
-DEF title = 'Sessions';
+DEF title = 'Sessions (logons current)';
 DEF vaxis = 'Sessions';
 DEF tit_01 = 'logons current';
 DEF tit_02 = '';
@@ -100,7 +100,7 @@ EXEC :sql_text := REPLACE(:sql_text, 'dummy_01', '"'||SUBSTR('&&tit_01.',1,30)||
 @@edb360_9a_pre_one.sql
 
 DEF skip_lch = '';
-DEF title = 'Cursors';
+DEF title = 'Cursors (opened and pinned)';
 DEF vaxis = 'Cursors';
 DEF tit_01 = 'opened cursors current';
 DEF tit_02 = 'pinned cursors current';

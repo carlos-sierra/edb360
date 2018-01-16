@@ -1280,9 +1280,41 @@ DEF tit_15 = '';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name_01@', '&&tit_01.');
 EXEC :sql_text := REPLACE(:sql_text, '@stat_name_02@', '&&tit_02.');
 EXEC :sql_text := REPLACE(:sql_text, '@stat_name_03@', '&&tit_03.');
-EXEC :sql_text := REPLACE(:sql_text, 'dummy_01', '"'||SUBSTR('&&tit_01.',23,30)||'"');
-EXEC :sql_text := REPLACE(:sql_text, 'dummy_02', '"'||SUBSTR('&&tit_02.',23,30)||'"');
-EXEC :sql_text := REPLACE(:sql_text, 'dummy_03', '"'||SUBSTR('&&tit_03.',23,30)||'"');
+EXEC :sql_text := REPLACE(:sql_text, 'dummy_01', '"'||SUBSTR('&&tit_01.',1,30)||'"');
+EXEC :sql_text := REPLACE(:sql_text, 'dummy_02', '"'||SUBSTR('&&tit_02.',1,30)||'"');
+EXEC :sql_text := REPLACE(:sql_text, 'dummy_03', '"'||SUBSTR('&&tit_03.',1,30)||'"');
+@@edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF title = 'Parsing Counts and Session Cursor Cache Hits';
+DEF vaxis = 'Parsing and Session Cursor Cache Counts';
+DEF tit_01 = 'parse count (total)';
+DEF tit_02 = 'parse count (hard)';
+DEF tit_03 = 'parse count (failures)';
+DEF tit_04 = 'parse count (describe)';
+DEF tit_05 = 'session cursor cache count';
+DEF tit_06 = 'session cursor cache hits';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
+EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name_01@', '&&tit_01.');
+EXEC :sql_text := REPLACE(:sql_text, '@stat_name_02@', '&&tit_02.');
+EXEC :sql_text := REPLACE(:sql_text, '@stat_name_03@', '&&tit_03.');
+EXEC :sql_text := REPLACE(:sql_text, '@stat_name_04@', '&&tit_04.');
+EXEC :sql_text := REPLACE(:sql_text, '@stat_name_05@', '&&tit_05.');
+EXEC :sql_text := REPLACE(:sql_text, '@stat_name_06@', '&&tit_06.');
+EXEC :sql_text := REPLACE(:sql_text, 'dummy_01', '"'||SUBSTR('&&tit_01.',1,30)||'"');
+EXEC :sql_text := REPLACE(:sql_text, 'dummy_02', '"'||SUBSTR('&&tit_02.',1,30)||'"');
+EXEC :sql_text := REPLACE(:sql_text, 'dummy_03', '"'||SUBSTR('&&tit_03.',1,30)||'"');
+EXEC :sql_text := REPLACE(:sql_text, 'dummy_04', '"'||SUBSTR('&&tit_04.',1,30)||'"');
+EXEC :sql_text := REPLACE(:sql_text, 'dummy_05', '"'||SUBSTR('&&tit_05.',1,30)||'"');
+EXEC :sql_text := REPLACE(:sql_text, 'dummy_06', '"'||SUBSTR('&&tit_06.',1,30)||'"');
 @@edb360_9a_pre_one.sql
 
 DEF tit_01 = '';

@@ -172,6 +172,157 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '8');
 DEF main_table = '&&awr_hist_prefix.OSSTAT';
 DEF chartype = 'LineChart';
 DEF stacked = '';
+DEF vaxis = 'OS Load and CPU Subscription Threshold';
+DEF vbaseline = '';
+DEF abstract = '';
+
+DEF tit_01 = 'OS Load';
+DEF tit_02 = 'CPU Subscription';
+DEF tit_03 = '';
+DEF tit_04 = '';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
+
+COL load FOR 999990.00;
+
+BEGIN
+  :sql_text_backup := q'[
+WITH
+seed AS (
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
+       snap_id,
+       dbid,
+       instance_number,
+       stat_name,
+       value
+  FROM &&awr_object_prefix.osstat
+ WHERE stat_name IN ('LOAD', 'NUM_CPU_CORES')
+   AND snap_id BETWEEN &&minimum_snap_id. AND &&maximum_snap_id.
+   AND dbid = &&edb360_dbid.
+   AND instance_number = @instance_number@
+),
+manual_pivot AS (
+SELECT /*+ &&sq_fact_hints. */ /* &&section_id..&&report_sequence. */
+       snap_id,
+       dbid,
+       instance_number,
+       SUM(CASE stat_name WHEN 'LOAD'            THEN value ELSE 0 END) load,
+       SUM(CASE stat_name WHEN 'NUM_CPU_CORES'   THEN value ELSE 0 END) num_cpu_cores
+  FROM seed
+ WHERE value >= 0
+ GROUP BY
+       snap_id,
+       dbid,
+       instance_number
+)
+SELECT u.snap_id,
+       TO_CHAR(MIN(s.begin_interval_time), 'YYYY-MM-DD HH24:MI:SS') begin_time,
+       TO_CHAR(MIN(s.end_interval_time), 'YYYY-MM-DD HH24:MI:SS') end_time,
+       ROUND(SUM(u.load), 2) load,
+       --SUM(u.num_cpu_cores) num_cpu_cores,
+       &&cpu_load_threshold. cpu_load_threshold,
+       0 dummy_03,
+       0 dummy_04,
+       0 dummy_05,
+       0 dummy_06,
+       0 dummy_07,
+       0 dummy_08,
+       0 dummy_09,
+       0 dummy_10,
+       0 dummy_11,
+       0 dummy_12,
+       0 dummy_13,
+       0 dummy_14,
+       0 dummy_15
+  FROM manual_pivot u,
+       &&awr_object_prefix.snapshot s
+ WHERE s.snap_id         = u.snap_id
+   AND s.dbid            = u.dbid
+   AND s.instance_number = u.instance_number
+   AND (CAST(s.end_interval_time AS DATE) - CAST(s.begin_interval_time AS DATE)) * 24 * 60 > 1 -- ignore snaps closer than 1m appart
+ GROUP BY
+       u.snap_id
+ ORDER BY
+       u.snap_id
+]';
+END;
+/
+
+DEF skip_lch = '';
+DEF skip_all = '&&is_single_instance.';
+DEF title = 'OS Load and CPU Subscription Threshold for Cluster';
+EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', 'instance_number');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 1;
+DEF title = 'OS Load and CPU Subscription Threshold for Instance 1';
+EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '1');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 2;
+DEF title = 'OS Load and CPU Subscription Threshold for Instance 2';
+EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '2');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 3;
+DEF title = 'OS Load and CPU Subscription Threshold for Instance 3';
+EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '3');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 4;
+DEF title = 'OS Load and CPU Subscription Threshold for Instance 4';
+EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '4');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 5;
+DEF title = 'OS Load and CPU Subscription Threshold for Instance 5';
+EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '5');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 6;
+DEF title = 'OS Load and CPU Subscription Threshold for Instance 6';
+EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '6');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 7;
+DEF title = 'OS Load and CPU Subscription Threshold for Instance 7';
+EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '7');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+DEF skip_lch = '';
+DEF skip_all = 'Y';
+SELECT NULL skip_all FROM &&gv_object_prefix.instance WHERE instance_number = 8;
+DEF title = 'OS Load and CPU Subscription Threshold for Instance 8';
+EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '8');
+@@&&skip_all.&&skip_diagnostics.edb360_9a_pre_one.sql
+
+
+DEF main_table = '&&awr_hist_prefix.OSSTAT';
+DEF chartype = 'LineChart';
+DEF stacked = '';
 DEF vaxis = 'Percent over (Busy + Idle)';
 --DEF vbaseline = 'baseline: 100,';
 DEF vbaseline = '';
@@ -258,6 +409,7 @@ SELECT u.snap_id,
    AND s.dbid            = u.dbid
    AND s.instance_number = u.instance_number
    AND (CAST(s.end_interval_time AS DATE) - CAST(s.begin_interval_time AS DATE)) * 24 * 60 > 1 -- ignore snaps closer than 1m appart
+   AND u.busy_time + u.idle_time > 0
  GROUP BY
        u.snap_id
  ORDER BY
@@ -801,7 +953,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '8');
 SET SERVEROUT ON;
 SET SERVEROUT ON SIZE 1000000;
 SET SERVEROUT ON SIZE UNL;
-SPO 99810_&&common_edb360_prefix._chart_setup_driver1.sql;
+SPO &&edb360_output_directory.99810_&&common_edb360_prefix._chart_setup_driver1.sql;
 DECLARE
   l_count NUMBER;
 BEGIN
@@ -820,8 +972,8 @@ END;
 /
 SPO OFF;
 SET SERVEROUT OFF;
-@99810_&&common_edb360_prefix._chart_setup_driver1.sql;
-HOS zip -m &&edb360_zip_filename. 99810_&&common_edb360_prefix._chart_setup_driver1.sql >> &&edb360_log3..txt
+@&&edb360_output_directory.99810_&&common_edb360_prefix._chart_setup_driver1.sql;
+HOS zip -mj &&edb360_zip_filename. &&edb360_output_directory.99810_&&common_edb360_prefix._chart_setup_driver1.sql >> &&edb360_log3..txt
 
 
 DEF main_table = '&&awr_hist_prefix.OSSTAT';

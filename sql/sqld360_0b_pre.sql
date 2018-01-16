@@ -9,8 +9,8 @@ CL COL;
 COL row_num FOR 9999999 HEA '#' PRI;
 
 -- version
-DEF sqld360_vYYNN = 'v1708';
-DEF sqld360_vrsn = '&&sqld360_vYYNN. (2016-07-29)';
+DEF sqld360_vYYNN = 'v1801';
+DEF sqld360_vrsn = '&&sqld360_vYYNN. (2018-01-13)';
 DEF sqld360_prefix = 'sqld360';
 
 -- parameters
@@ -98,6 +98,29 @@ BEGIN
   END IF;
 END;
 /
+
+
+PRO
+PRO Parameter 3:
+PRO Name of an optional custom configuration file executed right after 
+PRO sql/sqld360_00_config.sql. If such file name is provided, then corresponding file
+PRO should exist under sqld360-master/sql. Filename is case sensitivive and its existence
+PRO is not validated. Example: custom_config_01.sql
+PRO If no custom configuration file is needed, simply hit the "return" key.
+PRO
+PRO Custom configuration filename? (optional)
+COL custom_config_filename NEW_V custom_config_filename NOPRI;
+SELECT NVL(TRIM('&3.'), 'null') custom_config_filename FROM DUAL;
+
+PRO
+PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+PRO
+PRO custom configuration filename: "&&custom_config_filename."
+PRO
+SET SUF '';
+@@&&custom_config_filename.
+SET SUF sql;
+@@&&custom_config_filename.
 
 -- suppressing some unnecessary output
 --SET TERM OFF;
@@ -248,11 +271,11 @@ COL sqld360_ashdiskfilter NEW_V sqld360_ashdiskfilter
 SELECT 10 sqld360_ashdiskfilter FROM dual;
 SELECT VALUE sqld360_ashdiskfilter FROM v$parameter2 WHERE name = '_ash_disk_filter_ratio';
 COL sqld360_ashsample NEW_V sqld360_ashsample
-SELECT 1000 sqld360_ashsample FROM dual;
-SELECT VALUE sqld360_ashsample FROM v$parameter2 WHERE name = '_ash_sampling_interval';
+SELECT 1 sqld360_ashsample FROM dual;
+SELECT TO_NUMBER(TRUNC(VALUE/1000,3)) sqld360_ashsample FROM v$parameter2 WHERE name = '_ash_sampling_interval';
 -- Formula is really simple, adjust the _ash_sampling_interval to seconds and multiply by _ash_disk_filter_ratio
 COL sqld360_ashtimevalue NEW_V sqld360_ashtimevalue
-SELECT TO_NUMBER(TRUNC((&&sqld360_ashsample./1000)*&&sqld360_ashdiskfilter.,3)) sqld360_ashtimevalue FROM DUAL;
+SELECT TO_NUMBER(TRUNC(&&sqld360_ashsample.*&&sqld360_ashdiskfilter.,3)) sqld360_ashtimevalue FROM DUAL;
 
 -- ebs
 DEF ebs_release = '';
@@ -307,8 +330,8 @@ COL sqld360_sqltxt NEW_V sqld360_sqltxt
 -- COMMAND_TYPE = 2 is INSERT, likely to never change (eventually will use X$KEACMDN / WRH$_SQLCOMMAND_NAME)
 COL sqld360_is_insert NEW_V sqld360_is_insert
 SELECT SUBSTR(sql_text,1,100) sqld360_sqltxt FROM v$sqltext_with_newlines WHERE sql_id = '&&sqld360_sqlid.' AND piece = 0 AND rownum = 1;
-SELECT CASE WHEN command_type = 2 THEN 'Y' END sqld360_is_insert FROM v$sql WHERE sql_id = '&&sqld360_sqlid.' AND rownum = 1;
-SELECT SUBSTR(sql_text,1,100) sqld360_sqltxt, CASE WHEN command_type = 2 THEN 'Y' END sqld360_is_insert FROM dba_hist_sqltext WHERE sql_id = '&&sqld360_sqlid.' AND rownum = 1;
+SELECT CASE WHEN command_type = 2 THEN 'Y' ELSE 'N' END sqld360_is_insert FROM v$sql WHERE sql_id = '&&sqld360_sqlid.' AND rownum = 1;
+SELECT SUBSTR(sql_text,1,100) sqld360_sqltxt, CASE WHEN command_type = 2 THEN 'Y' ELSE 'N' END sqld360_is_insert FROM dba_hist_sqltext WHERE sql_id = '&&sqld360_sqlid.' AND rownum = 1;
 
 -- get sql full text
 VAR sqld360_fullsql CLOB;
@@ -482,6 +505,15 @@ COL sqld360_no_read_stats_h new_V sqld360_no_read_stats_h
 SELECT '--' sqld360_no_read_stats_h FROM DUAL;
 SELECT NULL sqld360_no_read_stats_h FROM sys.wri$_optstat_tab_history WHERE rownum <= 1;
 
+--this is the divisor variable, will be used in the formula
+COL sqld360_awr_timescale_d NEW_V sqld360_awr_timescale_d
+--this is the label variable, will be used in the Y-axis label
+COL sqld360_awr_timescale_l NEW_V sqld360_awr_timescale_l
+-- Consider "ms" the exception, everything else goes to default
+SELECT CASE WHEN '&&sqld360_conf_awr_timescale.' = 'ms' THEN '1e3' ELSE '1e6'  END sqld360_awr_timescale_d, CASE WHEN '&&sqld360_conf_awr_timescale.' = 'ms' THEN 'ms'  ELSE 'secs' END sqld360_awr_timescale_l FROM DUAL;
+
+
+
 -- setup
 DEF main_table = '';
 DEF title = '';
@@ -519,10 +551,10 @@ DEF ash_max_reports = '12';
 --DEF skip_tcb = '';
 --DEF skip_ash_rpt = '--';
 -- I really don't like this, I would rather insert some metadata into the plan table and join back (keep an eye on it, 2016/09/27)
-DEF wait_class_colors = 'CASE wait_class WHEN ''''''''CPU'''''''' THEN ''''''''34CF27'''''''' WHEN ''''''''Scheduler'''''''' THEN ''''''''9FFA9D'''''''' WHEN ''''''''User I/O'''''''' THEN ''''''''0252D7'''''''' WHEN ''''''''System I/O'''''''' THEN ''''''''1E96DD'''''''' ';
-DEF wait_class_colors2 = ' WHEN ''''''''Concurrency'''''''' THEN ''''''''871C12'''''''' WHEN ''''''''Application'''''''' THEN ''''''''C42A05'''''''' WHEN ''''''''Commit'''''''' THEN ''''''''EA6A05'''''''' WHEN ''''''''Configuration'''''''' THEN ''''''''594611''''''''  ';
-DEF wait_class_colors3 = ' WHEN ''''''''Administrative'''''''' THEN ''''''''75763E''''''''  WHEN ''''''''Network'''''''' THEN ''''''''989779'''''''' WHEN ''''''''Other'''''''' THEN ''''''''F571A0'''''''' ';
-DEF wait_class_colors4 = ' WHEN ''''''''Cluster'''''''' THEN ''''''''CEC3B5'''''''' WHEN ''''''''Queueing'''''''' THEN ''''''''C6BAA5'''''''' END';
+DEF wait_class_colors = 'CASE wait_class WHEN ''''CPU'''' THEN ''''34CF27'''' WHEN ''''Scheduler'''' THEN ''''9FFA9D'''' WHEN ''''User I/O'''' THEN ''''0252D7'''' WHEN ''''System I/O'''' THEN ''''1E96DD'''' ';
+DEF wait_class_colors2 = ' WHEN ''''Concurrency'''' THEN ''''871C12'''' WHEN ''''Application'''' THEN ''''C42A05'''' WHEN ''''Commit'''' THEN ''''EA6A05'''' WHEN ''''Configuration'''' THEN ''''594611''''  ';
+DEF wait_class_colors3 = ' WHEN ''''Administrative'''' THEN ''''75763E''''  WHEN ''''Network'''' THEN ''''989779'''' WHEN ''''Other'''' THEN ''''F571A0'''' ';
+DEF wait_class_colors4 = ' WHEN ''''Cluster'''' THEN ''''CEC3B5'''' WHEN ''''Queueing'''' THEN ''''C6BAA5'''' END';
 --DEF wait_class_colors =  "CASE wait_class WHEN 'CPU' THEN '34CF27' WHEN 'Scheduler' THEN '9FFA9D' WHEN 'User I/O' THEN '0252D7' WHEN 'System I/O' THEN '1E96DD' ";
 --DEF wait_class_colors2 = " WHEN 'Concurrency' THEN '871C12' WHEN 'Application' THEN 'C42A05' WHEN 'Commit' THEN 'EA6A05' WHEN 'Configuration' THEN '594611'  ";
 --DEF wait_class_colors3 = " WHEN 'Administrative' THEN '75763E'  WHEN 'Network' THEN '989779' WHEN 'Other' THEN 'F571A0' ";
@@ -571,8 +603,9 @@ DEF bubblesDetails = '';
 DEF sql_text = '';
 DEF chartype = '';
 DEF stacked = '';
-DEF haxis = '&&db_version. &&cores_threads_hosts.';
+DEF haxis = '&&sqld360_sqlid. &&db_version. &&cores_threads_hosts.';
 DEF vaxis = '';
+DEF vaxis2 = '';
 DEF vbaseline = '';
 DEF tit_01 = '';
 DEF tit_02 = '';
@@ -701,7 +734,8 @@ SET TRIMS ON;
 SET TRIM ON; 
 SET TI OFF; 
 SET TIMI OFF; 
-SET ARRAY 1000; 
+-- because of bug 26163790
+--SET ARRAY 999; 
 SET NUM 20; 
 SET SQLBL ON; 
 SET BLO .; 

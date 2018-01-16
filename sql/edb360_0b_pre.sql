@@ -1,6 +1,6 @@
-DEF edb360_vYYNN = 'v1715';
-DEF edb360_vrsn = '&&edb360_vYYNN. (2017-07-28)';
-DEF edb360_copyright = ' (c) 2017';
+DEF edb360_vYYNN = 'v1801';
+DEF edb360_vrsn = '&&edb360_vYYNN. (2018-01-15)';
+DEF edb360_copyright = ' (c) 2018';
 
 SET TERM OFF;
 -- watchdog
@@ -34,11 +34,16 @@ SELECT CASE WHEN '&&tool_repo_user.' IS NULL THEN '&&awr_object_prefix.' ELSE '&
   FROM DUAL
 /
 
+-- get dbid
+COL edb360_dbid NEW_V edb360_dbid;
+SELECT TRIM(TO_CHAR(NVL(TO_NUMBER('&&edb360_config_dbid.'), dbid))) edb360_dbid FROM &&v_object_prefix.database;
+
 -- snaps
 SELECT startup_time, dbid, instance_number, COUNT(*) snaps,
        MIN(begin_interval_time) min_time, MAX(end_interval_time) max_time,
        MIN(snap_id) min_snap_id, MAX(snap_id) max_snap_id
   FROM &&awr_object_prefix.snapshot
+ WHERE dbid = &&edb360_dbid.
  GROUP BY
        startup_time, dbid, instance_number
  ORDER BY
@@ -47,7 +52,7 @@ SELECT startup_time, dbid, instance_number, COUNT(*) snaps,
 
 COL history_days NEW_V history_days;
 -- range: takes at least 31 days and at most as many as actual history, with a default of 31. parameter restricts within that range. 
-SELECT TO_CHAR(LEAST(CEIL(SYSDATE - CAST(MIN(begin_interval_time) AS DATE)), GREATEST(31, TO_NUMBER(NVL(TRIM('&&edb360_conf_days.'), '31'))))) history_days FROM &&awr_object_prefix.snapshot WHERE '&&diagnostics_pack.' = 'Y' AND dbid = (SELECT dbid FROM &&v_object_prefix.database);
+SELECT TO_CHAR(LEAST(CEIL(SYSDATE - CAST(MIN(begin_interval_time) AS DATE)), GREATEST(31, TO_NUMBER(NVL(TRIM('&&edb360_conf_days.'), '31'))))) history_days FROM &&awr_object_prefix.snapshot WHERE '&&diagnostics_pack.' = 'Y' AND dbid = &&edb360_dbid.;
 SELECT TO_CHAR(TO_DATE('&&edb360_conf_date_to.', 'YYYY-MM-DD') - TO_DATE('&&edb360_conf_date_from.', 'YYYY-MM-DD') + 1) history_days FROM DUAL WHERE '&&edb360_conf_date_from.' != 'YYYY-MM-DD' AND '&&edb360_conf_date_to.' != 'YYYY-MM-DD';
 SELECT '0' history_days FROM DUAL WHERE NVL(TRIM('&&diagnostics_pack.'), 'N') = 'N';
 SET TERM OFF;
@@ -274,13 +279,9 @@ COL edb360_pdb_name NEW_V edb360_pdb_name;
 SELECT 'NONE' edb360_pdb_name FROM DUAL;
 SELECT SYS_CONTEXT('USERENV', 'CON_NAME') edb360_pdb_name FROM DUAL;
 
--- get dbid
-COL edb360_dbid NEW_V edb360_dbid;
-SELECT TRIM(TO_CHAR(dbid)) edb360_dbid FROM &&v_object_prefix.database;
-
 -- get dbmod
 COL edb360_dbmod NEW_V edb360_dbmod;
-SELECT LPAD(MOD(dbid,1e6),6,'6') edb360_dbmod FROM &&v_object_prefix.database;
+SELECT LPAD(MOD(&&edb360_dbid.,1e6),6,'6') edb360_dbmod FROM DUAL;
 
 -- get instance number
 COL connect_instance_number NEW_V connect_instance_number;
@@ -301,6 +302,10 @@ SELECT SUBSTR('&&host_name_short.', 1, INSTR('&&host_name_short..', '.') - 1) ho
 SELECT TRANSLATE('&&host_name_short.',
 'abcdefghijklmnopqrstuvwxyz0123456789-_ ''`~!@#$%&*()=+[]{}\|;:",.<>/?'||CHR(0)||CHR(9)||CHR(10)||CHR(13)||CHR(38),
 'abcdefghijklmnopqrstuvwxyz0123456789-_') host_name_short FROM DUAL;
+
+-- get host_name_suffix
+COL host_name_suffix NEW_V host_name_suffix FOR A30;
+SELECT SUBSTR(SYS_CONTEXT('USERENV','HOST'), 1 + INSTR(SYS_CONTEXT('USERENV','HOST'), '&&edb360_host_name_separator.', '&&edb360_host_name_position.', '&&edb360_host_name_occurrence.'), 30) host_name_suffix FROM DUAL;
 
 -- get host name (up to 30, stop before first '.', no special characters)
 DEF esp_host_name_short = '';
@@ -332,20 +337,20 @@ DEF title_suffix = '';
 COL edb360_file_time NEW_V edb360_file_time FOR A20;
 SELECT TO_CHAR(SYSDATE, 'YYYYMMDD_HH24MI') edb360_file_time FROM DUAL;
 DEF common_edb360_prefix = '&&edb360_prefix._&&edb360_dbmod.';
-DEF edb360_main_report = '00001_&&common_edb360_prefix._index';
-DEF edb360_log = '00002_&&common_edb360_prefix._log';
-DEF edb360_log2 = '00003_&&common_edb360_prefix._log2';
-DEF edb360_log3 = '00004_&&common_edb360_prefix._log3';
-DEF edb360_tkprof = '00005_&&common_edb360_prefix._tkprof';
+DEF edb360_main_report = '&&edb360_output_directory.00001_&&common_edb360_prefix._index';
+DEF edb360_log = '&&edb360_output_directory.00002_&&common_edb360_prefix._log';
+DEF edb360_log2 = '&&edb360_output_directory.00003_&&common_edb360_prefix._log2';
+DEF edb360_log3 = '&&edb360_output_directory.00004_&&common_edb360_prefix._log3';
+DEF edb360_tkprof = '&&edb360_output_directory.00005_&&common_edb360_prefix._tkprof';
 --DEF edb360_main_filename = '&&common_edb360_prefix._&&host_hash.';
 COL edb360_main_filename NEW_V edb360_main_filename;
 SELECT '&&common_edb360_prefix.'||(CASE '&&edb360_conf_incl_dbname_file.' WHEN 'Y' THEN '_&&database_name_short.' ELSE '_&&host_hash.' END) edb360_main_filename FROM DUAL
 /
 COL edb360_zip_filename NEW_V edb360_zip_filename;
-SELECT '&&edb360_main_filename._&&edb360_file_time.' edb360_zip_filename FROM DUAL
+SELECT '&&edb360_output_directory.&&edb360_main_filename._&&edb360_file_time.' edb360_zip_filename FROM DUAL
 /
 DEF edb360_tracefile_identifier = '&&common_edb360_prefix.';
-DEF edb360_tar_filename = '00008_&&edb360_zip_filename.';
+DEF edb360_tar_filename = '&&edb360_output_directory.00008_&&edb360_zip_filename.';
 DEF edb360_mv_host_command = '';
 
 -- mont info
@@ -469,6 +474,14 @@ SELECT TO_CHAR(ROUND(AVG(TO_NUMBER(value)),1)) avg_core_count FROM &&gv_object_p
 COL avg_thread_count NEW_V avg_thread_count FOR A6;
 SELECT TO_CHAR(ROUND(AVG(TO_NUMBER(value)),1)) avg_thread_count FROM &&gv_object_prefix.osstat WHERE stat_name = 'NUM_CPUS';
 
+-- get CPU Load threshold (for intel assume 1.4x cores and for solaris use 4x cores) else 2x
+COL cpu_load_threshold NEW_V cpu_load_threshold FOR A6;
+SELECT TO_CHAR(CASE ROUND(AVG(TO_NUMBER(cpus.value))/AVG(TO_NUMBER(cores.value))) WHEN 2 THEN 1.4 * AVG(TO_NUMBER(cores.value)) WHEN 8 THEN 4 * AVG(TO_NUMBER(cores.value)) ELSE 2 * AVG(TO_NUMBER(cores.value)) END) cpu_load_threshold
+  FROM &&gv_object_prefix.osstat cores, &&gv_object_prefix.osstat cpus
+ WHERE cores.stat_name = 'NUM_CPU_CORES' 
+   AND cpus.stat_name = 'NUM_CPUS'
+/
+
 -- get number of Hosts
 COL hosts_count NEW_V hosts_count FOR A2;
 SELECT TO_CHAR(COUNT(DISTINCT inst_id)) hosts_count FROM &&gv_object_prefix.osstat WHERE stat_name = 'NUM_CPU_CORES';
@@ -579,8 +592,7 @@ DEF abstract_uom = 'Memory is accounted as power of two (binary) while storage a
 COL sql_text FOR A100;
 DEF chartype = '';
 DEF stacked = '';
---DEF haxis = '&&db_version. dbmod:&&edb360_dbmod. host:&&host_hash. (avg cpu_count: &&avg_cpu_count.)';
-DEF haxis = '&&db_version. &&cores_threads_hosts.';
+DEF haxis = '&&host_name_suffix. &&db_version. &&cores_threads_hosts.';
 DEF vaxis = '';
 DEF vbaseline = '';
 DEF bar_height = '65%';
@@ -783,7 +795,6 @@ SET TRIMS ON;
 SET TRIM ON; 
 SET TI OFF; 
 SET TIMI OFF; 
-SET ARRAY 1000; 
 SET NUM 20; 
 SET SQLBL ON; 
 SET BLO .; 
@@ -850,15 +861,15 @@ PRO
 SPO OFF;
 
 -- ash
-HOS zip -m &&edb360_zip_filename. awr_ash_pre_check_*.txt >> &&edb360_log3..txt
-HOS zip -m &&edb360_zip_filename. verify_stats_wr_sys_*.txt >> &&edb360_log3..txt
+HOS zip -mj &&edb360_zip_filename. awr_ash_pre_check_*.txt >> &&edb360_log3..txt
+HOS zip -mj &&edb360_zip_filename. verify_stats_wr_sys_*.txt >> &&edb360_log3..txt
 -- osw
 --HOS zip -r osw_&&esp_host_name_short..zip `ps -ef | grep OSW | grep FM | awk -F 'OSW' '{print $2}' | cut -f 3 -d ' '`
 --HOS zip -mT &&edb360_zip_filename. osw_&&esp_host_name_short..zip
 -- zip esp into main
-HOS zip -m &&edb360_zip_filename. escp_output_&&esp_host_name_short._&&esp_collection_yyyymmdd..zip >> &&edb360_log3..txt
+HOS zip -mj &&edb360_zip_filename. escp_output_&&esp_host_name_short._&&esp_collection_yyyymmdd..zip >> &&edb360_log3..txt
 -- zip other files
-HOS zip -m &&edb360_zip_filename. 00000_readme_first_&&my_sid..txt >> &&edb360_log3..txt
+HOS zip -mj &&edb360_zip_filename. 00000_readme_first_&&my_sid..txt >> &&edb360_log3..txt
 HOS zip -j &&edb360_zip_filename. js/sorttable.js >> &&edb360_log3..txt
 HOS zip -j &&edb360_zip_filename. js/edb360_img.jpg >> &&edb360_log3..txt
 HOS zip -j &&edb360_zip_filename. js/edb360_favicon.ico >> &&edb360_log3..txt

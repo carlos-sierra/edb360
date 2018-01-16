@@ -767,7 +767,8 @@ WHERE
 AND gd.asmdiskname = ad.name (+)
 AND cd.name = gd.cellDisk (+)
 AND pd.id = cd.physicalDisk (+)
-AND cd.name = lun.celldisk (+)
+--AND cd.name = lun.celldisk (+) -- as per Jie Wu
+AND cd.lun=lun.ID(+)
 --GROUP BY
 --    cellname
 --  , disktype
@@ -928,7 +929,8 @@ WHERE
 AND gd.asmdiskname = ad.name (+)
 AND cd.name = gd.cellDisk (+)
 AND pd.id =   cd.physicalDisk (+)
-AND cd.name = lun.celldisk (+)
+--AND cd.name = lun.celldisk (+)
+AND cd.lun=lun.ID(+) -- as per Jie Wu
 ORDER BY
     --disktype
     cellname

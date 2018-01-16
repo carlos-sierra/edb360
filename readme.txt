@@ -1,4 +1,4 @@
-edb360 v1715 (2017-07-28) by Carlos Sierra
+edb360 v1801 (2018-01-15) by Carlos Sierra
 ~~~~~~~~~~~~
 edb360 is a "free to use" tool to perform an initial assessment of an Oracle database. 
 
@@ -98,6 +98,15 @@ Notes
    grant execute on dbms_workload_repository to xxx;
    grant execute on dbms_lock to xxx;
 
+6. When executed in a Container Database make sure to connect sys as sysdba
+
+   Due to the way the DBA_ and CDB_ views work in a multi tenant environment
+   we require the connection to be with sys as sysdba
+   or a user with the sysdba role granted
+
+   When having only one PDB, connect to the CDB to collect for CDB and PDB.
+   When having more than one PDB, connect to each PDB to collect for each PDB.
+   
 ****************************************************************************************
 
 Troubleshooting
@@ -122,7 +131,7 @@ Steps:
 
 ****************************************************************************************
    
-    edb360 - Enkitec's Oracle Database 360-degree View
+    edb360 - An Oracle Database 360-degree View
     Copyright (C) 2017  Carlos Sierra
 
     This program is free software: you can redistribute it and/or modify

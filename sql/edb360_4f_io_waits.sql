@@ -62,7 +62,7 @@ END;
 SET SERVEROUT ON;
 SET SERVEROUT ON SIZE 1000000;
 SET SERVEROUT ON SIZE UNL;
-SPO 99870_&&common_edb360_prefix._chart_setup_driver4.sql;
+SPO &&edb360_output_directory.99870_&&common_edb360_prefix._chart_setup_driver4.sql;
 DECLARE
   l_count NUMBER;
 BEGIN
@@ -81,8 +81,8 @@ END;
 /
 SPO OFF;
 SET SERVEROUT OFF;
-@99870_&&common_edb360_prefix._chart_setup_driver4.sql;
-HOS zip -m &&edb360_zip_filename. 99870_&&common_edb360_prefix._chart_setup_driver4.sql >> &&edb360_log3..txt
+@&&edb360_output_directory.99870_&&common_edb360_prefix._chart_setup_driver4.sql;
+HOS zip -mj &&edb360_zip_filename. &&edb360_output_directory.99870_&&common_edb360_prefix._chart_setup_driver4.sql >> &&edb360_log3..txt
 
 DEF main_table = '&&awr_hist_prefix.EVENT_HISTOGRAM';
 DEF vaxis = 'Wait Minutes (stacked)';

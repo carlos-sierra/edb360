@@ -100,6 +100,9 @@ DEF sqld360_sqltrace_level = '0';
 -- specify a different DBID than default
 DEF sqld360_conf_dbid = '';
 
+-- specify the unit of measure to use for avg elapsed from AWR (valid values are "s" and "ms")
+DEF sqld360_conf_awr_timescale = 's';
+
 /**************************** not recommended to modify *********************************/
 
 DEF sqld360_conf_tool_page = '<a href="http://www.enkitec.com/products/sqld360" target="_blank">';
@@ -118,3 +121,6 @@ DEF sqld360_conf_google_charts = '<script type="text/javascript" src="https://ww
 --DEF sqld360_conf_date_from = '2016-04-15';
 --DEF sqld360_conf_date_to = '2016-04-18';
 
+DEF sqld360_conf_incl_cboenv = 'N';
+DEF sqld360_conf_days = '61';
+DEF sqld360_conf_awr_timescale = 'ms';

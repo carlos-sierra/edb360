@@ -19,7 +19,7 @@ SPO OFF;
 EXEC :get_time_t0 := DBMS_UTILITY.get_time;
 
 -- header
-SPO &&one_spool_filename._pie_chart.html;
+SPO &&edb360_output_directory.&&one_spool_filename._pie_chart.html;
 @@edb360_0d_html_header.sql
 PRO <!-- &&one_spool_filename._pie_chart.html $ -->
 
@@ -124,4 +124,4 @@ SPO OFF;
 SET HEA ON;
 
 -- zip
-HOS zip -m &&edb360_zip_filename. &&one_spool_filename._pie_chart.html >> &&edb360_log3..txt
+HOS zip -mj &&edb360_zip_filename. &&edb360_output_directory.&&one_spool_filename._pie_chart.html >> &&edb360_log3..txt

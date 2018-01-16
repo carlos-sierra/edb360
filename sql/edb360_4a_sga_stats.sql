@@ -7,6 +7,16 @@ PRO <h2>&&section_id.. &&section_name.</h2>
 PRO <ol start="&&report_sequence.">
 SPO OFF;
 
+DEF title = 'SGA Allocation';
+DEF main_table = 'X$KSMSSINFO';
+BEGIN
+  :sql_text := q'[
+select * from x$ksmssinfo  
+]';
+END;
+/
+@@&&skip_10g_script.&&skip_11g_script.edb360_9a_pre_one.sql
+
 DEF main_table = '&&awr_hist_prefix.SGASTAT';
 DEF chartype = 'LineChart';
 DEF stacked = '';

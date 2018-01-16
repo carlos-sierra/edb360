@@ -72,7 +72,8 @@ CASE WHEN mem.target > 0 THEN 'AMM' ELSE CASE WHEN sga.target > 0 THEN 'ASMM' EL
 &&skip_10g_column.&&skip_11r1_column. CASE WHEN '&&processor_model.' LIKE '%5675%' THEN 'X2-2 ' END|| 
 &&skip_10g_column.&&skip_11r1_column. CASE WHEN '&&processor_model.' LIKE '%2690%' THEN 'X3-2 ' END|| 
 &&skip_10g_column.&&skip_11r1_column. CASE WHEN '&&processor_model.' LIKE '%2697%' THEN 'X4-2 ' END|| 
-&&skip_10g_column.&&skip_11r1_column. CASE WHEN '&&processor_model.' LIKE '%2699%' THEN 'X5-2 ' END|| 
+&&skip_10g_column.&&skip_11r1_column. CASE WHEN '&&processor_model.' LIKE '%2699%' THEN 'X5-2 or X-6 ' END|| 
+&&skip_10g_column.&&skip_11r1_column. CASE WHEN '&&processor_model.' LIKE '%8160%' THEN 'X7-2 ' END|| 
 &&skip_10g_column.&&skip_11r1_column. CASE WHEN '&&processor_model.' LIKE '%8870%' THEN 'X3-8 ' END|| 
 &&skip_10g_column.&&skip_11r1_column. CASE WHEN '&&processor_model.' LIKE '%8895%' THEN 'X4-8 or X5-8 ' END|| 
 &&skip_10g_column.&&skip_11r1_column. 'with '||cell.cnt||' storage servers' 
@@ -742,20 +743,6 @@ SELECT s.name,
        WHEN 'db_2k_cache_size'          THEN 19
        END,
        s.inst_id
-]';
-END;
-/
-@@edb360_9a_pre_one.sql
-
-DEF title = 'SQLTXPLAIN Version';
-DEF main_table = 'SQLTXPLAIN.SQLI$_PARAMETER';
-BEGIN
-  :sql_text := q'[
-SELECT /* ignore if it fails to parse */ /* &&section_id..&&report_sequence. */ 
-sqltxplain.sqlt$a.get_param('tool_version') sqlt_version,
-sqltxplain.sqlt$a.get_param('tool_date') sqlt_version_date,
-sqltxplain.sqlt$a.get_param('install_date') install_date
-FROM DUAL
 ]';
 END;
 /

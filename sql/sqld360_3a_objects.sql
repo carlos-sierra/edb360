@@ -400,6 +400,22 @@ END;
 /
 @@sqld360_9a_pre_one.sql
 
+
+DEF title = 'Table Partition Info';
+DEF main_table = 'DBA_PART_TABLES';
+BEGIN
+  :sql_text := q'[
+SELECT /*+ &&top_level_hints. */
+       *
+  FROM dba_part_tables
+ WHERE (owner, table_name) IN (SELECT /*+ UNNEST */ object_owner, object_name FROM plan_table WHERE statement_id = 'LIST_OF_TABLES' AND remarks = '&&sqld360_sqlid.')
+ ORDER BY owner, table_name
+]';
+END;
+/
+@@sqld360_9a_pre_one.sql
+
+
 DEF title = 'Table Partitions';
 DEF main_table = 'DBA_TAB_PARTITIONS';
 BEGIN
@@ -409,6 +425,21 @@ SELECT /*+ &&top_level_hints. */
   FROM dba_tab_partitions
  WHERE (table_owner, table_name) IN (SELECT /*+ UNNEST */ object_owner, object_name FROM plan_table WHERE statement_id = 'LIST_OF_TABLES' AND remarks = '&&sqld360_sqlid.')
  ORDER BY table_owner, table_name, partition_position
+]';
+END;
+/
+@@sqld360_9a_pre_one.sql
+
+
+DEF title = 'Index Partition Info';
+DEF main_table = 'DBA_PART_INDEXES';
+BEGIN
+  :sql_text := q'[
+SELECT /*+ &&top_level_hints. */
+       *
+  FROM dba_part_indexes
+ WHERE (owner, table_name) IN (SELECT /*+ UNNEST */ object_owner, object_name FROM plan_table WHERE statement_id = 'LIST_OF_TABLES' AND remarks = '&&sqld360_sqlid.')
+ ORDER BY owner, index_name
 ]';
 END;
 /
@@ -427,6 +458,21 @@ SELECT /*+ &&top_level_hints. */
    AND a.index_owner = b.owner
    AND a.index_name = b.index_name
  ORDER BY a.index_owner, a.index_name, a.partition_position
+]';
+END;
+/
+@@sqld360_9a_pre_one.sql
+
+
+DEF title = 'LOB Partition Info';
+DEF main_table = 'DBA_PART_LOBS';
+BEGIN
+  :sql_text := q'[
+SELECT /*+ &&top_level_hints. */
+       *
+  FROM dba_part_lobs
+ WHERE (table_owner, table_name) IN (SELECT /*+ UNNEST */ object_owner, object_name FROM plan_table WHERE statement_id = 'LIST_OF_TABLES' AND remarks = '&&sqld360_sqlid.')
+ ORDER BY table_owner, table_name, column_name
 ]';
 END;
 /
@@ -565,7 +611,10 @@ BEGIN
 SELECT /*+ &&top_level_hints. */
        *
   FROM dba_triggers
- WHERE (table_owner, table_name) IN (SELECT /*+ UNNEST */ object_owner, object_name FROM plan_table WHERE statement_id = 'LIST_OF_TABLES' AND remarks = '&&sqld360_sqlid.')
+ WHERE (table_owner, table_name) IN (SELECT /*+ UNNEST */ object_owner, object_name 
+                                       FROM plan_table 
+                                      WHERE statement_id = 'LIST_OF_TABLES' 
+                                        AND remarks = '&&sqld360_sqlid.')
  ORDER BY table_owner, table_name, trigger_name
 ]';
 END;
@@ -580,7 +629,10 @@ BEGIN
 SELECT /*+ &&top_level_hints. */
        *
   FROM dba_policies
- WHERE (object_owner, object_name) IN (SELECT /*+ UNNEST */ object_owner, object_name FROM plan_table WHERE statement_id = 'LIST_OF_TABLES' AND remarks = '&&sqld360_sqlid.')
+ WHERE (object_owner, object_name) IN (SELECT /*+ UNNEST */ object_owner, object_name 
+                                         FROM plan_table 
+                                        WHERE statement_id = 'LIST_OF_TABLES' 
+                                          AND remarks = '&&sqld360_sqlid.')
  ORDER BY object_owner, object_name, policy_group, policy_name
 ]';
 END;
@@ -595,7 +647,10 @@ BEGIN
 SELECT /*+ &&top_level_hints. */
        *
   FROM dba_audit_policies
- WHERE (object_schema, object_name) IN (SELECT /*+ UNNEST */ object_owner, object_name FROM plan_table WHERE statement_id = 'LIST_OF_TABLES' AND remarks = '&&sqld360_sqlid.')
+ WHERE (object_schema, object_name) IN (SELECT /*+ UNNEST */ object_owner, object_name 
+                                          FROM plan_table 
+                                         WHERE statement_id = 'LIST_OF_TABLES' 
+                                           AND remarks = '&&sqld360_sqlid.')
  ORDER BY object_schema, object_name, policy_owner, policy_name
 ]';
 END;
@@ -607,19 +662,28 @@ DEF title = 'Segments';
 DEF main_table = 'DBA_SEGMENTS';
 BEGIN
   :sql_text := q'[
-SELECT /*+ &&top_level_hints. */
-       *
-  FROM (SELECT *
-          FROM dba_segments
-         WHERE (owner, segment_name) IN (SELECT /*+ UNNEST */ object_owner, object_name FROM plan_table WHERE statement_id = 'LIST_OF_TABLES' AND remarks = '&&sqld360_sqlid.')
-        UNION ALL
-        SELECT a.*
-          FROM dba_segments a,
-               dba_indexes b
-         WHERE (b.table_owner, b.table_name) IN (SELECT /*+ UNNEST */ object_owner, object_name FROM plan_table WHERE statement_id = 'LIST_OF_TABLES' AND remarks = '&&sqld360_sqlid.')
-           AND a.owner = b.owner
-           AND a.segment_name = b.index_name)
- ORDER BY owner, segment_name, segment_type desc
+SELECT /*+ &&top_level_hints. */ *
+  FROM dba_segments
+ WHERE (owner, segment_name) IN (SELECT /*+ UNNEST */ object_owner, object_name 
+                                   FROM plan_table 
+                                  WHERE statement_id = 'LIST_OF_TABLES' 
+                                    AND remarks = '&&sqld360_sqlid.'
+                                  UNION ALL
+                                 SELECT owner, index_name 
+                                   FROM dba_indexes 
+                                  WHERE (table_owner, table_name) IN (SELECT /*+ UNNEST */ object_owner, object_name 
+                                                                        FROM plan_table 
+                                                                       WHERE statement_id = 'LIST_OF_TABLES' 
+                                                                         AND remarks = '&&sqld360_sqlid.')
+                                  UNION ALL
+                                 SELECT owner, segment_name 
+                                   FROM dba_lobs 
+                                  WHERE (owner, table_name) IN (SELECT /*+ UNNEST */ object_owner, object_name 
+                                                                  FROM plan_table 
+                                                                 WHERE statement_id = 'LIST_OF_TABLES' 
+                                                                   AND remarks = '&&sqld360_sqlid.')
+                                 )
+ ORDER BY owner, segment_name, segment_type DESC
 ]';
 END;
 /
@@ -629,19 +693,63 @@ DEF title = 'Objects';
 DEF main_table = 'DBA_OBJECTS';
 BEGIN
   :sql_text := q'[
-SELECT /*+ &&top_level_hints. */
-       *
-  FROM (SELECT *
-          FROM dba_objects
-         WHERE (owner, object_name) IN (SELECT /*+ UNNEST */ object_owner, object_name FROM plan_table WHERE statement_id = 'LIST_OF_TABLES' AND remarks = '&&sqld360_sqlid.')
-        UNION ALL
-        SELECT a.*
-          FROM dba_objects a,
-               dba_indexes b
-         WHERE (b.table_owner, b.table_name) IN (SELECT /*+ UNNEST */ object_owner, object_name FROM plan_table WHERE statement_id = 'LIST_OF_TABLES' AND remarks = '&&sqld360_sqlid.')
-           AND a.owner = b.owner
-           AND a.object_name = b.index_name)
- ORDER BY owner, object_name, object_type desc
+SELECT /*+ &&top_level_hints. */ *
+  FROM dba_objects
+ WHERE (owner, object_name) IN (SELECT /*+ UNNEST */ object_owner, object_name 
+                                   FROM plan_table 
+                                  WHERE statement_id = 'LIST_OF_TABLES' 
+                                    AND remarks = '&&sqld360_sqlid.'
+                                  UNION ALL
+                                 SELECT owner, index_name 
+                                   FROM dba_indexes 
+                                  WHERE (table_owner, table_name) IN (SELECT /*+ UNNEST */ object_owner, object_name 
+                                                                        FROM plan_table 
+                                                                       WHERE statement_id = 'LIST_OF_TABLES' 
+                                                                         AND remarks = '&&sqld360_sqlid.')
+                                  UNION ALL
+                                 SELECT owner, segment_name 
+                                   FROM dba_lobs 
+                                  WHERE (owner, table_name) IN (SELECT /*+ UNNEST */ object_owner, object_name 
+                                                                  FROM plan_table 
+                                                                 WHERE statement_id = 'LIST_OF_TABLES' 
+                                                                   AND remarks = '&&sqld360_sqlid.')
+                                 )
+ ORDER BY owner, object_name, object_type DESC
+]';
+END;
+/
+@@sqld360_9a_pre_one.sql
+
+
+DEF title = 'Tablespaces';
+DEF main_table = 'DBA_TABLESPACES';
+BEGIN
+  :sql_text := q'[
+SELECT /*+ &&top_level_hints. */ *
+  FROM dba_tablespaces
+ WHERE tablespace_name IN (SELECT /*+ UNNEST */ tablespace_name 
+                             FROM dba_segments 
+                            WHERE (owner, segment_name) IN (SELECT /*+ UNNEST */ object_owner, object_name 
+                                                              FROM plan_table 
+                                                             WHERE statement_id = 'LIST_OF_TABLES' 
+                                                               AND remarks = '&&sqld360_sqlid.'
+                                                             UNION ALL
+                                                            SELECT owner, index_name 
+                                                              FROM dba_indexes 
+                                                             WHERE (table_owner, table_name) IN (SELECT /*+ UNNEST */ object_owner, object_name 
+                                                                                                   FROM plan_table 
+                                                                                                  WHERE statement_id = 'LIST_OF_TABLES' 
+                                                                                                    AND remarks = '&&sqld360_sqlid.')
+                                                             UNION ALL
+                                                            SELECT owner, segment_name 
+                                                              FROM dba_lobs 
+                                                             WHERE (owner, table_name) IN (SELECT /*+ UNNEST */ object_owner, object_name 
+                                                                                             FROM plan_table 
+                                                                                            WHERE statement_id = 'LIST_OF_TABLES' 
+                                                                                              AND remarks = '&&sqld360_sqlid.')
+                                                            )
+                           )
+ ORDER BY tablespace_name
 ]';
 END;
 /
