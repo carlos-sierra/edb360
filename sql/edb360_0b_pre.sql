@@ -95,15 +95,17 @@ BEGIN
   IF '&&edb360_sections.' IS NULL THEN -- no sections were selected as per config parameter on edb360_00_config.sql or custom file passed
     IF LOWER(NVL(TRIM('&&custom_config_filename.'), 'null')) = 'null' THEN -- 2nd execution parameter is null
       :edb360_sections := NULL; -- all sections
-    ELSIF LENGTH(TRIM('&&custom_config_filename.')) <= 5 AND TRIM('&&custom_config_filename.') BETWEEN '1' AND '9' THEN -- assume 2nd execution parameter is a section selection
+    ELSIF LENGTH(TRIM('&&custom_config_filename.')) <= 5 AND TRIM('&&custom_config_filename.') BETWEEN '1' AND '9' AND INSTR('&&custom_config_filename.',',') = 0 THEN -- assume 2nd execution parameter is a section selection
       :edb360_sections := LOWER(TRIM('&&custom_config_filename.')); -- second parameter becomes potential sections selection
+    ELSIF INSTR('&&custom_config_filename.',',') > 0 THEN -- assume 2nd execution parameter is a section list
+      :edb360_sections := ','||LOWER(TRIM('&&custom_config_filename.'))||','; -- second parameter becomes potential section list
     ELSE
       :edb360_sections := NULL; -- 2nd parameter was indeed a custom config file
     END IF;      
   ELSE -- an actual selection of sections was passed on config parameter
     :edb360_sections := LOWER(TRIM('&&edb360_sections.'));
   END IF;
-  IF LENGTH(:edb360_sections) > 5 THEN -- wrong value of parameter passed (too long), then select all sections
+  IF LENGTH(:edb360_sections) > 5 AND INSTR(:edb360_sections,',') = 0 THEN -- wrong value of parameter passed (too long), then select all sections
     :edb360_sec_from := '1a';
     :edb360_sec_to := '9z';
   ELSIF LENGTH(:edb360_sections) = 5 AND SUBSTR(:edb360_sections, 3, 1) = '-' AND SUBSTR(:edb360_sections, 1, 2) BETWEEN '1a' AND '9z' AND SUBSTR(:edb360_sections, 4, 2) BETWEEN '1a' AND '9z' THEN -- i.e. 1a-7b
@@ -124,6 +126,9 @@ BEGIN
   ELSIF LENGTH(:edb360_sections) = 1 AND SUBSTR(:edb360_sections, 1, 1) BETWEEN '1' AND '9' THEN -- i.e. 7
     :edb360_sec_from := SUBSTR(:edb360_sections, 1, 1)||'a';
     :edb360_sec_to := SUBSTR(:edb360_sections, 1, 1)||'z';
+  ELSIF INSTR(:edb360_sections,',') > 0 THEN -- i.e. 4b,5a
+    :edb360_sec_from := 0;
+    :edb360_sec_to := 0;
   ELSE -- wrong value of parameter passed (incorrect syntax), or nothing was passed
     :edb360_sec_from := '1a';
     :edb360_sec_to := '9z';
@@ -197,65 +202,65 @@ COL edb360_6n NEW_V edb360_6n;
 COL edb360_7a NEW_V edb360_7a;
 COL edb360_7b NEW_V edb360_7b;
 COL edb360_7c NEW_V edb360_7c;
-SELECT CASE '&&edb360_conf_incl_tkprof.' WHEN 'Y'                 THEN 'edb360_0g_' ELSE ' echo skip ' END edb360_0g FROM DUAL;
-SELECT CASE WHEN '1a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_1a_' ELSE ' echo skip ' END edb360_1a FROM DUAL;
-SELECT CASE WHEN '1b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_1b_' ELSE ' echo skip ' END edb360_1b FROM DUAL;
-SELECT CASE WHEN '1c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_1c_' ELSE ' echo skip ' END edb360_1c FROM DUAL;
-SELECT CASE WHEN '1d' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_1d_' ELSE ' echo skip ' END edb360_1d FROM DUAL;
-SELECT CASE WHEN '1e' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_1e_' ELSE ' echo skip ' END edb360_1e FROM DUAL;
-SELECT CASE WHEN '1f' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_1f_' ELSE ' echo skip ' END edb360_1f FROM DUAL;
-SELECT CASE WHEN '1g' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_1g_' ELSE ' echo skip ' END edb360_1g FROM DUAL;
-SELECT CASE WHEN '2a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_2a_' ELSE ' echo skip ' END edb360_2a FROM DUAL;
-SELECT CASE WHEN '2b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_2b_' ELSE ' echo skip ' END edb360_2b FROM DUAL;
-SELECT CASE WHEN '2c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_2c_' ELSE ' echo skip ' END edb360_2c FROM DUAL;
-SELECT CASE WHEN '2d' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_2d_' ELSE ' echo skip ' END edb360_2d FROM DUAL;
-SELECT CASE WHEN '3a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3a_' ELSE ' echo skip ' END edb360_3a FROM DUAL;
-SELECT CASE WHEN '3b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3b_' ELSE ' echo skip ' END edb360_3b FROM DUAL;
-SELECT CASE WHEN '3c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3c_' ELSE ' echo skip ' END edb360_3c FROM DUAL;
-SELECT CASE WHEN '3d' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3d_' ELSE ' echo skip ' END edb360_3d FROM DUAL;
-SELECT CASE WHEN '3e' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3e_' ELSE ' echo skip ' END edb360_3e FROM DUAL;
-SELECT CASE WHEN '3f' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3f_' ELSE ' echo skip ' END edb360_3f FROM DUAL;
-SELECT CASE WHEN '3g' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3g_' ELSE ' echo skip ' END edb360_3g FROM DUAL;
-SELECT CASE WHEN '3h' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3h_' ELSE ' echo skip ' END edb360_3h FROM DUAL;
-SELECT CASE WHEN '3i' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3i_' ELSE ' echo skip ' END edb360_3i FROM DUAL;
-SELECT CASE WHEN '3j' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3j_' ELSE ' echo skip ' END edb360_3j FROM DUAL;
-SELECT CASE WHEN '3k' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3k_' ELSE ' echo skip ' END edb360_3k FROM DUAL;
-SELECT CASE WHEN '4a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4a_' ELSE ' echo skip ' END edb360_4a FROM DUAL;
-SELECT CASE WHEN '4b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4b_' ELSE ' echo skip ' END edb360_4b FROM DUAL;
-SELECT CASE WHEN '4c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4c_' ELSE ' echo skip ' END edb360_4c FROM DUAL;
-SELECT CASE WHEN '4d' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4d_' ELSE ' echo skip ' END edb360_4d FROM DUAL;
-SELECT CASE WHEN '4e' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4e_' ELSE ' echo skip ' END edb360_4e FROM DUAL;
-SELECT CASE WHEN '4f' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4f_' ELSE ' echo skip ' END edb360_4f FROM DUAL;
-SELECT CASE WHEN '4g' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4g_' ELSE ' echo skip ' END edb360_4g FROM DUAL;
-SELECT CASE WHEN '4h' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4h_' ELSE ' echo skip ' END edb360_4h FROM DUAL;
-SELECT CASE WHEN '4i' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4i_' ELSE ' echo skip ' END edb360_4i FROM DUAL;
-SELECT CASE WHEN '4j' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4j_' ELSE ' echo skip ' END edb360_4j FROM DUAL;
-SELECT CASE WHEN '4k' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4k_' ELSE ' echo skip ' END edb360_4k FROM DUAL;
-SELECT CASE WHEN '4l' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4l_' ELSE ' echo skip ' END edb360_4l FROM DUAL;
-SELECT CASE WHEN '5a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_5a_' ELSE ' echo skip ' END edb360_5a FROM DUAL;
-SELECT CASE WHEN '5b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_5b_' ELSE ' echo skip ' END edb360_5b FROM DUAL;
-SELECT CASE WHEN '5c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_5c_' ELSE ' echo skip ' END edb360_5c FROM DUAL;
-SELECT CASE WHEN '5d' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_5d_' ELSE ' echo skip ' END edb360_5d FROM DUAL;
-SELECT CASE WHEN '5e' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_5e_' ELSE ' echo skip ' END edb360_5e FROM DUAL;
-SELECT CASE WHEN '5f' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_5f_' ELSE ' echo skip ' END edb360_5f FROM DUAL;
-SELECT CASE WHEN '5g' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_5g_' ELSE ' echo skip ' END edb360_5g FROM DUAL;
-SELECT CASE WHEN '6a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6a_' ELSE ' echo skip ' END edb360_6a FROM DUAL;
-SELECT CASE WHEN '6b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6b_' ELSE ' echo skip ' END edb360_6b FROM DUAL;
-SELECT CASE WHEN '6c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6c_' ELSE ' echo skip ' END edb360_6c FROM DUAL;
-SELECT CASE WHEN '6d' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6d_' ELSE ' echo skip ' END edb360_6d FROM DUAL;
-SELECT CASE WHEN '6e' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6e_' ELSE ' echo skip ' END edb360_6e FROM DUAL;
-SELECT CASE WHEN '6f' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6f_' ELSE ' echo skip ' END edb360_6f FROM DUAL;
-SELECT CASE WHEN '6g' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6g_' ELSE ' echo skip ' END edb360_6g FROM DUAL;
-SELECT CASE WHEN '6h' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6h_' ELSE ' echo skip ' END edb360_6h FROM DUAL;
-SELECT CASE WHEN '6i' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6i_' ELSE ' echo skip ' END edb360_6i FROM DUAL;
-SELECT CASE WHEN '6j' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6j_' ELSE ' echo skip ' END edb360_6j FROM DUAL;
-SELECT CASE WHEN '6k' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6k_' ELSE ' echo skip ' END edb360_6k FROM DUAL;
-SELECT CASE WHEN '6l' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6l_' ELSE ' echo skip ' END edb360_6l FROM DUAL;
-SELECT CASE WHEN '6m' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6m_' ELSE ' echo skip ' END edb360_6m FROM DUAL;
-SELECT CASE WHEN '6n' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6n_' ELSE ' echo skip ' END edb360_6n FROM DUAL;
-SELECT CASE WHEN '7a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_7a_' ELSE ' echo skip ' END edb360_7a FROM DUAL;
-SELECT CASE WHEN '7b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_7b_' ELSE ' echo skip ' END edb360_7b FROM DUAL;
-SELECT CASE WHEN '7c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_7c_' ELSE ' echo skip ' END edb360_7c FROM DUAL;
+SELECT CASE '&&edb360_conf_incl_tkprof.' WHEN 'Y'                                       THEN 'edb360_0g_' ELSE ' echo skip ' END edb360_0g FROM DUAL;
+SELECT CASE WHEN '1a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_1a_' WHEN INSTR(:edb360_sections,',1a,') > 0 THEN 'edb360_1a_' ELSE ' echo skip ' END edb360_1a FROM DUAL;
+SELECT CASE WHEN '1b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_1b_' WHEN INSTR(:edb360_sections,',1b,') > 0 THEN 'edb360_1b_' ELSE ' echo skip ' END edb360_1b FROM DUAL;
+SELECT CASE WHEN '1c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_1c_' WHEN INSTR(:edb360_sections,',1c,') > 0 THEN 'edb360_1c_' ELSE ' echo skip ' END edb360_1c FROM DUAL;
+SELECT CASE WHEN '1d' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_1d_' WHEN INSTR(:edb360_sections,',1d,') > 0 THEN 'edb360_1d_' ELSE ' echo skip ' END edb360_1d FROM DUAL;
+SELECT CASE WHEN '1e' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_1e_' WHEN INSTR(:edb360_sections,',1e,') > 0 THEN 'edb360_1e_' ELSE ' echo skip ' END edb360_1e FROM DUAL;
+SELECT CASE WHEN '1f' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_1f_' WHEN INSTR(:edb360_sections,',1f,') > 0 THEN 'edb360_1f_' ELSE ' echo skip ' END edb360_1f FROM DUAL;
+SELECT CASE WHEN '1g' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_1g_' WHEN INSTR(:edb360_sections,',1g,') > 0 THEN 'edb360_1g_' ELSE ' echo skip ' END edb360_1g FROM DUAL;
+SELECT CASE WHEN '2a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_2a_' WHEN INSTR(:edb360_sections,',2a,') > 0 THEN 'edb360_2a_' ELSE ' echo skip ' END edb360_2a FROM DUAL;
+SELECT CASE WHEN '2b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_2b_' WHEN INSTR(:edb360_sections,',2b,') > 0 THEN 'edb360_2b_' ELSE ' echo skip ' END edb360_2b FROM DUAL;
+SELECT CASE WHEN '2c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_2c_' WHEN INSTR(:edb360_sections,',2c,') > 0 THEN 'edb360_2c_' ELSE ' echo skip ' END edb360_2c FROM DUAL;
+SELECT CASE WHEN '2d' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_2d_' WHEN INSTR(:edb360_sections,',2d,') > 0 THEN 'edb360_2d_' ELSE ' echo skip ' END edb360_2d FROM DUAL;
+SELECT CASE WHEN '3a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3a_' WHEN INSTR(:edb360_sections,',3a,') > 0 THEN 'edb360_3a_' ELSE ' echo skip ' END edb360_3a FROM DUAL;
+SELECT CASE WHEN '3b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3b_' WHEN INSTR(:edb360_sections,',3b,') > 0 THEN 'edb360_3b_' ELSE ' echo skip ' END edb360_3b FROM DUAL;
+SELECT CASE WHEN '3c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3c_' WHEN INSTR(:edb360_sections,',3c,') > 0 THEN 'edb360_3c_' ELSE ' echo skip ' END edb360_3c FROM DUAL;
+SELECT CASE WHEN '3d' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3d_' WHEN INSTR(:edb360_sections,',3d,') > 0 THEN 'edb360_3d_' ELSE ' echo skip ' END edb360_3d FROM DUAL;
+SELECT CASE WHEN '3e' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3e_' WHEN INSTR(:edb360_sections,',3e,') > 0 THEN 'edb360_3e_' ELSE ' echo skip ' END edb360_3e FROM DUAL;
+SELECT CASE WHEN '3f' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3f_' WHEN INSTR(:edb360_sections,',3f,') > 0 THEN 'edb360_3f_' ELSE ' echo skip ' END edb360_3f FROM DUAL;
+SELECT CASE WHEN '3g' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3g_' WHEN INSTR(:edb360_sections,',3g,') > 0 THEN 'edb360_3g_' ELSE ' echo skip ' END edb360_3g FROM DUAL;
+SELECT CASE WHEN '3h' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3h_' WHEN INSTR(:edb360_sections,',3h,') > 0 THEN 'edb360_3h_' ELSE ' echo skip ' END edb360_3h FROM DUAL;
+SELECT CASE WHEN '3i' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3i_' WHEN INSTR(:edb360_sections,',3i,') > 0 THEN 'edb360_3i_' ELSE ' echo skip ' END edb360_3i FROM DUAL;
+SELECT CASE WHEN '3j' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3j_' WHEN INSTR(:edb360_sections,',3j,') > 0 THEN 'edb360_3j_' ELSE ' echo skip ' END edb360_3j FROM DUAL;
+SELECT CASE WHEN '3k' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_3k_' WHEN INSTR(:edb360_sections,',3k,') > 0 THEN 'edb360_3k_' ELSE ' echo skip ' END edb360_3k FROM DUAL;
+SELECT CASE WHEN '4a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4a_' WHEN INSTR(:edb360_sections,',4a,') > 0 THEN 'edb360_4a_' ELSE ' echo skip ' END edb360_4a FROM DUAL;
+SELECT CASE WHEN '4b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4b_' WHEN INSTR(:edb360_sections,',4b,') > 0 THEN 'edb360_4b_' ELSE ' echo skip ' END edb360_4b FROM DUAL;
+SELECT CASE WHEN '4c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4c_' WHEN INSTR(:edb360_sections,',4c,') > 0 THEN 'edb360_4c_' ELSE ' echo skip ' END edb360_4c FROM DUAL;
+SELECT CASE WHEN '4d' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4d_' WHEN INSTR(:edb360_sections,',4d,') > 0 THEN 'edb360_4d_' ELSE ' echo skip ' END edb360_4d FROM DUAL;
+SELECT CASE WHEN '4e' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4e_' WHEN INSTR(:edb360_sections,',4e,') > 0 THEN 'edb360_4e_' ELSE ' echo skip ' END edb360_4e FROM DUAL;
+SELECT CASE WHEN '4f' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4f_' WHEN INSTR(:edb360_sections,',4f,') > 0 THEN 'edb360_4f_' ELSE ' echo skip ' END edb360_4f FROM DUAL;
+SELECT CASE WHEN '4g' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4g_' WHEN INSTR(:edb360_sections,',4g,') > 0 THEN 'edb360_4g_' ELSE ' echo skip ' END edb360_4g FROM DUAL;
+SELECT CASE WHEN '4h' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4h_' WHEN INSTR(:edb360_sections,',4h,') > 0 THEN 'edb360_4h_' ELSE ' echo skip ' END edb360_4h FROM DUAL;
+SELECT CASE WHEN '4i' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4i_' WHEN INSTR(:edb360_sections,',4i,') > 0 THEN 'edb360_4i_' ELSE ' echo skip ' END edb360_4i FROM DUAL;
+SELECT CASE WHEN '4j' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4j_' WHEN INSTR(:edb360_sections,',4j,') > 0 THEN 'edb360_4j_' ELSE ' echo skip ' END edb360_4j FROM DUAL;
+SELECT CASE WHEN '4k' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4k_' WHEN INSTR(:edb360_sections,',4k,') > 0 THEN 'edb360_4k_' ELSE ' echo skip ' END edb360_4k FROM DUAL;
+SELECT CASE WHEN '4l' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_4l_' WHEN INSTR(:edb360_sections,',4l,') > 0 THEN 'edb360_4l_' ELSE ' echo skip ' END edb360_4l FROM DUAL;
+SELECT CASE WHEN '5a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_5a_' WHEN INSTR(:edb360_sections,',5a,') > 0 THEN 'edb360_5a_' ELSE ' echo skip ' END edb360_5a FROM DUAL;
+SELECT CASE WHEN '5b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_5b_' WHEN INSTR(:edb360_sections,',5b,') > 0 THEN 'edb360_5b_' ELSE ' echo skip ' END edb360_5b FROM DUAL;
+SELECT CASE WHEN '5c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_5c_' WHEN INSTR(:edb360_sections,',5c,') > 0 THEN 'edb360_5c_' ELSE ' echo skip ' END edb360_5c FROM DUAL;
+SELECT CASE WHEN '5d' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_5d_' WHEN INSTR(:edb360_sections,',5d,') > 0 THEN 'edb360_5d_' ELSE ' echo skip ' END edb360_5d FROM DUAL;
+SELECT CASE WHEN '5e' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_5e_' WHEN INSTR(:edb360_sections,',5e,') > 0 THEN 'edb360_5e_' ELSE ' echo skip ' END edb360_5e FROM DUAL;
+SELECT CASE WHEN '5f' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_5f_' WHEN INSTR(:edb360_sections,',5f,') > 0 THEN 'edb360_5f_' ELSE ' echo skip ' END edb360_5f FROM DUAL;
+SELECT CASE WHEN '5g' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_5g_' WHEN INSTR(:edb360_sections,',5g,') > 0 THEN 'edb360_5g_' ELSE ' echo skip ' END edb360_5g FROM DUAL;
+SELECT CASE WHEN '6a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6a_' WHEN INSTR(:edb360_sections,',6a,') > 0 THEN 'edb360_6a_' ELSE ' echo skip ' END edb360_6a FROM DUAL;
+SELECT CASE WHEN '6b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6b_' WHEN INSTR(:edb360_sections,',6b,') > 0 THEN 'edb360_6b_' ELSE ' echo skip ' END edb360_6b FROM DUAL;
+SELECT CASE WHEN '6c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6c_' WHEN INSTR(:edb360_sections,',6c,') > 0 THEN 'edb360_6c_' ELSE ' echo skip ' END edb360_6c FROM DUAL;
+SELECT CASE WHEN '6d' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6d_' WHEN INSTR(:edb360_sections,',6d,') > 0 THEN 'edb360_6d_' ELSE ' echo skip ' END edb360_6d FROM DUAL;
+SELECT CASE WHEN '6e' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6e_' WHEN INSTR(:edb360_sections,',6e,') > 0 THEN 'edb360_6e_' ELSE ' echo skip ' END edb360_6e FROM DUAL;
+SELECT CASE WHEN '6f' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6f_' WHEN INSTR(:edb360_sections,',6f,') > 0 THEN 'edb360_6f_' ELSE ' echo skip ' END edb360_6f FROM DUAL;
+SELECT CASE WHEN '6g' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6g_' WHEN INSTR(:edb360_sections,',6g,') > 0 THEN 'edb360_6g_' ELSE ' echo skip ' END edb360_6g FROM DUAL;
+SELECT CASE WHEN '6h' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6h_' WHEN INSTR(:edb360_sections,',6h,') > 0 THEN 'edb360_6h_' ELSE ' echo skip ' END edb360_6h FROM DUAL;
+SELECT CASE WHEN '6i' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6i_' WHEN INSTR(:edb360_sections,',6i,') > 0 THEN 'edb360_6i_' ELSE ' echo skip ' END edb360_6i FROM DUAL;
+SELECT CASE WHEN '6j' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6j_' WHEN INSTR(:edb360_sections,',6j,') > 0 THEN 'edb360_6j_' ELSE ' echo skip ' END edb360_6j FROM DUAL;
+SELECT CASE WHEN '6k' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6k_' WHEN INSTR(:edb360_sections,',6k,') > 0 THEN 'edb360_6k_' ELSE ' echo skip ' END edb360_6k FROM DUAL;
+SELECT CASE WHEN '6l' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6l_' WHEN INSTR(:edb360_sections,',6l,') > 0 THEN 'edb360_6l_' ELSE ' echo skip ' END edb360_6l FROM DUAL;
+SELECT CASE WHEN '6m' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6m_' WHEN INSTR(:edb360_sections,',6m,') > 0 THEN 'edb360_6m_' ELSE ' echo skip ' END edb360_6m FROM DUAL;
+SELECT CASE WHEN '6n' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_6n_' WHEN INSTR(:edb360_sections,',6n,') > 0 THEN 'edb360_6n_' ELSE ' echo skip ' END edb360_6n FROM DUAL;
+SELECT CASE WHEN '7a' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_7a_' WHEN INSTR(:edb360_sections,',7a,') > 0 THEN 'edb360_7a_' ELSE ' echo skip ' END edb360_7a FROM DUAL;
+SELECT CASE WHEN '7b' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_7b_' WHEN INSTR(:edb360_sections,',7b,') > 0 THEN 'edb360_7b_' ELSE ' echo skip ' END edb360_7b FROM DUAL;
+SELECT CASE WHEN '7c' BETWEEN :edb360_sec_from AND :edb360_sec_to THEN 'edb360_7c_' WHEN INSTR(:edb360_sections,',7c,') > 0 THEN 'edb360_7c_' ELSE ' echo skip ' END edb360_7c FROM DUAL;
 
 -- filename prefix
 COL edb360_prefix NEW_V edb360_prefix;
