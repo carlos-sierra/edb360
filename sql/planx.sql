@@ -6,7 +6,7 @@
 --
 -- Author:      Carlos Sierra
 --
--- Version:     2017/12/01
+-- Version:     2018/01/29
 --
 -- Usage:       This script inputs two parameters. Parameter 1 is a flag to specify if
 --              your database is licensed to use the Oracle Diagnostics Pack or not.
@@ -194,6 +194,17 @@ COL user_io_wait_secs_ff            FOR A18 HEA "User IO wait secs";
 COL users_executing_ff              FOR A15 HEA "Users executing";
 COL users_opening_ff                FOR A15 HEA "Users opening";
 COL version_count_ff                FOR A8  HEA "Version count";
+
+COL obsl FOR A4;
+COL sens FOR A4;
+COL aware FOR A5;
+COL shar FOR A4;
+COL u_exec FOR 999999;
+COL obj_sta FOR A7;
+
+COL plan_name FOR A30;
+COL created FOR A30;
+COL last_executed FOR A30;
 
 COL avg_et_ms_awr FOR A11 HEA 'ET Avg|AWR (ms)';
 COL avg_et_ms_mem FOR A11 HEA 'ET Avg|MEM (ms)';
@@ -388,13 +399,15 @@ SELECT   inst_id
  ORDER BY inst_id
 /
 
-COL obsl FOR A4;
+BREAK ON inst_id SKIP PAGE ON obj_sta SKIP PAGE ON obsl SKIP PAGE ON shar SKIP PAGE;
 PRO
-PRO GV$SQL (ordered by inst_id, is_obsolete, last_active_time and child_number)
+PRO GV$SQL (ordered by inst_id, object_status, is_obsolete, is_shareable, last_active_time and child_number)
 PRO ~~~~~~
 SPO planx_&&sql_id._&&current_time..txt APP;
 SELECT   inst_id
+       , SUBSTR(object_status, 1, 7) obj_sta
        , is_obsolete obsl
+       , is_shareable shar
        , LPAD(TO_CHAR(last_active_time, 'YYYY-MM-DD"T"HH24:MI:SS'), 20) last_active_time_ff
        , child_number
        , plan_hash_value
@@ -441,10 +454,13 @@ SELECT   inst_id
   FROM gv$sql
  WHERE sql_id = :sql_id
  ORDER BY inst_id
+       , SUBSTR(object_status, 1, 7) DESC
        , is_obsolete
+       , is_shareable DESC
        , last_active_time DESC
        , child_number DESC
 /
+CLEAR BREAKS;
 
 PRO
 PRO GV$SQL (grouped by PHV and ordered by et_secs_per_exec)
@@ -474,24 +490,19 @@ SELECT   plan_hash_value
        2
 /
 
-COL sens FOR A4;
-COL aware FOR A5;
-COL shar FOR A4;
-COL u_exec FOR 999999;
-COL obj_sta FOR A7;
-
+BREAK ON inst_id SKIP PAGE ON obj_sta SKIP PAGE ON obsl SKIP PAGE ON shar SKIP PAGE;
 PRO
-PRO GV$SQL (ordered by inst_id, is_obsolete, last_active_time and child_number)
+PRO GV$SQL (ordered by inst_id, object_status, is_obsolete, is_shareable, last_active_time and child_number)
 PRO ~~~~~~
 SELECT   inst_id
+       , SUBSTR(object_status, 1, 7) obj_sta
        , is_obsolete obsl
+       , is_shareable shar
        , LPAD(TO_CHAR(last_active_time, 'YYYY-MM-DD"T"HH24:MI:SS'), 20) last_active_time_ff
        , child_number
        , plan_hash_value
        , is_bind_sensitive sens
        , is_bind_aware aware
-       , is_shareable shar
-       , SUBSTR(object_status, 1, 7) obj_sta 
        , users_executing u_exec
        , TO_CHAR(ROUND(elapsed_time/executions/1e6,6), '999,990.000000') et_secs_per_exec
        , TO_CHAR(ROUND(cpu_time/executions/1e6,6), '999,990.000000') cpu_secs_per_exec
@@ -505,21 +516,25 @@ SELECT   inst_id
  WHERE sql_id = :sql_id
    AND executions > 0
  ORDER BY inst_id
+       , SUBSTR(object_status, 1, 7) DESC
        , is_obsolete
+       , is_shareable DESC
        , last_active_time DESC
        , child_number DESC
 /
+CLEAR BREAKS;
 
+BREAK ON inst_id SKIP PAGE ON obj_sta SKIP PAGE ON obsl SKIP PAGE ON shar SKIP PAGE;
 PRO
-PRO GV$SQL (ordered by inst_id, is_obsolete, last_active_time and child_number)
+PRO GV$SQL (ordered by inst_id, object_status, is_obsolete, is_shareable, last_active_time and child_number)
 PRO ~~~~~~
 SELECT   inst_id
+       , SUBSTR(object_status, 1, 7) obj_sta
        , is_obsolete obsl
+       , is_shareable shar
        , LPAD(TO_CHAR(last_active_time, 'YYYY-MM-DD"T"HH24:MI:SS'), 20) last_active_time_ff
        , child_number
        , plan_hash_value
-       , is_shareable shar
-       , SUBSTR(object_status, 1, 7) obj_sta
        &&is_10g., sql_plan_baseline
        , sql_profile
        &&is_10g., sql_patch
@@ -527,10 +542,13 @@ SELECT   inst_id
  WHERE sql_id = :sql_id
    AND executions > 0
  ORDER BY inst_id
+       , SUBSTR(object_status, 1, 7) DESC
        , is_obsolete
+       , is_shareable DESC
        , last_active_time DESC
        , child_number DESC
 /
+CLEAR BREAKS;
 
 PRO       
 --PRO GV$SQL_PLAN_STATISTICS_ALL LAST (ordered by inst_id and child_number)
@@ -700,6 +718,7 @@ SELECT /*+ ORDERED USE_NL(t) */
        t.plan_table_output
   FROM v, TABLE(DBMS_XPLAN.DISPLAY_AWR(v.sql_id, v.plan_hash_value, v.dbid, 'ADVANCED')) t
 /  
+CLEAR BREAK;
 
 PRO
 PRO GV$ACTIVE_SESSION_HISTORY 
@@ -1065,14 +1084,12 @@ DEF x_days = '31';
 SPO planx_&&sql_id._&&current_time..txt APP;
 /
 
-COL plan_name FOR A30;
-COL created FOR A30;
-COL last_executed FOR A30;
 PRO
 PRO SQL Plan Baselines
 PRO ~~~~~~~~~~~~~~~~~~
 SPO planx_&&sql_id._&&current_time..txt APP;
-SELECT created, plan_name, origin, enabled, accepted, fixed, reproduced, last_executed, last_modified, description
+SELECT created, plan_name, origin, enabled, accepted, fixed, reproduced, &&is_10g.&&is_11r1.adaptive,
+       last_executed, last_modified, description
 FROM dba_sql_plan_baselines WHERE signature = :signature
 ORDER BY created, plan_name
 /

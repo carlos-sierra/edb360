@@ -1,6 +1,29 @@
 Changelog
 =========
 
+v1802
+=====
+1. Modify dcli command on 0b to expect a possible OS user other than oracle
+2. Top SQL as per diverse metrics
+PRO Metrics
+PRO ~~~~~~~~~~~~~~~~~~~
+PRO elapsed_time_delta
+PRO cpu_time_delta
+PRO iowait_delta
+PRO apwait_delta
+PRO ccwait_delta
+PRO parse_calls_delta
+PRO executions_delta
+PRO fetches_delta
+PRO loads_delta
+PRO invalidations_delta
+PRO version_count
+PRO sharable_mem
+PRO rows_processed_delta
+PRO buffer_gets_delta
+PRO disk_reads_delta
+
+
 v1801 (2018-01-15)
 =====
 1. Remove SQLT references

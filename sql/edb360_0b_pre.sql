@@ -358,8 +358,9 @@ DEF edb360_tracefile_identifier = '&&common_edb360_prefix.';
 DEF edb360_tar_filename = '&&edb360_output_directory.00008_&&edb360_zip_filename.';
 DEF edb360_mv_host_command = '';
 
--- mont info
-HOS dcli -g ~/dbs_group -l oracle mount >> &&edb360_log3..txt
+-- mount info
+HOS export whoami=`whoami`
+HOS dcli -g ~/dbs_group -l $whoami mount >> &&edb360_log3..txt
 
 -- Exadata
 ALTER SESSION SET "_serial_direct_read" = ALWAYS;
@@ -387,7 +388,7 @@ ALTER SESSION SET "_subquery_pruning_enabled" = TRUE;
 -- workaround bug 19567916
 ALTER SESSION SET "_optimizer_aggr_groupby_elim" = FALSE;
 -- workaround nigeria
-ALTER SESSION SET "_gby_hash_aggregation_enabled" = TRUE;
+--ALTER SESSION SET "_gby_hash_aggregation_enabled" = TRUE;
 ALTER SESSION SET "_hash_join_enabled" = TRUE;
 ALTER SESSION SET "_optim_peek_user_binds" = TRUE;
 ALTER SESSION SET "_optimizer_skip_scan_enabled" = TRUE;
@@ -400,6 +401,8 @@ ALTER SESSION SET optimizer_index_cost_adj = 100;
 ALTER SESSION SET optimizer_dynamic_sampling = 0;
 ALTER SESSION SET "_optimizer_dsdir_usage_control"=0;
 ALTER SESSION SET "_sql_plan_directive_mgmt_control" = 0;
+/* workaround for bug 24554937 affecting SQL_ID dfffkcnqfystw */
+ALTER SESSION SET "_gby_hash_aggregation_enabled" = FALSE;
 
 -- tracing script in case it takes long to execute so we can diagnose it
 ALTER SESSION SET MAX_DUMP_FILE_SIZE = '1G';
