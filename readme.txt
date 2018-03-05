@@ -4,7 +4,7 @@ edb360 is a "free to use" tool to perform an initial assessment of an Oracle dat
 
 eDB360 works on Oracle 10g to 12c databases. 
 
-eDB360 works on Linus and UNIX systems. 
+eDB360 works on Linux and UNIX systems. 
 
 For Windows systems you may want to install first UNIX Utilities (UnxUtils) and a zip 
 program, else a few OS commands may not properly work. Besides that it works on Windows.
@@ -52,6 +52,9 @@ Steps
          can also accept a column, range of columns, section or range of sections;
          for example: 7, 6-7, 7a, 7a-7b, 1b-2b
 
+         A comma separated list of sections to use can also be specified (without
+         spaces).  For example: 4b,5a,7a
+
    Execution samples:
 
    SQL> @edb360.sql T NULL          normal execution when Tuning pack is licensed
@@ -60,6 +63,8 @@ Steps
                                     of some configuration parameters
 
    SQL> @edb360.sql T 7a            generate only section 7a (AWR, ADDM and ASH reports)
+
+   SQL> @edb360.sql T 4b,5a,7a      generate for sections 4b, 5a, and 7a only
    
 4. Unzip output edb360_<NNNNNN>_<NNNNNN>_YYYYMMDD_HH24MI.zip into a directory on your PC
 
