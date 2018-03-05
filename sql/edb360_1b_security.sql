@@ -97,17 +97,41 @@ END;
 /
 @@edb360_9a_pre_one.sql
 
-DEF title = 'Profile Verification Functions';
+DEF title = 'Profile Password Verification Functions';
 DEF main_table = '&&dva_view_prefix.PROFILES';
 BEGIN
   :sql_text := q'[
 -- provided by Simon Pane
-SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */ 
-       owner, object_name, created, last_ddl_time, status
-  FROM &&dva_object_prefix.objects
- WHERE object_name IN (SELECT /*+ &&top_level_hints. */ limit
-                         FROM &&dva_object_prefix.profiles
-                        WHERE resource_name = 'PASSWORD_VERIFY_FUNCTION')
+WITH
+expanded_profiles AS (
+SELECT /*+  NO_MERGE  */
+       profile,
+       limit,
+       CONNECT_BY_ROOT limit top_limit,
+       level nest_level
+  FROM (SELECT profile, limit FROM dba_profiles WHERE resource_name = 'PASSWORD_VERIFY_FUNCTION')
+CONNECT BY PRIOR profile = limit
+),
+users_with_profile AS (
+SELECT /*+  NO_MERGE  */
+       profile,
+       count(*) cnt
+  FROM dba_users
+ GROUP BY profile
+)
+SELECT /*+ &&top_level_hints. */ /* &&section_id..&&report_sequence. */
+       p.profile,
+       DECODE(nest_level,2,'DEFAULT ('||top_limit||')',top_limit) profile_limit_setting,
+       DECODE(top_limit,'NULL',' ',NVL2(object_name,owner||'.'||object_name,'** FUNCTION NOT FOUND **')) verification_function,
+       last_ddl_time,
+       status,
+       NVL(TO_CHAR(u.cnt),'<NONE>') assigned_users
+  FROM dba_objects o,
+       expanded_profiles p,
+       users_with_profile u
+ WHERE p.top_limit = o.object_name (+)
+   AND p.profile = u.profile (+)
+   AND NOT (limit = 'DEFAULT' AND top_limit = 'DEFAULT')
  ORDER BY 1,2
 ]';
 END;
