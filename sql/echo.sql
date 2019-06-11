@@ -1,1 +1,0 @@
--- skips execution of another script passed on same command line
